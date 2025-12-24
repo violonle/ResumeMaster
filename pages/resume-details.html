@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>简历详情 - 争湃·简历大师</title>
+  <script src="../js/tailwindcss.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
+  <script src="../js/user-auth.js"></script>
+  <script src="../js/resume-data.js?v=2"></script>
+  <link rel="stylesheet" href="/css/sidebar.css">
+  <style>
+    .tag {display:inline-block;padding:2px 8px;background:#f3f4f6;color:#6b7280;border-radius:12px;font-size:.75rem;margin-right:4px;margin-bottom:4px}
+    .section-card {background:white;border-radius:1rem;padding:1.5rem;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1);margin-bottom:1.5rem}
+    .info-label {font-size:0.875rem;color:#6b7280;margin-bottom:0.25rem}
+    .info-value {font-size:1rem;color:#111827;font-weight:500}
+    .timeline-item {position:relative;padding-left:2rem;padding-bottom:1.5rem;border-left:2px solid #e5e7eb}
+    .timeline-item:last-child {border-left-color:transparent}
+    .timeline-dot {position:absolute;left:-9px;top:0;width:16px;height:16px;border-radius:50%;background:#3b82f6;border:4px solid #fff;box-shadow:0 0 0 2px #e5e7eb}
+  </style>
+</head>
+<body class="font-sans bg-gray-50 min-h-screen">
+  <!-- Sidebar -->
+  <aside id="sidebar" class="fixed left-0 top-0 bottom-0 sidebar-modern z-40"></aside>
+  <div id="sidebar-overlay" class="sidebar-overlay"></div>
+  
+  <!-- Header -->
+  <header class="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20">
+    <div class="flex items-center justify-between p-4">
+      <div class="flex items-center space-x-4">
+        <button class="menu-button p-2 rounded-lg hover:bg-gray-100" id="sidebar-toggle"><i class="fas fa-bars text-gray-600"></i></button>
+        <h1 class="brand-title text-lg font-bold text-gray-900">争湃·简历大师</h1>
+      </div>
+      <div id="header-right-section" class="flex items-center space-x-4"></div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content pt-20" id="main-content">
+    <div class="p-6 max-w-6xl mx-auto">
+      <!-- Breadcrumb & Back -->
+      <div class="mb-6 flex items-center justify-between">
+        <a href="librarypool.html" class="text-gray-500 hover:text-blue-600 flex items-center transition-colors">
+          <i class="fas fa-arrow-left mr-2"></i>返回人才库
+        </a>
+        <div class="flex space-x-3">
+          <button onclick="window.print()" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 flex items-center">
+            <i class="fas fa-print mr-2"></i>打印
+          </button>
+          <button id="export-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center">
+            <i class="fas fa-download mr-2"></i>导出
+          </button>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div id="loading-indicator" class="text-center py-20">
+        <i class="fas fa-circle-notch fa-spin text-4xl text-blue-500 mb-4"></i>
+        <p class="text-gray-600">正在加载简历详情...</p>
+      </div>
+
+      <!-- Error State -->
+      <div id="error-state" class="hidden text-center py-20 bg-white rounded-2xl shadow-lg">
+        <i class="fas fa-exclamation-triangle text-4xl text-red-500 mb-4"></i>
+        <h2 class="text-xl font-bold text-gray-900 mb-2">无法加载简历</h2>
+        <p class="text-gray-500 mb-6" id="error-message">找不到指定的简历信息</p>
+        <a href="librarypool.html" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">返回列表</a>
+      </div>
+
+      <!-- Resume Content -->
+      <div id="resume-content" class="hidden fade-in-up">
+        <!-- Header Card -->
+        <div class="section-card flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+          <div class="flex items-start gap-6">
+            <div class="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center text-3xl text-gray-400 overflow-hidden flex-shrink-0">
+              <span id="avatar-text"></span>
+              <img id="avatar-img" class="w-full h-full object-cover hidden" alt="Avatar">
+            </div>
+            <div>
+              <h1 class="text-2xl font-bold text-gray-900 mb-2" id="resume-name">姓名</h1>
+              <p class="text-lg text-blue-600 font-medium mb-3" id="resume-position">职位</p>
+              <div class="flex flex-wrap gap-4 text-sm text-gray-600">
+                <span class="flex items-center"><i class="fas fa-envelope mr-2"></i><span id="resume-email">email@example.com</span></span>
+                <span class="flex items-center"><i class="fas fa-phone mr-2"></i><span id="resume-phone">13800000000</span></span>
+                <span class="flex items-center"><i class="fas fa-map-marker-alt mr-2"></i><span id="resume-location">城市</span></span>
+              </div>
+              <div class="mt-4 flex flex-wrap gap-2" id="resume-tags">
+                <!-- Tags will be inserted here -->
+              </div>
+            </div>
+          </div>
+          <div class="flex flex-col items-end">
+            <div class="text-center bg-blue-50 p-4 rounded-xl">
+              <p class="text-sm text-gray-500 mb-1">综合评分</p>
+              <p class="text-3xl font-bold text-blue-600" id="resume-score">0</p>
+            </div>
+            <p class="text-xs text-gray-400 mt-2">更新于: <span id="resume-updated">2024-01-01</span></p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Left Column -->
+          <div class="space-y-6">
+            <!-- Basic Info -->
+            <div class="section-card">
+              <h3 class="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-100">基本信息</h3>
+              <div class="space-y-4">
+                <div>
+                  <p class="info-label">工作经验</p>
+                  <p class="info-value" id="info-exp">0年</p>
+                </div>
+                <div>
+                  <p class="info-label">最高学历</p>
+                  <p class="info-value" id="info-edu">本科</p>
+                </div>
+                <div>
+                  <p class="info-label">求职状态</p>
+                  <p class="info-value" id="info-status">在职-看机会</p>
+                </div>
+                <div>
+                  <p class="info-label">期望薪资</p>
+                  <p class="info-value" id="info-salary">面议</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Skills -->
+            <div class="section-card">
+              <h3 class="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-100">技能专长</h3>
+              <div class="flex flex-wrap gap-2" id="skills-container">
+                <!-- Skills -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column -->
+          <div class="lg:col-span-2 space-y-6">
+             <!-- Summary -->
+             <div class="section-card">
+              <h3 class="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-100">个人优势</h3>
+              <p class="text-gray-700 leading-relaxed" id="resume-summary">暂无描述</p>
+            </div>
+
+            <!-- Experience -->
+            <div class="section-card">
+              <h3 class="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-100">工作经历</h3>
+              <div class="space-y-6" id="experience-container">
+                <!-- Experience Items -->
+              </div>
+            </div>
+
+            <!-- Education -->
+            <div class="section-card">
+              <h3 class="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-100">教育经历</h3>
+              <div class="space-y-6" id="education-container">
+                <!-- Education Items -->
+              </div>
+            </div>
+            
+             <!-- Projects -->
+             <div class="section-card">
+              <h3 class="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-100">项目经历</h3>
+              <div class="space-y-6" id="project-container">
+                <!-- Project Items -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/sidebar.js"></script>
+  <script src="../js/header-profile.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        // Initialize sidebar
+        if (typeof Sidebar !== 'undefined') {
+            await Sidebar.init({ mount: '#sidebar', active: 'librarypool' });
+        }
+        // Initialize header profile
+        if (typeof HeaderProfile !== 'undefined') {
+            HeaderProfile.init('#header-right-section');
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const resumeId = urlParams.get('id');
+
+        if (!resumeId) {
+          showError('未提供简历ID');
+          return;
+        }
+
+        loadResumeDetails(resumeId);
+    });
+
+    function navigateToJobPosting(){window.location.href='job-posting.html'}
+    function navigateToResumeUpload(){window.location.href='resume-upload-pc.html'}
+    function navigateToAnalytics(){window.location.href='data-analysis.html'}
+
+    async function initResumeDetails() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const id = urlParams.get('id');
+      
+      if (!id) {
+        showError('未提供简历ID');
+        return;
+      }
+
+      try {
+        const rdm = new ResumeDataManager();
+        let resume = await rdm.getResumeById(id);
+        
+        // 如果API没找到，尝试从window.resumeData查找(如果是Mock或缓存)
+        // 注意：实际场景下resume-data.js的getResumeById应该已经处理了API请求
+        
+        if (!resume) {
+          // 最后的尝试：看看localStorage里有没有
+          // 这只是为了兼容纯前端演示模式
+          try {
+             // 模拟从列表页传递的数据（如果存在）
+          } catch(e){}
+        }
+
+        if (resume) {
+          renderResume(resume);
+        } else {
+          showError('找不到该简历数据');
+        }
+      } catch (error) {
+        console.error(error);
+        showError('加载简历数据时出错');
+      }
+    }
+
+    function showError(msg) {
+      document.getElementById('loading-indicator').classList.add('hidden');
+      document.getElementById('resume-content').classList.add('hidden');
+      document.getElementById('error-state').classList.remove('hidden');
+      document.getElementById('error-message').textContent = msg;
+    }
+
+    function renderResume(data) {
+      document.getElementById('loading-indicator').classList.add('hidden');
+      document.getElementById('resume-content').classList.remove('hidden');
+      
+      const pd = data.parsed_data || {};
+      
+      // Header
+      const name = pd.name || data.file_name || '未命名简历';
+      document.getElementById('resume-name').textContent = name;
+      document.getElementById('avatar-text').textContent = name.charAt(0);
+      document.getElementById('resume-position').textContent = pd.jobTitle || (data.tags && data.tags[0]) || '未填写职位';
+      document.getElementById('resume-email').textContent = pd.email || '未填写邮箱';
+      document.getElementById('resume-phone').textContent = pd.phone || '未填写电话';
+      document.getElementById('resume-location').textContent = pd.location || '未填写城市';
+      document.getElementById('resume-score').textContent = data.overall_score || 0;
+      
+      const date = data.upload_date ? new Date(data.upload_date).toLocaleDateString() : new Date().toLocaleDateString();
+      document.getElementById('resume-updated').textContent = date;
+
+      // Tags
+      const tagsContainer = document.getElementById('resume-tags');
+      const tags = pd.skills || data.tags || [];
+      tagsContainer.innerHTML = tags.slice(0, 5).map(t => `<span class="tag">${t}</span>`).join('');
+
+      // Info
+      document.getElementById('info-exp').textContent = (pd.experience_years || 0) + '年';
+      document.getElementById('info-edu').textContent = (pd.education && pd.education[0] && pd.education[0].degree) || '未填写';
+      // document.getElementById('info-status').textContent = data.status === 'analyzed' ? '已分析' : '待分析';
+      
+      // Skills
+      const skillsContainer = document.getElementById('skills-container');
+      const skills = pd.skills || [];
+      if(skills.length > 0) {
+          skillsContainer.innerHTML = skills.map(s => `<span class="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-medium">${s}</span>`).join('');
+      } else {
+          skillsContainer.innerHTML = '<span class="text-gray-400 text-sm">暂无技能标签</span>';
+      }
+
+      // Summary
+      document.getElementById('resume-summary').textContent = pd.summary || '暂无个人优势描述';
+
+      // Experience
+      const expContainer = document.getElementById('experience-container');
+      const experience = pd.workExperience || pd.experience || [];
+      if (experience.length > 0) {
+        expContainer.innerHTML = experience.map((exp, index) => `
+          <div class="timeline-item">
+            <div class="timeline-dot"></div>
+            <div class="flex flex-wrap justify-between items-baseline mb-1">
+              <h4 class="text-lg font-bold text-gray-900">${exp.company || '未知公司'}</h4>
+              <span class="text-sm text-gray-500">${exp.startDate || ''} - ${exp.endDate || '至今'}</span>
+            </div>
+            <p class="text-blue-600 font-medium mb-2">${exp.jobTitle || exp.position || ''}</p>
+            <p class="text-gray-600 text-sm leading-relaxed">${exp.description || ''}</p>
+          </div>
+        `).join('');
+      } else {
+        expContainer.innerHTML = '<p class="text-gray-400 italic">暂无工作经历</p>';
+      }
+
+      // Education
+      const eduContainer = document.getElementById('education-container');
+      const education = pd.education || [];
+      if (education.length > 0) {
+        eduContainer.innerHTML = education.map(edu => `
+          <div class="timeline-item">
+            <div class="timeline-dot"></div>
+            <div class="flex flex-wrap justify-between items-baseline mb-1">
+              <h4 class="text-lg font-bold text-gray-900">${edu.school || '未知学校'}</h4>
+              <span class="text-sm text-gray-500">${edu.startDate || ''} - ${edu.endDate || '至今'}</span>
+            </div>
+            <p class="text-gray-700 font-medium">${edu.degree || ''} · ${edu.major || ''}</p>
+          </div>
+        `).join('');
+      } else {
+        eduContainer.innerHTML = '<p class="text-gray-400 italic">暂无教育经历</p>';
+      }
+      
+      // Projects
+      const projContainer = document.getElementById('project-container');
+      const projects = pd.projects || [];
+      if (projects.length > 0) {
+        projContainer.innerHTML = projects.map(proj => `
+          <div class="timeline-item">
+            <div class="timeline-dot"></div>
+            <div class="flex flex-wrap justify-between items-baseline mb-1">
+              <h4 class="text-lg font-bold text-gray-900">${proj.name || '未知项目'}</h4>
+              <span class="text-sm text-gray-500">${proj.startDate || ''} - ${proj.endDate || '至今'}</span>
+            </div>
+            <p class="text-blue-600 font-medium mb-2">${proj.role || ''}</p>
+            <p class="text-gray-600 text-sm leading-relaxed">${proj.description || ''}</p>
+          </div>
+        `).join('');
+      } else {
+         // Hide project section if empty
+         if(projContainer.parentElement) projContainer.parentElement.style.display = 'none';
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简历库 - 争湃·简历大师</title>
+    <script src="../js/tailwindcss.js"></script>
+    <script src="../js/ui-components.js"></script>
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary': {
+                            50: '#eff6ff',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8'
+                        }
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1); }
+        .resume-card { transition: all 0.3s ease; }
+        .resume-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1); }
+        .btn-primary { background-color: #2563eb; transition: all 0.3s ease; }
+        .btn-primary:hover { background-color: #1d4ed8; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3); }
+        .filter-btn { transition: all 0.3s ease; }
+        .filter-btn.active { background-color: #2563eb; color: white; }
+        .search-box { transition: all 0.3s ease; }
+        .search-box:focus { box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in-up { animation: fadeInUp 0.6s ease forwards; }
+        .score-badge { position: absolute; top: 12px; right: 12px; padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+        .score-excellent { background-color: #10b981; color: white; }
+        .score-good { background-color: #3b82f6; color: white; }
+        .score-average { background-color: #f59e0b; color: white; }
+        .score-poor { background-color: #ef4444; color: white; }
+        .tag { display: inline-block; padding: 2px 8px; background: #f3f4f6; color: #6b7280; border-radius: 12px; font-size: 0.75rem; margin-right: 4px; margin-bottom: 4px; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,.5); z-index: 1000; }
+        .modal.show { display: flex; align-items: center; justify-content: center; }
+        .modal-content { background: white; border-radius: 16px; max-width: 90vw; max-height: 90vh; overflow-y: auto; }
+        .main-content { margin-left: 280px; padding: 24px; }
+        .sidebar-collapsed-root .main-content { margin-left: 60px !important; }
+        @media (max-width:768px){ .main-content{ margin-left:0 !important; padding:24px } }
+    </style>
+</head>
+<body class="font-sans bg-gray-50 min-h-screen">
+    <!-- 侧边栏 -->
+    <aside id="sidebar" class="fixed left-0 top-0 bottom-0 sidebar-modern z-40">
+        
+    </aside>
+
+    <!-- 移动端遮罩 -->
+    
+
+    <!-- 顶部导航栏（移动端） -->
+    <div class="lg:hidden fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20">
+        <div class="flex items-center justify-between p-4">
+            <button class="p-2 rounded-lg hover:bg-gray-100" id="sidebar-toggle">
+                <i class="fas fa-bars text-gray-600"></i>
+            </button>
+            <h1 class="brand-title text-lg font-bold text-gray-900">争湃·简历大师</h1>
+            <button class="p-2 rounded-lg hover:bg-gray-100">
+                <i class="fas fa-bell text-gray-600"></i>
+            </button>
+        </div>
+    </div>
+    
+    <!-- 主要内容 -->
+    <main class="main-content" id="main-content">
+        <div class="p-6 lg:pl-12">
+            <!-- 页面标题 -->
+            <h1 class="text-3xl font-bold text-gray-900 mb-6">前端工程师</h1>
+
+            <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+                <!-- 统计卡片 -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div class="p-6 rounded-xl bg-gray-50">
+                        <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">总简历数</p>
+                            <p class="text-2xl font-bold text-gray-900">24</p>
+                        </div>
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                            <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="p-6 rounded-xl bg-gray-50">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">优秀简历</p>
+                            <p class="text-2xl font-bold text-blue-600">8</p>
+                        </div>
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                            <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="p-6 rounded-xl bg-gray-50">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">平均评分</p>
+                            <p class="text-2xl font-bold text-blue-600">82.5</p>
+                        </div>
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                            <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="p-6 rounded-xl bg-gray-50">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">本月新增</p>
+                            <p class="text-2xl font-bold text-blue-600">6</p>
+                        </div>
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                            <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        
+        <!-- 搜索和筛选 -->
+        <div class="bg-white rounded-2xl shadow-lg p-4 mb-8 fade-in-up">
+            <div class="flex items-center justify-between gap-4">
+                <!-- 搜索框 -->
+                <div class="flex-1">
+                    <div class="relative">
+                        <input type="text" id="searchInput" placeholder="输入技能关键字..." 
+                               class="search-box w-full pl-9 pr-10 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                        <svg class="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                        <button id="searchButton" class="absolute right-2.5 top-1/2 transform -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 focus:outline-none">
+                            <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 排序按钮 -->
+                <div class="flex items-center gap-2">
+                    <button id="sortButton" class="sort-btn px-3 py-1.5 rounded-lg border border-gray-300 text-sm font-medium hover:bg-gray-50 flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9M3 12h5"/>
+                        </svg>
+                        <span>时间</span>
+                        <svg id="sortIcon" class="w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 简历列表 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 fade-in-up" id="resumeGrid">
+            <!-- 简历卡片 1 -->
+            <div class="resume-card bg-white rounded-2xl shadow-lg p-6 relative" data-score="92" data-category="excellent">
+                <div class="score-badge score-excellent">92分</div>
+                
+                <div class="flex items-start space-x-4 mb-4">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/>
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="font-semibold text-gray-900 mb-1">李四_全栈开发.pdf</h3>
+                        <p class="text-sm text-gray-600">全栈开发工程师</p>
+                        <p class="text-xs text-gray-500 mt-1">上传时间：2024-01-15</p>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <div class="flex flex-wrap">
+                        <span class="tag">React</span>
+                        <span class="tag">Node.js</span>
+                        <span class="tag">MongoDB</span>
+                        <span class="tag">TypeScript</span>
+                    </div>
+                </div>
+                
+                <div class="space-y-2 mb-4">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">技能匹配</span>
+                        <span class="font-semibold text-blue-600">95%</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">经验匹配</span>
+                        <span class="font-semibold text-blue-600">90%</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">发展潜力</span>
+                        <span class="font-semibold text-blue-600">88%</span>
+                    </div>
+                </div>
+                
+                <div class="flex space-x-2">
+                    <button class="flex-1 bg-blue-50 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors" onclick="viewResume('李四_全栈开发.pdf')">
+                        👁️ 查看
+                    </button>
+                    <button class="flex-1 bg-white border border-blue-600 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors">
+                        📊 分析
+                    </button>
+                    <button class="bg-gray-50 text-gray-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">
+                        ⋯
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 简历卡片 2 -->
+            <div class="resume-card bg-white rounded-2xl shadow-lg p-6 relative" data-score="85" data-category="good">
+                <div class="score-badge score-good">85分</div>
+                
+                <div class="flex items-start space-x-4 mb-4">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/>
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="font-semibold text-gray-900 mb-1">张三_前端开发.pdf</h3>
+                        <p class="text-sm text-gray-600">前端开发工程师</p>
+                        <p class="text-xs text-gray-500 mt-1">上传时间：2024-01-14</p>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <div class="flex flex-wrap">
+                        <span class="tag">Vue.js</span>
+                        <span class="tag">JavaScript</span>
+                        <span class="tag">CSS3</span>
+                        <span class="tag">Webpack</span>
+                    </div>
+                </div>
+                
+                <div class="space-y-2 mb-4">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">技能匹配</span>
+                        <span class="font-semibold text-blue-600">88%</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">经验匹配</span>
+                        <span class="font-semibold text-blue-600">82%</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">发展潜力</span>
+                        <span class="font-semibold text-blue-600">85%</span>
+                    </div>
+                </div>
+                
+                <div class="flex space-x-2">
+                    <button class="flex-1 bg-blue-50 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors" onclick="viewResume('张三_前端开发.pdf')">
+                        👁️ 查看
+                    </button>
+                    <button class="flex-1 bg-white border border-blue-600 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors">
+                        📊 分析
+                    </button>
+                    <button class="bg-gray-50 text-gray-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">
+                        ⋯
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 简历卡片 3 -->
+            <div class="resume-card bg-white rounded-2xl shadow-lg p-6 relative" data-score="78" data-category="average">
+                <div class="score-badge score-average">78分</div>
+                
+                <div class="flex items-start space-x-4 mb-4">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/>
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="font-semibold text-gray-900 mb-1">王五_后端开发.pdf</h3>
+                        <p class="text-sm text-gray-600">后端开发工程师</p>
+                        <p class="text-xs text-gray-500 mt-1">上传时间：2024-01-13</p>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <div class="flex flex-wrap">
+                        <span class="tag">Java</span>
+                        <span class="tag">Spring</span>
+                        <span class="tag">MySQL</span>
+                        <span class="tag">Redis</span>
+                    </div>
+                </div>
+                
+                <div class="space-y-2 mb-4">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">技能匹配</span>
+                        <span class="font-semibold text-blue-600">75%</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">经验匹配</span>
+                        <span class="font-semibold text-blue-600">78%</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">发展潜力</span>
+                        <span class="font-semibold text-blue-600">80%</span>
+                    </div>
+                </div>
+                
+                <div class="flex space-x-2">
+                    <button class="flex-1 bg-blue-50 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors" onclick="viewResume('王五_后端开发.pdf')">
+                        👁️ 查看
+                    </button>
+                    <button class="flex-1 bg-white border border-blue-600 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors">
+                        📊 分析
+                    </button>
+                    <button class="bg-gray-50 text-gray-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">
+                        ⋯
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 简历卡片 4 -->
+            <div class="resume-card bg-white rounded-2xl shadow-lg p-6 relative" data-score="95" data-category="excellent">
+                <div class="score-badge score-excellent">95分</div>
+                
+                <div class="flex items-start space-x-4 mb-4">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/>
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="font-semibold text-gray-900 mb-1">赵六_架构师.pdf</h3>
+                        <p class="text-sm text-gray-600">技术架构师</p>
+                        <p class="text-xs text-gray-500 mt-1">上传时间：2024-01-12</p>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <div class="flex flex-wrap">
+                        <span class="tag">微服务</span>
+                        <span class="tag">Kubernetes</span>
+                        <span class="tag">Docker</span>
+                        <span class="tag">AWS</span>
+                    </div>
+                </div>
+                
+                <div class="space-y-2 mb-4">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">技能匹配</span>
+                        <span class="font-semibold text-blue-600">98%</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">经验匹配</span>
+                        <span class="font-semibold text-blue-600">95%</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">发展潜力</span>
+                        <span class="font-semibold text-blue-600">92%</span>
+                    </div>
+                </div>
+                
+                <div class="flex space-x-2">
+                    <button class="flex-1 bg-blue-50 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors" onclick="viewResume('赵六_架构师.pdf')">
+                        👁️ 查看
+                    </button>
+                    <button class="flex-1 bg-white border border-blue-600 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors">
+                        📊 分析
+                    </button>
+                    <button class="bg-gray-50 text-gray-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">
+                        ⋯
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 简历卡片 5 -->
+            <div class="resume-card bg-white rounded-2xl shadow-lg p-6 relative" data-score="65" data-category="poor">
+                <div class="score-badge score-poor">65分</div>
+                
+                <div class="flex items-start space-x-4 mb-4">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/>
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="font-semibold text-gray-900 mb-1">孙七_初级开发.pdf</h3>
+                        <p class="text-sm text-gray-600">初级开发工程师</p>
+                        <p class="text-xs text-gray-500 mt-1">上传时间：2024-01-11</p>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <div class="flex flex-wrap">
+                        <span class="tag">HTML</span>
+                        <span class="tag">CSS</span>
+                        <span class="tag">JavaScript</span>
+                    </div>
+                </div>
+                
+                <div class="space-y-2 mb-4">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">技能匹配</span>
+                        <span class="font-semibold text-blue-600">60%</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">经验匹配</span>
+                        <span class="font-semibold text-blue-600">65%</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">发展潜力</span>
+                        <span class="font-semibold text-blue-600">70%</span>
+                    </div>
+                </div>
+                
+                <div class="flex space-x-2">
+                    <button class="flex-1 bg-blue-50 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors" onclick="viewResume('孙七_初级开发.pdf')">
+                        👁️ 查看
+                    </button>
+                    <button class="flex-1 bg-white border border-blue-600 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors">
+                        📊 分析
+                    </button>
+                    <button class="bg-gray-50 text-gray-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">
+                        ⋯
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 简历卡片 6 -->
+            <div class="resume-card bg-white rounded-2xl shadow-lg p-6 relative" data-score="88" data-category="good">
+                <div class="score-badge score-good">88分</div>
+                
+                <div class="flex items-start space-x-4 mb-4">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/>
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="font-semibold text-gray-900 mb-1">周八_产品经理.pdf</h3>
+                        <p class="text-sm text-gray-600">产品经理</p>
+                        <p class="text-xs text-gray-500 mt-1">上传时间：2024-01-10</p>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <div class="flex flex-wrap">
+                        <span class="tag">产品设计</span>
+                        <span class="tag">用户研究</span>
+                        <span class="tag">数据分析</span>
+                        <span class="tag">Axure</span>
+                    </div>
+                </div>
+                
+                <div class="space-y-2 mb-4">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">技能匹配</span>
+                        <span class="font-semibold text-blue-600">85%</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">经验匹配</span>
+                        <span class="font-semibold text-blue-600">88%</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">发展潜力</span>
+                        <span class="font-semibold text-blue-600">90%</span>
+                    </div>
+                </div>
+                
+                <div class="flex space-x-2">
+                    <button class="flex-1 bg-blue-50 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors" onclick="viewResume('周八_产品经理.pdf')">
+                        👁️ 查看
+                    </button>
+                    <button class="flex-1 bg-white border border-blue-600 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors">
+                        📊 分析
+                    </button>
+                    <button class="bg-gray-50 text-gray-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">
+                        ⋯
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 分页 -->
+        <div class="flex justify-center mt-8">
+            <nav class="flex space-x-2">
+                <button class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                    上一页
+                </button>
+                <button class="px-3 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-lg">
+                    1
+                </button>
+                <button class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                    2
+                </button>
+                <button class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                    3
+                </button>
+                <button class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                    下一页
+                </button>
+            </nav>
+        </div>
+    </main>
+    
+    <!-- 简历预览模态框 -->
+    <div id="resumeModal" class="modal">
+        <div class="modal-content w-full max-w-4xl p-8">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-900" id="modalTitle">简历预览</h2>
+                <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="bg-gray-100 rounded-xl p-8 text-center">
+                <div class="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-12 h-12 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2" id="resumeFileName">简历文件名</h3>
+                <p class="text-gray-600 mb-6">简历预览功能正在开发中，敬请期待...</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
+                    <div class="bg-white rounded-lg p-4">
+                        <h4 class="font-semibold text-gray-900 mb-2">基本信息</h4>
+                        <ul class="text-sm text-gray-600 space-y-1">
+                            <li>• 文件大小：2.3 MB</li>
+                            <li>• 文件格式：PDF</li>
+                            <li>• 页数：2页</li>
+                            <li>• 上传时间：2024-01-15</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg p-4">
+                        <h4 class="font-semibold text-gray-900 mb-2">分析结果</h4>
+                        <ul class="text-sm text-gray-600 space-y-1">
+                            <li>• 综合评分：92分</li>
+                            <li>• 技能匹配：95%</li>
+                            <li>• 经验匹配：90%</li>
+                            <li>• 发展潜力：88%</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg p-4">
+                        <h4 class="font-semibold text-gray-900 mb-2">操作记录</h4>
+                        <ul class="text-sm text-gray-600 space-y-1">
+                            <li>• 最后查看：今天 14:30</li>
+                            <li>• 分析次数：3次</li>
+                            <li>• 对比次数：2次</li>
+                            <li>• 导出次数：1次</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 筛选功能
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        const resumeCards = document.querySelectorAll('.resume-card');
+        const searchInput = document.getElementById('searchInput');
+        
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // 更新按钮状态
+                filterBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                const filter = btn.getAttribute('data-filter');
+                filterResumes(filter);
+            });
+        });
+        
+        function filterResumes(filter) {
+            resumeCards.forEach(card => {
+                const category = card.getAttribute('data-category');
+                
+                if (filter === 'all' || category === filter) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+        
+        // 搜索功能
+        searchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            
+            resumeCards.forEach(card => {
+                const title = card.querySelector('h3').textContent.toLowerCase();
+                const tags = Array.from(card.querySelectorAll('.tag')).map(tag => tag.textContent.toLowerCase());
+                const allText = title + ' ' + tags.join(' ');
+                
+                if (allText.includes(searchTerm)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+        
+        // 简历预览功能
+        function viewResume(fileName) {
+            document.getElementById('modalTitle').textContent = '简历预览 - ' + fileName;
+            document.getElementById('resumeFileName').textContent = fileName;
+            document.getElementById('resumeModal').classList.add('show');
+        }
+        
+        function closeModal() {
+            document.getElementById('resumeModal').classList.remove('show');
+        }
+        
+        // 点击模态框外部关闭
+        document.getElementById('resumeModal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                closeModal();
+            }
+        });
+        
+        // 用户信息显示
+        const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+        const usernameDisplay = document.getElementById('username-display');
+        if (usernameDisplay) {
+            if (typeof HeaderProfile !== 'undefined' && HeaderProfile.getDisplayId) {
+                usernameDisplay.textContent = HeaderProfile.getDisplayId();
+            } else {
+                const u = userInfo.user || userInfo;
+                let uid = u.userId || u.id || u.uid || null;
+                if (uid) {
+                    usernameDisplay.textContent = `用户${uid}`;
+                } else {
+                    const seed = (u.phone || u.email || u.username || '');
+                    let h = 0;
+                    for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+                    const digits = (u.phone || '').replace(/\D/g, '');
+                    const part1 = digits && digits.length >= 4 ? digits.slice(-4) : String(1000 + (h % 9000));
+                    const part2 = String(1000 + ((h >>> 13) % 9000));
+                    usernameDisplay.textContent = `用户${part1}-${part2}`;
+                }
+            }
+        }
+
+        // 侧边栏切换功能
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        const sidebar = document.getElementById('sidebar');
+        
+        // 桌面端侧边栏切换
+        
+        
+        // 移动端侧边栏切换
+        
+
+        // 退出登录
+        const logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                ui.showConfirm('确定要退出登录吗？', () => {
+                    // 使用userAuthInstance登出
+                    if (typeof userAuthInstance !== 'undefined') {
+                        userAuthInstance.logout();
+                    } else {
+                        localStorage.removeItem('userInfo');
+                    }
+                    window.location.href = '../index.html';
+                });
+            });
+        }
+
+        // 页面加载动画
+        document.addEventListener('DOMContentLoaded', () => {
+            const elements = document.querySelectorAll('.fade-in-up');
+            elements.forEach((el, index) => {
+                setTimeout(() => {
+                    el.style.opacity = '1';
+                }, index * 200);
+            });
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchInput');
+            const searchButton = document.getElementById('searchButton');
+            const sortButton = document.getElementById('sortButton');
+            const sortIcon = document.getElementById('sortIcon');
+            const resumeGrid = document.getElementById('resumeGrid');
+            let sortOrder = 'desc'; // 'asc' or 'desc'
+
+            function performSearch() {
+                const searchTerm = searchInput.value.toLowerCase();
+                const resumeCards = resumeGrid.querySelectorAll('.resume-card');
+
+                resumeCards.forEach(card => {
+                    const skills = Array.from(card.querySelectorAll('.tag')).map(tag => tag.textContent.toLowerCase());
+                    const cardText = card.textContent.toLowerCase();
+                    const isVisible = skills.some(skill => skill.includes(searchTerm)) || cardText.includes(searchTerm);
+                    card.style.display = isVisible ? '' : 'none';
+                });
+            }
+
+            function sortResumes() {
+                const resumeCards = Array.from(resumeGrid.querySelectorAll('.resume-card'));
+                
+                resumeCards.sort((a, b) => {
+                    const dateA = new Date(a.querySelector('p.text-xs.text-gray-500').textContent.replace('上传时间：', ''));
+                    const dateB = new Date(b.querySelector('p.text-xs.text-gray-500').textContent.replace('上传时间：', ''));
+
+                    if (sortOrder === 'asc') {
+                        return dateA - dateB;
+                    } else {
+                        return dateB - dateA;
+                    }
+                });
+
+                resumeCards.forEach(card => resumeGrid.appendChild(card));
+            }
+
+            function toggleSortOrder() {
+                sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+                sortIcon.style.transform = sortOrder === 'asc' ? 'rotate(180deg)' : 'rotate(0deg)';
+                sortResumes();
+            }
+
+            searchButton.addEventListener('click', performSearch);
+            searchInput.addEventListener('keyup', function(event) {
+                if (event.key === 'Enter') {
+                    performSearch();
+                }
+            });
+
+            sortButton.addEventListener('click', toggleSortOrder);
+
+            // Initial sort
+            sortResumes();
+        });
+    </script>
+    <script src="/js/sidebar.js"></script>
+    <script>
+      Sidebar.init({ mount:'#sidebar', active:'librarypool' })
+    </script>
+</body>
+</html>

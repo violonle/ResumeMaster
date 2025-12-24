@@ -1,0 +1,299 @@
+/* Modern Sidebar Styles */
+.sidebar-modern {
+    background: #ffffff;
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.05);
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    width: 280px;
+    z-index: 40;
+    overflow-y: hidden;
+    overflow-x: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-right: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.sidebar-inner {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+#sidebar-header {
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.sidebar-inner nav {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.sidebar-footer {
+    margin-top: auto;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* Navigation Items */
+.nav-item-modern {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    margin: 0.2rem 0.5rem;
+    border-radius: 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #4b5563;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.nav-item-modern:hover {
+    background-color: #f3f4f6;
+    color: #111827;
+    transform: translateX(4px);
+}
+
+.nav-item-modern.active {
+    background: #eff6ff;
+    color: #2563eb;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.05);
+}
+
+.nav-item-modern.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 20px;
+    background: #2563eb;
+    border-radius: 0 4px 4px 0;
+}
+
+.nav-item-modern i {
+    width: 24px;
+    margin-right: 12px;
+    text-align: center;
+    font-size: 1.1em;
+    transition: transform 0.2s ease;
+}
+
+.nav-item-modern:hover i {
+    transform: scale(1.1);
+    color: #2563eb;
+}
+
+/* Quick Action Buttons */
+.quick-action-button {
+    display: flex;
+    align-items: center;
+    width: calc(100% - 1.5rem);
+    margin: 0 auto 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 0.75rem;
+    color: #4b5563;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.quick-action-button:hover {
+    background: #f9fafb;
+    color: #111827;
+    border-color: #e5e7eb;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.quick-action-button i {
+    margin-right: 0.75rem;
+    font-size: 1rem;
+    color: #6b7280;
+}
+
+.quick-action-button:hover i {
+    color: #2563eb;
+}
+
+/* Main Content Layout */
+.main-content {
+    margin-left: 280px;
+    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 64px 24px 24px;
+    min-height: 100vh;
+    background-color: #f9fafb;
+}
+
+/* Sidebar Collapsed State */
+.sidebar-collapsed {
+    width: 80px !important;
+}
+
+/* Reset padding for the inner container when collapsed to allow correct centering */
+.sidebar-collapsed > .sidebar-inner {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+.sidebar-collapsed .nav-item-modern {
+    justify-content: center;
+    padding: 0.75rem;
+    margin: 0.25rem auto;
+    width: 48px;
+    height: 48px;
+}
+
+.sidebar-collapsed .nav-item-modern span,
+.sidebar-collapsed .quick-action-button span,
+.sidebar-collapsed .sidebar-text,
+.sidebar-collapsed h3,
+.sidebar-collapsed #sidebar-subscription,
+.sidebar-collapsed #sidebar-logo {
+    display: none !important;
+}
+
+.sidebar-collapsed #sidebar-header {
+    justify-content: center;
+    padding: 1rem 0;
+}
+
+.sidebar-collapsed #sidebar-toggle-inner {
+    display: flex !important;
+    margin: 0 auto;
+    width: 48px;
+    height: 48px;
+    justify-content: center;
+}
+
+.sidebar-collapsed .nav-item-modern i {
+    margin-right: 0;
+    font-size: 1.25rem;
+}
+
+.sidebar-collapsed .quick-action-button {
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    margin: 0 auto 0.5rem;
+}
+
+.sidebar-collapsed .quick-action-button i {
+    margin-right: 0;
+}
+
+.main-content-collapsed {
+    margin-left: 80px !important;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .sidebar-modern {
+        transform: translateX(-100%);
+        width: 280px;
+    }
+    
+    .sidebar-modern.sidebar-open {
+        transform: translateX(0);
+    }
+    
+    .main-content {
+        margin-left: 0 !important;
+        padding: 80px 16px 24px;
+    }
+    
+    .sidebar-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 30;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+    }
+    
+    .sidebar-overlay.visible {
+        opacity: 1;
+        pointer-events: auto;
+    }
+}
+
+@media (max-height: 780px) {
+    #sidebar-subscription {
+        display: none;
+    }
+}
+
+@media (max-height: 720px) {
+    .quick-action-button {
+        display: none;
+    }
+    .sidebar-inner {
+        padding: 12px;
+    }
+    #sidebar-header {
+        padding: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+}
+
+@media (max-height: 640px) {
+    .sidebar-text {
+        display: none;
+    }
+}
+
+/* Header Styling */
+header {
+    height: 64px;
+    background: #ffffff;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Menu Button */
+.menu-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    color: #4b5563;
+    transition: all 0.2s;
+}
+
+.menu-button:hover {
+    background-color: #f3f4f6;
+    color: #2563eb;
+}
+
+/* Subscription Card */
+.gradient-card {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border: 1px solid #e2e8f0;
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #e5e7eb;
+    border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #d1d5db;
+}

@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能工作台 - 争湃·简历大师</title>
+    <script src="../js/tailwindcss.js"></script>
+    <link rel="stylesheet" href="/css/design-system.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <style>
+        /* 页面特定样式 */
+        .dashboard-card {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+        
+        .dashboard-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .pulse-animation {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+
+        .slide-in {
+            animation: slideIn 0.6s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* 进度环样式 */
+        .progress-ring { transform: rotate(-90deg); }
+        .progress-ring-circle { transition: stroke-dashoffset 0.35s; stroke-dasharray: 251.2 251.2; }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- 侧边栏 -->
+    <aside id="sidebar" class="sidebar-modern"></aside>
+    <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+    <!-- 顶部导航栏 -->
+    <header class="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20">
+        <div class="flex items-center justify-between p-4">
+            <div class="flex items-center space-x-4">
+                <button class="menu-button p-2 rounded-lg hover:bg-gray-100" id="sidebar-toggle">
+                    <i class="fas fa-bars text-gray-900"></i>
+                </button>
+                <h1 class="brand-title text-lg font-bold text-gray-900">智能工作台</h1>
+            </div>
+            <div class="flex items-center space-x-4" id="header-right-section">
+                <!-- User Profile rendered by HeaderProfile -->
+            </div>
+        </div>
+    </header>
+
+    <!-- 主要内容区域 -->
+    <main id="main-content" class="main-content pt-20 p-6 min-h-screen transition-all duration-300">
+        <!-- 欢迎区域 -->
+        <section class="mb-8 slide-in">
+            <div class="bg-white rounded-2xl p-6 mb-6 border border-gray-100 shadow-sm">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900 mb-2">欢迎回来</h1>
+                        <p class="text-gray-600">今天是 <span id="current-date"></span>，您有 <span class="font-semibold text-blue-600">—</span> 个新简历需要审核</p>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-3xl font-bold text-blue-600" id="ai-score">—</div>
+                        <p class="text-sm text-gray-500">AI服务评分</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 统计卡片 - 蓝色背景白字版本 -->
+        <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- 简历总数 -->
+            <div class="bg-blue-600 rounded-xl shadow-sm hover-lift p-6 text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-white opacity-80">简历总数</p>
+                        <p class="text-3xl font-bold text-white mt-1">—</p>
+                    <p class="text-sm text-white opacity-80 mt-1">—</p>
+                    </div>
+                    <div class="text-right">
+                        <i class="fas fa-file-alt text-white opacity-80 text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 职位发布 -->
+            <div class="bg-blue-600 rounded-xl shadow-sm hover-lift p-6 text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-white opacity-80">活跃职位</p>
+                        <p class="text-3xl font-bold text-white mt-1">—</p>
+                        <p class="text-sm text-white opacity-80 mt-1">—</p>
+                    </div>
+                    <div class="text-right">
+                        <i class="fas fa-briefcase text-white opacity-80 text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI分析次数 -->
+            <div class="bg-blue-600 rounded-xl shadow-sm hover-lift p-6 text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-white opacity-80">AI分析</p>
+                        <p class="text-3xl font-bold text-white mt-1">—</p>
+                        <p class="text-sm text-white opacity-80 mt-1">—</p>
+                    </div>
+                    <div class="text-right">
+                        <i class="fas fa-robot text-white opacity-80 text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 匹配成功率 -->
+            <div class="bg-blue-600 rounded-xl shadow-sm hover-lift p-6 text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-white opacity-80">匹配成功率</p>
+                        <p class="text-3xl font-bold text-white mt-1">87%</p>
+                        <p class="text-sm text-white opacity-80 mt-1">
+                            <i class="fas fa-chart-line mr-1"></i>+5.2% 提升
+                        </p>
+                    </div>
+                    <div class="relative">
+                        <svg class="w-16 h-16 transform -rotate-90" viewBox="0 0 36 36">
+                            <path class="text-blue-300" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3"></path>
+                            <path class="text-white" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3" stroke-dasharray="87, 100"></path>
+                        </svg>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <span class="text-xs font-bold text-white">87%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 主要内容区域 -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- 左侧：简历分析和快速操作 -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- 简历分析与对比 - 标签页版本 -->
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <div class="flex border-b border-gray-200 mb-6">
+                        <button class="tab-button active px-4 py-2 text-sm font-medium text-blue-600 border-b-2 border-blue-600" data-tab="analysis">
+                            <i class="fas fa-file-alt mr-2"></i>简历分析
+                        </button>
+                        <button class="tab-button px-4 py-2 text-sm font-medium text-gray-500 border-b-2 border-transparent hover:text-gray-700" data-tab="comparison">
+                            <i class="fas fa-balance-scale mr-2"></i>简历对比
+                        </button>
+                    </div>
+                    
+                    <!-- 标签页内容 -->
+                    <div class="tab-content">
+                        <!-- 简历分析内容 -->
+                        <div id="analysis-tab" class="tab-pane active">
+                            <div class="flex items-center justify-between mb-6">
+                                <h2 class="text-lg font-semibold text-gray-900">简历分析</h2>
+                                <span class="text-sm text-gray-500">最近分析记录</span>
+                            </div>
+                            
+                            <!-- 最近分析的简历列表（动态容器） -->
+                            <div id="recent-activity" class="space-y-3 mb-6">
+                                <a href="resume-analysis-pc.html?id=001" class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 hover:shadow-md transition-all cursor-pointer">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-file-alt text-blue-500 mr-3"></i>
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-900">张三_前端工程师.pdf</p>
+                                            <p class="text-xs text-gray-500">2024-01-15 14:30</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded">匹配度: 92%</span>
+                                        <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
+                                    </div>
+                                </a>
+                                
+                                <a href="resume-analysis-pc.html?id=002" class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 hover:shadow-md transition-all cursor-pointer">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-file-alt text-blue-500 mr-3"></i>
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-900">李四_Java开发.pdf</p>
+                                            <p class="text-xs text-gray-500">2024-01-15 11:20</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded">匹配度: 78%</span>
+                                        <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
+                                    </div>
+                                </a>
+                                
+                                <a href="resume-analysis-pc.html?id=003" class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 hover:shadow-md transition-all cursor-pointer">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-file-alt text-blue-500 mr-3"></i>
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-900">王五_UI设计师.pdf</p>
+                                            <p class="text-xs text-gray-500">2024-01-14 16:45</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded">匹配度: 85%</span>
+                                        <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
+                                    </div>
+                                </a>
+                                
+                                <a href="resume-analysis-pc.html?id=004" class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 hover:shadow-md transition-all cursor-pointer">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-file-alt text-blue-500 mr-3"></i>
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-900">赵六_产品经理.pdf</p>
+                                            <p class="text-xs text-gray-500">2024-01-14 09:15</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded">匹配度: 65%</span>
+                                        <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
+                                    </div>
+                                </a>
+                            </div>
+                            
+                            <!-- 快速操作按钮 -->
+                            <div class="flex justify-center space-x-4">
+                                <a href="resume-upload-pc.html" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 text-center transform hover:scale-105">
+                                    <i class="fas fa-upload mr-2"></i>上传简历
+                                </a>
+                                <a href="resume-analysis-pc.html" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 text-center transform hover:scale-105">
+                                    <i class="fas fa-chart-line mr-2"></i>查看全部
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <!-- 简历对比内容 -->
+                        <div id="comparison-tab" class="tab-pane hidden">
+                            <div class="flex items-center justify-between mb-6">
+                                <h2 class="text-lg font-semibold text-gray-900">简历对比</h2>
+                                <span class="text-sm text-gray-500">最近对比记录</span>
+                            </div>
+                            
+                            <!-- 对比记录列表 -->
+                            <div class="space-y-3 mb-6">
+                                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-balance-scale text-blue-600 mr-3"></i>
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-900">
+                                                <a href="analysis.html?id=001" class="text-blue-600 hover:text-blue-800">张三</a> | 
+                                                <a href="analysis.html?id=002" class="text-blue-600 hover:text-blue-800">李四</a> | 
+                                                <a href="analysis.html?id=003" class="text-blue-600 hover:text-blue-800">王五</a>
+                                            </p>
+                                            <p class="text-xs text-gray-500">前端工程师</p>
+                                        </div>
+                                    </div>
+                                    <a href="comparison.html?compare=001-002-003" class="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded hover:bg-blue-200 transition-colors">进入详情</a>
+                                </div>
+                                
+                                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-balance-scale text-blue-600 mr-3"></i>
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-900">
+                                                <a href="analysis.html?id=004" class="text-blue-600 hover:text-blue-800">赵六</a> | 
+                                                <a href="analysis.html?id=005" class="text-blue-600 hover:text-blue-800">钱七</a>
+                                            </p>
+                                            <p class="text-xs text-gray-500">产品经理</p>
+                                        </div>
+                                    </div>
+                                    <a href="comparison.html?compare=004-005" class="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded hover:bg-blue-200 transition-colors">进入详情</a>
+                                </div>
+                                
+                                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-balance-scale text-blue-600 mr-3"></i>
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-900">
+                                                <a href="analysis.html?id=006" class="text-blue-600 hover:text-blue-800">孙八</a> | 
+                                                <a href="analysis.html?id=007" class="text-blue-600 hover:text-blue-800">周九</a> | 
+                                                <a href="analysis.html?id=008" class="text-blue-600 hover:text-blue-800">吴十</a>
+                                            </p>
+                                            <p class="text-xs text-gray-500">数据分析师</p>
+                                        </div>
+                                    </div>
+                                    <a href="comparison.html?compare=006-007-008" class="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded hover:bg-blue-200 transition-colors">进入详情</a>
+                                </div>
+                                
+                                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-balance-scale text-blue-600 mr-3"></i>
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-900">
+                                                <a href="analysis.html?id=009" class="text-blue-600 hover:text-blue-800">郑十一</a> | 
+                                                <a href="analysis.html?id=010" class="text-blue-600 hover:text-blue-800">王十二</a>
+                                            </p>
+                                            <p class="text-xs text-gray-500">市场专员</p>
+                                        </div>
+                                    </div>
+                                    <a href="comparison.html?compare=009-010" class="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded hover:bg-blue-200 transition-colors">进入详情</a>
+                                </div>
+                            </div>
+                            
+                            <!-- 快速操作按钮 -->
+                            <div class="flex justify-center space-x-4">
+                                <a href="comparison.html" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 text-center transform hover:scale-105">
+                                    <i class="fas fa-balance-scale mr-2"></i>新建对比
+                                </a>
+                                <a href="resume-compare-results.html" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 text-center transform hover:scale-105">
+                                    <i class="fas fa-list mr-2"></i>查看全部
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 最近活动 -->
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900">最近活动</h3>
+                        <button class="text-sm text-blue-600 hover:text-blue-700">查看全部</button>
+                    </div>
+                    <div class="space-y-4" id="recent-activities">
+                        <!-- 动态加载活动列表 -->
+                    </div>
+                </div>
+
+                <!-- AI分析趋势图表 -->
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900">AI分析趋势</h3>
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-full">7天</button>
+                            <button class="px-3 py-1 text-xs text-gray-600 hover:bg-gray-100 rounded-full">30天</button>
+                            <button class="px-3 py-1 text-xs text-gray-600 hover:bg-gray-100 rounded-full">90天</button>
+                        </div>
+                    </div>
+                    <div class="h-64">
+                        <canvas id="analysis-trend-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧：AI助手和系统状态 -->
+            <div class="space-y-6">
+                <!-- AI助手 -->
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900">AI助手</h3>
+                        <div class="flex items-center space-x-2">
+                            <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
+                            <span class="text-xs text-blue-600">在线</span>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="p-3 bg-blue-50 rounded-lg">
+                            <p class="text-sm text-blue-800">💡 建议：本周简历投递成功率较高，建议增加职位发布频率</p>
+                        </div>
+                        <div class="p-3 bg-green-50 rounded-lg">
+                            <p class="text-sm text-green-800">📊 统计：本月AI分析准确率达到 98.5%</p>
+                        </div>
+                        <div class="p-3 bg-yellow-50 rounded-lg">
+                            <p class="text-sm text-yellow-800">⚠️ 提醒：有 5 份简历需要人工复核</p>
+                        </div>
+                    </div>
+                    <a href="http://localhost:8083/pages/assistant-chat.html" target="_blank" rel="noopener noreferrer" class="w-full mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg text-center inline-block">
+                        <i class="fas fa-robot mr-2"></i>
+                        与AI助手对话
+                    </a>
+                </div>
+
+                <!-- 系统状态 -->
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">系统状态</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+                                <span class="text-sm text-gray-600">AI服务</span>
+                            </div>
+                            <span class="text-sm font-medium text-green-600">正常运行</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+                                <span class="text-sm text-gray-600">支付服务</span>
+                            </div>
+                            <span class="text-sm font-medium text-green-600">正常运行</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+                                <span class="text-sm text-gray-600">数据库连接</span>
+                            </div>
+                            <span class="text-sm font-medium text-green-600">正常</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 bg-yellow-500 rounded-full mr-3"></div>
+                                <span class="text-sm text-gray-600">存储空间</span>
+                            </div>
+                            <span class="text-sm font-medium text-yellow-600">68% 已使用</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 待办事项 -->
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900">待办事项</h3>
+                        <button class="text-sm text-blue-600 hover:text-blue-700">+ 添加</button>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                            <input type="checkbox" class="mr-3 rounded">
+                            <span class="text-sm text-gray-700 flex-1">审核新投递的简历 (5)</span>
+                            <span class="text-xs text-gray-500">今天</span>
+                        </div>
+                        <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                            <input type="checkbox" class="mr-3 rounded">
+                            <span class="text-sm text-gray-700 flex-1">更新职位描述</span>
+                            <span class="text-xs text-gray-500">明天</span>
+                        </div>
+                        <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                            <input type="checkbox" class="mr-3 rounded" checked>
+                            <span class="text-sm text-gray-500 flex-1 line-through">月度数据分析报告</span>
+                            <span class="text-xs text-green-600">已完成</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 加载必要的JavaScript文件 -->
+    <script src="../js/user-auth.js"></script>
+    <script src="../js/header-profile.js"></script>
+    <script src="../js/sidebar.js"></script>
+    <script src="../js/resume-data.js"></script>
+    <script src="../js/ai-analyzer.js"></script>
+    
+    <script>
+        // 初始化头部
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.HeaderProfile) {
+                HeaderProfile.init();
+            }
+        });
+
+        // 智能工作台主程序
+        class SmartDashboard {
+            constructor() {
+                this.currentUser = null;
+                this.dashboardData = null;
+                this.charts = {};
+                this.init();
+            }
+
+            async init() {
+                await this.loadUserData();
+                this.setupEventListeners();
+                this.updateDateTime();
+                this.loadDashboardData();
+                this.renderCharts();
+                this.loadRecentActivities();
+            }
+
+            async loadUserData() {
+                try {
+                    const userAuth = window.userAuth || new UserAuth();
+                    this.currentUser = await userAuth.getCurrentUser();
+                    this.updateUserDisplay();
+                } catch (error) {
+                    console.error('加载用户数据失败:', error);
+                }
+            }
+
+            updateUserDisplay() {
+                if (this.currentUser) {
+                    const usernameEl = document.getElementById('username');
+                    if (usernameEl) {
+                        usernameEl.textContent = this.currentUser.name || '用户';
+                    }
+                }
+            }
+
+            setupEventListeners() {
+                // 快速操作按钮
+                document.querySelectorAll('.quick-action-button').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        this.handleQuickAction(e.target.closest('button'));
+                    });
+                });
+            }
+
+            updateDateTime() {
+                const updateDate = () => {
+                    const now = new Date();
+                    const options = { 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric',
+                        weekday: 'long'
+                    };
+                    document.getElementById('current-date').textContent = 
+                        now.toLocaleDateString('zh-CN', options);
+                };
+                
+                updateDate();
+                setInterval(updateDate, 60000); // 每分钟更新
+            }
+
+            async loadDashboardData() {}
+
+            updateDashboardDisplay() {
+                if (!this.dashboardData) return;
+
+                // 更新统计数字
+                const animateNumber = (element, target) => {
+                    let current = 0;
+                    const increment = target / 50;
+                    const timer = setInterval(() => {
+                        current += increment;
+                        if (current >= target) {
+                            element.textContent = target.toLocaleString();
+                            clearInterval(timer);
+                        } else {
+                            element.textContent = Math.floor(current).toLocaleString();
+                        }
+                    }, 20);
+                };
+
+                // 更新统计卡片
+                const resumeCount = document.querySelector('#total-resumes');
+                const jobCount = document.querySelector('#active-jobs');
+                const aiCount = document.querySelector('#ai-analysis-count');
+                const matchRate = document.querySelector('#match-success-rate');
+
+                if (resumeCount) animateNumber(resumeCount, this.dashboardData.totalResumes);
+                if (jobCount) animateNumber(jobCount, this.dashboardData.activeJobs);
+                if (aiCount) animateNumber(aiCount, this.dashboardData.aiAnalysisCount);
+                if (matchRate) matchRate.textContent = this.dashboardData.matchSuccessRate + '%';
+            }
+
+            renderCharts() {
+                this.renderAnalysisTrendChart();
+            }
+
+            renderAnalysisTrendChart() {
+                const ctx = document.getElementById('analysis-trend-chart');
+                if (!ctx) return;
+                this.charts.analysisTrend = null;
+            }
+
+            loadRecentActivities() {
+                if (!this.dashboardData?.recentActivities) return;
+
+                const container = document.getElementById('recent-activities');
+                if (!container) return;
+
+                const colors = {
+                    blue: 'bg-blue-100 text-blue-600',
+                    green: 'bg-green-100 text-green-600',
+                    purple: 'bg-purple-100 text-purple-600',
+                    orange: 'bg-orange-100 text-orange-600'
+                };
+
+                container.innerHTML = this.dashboardData.recentActivities.map(activity => `
+                    <div class="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                        <div class="flex-shrink-0 w-8 h-8 ${colors[activity.color]} rounded-full flex items-center justify-center">
+                            <i class="fas ${activity.icon} text-sm"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-900">${activity.title}</p>
+                            <p class="text-sm text-gray-600">${activity.description}</p>
+                            <p class="text-xs text-gray-500 mt-1">${activity.time}</p>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            handleQuickAction(button) {
+                const action = button.textContent.trim();
+                
+                // 显示加载状态（禁用ui-components功能）
+                // if (window.uiComponents) {
+                //     window.uiComponents.setButtonLoading(button, true);
+                // }
+
+                setTimeout(() => {
+                    // if (window.uiComponents) {
+                    //     window.uiComponents.setButtonLoading(button, false);
+                    // }
+                }, 1000);
+            }
+
+
+        }
+
+        // 初始化智能工作台
+        document.addEventListener('DOMContentLoaded', () => {
+            new SmartDashboard();
+            
+            // 标签页切换功能
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabPanes = document.querySelectorAll('.tab-pane');
+
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const targetTab = this.getAttribute('data-tab');
+                    
+                    // 移除所有标签按钮的active状态
+                    tabButtons.forEach(btn => {
+                        btn.classList.remove('active', 'text-blue-600', 'border-blue-600');
+                        btn.classList.add('text-gray-500', 'border-transparent');
+                    });
+                    
+                    // 添加当前按钮的active状态
+                    this.classList.add('active', 'text-blue-600', 'border-blue-600');
+                    this.classList.remove('text-gray-500', 'border-transparent');
+                    
+                    // 隐藏所有标签页内容
+                    tabPanes.forEach(pane => {
+                        pane.classList.add('hidden');
+                        pane.classList.remove('active');
+                    });
+                    
+                    // 显示目标标签页内容
+                    const targetPane = document.getElementById(targetTab + '-tab');
+                    if (targetPane) {
+                        targetPane.classList.remove('hidden');
+                        targetPane.classList.add('active');
+                    }
+                });
+            });
+
+            
+        });
+
+
+    </script>
+    
+    <script src="/js/sidebar.js"></script>
+    <script>
+        Sidebar.init({ mount:'#sidebar', active:'dashboard' });
+    </script>
+    
+    <!-- 快速操作跳转函数 - 来自unified-example.html -->
+    <script>
+        function navigateToJobPosting() {
+            window.location.href = '/pages/job-posting.html';
+        }
+
+        function navigateToResumeUpload() {
+            window.location.href = '/pages/resume-upload-pc.html';
+        }
+
+        function navigateToAnalytics() {
+            window.location.href = '/pages/analytics-dashboard.html';
+        }
+    </script>
+</body>
+</html>

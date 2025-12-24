@@ -1,0 +1,504 @@
+/**
+ * UI组件库 - 增强用户体验
+ * 提供现代化的交互组件和动画效果
+ */
+
+class UIComponents {
+    constructor() {
+        this.init();
+    }
+
+    init() {
+        this.setupNotificationSystem();
+        this.setupLoadingStates();
+        this.setupModalSystem();
+        this.setupTooltipSystem();
+    }
+
+    /**
+     * 通知系统 (Toast)
+     */
+    setupNotificationSystem() {
+        try {
+            // 检查是否已存在通知容器
+            let notificationContainer = document.getElementById('notification-container');
+            if (!notificationContainer) {
+                notificationContainer = document.createElement('div');
+                notificationContainer.id = 'notification-container';
+                notificationContainer.className = 'fixed top-4 right-4 z-[110] space-y-2';
+                
+                const mount = () => document.body.appendChild(notificationContainer);
+                if (document.body) mount();
+                else document.addEventListener('DOMContentLoaded', mount);
+            }
+
+            // 添加通知样式
+            const style = document.createElement('style');
+            style.textContent = `
+                .notification {
+                    transform: translateX(400px);
+                    opacity: 0;
+                    transition: all 0.3s ease;
+                    animation: slideInRight 0.3s ease forwards;
+                }
+                .notification.hide {
+                    animation: slideOutRight 0.3s ease forwards;
+                }
+                @keyframes slideInRight {
+                    to { transform: translateX(0); opacity: 1; }
+                }
+                @keyframes slideOutRight {
+                    to { transform: translateX(400px); opacity: 0; }
+                }
+                .notification-success { background: linear-gradient(135deg, #10b981, #059669); }
+                .notification-error { background: linear-gradient(135deg, #ef4444, #dc2626); }
+                .notification-warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
+                .notification-info { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+            `;
+            document.head.appendChild(style);
+        } catch (error) {
+            console.warn('通知系统初始化失败:', error);
+        }
+    }
+
+    /**
+     * 显示通知
+     * @param {string} message - 通知消息
+     * @param {string} type - 通知类型 (success, error, warning, info)
+     * @param {number} duration - 显示时长（毫秒）
+     */
+    showNotification(message, type = 'info', duration = 3000) {
+        try {
+            const container = document.getElementById('notification-container');
+            if (!container) {
+                this.setupNotificationSystem();
+                return;
+            }
+            
+            const notification = document.createElement('div');
+            const icons = {
+                success: 'fa-check-circle',
+                error: 'fa-exclamation-circle',
+                warning: 'fa-exclamation-triangle',
+                info: 'fa-info-circle'
+            };
+            
+            notification.className = `notification notification-${type} text-white p-4 rounded-lg shadow-lg max-w-sm flex items-center space-x-3 pointer-events-auto`;
+            notification.innerHTML = `
+                <i class="fas ${icons[type]} text-xl"></i>
+                <div class="flex-1 font-medium">${message}</div>
+                <button class="notification-close text-white hover:text-gray-200 focus:outline-none">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            container.appendChild(notification);
+            
+            // 自动移除
+            if (duration > 0) {
+                setTimeout(() => this.hideNotification(notification), duration);
+            }
+            
+            // 手动关闭
+            const closeButton = notification.querySelector('.notification-close');
+            if (closeButton) {
+                closeButton.addEventListener('click', () => this.hideNotification(notification));
+            }
+        } catch (error) {
+            console.error('显示通知失败:', error);
+        }
+    }
+
+    showToast(message, type = 'info', duration = 3000) {
+        this.showNotification(message, type, duration);
+    }
+
+    hideNotification(notification) {
+        notification.classList.add('hide');
+        setTimeout(() => notification.remove(), 300);
+    }
+
+    /**
+     * 加载状态管理
+     */
+    setupLoadingStates() {
+        const style = document.createElement('style');
+        style.textContent = `
+            .loading-shimmer {
+                background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+                background-size: 200% 100%;
+                animation: shimmer 1.5s infinite;
+            }
+            @keyframes shimmer {
+                0% { background-position: -200% 0; }
+                100% { background-position: 200% 0; }
+            }
+            .btn-loading {
+                position: relative;
+                color: transparent !important;
+                pointer-events: none;
+            }
+            .btn-loading::after {
+                content: '';
+                position: absolute;
+                width: 16px;
+                height: 16px;
+                top: 50%;
+                left: 50%;
+                margin-left: -8px;
+                margin-top: -8px;
+                border: 2px solid #ffffff;
+                border-radius: 50%;
+                border-top-color: transparent;
+                animation: spin 0.8s linear infinite;
+            }
+            @keyframes spin { to { transform: rotate(360deg); } }
+            .skeleton {
+                background: #f6f7f8;
+                background-image: linear-gradient(to right, #f6f7f8 0%, #edeef1 20%, #f6f7f8 40%, #f6f7f8 100%);
+                background-repeat: no-repeat;
+                background-size: 800px 104px;
+                display: inline-block;
+                position: relative;
+                animation: shimmer-skeleton 1s linear infinite;
+            }
+            @keyframes shimmer-skeleton {
+                0% { background-position: -468px 0; }
+                100% { background-position: 468px 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    setButtonLoading(button, loading = true) {
+        if (loading) {
+            button.classList.add('btn-loading');
+            button.disabled = true;
+        } else {
+            button.classList.remove('btn-loading');
+            button.disabled = false;
+        }
+    }
+
+    /**
+     * 模态框系统 (Alert, Confirm, Prompt)
+     */
+    setupModalSystem() {
+        if (document.getElementById('modal-container')) return;
+
+        const modalContainer = document.createElement('div');
+        modalContainer.id = 'modal-container';
+        modalContainer.className = 'fixed inset-0 z-[100] hidden';
+        modalContainer.innerHTML = `
+            <div class="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity" id="modal-backdrop"></div>
+            <div class="fixed inset-0 z-10 overflow-y-auto">
+                <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                    <div id="modal-content" class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg border border-gray-100">
+                        <!-- Content -->
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        const mount = () => document.body.appendChild(modalContainer);
+        if (document.body) mount();
+        else document.addEventListener('DOMContentLoaded', mount);
+
+        const style = document.createElement('style');
+        style.textContent = `
+            .modal-enter-active {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            .modal-exit-active {
+                opacity: 0;
+                transform: scale(0.95) translateY(10px);
+                transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            .btn-click-effect { transition: transform 0.1s; }
+            .btn-click-effect:active { transform: scale(0.95); }
+        `;
+        document.head.appendChild(style);
+    }
+
+    showModal(content, options = {}) {
+        const container = document.getElementById('modal-container');
+        const contentArea = document.getElementById('modal-content');
+        const backdrop = document.getElementById('modal-backdrop');
+        
+        contentArea.innerHTML = content;
+        container.classList.remove('hidden');
+        
+        const newBackdrop = backdrop.cloneNode(true);
+        backdrop.parentNode.replaceChild(newBackdrop, backdrop);
+        
+        if (options.closeOnBackdrop) {
+            newBackdrop.addEventListener('click', () => {
+                this.hideModal();
+                if (options.onClose) options.onClose();
+            });
+        }
+
+        requestAnimationFrame(() => {
+            newBackdrop.classList.add('opacity-100');
+            contentArea.classList.remove('modal-exit-active');
+            contentArea.classList.add('modal-enter-active');
+        });
+        document.body.style.overflow = 'hidden';
+    }
+
+    hideModal() {
+        const container = document.getElementById('modal-container');
+        const contentArea = document.getElementById('modal-content');
+        const backdrop = document.getElementById('modal-backdrop');
+        
+        contentArea.classList.remove('modal-enter-active');
+        contentArea.classList.add('modal-exit-active');
+        backdrop.classList.remove('opacity-100');
+        
+        setTimeout(() => {
+            container.classList.add('hidden');
+            contentArea.classList.remove('modal-exit-active');
+            contentArea.innerHTML = '';
+            document.body.style.overflow = '';
+        }, 200);
+    }
+
+    showAlert(message, options = {}) {
+        const { title = '提示', type = 'info', onConfirm } = options;
+        const icons = {
+            success: '<div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100"><i class="fas fa-check text-green-600 text-xl"></i></div>',
+            error: '<div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100"><i class="fas fa-times text-red-600 text-xl"></i></div>',
+            warning: '<div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-yellow-100"><i class="fas fa-exclamation text-yellow-600 text-xl"></i></div>',
+            info: '<div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-100"><i class="fas fa-info text-blue-600 text-xl"></i></div>'
+        };
+
+        const content = `
+            <div class="p-6">
+                <div class="text-center">
+                    ${icons[type] || icons.info}
+                    <h3 class="mt-4 text-lg font-semibold leading-6 text-gray-900">${title}</h3>
+                    <div class="mt-2">
+                        <p class="text-sm text-gray-500">${message}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 rounded-b-xl">
+                <button type="button" class="btn-confirm inline-flex w-full justify-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 sm:ml-3 sm:w-auto btn-click-effect">
+                    确定
+                </button>
+            </div>
+        `;
+
+        this.showModal(content, { closeOnBackdrop: false });
+        const confirmBtn = document.querySelector('#modal-content .btn-confirm');
+        confirmBtn.focus();
+        confirmBtn.onclick = () => {
+            this.hideModal();
+            if (onConfirm) onConfirm();
+        };
+    }
+
+    showConfirm(message, onConfirm, onCancel, options = {}) {
+        const { title = '确认', type = 'warning' } = options;
+        const icons = {
+            warning: '<div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-yellow-100"><i class="fas fa-exclamation-triangle text-yellow-600 text-xl"></i></div>',
+            info: '<div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-100"><i class="fas fa-question text-blue-600 text-xl"></i></div>',
+            danger: '<div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100"><i class="fas fa-exclamation-triangle text-red-600 text-xl"></i></div>'
+        };
+        const confirmBtnClass = type === 'danger' ? 'bg-red-600 hover:bg-red-500' : 'bg-blue-600 hover:bg-blue-500';
+
+        const content = `
+            <div class="p-6">
+                <div class="text-center">
+                    ${icons[type] || icons.warning}
+                    <h3 class="mt-4 text-lg font-semibold leading-6 text-gray-900">${title}</h3>
+                    <div class="mt-2">
+                        <p class="text-sm text-gray-500">${message}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 rounded-b-xl">
+                <button type="button" class="btn-confirm inline-flex w-full justify-center rounded-lg ${confirmBtnClass} px-3 py-2 text-sm font-semibold text-white shadow-sm sm:ml-3 sm:w-auto btn-click-effect">
+                    确定
+                </button>
+                <button type="button" class="btn-cancel mt-3 inline-flex w-full justify-center rounded-lg bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto btn-click-effect">
+                    取消
+                </button>
+            </div>
+        `;
+
+        this.showModal(content, { closeOnBackdrop: true, onClose: onCancel });
+        const confirmBtn = document.querySelector('#modal-content .btn-confirm');
+        const cancelBtn = document.querySelector('#modal-content .btn-cancel');
+        confirmBtn.focus();
+        
+        confirmBtn.onclick = () => {
+            this.hideModal();
+            if (onConfirm) onConfirm();
+        };
+        cancelBtn.onclick = () => {
+            this.hideModal();
+            if (onCancel) onCancel();
+        };
+    }
+
+    showPrompt(message, onConfirm, onCancel, options = {}) {
+        const { title = '请输入', defaultValue = '', placeholder = '', inputType = 'text' } = options;
+        const content = `
+            <div class="p-6">
+                <div class="text-center sm:text-left">
+                    <h3 class="text-lg font-semibold leading-6 text-gray-900 mb-4">${title}</h3>
+                    <p class="text-sm text-gray-500 mb-4">${message}</p>
+                    <div>
+                        <input type="${inputType}" id="prompt-input" class="block w-full rounded-lg border-0 py-2.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6 px-3" placeholder="${placeholder}" value="${defaultValue}">
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 rounded-b-xl">
+                <button type="button" class="btn-confirm inline-flex w-full justify-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 sm:ml-3 sm:w-auto btn-click-effect">
+                    确定
+                </button>
+                <button type="button" class="btn-cancel mt-3 inline-flex w-full justify-center rounded-lg bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto btn-click-effect">
+                    取消
+                </button>
+            </div>
+        `;
+
+        this.showModal(content, { closeOnBackdrop: true, onClose: onCancel });
+        const input = document.getElementById('prompt-input');
+        const confirmBtn = document.querySelector('#modal-content .btn-confirm');
+        const cancelBtn = document.querySelector('#modal-content .btn-cancel');
+        
+        input.focus();
+        if (defaultValue) input.select();
+        
+        input.onkeyup = (e) => { if (e.key === 'Enter') confirmBtn.click(); };
+        confirmBtn.onclick = () => {
+            const value = input.value;
+            this.hideModal();
+            if (onConfirm) onConfirm(value);
+        };
+        cancelBtn.onclick = () => {
+            this.hideModal();
+            if (onCancel) onCancel();
+        };
+    }
+
+    /**
+     * 工具提示系统
+     */
+    setupTooltipSystem() {
+        const tooltipContainer = document.createElement('div');
+        tooltipContainer.id = 'tooltip-container';
+        tooltipContainer.className = 'fixed z-50 pointer-events-none hidden';
+        
+        const mount = () => document.body.appendChild(tooltipContainer);
+        if (document.body) mount();
+        else document.addEventListener('DOMContentLoaded', mount);
+
+        const style = document.createElement('style');
+        style.textContent = `
+            .tooltip {
+                background: rgba(0, 0, 0, 0.9);
+                color: white;
+                padding: 6px 10px;
+                border-radius: 4px;
+                font-size: 12px;
+                white-space: nowrap;
+                position: absolute;
+                transform: translateY(-100%);
+                margin-top: -8px;
+            }
+            .tooltip::after {
+                content: '';
+                position: absolute;
+                bottom: -4px;
+                left: 50%;
+                margin-left: -4px;
+                border-width: 4px 4px 0;
+                border-style: solid;
+                border-color: rgba(0, 0, 0, 0.9) transparent transparent transparent;
+            }
+        `;
+        document.head.appendChild(style);
+
+        // 全局委托
+        document.addEventListener('mouseover', (e) => {
+            const target = e.target.closest('[data-tooltip]');
+            if (target) {
+                this.showTooltip(target, target.getAttribute('data-tooltip'));
+            }
+        });
+        document.addEventListener('mouseout', (e) => {
+            const target = e.target.closest('[data-tooltip]');
+            if (target) {
+                this.hideTooltip();
+            }
+        });
+    }
+
+    showTooltip(element, text) {
+        const container = document.getElementById('tooltip-container');
+        if (!container) return;
+        
+        container.innerHTML = `<div class="tooltip">${text}</div>`;
+        container.classList.remove('hidden');
+        
+        const rect = element.getBoundingClientRect();
+        const tooltip = container.firstElementChild;
+        
+        // 简单定位
+        tooltip.style.left = (rect.left + rect.width / 2 - tooltip.offsetWidth / 2) + 'px';
+        tooltip.style.top = rect.top + 'px';
+    }
+
+    hideTooltip() {
+        const container = document.getElementById('tooltip-container');
+        if (container) container.classList.add('hidden');
+    }
+
+    // Helper Methods
+    createSkeleton(type, count = 1) {
+        const skeletons = {
+            card: `<div class="bg-white rounded-lg p-6 shadow-sm mb-4"><div class="flex items-center mb-4"><div class="skeleton w-12 h-12 rounded-full"></div><div class="ml-4 flex-1"><div class="skeleton h-4 w-32 mb-2"></div><div class="skeleton h-3 w-24"></div></div></div><div class="skeleton h-4 w-full mb-2"></div><div class="skeleton h-4 w-3/4"></div></div>`,
+            list: `<div class="bg-white rounded-lg p-4 shadow-sm mb-3"><div class="flex items-center"><div class="skeleton w-10 h-10 rounded-lg"></div><div class="ml-3 flex-1"><div class="skeleton h-4 w-32 mb-1"></div><div class="skeleton h-3 w-24"></div></div><div class="skeleton w-16 h-6 rounded"></div></div></div>`,
+            text: `<div class="skeleton h-4 w-full mb-2"></div>`
+        };
+        return Array(count).fill(skeletons[type] || skeletons.text).join('');
+    }
+
+    createProgressBar(progress, color = 'blue') {
+        const colors = { blue: 'bg-blue-600', green: 'bg-green-600', red: 'bg-red-600' };
+        return `<div class="w-full bg-gray-200 rounded-full h-2.5"><div class="${colors[color]||colors.blue} h-2.5 rounded-full" style="width: ${progress}%"></div></div>`;
+    }
+
+    createStarRating(rating, max = 5) {
+        let html = '<div class="flex text-yellow-400">';
+        for (let i = 1; i <= max; i++) {
+            if (i <= rating) html += '<i class="fas fa-star"></i>';
+            else if (i - 0.5 <= rating) html += '<i class="fas fa-star-half-alt"></i>';
+            else html += '<i class="far fa-star text-gray-300"></i>';
+        }
+        html += '</div>';
+        return html;
+    }
+
+    smoothScrollTo(target) {
+        const el = typeof target === 'string' ? document.querySelector(target) : target;
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+// Initialize
+window.uiComponents = new UIComponents();
+window.ui = window.uiComponents;
+
+// Override window.alert
+window.alert = function(message) {
+    window.ui.showAlert(message);
+};
+
+// window.confirm and window.prompt cannot be safely overridden due to async nature.
+// Developers should use ui.showConfirm and ui.showPrompt instead.

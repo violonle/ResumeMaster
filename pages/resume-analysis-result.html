@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>简历分析结果 - SuperResumeMaster</title>
+  <script src="../js/tailwindcss.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  
+  <link rel="stylesheet" href="/css/sidebar.css">
+</head>
+<body class="bg-gray-50">
+  <aside id="sidebar" class="fixed left-0 top-0 bottom-0 sidebar-modern z-40"></aside>
+  <header class="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20">
+    <div class="flex items-center justify-between p-4">
+      <div class="flex items-center space-x-4">
+        <button class="menu-button p-2 rounded-lg hover:bg-gray-100" id="sidebar-toggle"><i class="fas fa-bars text-gray-600"></i></button>
+        <h1 class="text-lg font-bold text-gray-900">简历分析结果</h1>
+      </div>
+      <div class="flex items-center space-x-3">
+        <button id="download-pdf" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"><i class="fas fa-file-pdf mr-2"></i>导出PDF</button>
+        <button id="download-png" class="border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50"><i class="fas fa-image mr-2"></i>导出PNG</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content pt-20" id="main-content">
+    <div class="p-6" id="report-root">
+      <div class="mb-8">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2" id="candidate-name">候选人</h1>
+            <p class="text-gray-600" id="candidate-subtitle">毕业院校 / 最近公司与岗位 / 薪资要求</p>
+          </div>
+          <div class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold flex items-center">
+            <i class="fas fa-star mr-1"></i><span id="overall-score">综合评分 0</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-2xl p-6 shadow-lg lg:col-span-1">
+          <h3 class="text-lg font-bold text-gray-900 mb-4">基本信息</h3>
+          <div class="space-y-2 text-sm text-gray-700" id="basic-info"></div>
+        </div>
+        <div class="bg-white rounded-2xl p-6 shadow-lg lg:col-span-2">
+          <h3 class="text-lg font-bold text-gray-900 mb-4">能力雷达图</h3>
+          <div class="radar-container" style="height:360px">
+            <canvas id="analysisRadarChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-2xl p-6 shadow-lg">
+          <h3 class="text-lg font-bold text-gray-900 mb-3">核心优势</h3>
+          <ul class="list-disc list-inside space-y-1 text-sm text-gray-700" id="strengths"></ul>
+        </div>
+        <div class="bg-white rounded-2xl p-6 shadow-lg">
+          <h3 class="text-lg font-bold text-gray-900 mb-3">潜在不足</h3>
+          <ul class="list-disc list-inside space-y-1 text-sm text-gray-700" id="weaknesses"></ul>
+        </div>
+        <div class="bg-white rounded-2xl p-6 shadow-lg">
+          <h3 class="text-lg font-bold text-gray-900 mb-3">职业发展建议</h3>
+          <ul class="list-disc list-inside space-y-1 text-sm text-gray-700" id="advices"></ul>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-lg p-6">
+        <h2 class="text-2xl font-bold text-gray-900 mb-4">总结报告</h2>
+        <p class="text-gray-700" id="summary"></p>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    function toStarsLabel(stars){ return '★'.repeat(stars) + '☆'.repeat(5 - stars); }
+    function loadAnalysis(){
+      try{
+        var store = localStorage.getItem('last_analysis_result');
+        if (store) return JSON.parse(store);
+      }catch(_){ }
+      return null;
+    }
+    function renderBasic(info, edu, work, salary){
+      var el = document.getElementById('basic-info');
+      var school = (edu && edu[0] && [edu[0].school, edu[0].degree, edu[0].major].filter(Boolean).join(' / ')) || '未提供';
+      var last = (work && work[0]) || null;
+      var company = last ? ((last.company || '')) : '未提供';
+      var title = last ? ((last.title || '')) : '';
+      var lastLine = (company||title) ? (company + ' / ' + title) : '未提供';
+      document.getElementById('candidate-name').textContent = (info && info.name) || '候选人';
+      document.getElementById('candidate-subtitle').textContent = school + ' / ' + lastLine + ' / ' + (salary||'未提供');
+      var items = [
+        '姓名：' + ((info && info.name)||'未提供'),
+        '邮箱：' + ((info && info.email)||'未提供'),
+        '电话：' + ((info && info.phone)||'未提供'),
+        '所在地：' + ((info && info.location)||'未提供'),
+        '毕业院校：' + school,
+        '最近经历：' + lastLine
+      ];
+      el.innerHTML = items.map(function(t){ return '<div>'+t+'</div>'; }).join('');
+    }
+    function renderLists(sel, arr){ sel.innerHTML = (arr||[]).map(function(x){ return '<li>'+x+'</li>'; }).join(''); }
+    function renderRadar(scores){
+      var ctx = document.getElementById('analysisRadarChart').getContext('2d');
+      var data = [
+        (scores && scores.job_fit)||0,
+        (scores && scores.skill_fit)||0,
+        (scores && scores.experience_fit)||0,
+        (scores && scores.learning_ability)||0,
+        (scores && scores.teamwork)||0
+      ];
+      new Chart(ctx, { type:'radar', data:{ labels:['岗位匹配度','技能匹配度','经验匹配度','学习能力','团队协作'], datasets:[{ label:'能力评估', data, backgroundColor:'transparent', borderColor:'rgba(37,99,235,1)', pointBackgroundColor:'#fff', pointBorderColor:'rgba(37,99,235,1)', pointRadius:2, pointHoverRadius:4, borderWidth:2, fill:false }] }, options:{ responsive:true, maintainAspectRatio:false, scales:{ r:{ suggestedMin:0, suggestedMax:100, angleLines:{ color:'rgba(0,0,0,0.08)' }, grid:{ color:'rgba(0,0,0,0.08)' }, ticks:{ stepSize:20, showLabelBackdrop:false } } }, plugins:{ legend:{ position:'top', labels:{ usePointStyle:true, boxWidth:8, padding:12 } } }, elements:{ line:{ tension:0.15 } } });
+    }
+    function downloadPNG(){ html2canvas(document.getElementById('report-root')).then(function(canvas){ var link=document.createElement('a'); link.download='分析报告.png'; link.href=canvas.toDataURL('image/png'); link.click(); }); }
+    function downloadPDF(){ var jsPDF = window.jspdf && window.jspdf.jsPDF ? window.jspdf.jsPDF : null; if(!jsPDF) return; var doc = new jsPDF('p','mm','a4'); var node = document.getElementById('report-root'); html2canvas(node,{scale:2}).then(function(canvas){ var img = canvas.toDataURL('image/png'); var pageWidth = 210, pageHeight = 297; var imgWidth = pageWidth - 20; var imgHeight = canvas.height * imgWidth / canvas.width; doc.addImage(img,'PNG',10,10,imgWidth,Math.min(imgHeight,pageHeight-20)); doc.save('分析报告.pdf'); }); }
+    document.addEventListener('DOMContentLoaded',function(){
+      var data = loadAnalysis();
+      var analysis = data && (data.analysis || data);
+      var basic = (analysis && analysis.basic_info) || (analysis && analysis.parsedData && analysis.parsedData.personalInfo) || {};
+      var edu = (analysis && analysis.education_background) || (analysis && analysis.parsedData && analysis.parsedData.education) || [];
+      var work = (analysis && analysis.work_experience) || (analysis && analysis.parsedData && analysis.parsedData.workExperience) || [];
+      var salary = (analysis && analysis.expected_salary) || '';
+      var strengths = (analysis && analysis.evaluation_report && analysis.evaluation_report.core_strengths) || (analysis && analysis.strengths) || [];
+      var weaknesses = (analysis && analysis.evaluation_report && analysis.evaluation_report.potential_issues) || (analysis && analysis.weaknesses) || [];
+      var advices = (analysis && analysis.evaluation_report && analysis.evaluation_report.career_advice) || (analysis && analysis.suggestions) || [];
+      var stars = (analysis && analysis.scores_star) || {};
+      var perc = (analysis && analysis.scores_percent) || {};
+      var overall = (analysis && analysis.overall_score) || 0;
+      document.getElementById('overall-score').textContent = '综合评分 ' + overall;
+      renderBasic(basic, edu, work, salary);
+      renderLists(document.getElementById('strengths'), strengths);
+      renderLists(document.getElementById('weaknesses'), weaknesses);
+      renderLists(document.getElementById('advices'), advices);
+      document.getElementById('summary').textContent = (analysis && analysis.summary) || '';
+      var scoreForRadar = Object.keys(perc).length ? perc : {
+        job_fit: ((stars && stars.job_fit)||0)*20,
+        skill_fit: ((stars && stars.skill_fit)||0)*20,
+        experience_fit: ((stars && stars.experience_fit)||0)*20,
+        learning_ability: ((stars && stars.learning_ability)||0)*20,
+        teamwork: ((stars && stars.teamwork)||0)*20
+      };
+      renderRadar(scoreForRadar);
+      document.getElementById('download-png').addEventListener('click', downloadPNG);
+      document.getElementById('download-pdf').addEventListener('click', downloadPDF);
+    });
+  </script>
+  <script>
+    (function(){ var s=document.createElement('script'); s.src='/js/sidebar.js'; s.async=false; s.onload=function(){ Sidebar.init({ mount:'#sidebar', active:'resume' }); }; document.body.appendChild(s); })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,56 @@
+<aside id="sidebar" class="fixed left-0 top-0 bottom-0 sidebar-modern z-40 bg-white border-r border-gray-200 transition-all duration-300">
+  <div class="sidebar-inner flex flex-col h-full p-4">
+    <!-- 顶部头部 -->
+    <div id="sidebar-header" class="flex items-center justify-between p-2 border-b border-gray-100 mb-6 flex-shrink-0">
+      <div id="sidebar-logo" class="flex items-center overflow-hidden whitespace-nowrap">
+        <div class="w-10 h-10 bg-[#111827] rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
+          <i class="fas fa-briefcase text-white text-lg"></i>
+        </div>
+        <div class="ml-3 sidebar-text transition-opacity duration-300">
+          <h1 class="text-lg font-bold text-gray-900 tracking-tight">争湃·简历大师</h1>
+          <p class="text-xs text-gray-500 font-medium">JobHuntly Pro</p>
+        </div>
+      </div>
+      <button class="flex items-center justify-center w-8 h-8 text-gray-900 rounded-lg hover:bg-gray-100 transition-colors" id="sidebar-toggle-inner">
+        <i class="fas fa-bars"></i>
+      </button>
+    </div>
+
+    <!-- 可滚动的内容区域 -->
+    <div class="flex-1 overflow-y-auto custom-scrollbar min-h-0 space-y-6">
+        <div class="sidebar-section">
+          <h3 class="text-xs font-bold text-gray-900 uppercase tracking-wider mb-3 px-3 sidebar-text">快速操作</h3>
+          <div id="sidebar-quick-actions" class="space-y-1"></div>
+        </div>
+
+        <nav class="sidebar-section">
+          <h3 class="text-xs font-bold text-gray-900 uppercase tracking-wider mb-3 px-3 sidebar-text">导航菜单</h3>
+          <div id="sidebar-nav" class="space-y-1"></div>
+        </nav>
+    </div>
+
+    <!-- 底部区域：订阅信息 + 退出登录 -->
+    <div class="flex-shrink-0 mt-auto pt-4 border-t border-gray-100">
+        <div id="sidebar-subscription" class="p-4 mb-4 bg-white border border-gray-200 rounded-xl shadow-sm hide-on-short sidebar-text">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-sm font-bold text-gray-800">专业版订阅</span>
+            <span class="text-xs text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full font-medium">活跃</span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-1.5 mb-2 overflow-hidden">
+            <div class="bg-blue-600 h-1.5 rounded-full" style="width:68%"></div>
+          </div>
+          <p class="text-xs text-gray-500">距离下次续费还有 12 天</p>
+        </div>
+
+        <div class="sidebar-footer relative">
+          <button id="sidebar-logout-btn" class="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-xl hover:bg-gray-100 transition-all duration-200 group">
+            <div class="w-6 flex justify-center">
+                <i class="fas fa-sign-out-alt text-gray-900 group-hover:text-blue-600 transition-colors"></i>
+            </div>
+            <span class="ml-3 sidebar-text">退出登录</span>
+            <i class="fas fa-chevron-right ml-auto text-xs text-gray-900 group-hover:text-blue-600 opacity-0 group-hover:opacity-100 transition-all sidebar-text"></i>
+          </button>
+        </div>
+    </div>
+  </div>
+</aside>

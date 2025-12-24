@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI助理 - 争湃·简历大师</title>
+    <script src="../js/tailwindcss.js"></script>
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/design-system.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <script src="/js/user-auth.js"></script>
+    <script src="/js/header-profile.js"></script>
+    <script src="/js/sidebar.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        /* 聊天气泡动画 */
+        .message-bubble {
+            animation: slideUp 0.3s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* 打字效果 */
+        .typing-indicator {
+            animation: pulse 1.4s infinite;
+        }
+        
+        .typing-dot {
+            animation: typingAnimation 1.4s infinite;
+        }
+        
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes typingAnimation {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.4;
+            }
+            30% {
+                transform: translateY(-10px);
+                opacity: 1;
+            }
+        }
+        
+        /* 滚动条样式 */
+        .chat-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .chat-container::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        
+        .chat-container::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        
+        /* 建议卡片 */
+        .suggestion-card {
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .suggestion-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.15);
+        }
+        
+        /* 快捷功能按钮 */
+        .quick-action-btn {
+            transition: all 0.3s ease;
+        }
+        
+        .quick-action-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <aside id="sidebar" class="fixed left-0 top-0 bottom-0 sidebar-modern z-40"></aside>
+
+    <header class="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20">
+        <div class="flex items-center justify-between p-4">
+            <div class="flex items-center space-x-4"><button class="menu-button p-2 rounded-lg hover:bg-gray-100"
+                    id="sidebar-toggle"><i class="fas fa-bars text-gray-600"></i></button>
+                <h1 class="brand-title text-lg font-bold text-gray-900">AI助理</h1>
+            </div>
+            <div class="flex items-center space-x-4" id="header-right-section">
+                <!-- User Profile will be rendered here -->
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content pt-20" id="main-content">
+        <div class="max-w-4xl mx-auto p-6">
+        <!-- AI助理介绍卡片 -->
+        <div class="bg-blue-600 rounded-2xl p-8 text-white mb-8">
+            <div class="flex items-center space-x-4 mb-4">
+                <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+                    <i class="fas fa-robot text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold mb-2">智能简历助理</h1>
+                    <p class="text-blue-100">我是您的专业简历顾问，可以帮您优化简历、分析职位匹配度、提供面试建议</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- 聊天区域 -->
+            <div class="lg:col-span-2">
+                <!-- 聊天容器 -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 h-96 flex flex-col">
+                    <!-- 聊天头部 -->
+                    <div class="p-4 border-b border-gray-200 bg-gray-50 rounded-t-2xl">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+                                <i class="fas fa-robot text-white"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-900">AI简历助理</h3>
+                                <p id="aiStatusText" class="text-sm text-gray-500 flex items-center">
+                                    <span class="w-2 h-2 bg-gray-400 rounded-full mr-2"></span>
+                                    AI未连接
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 消息区域 -->
+                    <div class="flex-1 p-4 overflow-y-auto chat-container" id="chatContainer">
+                        <!-- 欢迎消息 -->
+                        <div class="message-bubble mb-4">
+                            <div class="flex items-start space-x-3">
+                                <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-robot text-white text-xs"></i>
+                                </div>
+                                <div class="bg-gray-100 rounded-2xl rounded-tl-sm px-4 py-2 max-w-xs">
+                                    <p class="text-gray-800">您好！我是AI简历助理，很高兴为您服务。请告诉我您需要什么帮助？</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 输入区域 -->
+                    <div class="p-4 border-t border-gray-200">
+                        <div class="flex items-center space-x-3">
+                            <input 
+                                type="text" 
+                                id="messageInput"
+                                placeholder="输入您的问题..." 
+                                class="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            >
+                            <button 
+                                id="sendButton"
+                                class="bg-blue-600 text-white w-10 h-10 flex items-center justify-center rounded-full hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 快速操作建议 -->
+                <div class="mt-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">快速提问</h3>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button class="suggestion-card bg-white p-4 rounded-xl border border-gray-200 text-left hover:border-blue-300 group">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                                    <i class="fas fa-file-alt text-blue-600"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-medium text-gray-900">简历优化</h4>
+                                    <p class="text-sm text-gray-500">如何让简历更有竞争力？</p>
+                                </div>
+                            </div>
+                        </button>
+                        
+                        <button class="suggestion-card bg-white p-4 rounded-xl border border-gray-200 text-left hover:border-blue-300 group">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                                    <i class="fas fa-target text-blue-600"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-medium text-gray-900">职位匹配</h4>
+                                    <p class="text-sm text-gray-500">分析我的简历匹配度</p>
+                                </div>
+                            </div>
+                        </button>
+                        
+                        <button class="suggestion-card bg-white p-4 rounded-xl border border-gray-200 text-left hover:border-blue-300 group">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                                    <i class="fas fa-comments text-blue-600"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-medium text-gray-900">面试准备</h4>
+                                    <p class="text-sm text-gray-500">面试常见问题解答</p>
+                                </div>
+                            </div>
+                        </button>
+                        
+                        <button class="suggestion-card bg-white p-4 rounded-xl border border-gray-200 text-left hover:border-blue-300 group">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                                    <i class="fas fa-chart-line text-blue-600"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-medium text-gray-900">职业规划</h4>
+                                    <p class="text-sm text-gray-500">制定职业发展路径</p>
+                                </div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧功能区 -->
+            <div class="space-y-6">
+                <!-- 快捷功能 -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">快捷功能</h3>
+                    <div class="space-y-3">
+                        <button class="quick-action-btn w-full bg-white border border-gray-200 text-gray-700 p-3 rounded-xl text-left hover:bg-gray-50 hover:border-blue-300 hover:text-blue-600 group transition-all">
+                            <div class="flex items-center space-x-3">
+                                <i class="fas fa-upload text-gray-400 group-hover:text-blue-500 transition-colors"></i>
+                                <span>上传简历分析</span>
+                            </div>
+                        </button>
+                        
+                        <button class="quick-action-btn w-full bg-white border border-gray-200 text-gray-700 p-3 rounded-xl text-left hover:bg-gray-50 hover:border-blue-300 hover:text-blue-600 group transition-all">
+                            <div class="flex items-center space-x-3">
+                                <i class="fas fa-balance-scale text-gray-400 group-hover:text-blue-500 transition-colors"></i>
+                                <span>简历对比分析</span>
+                            </div>
+                        </button>
+                        
+                        <button class="quick-action-btn w-full bg-white border border-gray-200 text-gray-700 p-3 rounded-xl text-left hover:bg-gray-50 hover:border-blue-300 hover:text-blue-600 group transition-all">
+                            <div class="flex items-center space-x-3">
+                                <i class="fas fa-briefcase text-gray-400 group-hover:text-blue-500 transition-colors"></i>
+                                <span>职位推荐</span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 使用统计 -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">今日使用统计</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-2 h-2 bg-blue-600 rounded-full"></div>
+                                <span class="text-gray-600">对话次数</span>
+                            </div>
+                            <span class="font-semibold text-gray-900">12</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-2 h-2 bg-blue-400 rounded-full"></div>
+                                <span class="text-gray-600">分析建议</span>
+                            </div>
+                            <span class="font-semibold text-gray-900">8</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-2 h-2 bg-blue-300 rounded-full"></div>
+                                <span class="text-gray-600">问题解答</span>
+                            </div>
+                            <span class="font-semibold text-gray-900">15</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 帮助信息 -->
+                <div class="bg-blue-50 rounded-2xl p-6 border border-blue-100">
+                    <div class="flex items-center space-x-2 mb-3">
+                        <i class="fas fa-lightbulb text-blue-600"></i>
+                        <h3 class="font-semibold text-blue-900">使用提示</h3>
+                    </div>
+                    <ul class="text-sm text-blue-800 space-y-2">
+                        <li>• 详细描述您的问题，我会提供更精准的建议</li>
+                        <li>• 可以上传简历文件进行专业分析</li>
+                        <li>• 支持多轮对话，深入探讨职业问题</li>
+                        <li>• 所有对话内容都会保密处理</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class AIAssistant {
+            constructor() {
+                this.chatContainer = document.getElementById('chatContainer');
+                this.messageInput = document.getElementById('messageInput');
+                this.sendButton = document.getElementById('sendButton');
+                this.isTyping = false;
+                this.apiBaseUrl = 'http://localhost:3000/api/assistant';
+                
+                this.initEventListeners();
+                this.initSuggestions();
+                this.loadHistory();
+                this.checkConnection();
+            }
+            
+            async checkConnection() {
+                const statusBadge = document.getElementById('aiStatusBadge');
+                const statusText = document.getElementById('aiStatusText');
+                
+                try {
+                    const response = await fetch(`${this.apiBaseUrl}/status`);
+                    const data = await response.json();
+                    
+                    if (data.success && data.status === 'online') {
+                        // 更新顶部状态
+                        statusBadge.className = 'flex items-center space-x-2 text-sm text-gray-600 bg-blue-50 px-3 py-1 rounded-full';
+                        statusBadge.innerHTML = `
+                            <div class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                            <span>AI在线</span>
+                        `;
+                        
+                        // 更新聊天头部状态
+                        statusText.className = 'text-sm text-blue-600 flex items-center';
+                        statusText.innerHTML = `
+                            <span class="w-2 h-2 bg-blue-500 rounded-full mr-2 animate-pulse"></span>
+                            在线服务中
+                        `;
+                    }
+                } catch (error) {
+                    console.error('AI service connection failed:', error);
+                    // 保持默认的未连接状态
+                }
+            }
+            
+            loadHistory() {
+                const history = localStorage.getItem('ai_chat_history');
+                if (history) {
+                    try {
+                        const messages = JSON.parse(history);
+                        if (messages.length > 0) {
+                            // 如果有历史记录，先清空默认的欢迎语（可选，这里选择保留作为开场白，或者清空视情况而定）
+                            // 这里选择不清空，直接追加
+                            messages.forEach(msg => {
+                                if (msg.role === 'user') {
+                                    this.addUserMessage(msg.content);
+                                } else {
+                                    this.addAIMessage(msg.content);
+                                }
+                            });
+                            // 加载完后清除，避免刷新页面重复加载
+                            localStorage.removeItem('ai_chat_history');
+                        }
+                    } catch (e) {
+                        console.error('Failed to load chat history', e);
+                    }
+                }
+            }
+            
+            initEventListeners() {
+                // 发送按钮点击事件
+                this.sendButton.addEventListener('click', () => {
+                    this.sendMessage();
+                });
+                
+                // 回车键发送
+                this.messageInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.sendMessage();
+                    }
+                });
+                
+                // 快捷功能按钮
+                document.querySelectorAll('.quick-action-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const text = e.currentTarget.textContent.trim();
+                        this.handleQuickAction(text);
+                    });
+                });
+            }
+            
+            initSuggestions() {
+                // 建议卡片点击事件
+                document.querySelectorAll('.suggestion-card').forEach(card => {
+                    card.addEventListener('click', (e) => {
+                        const question = card.querySelector('h4').textContent;
+                        this.messageInput.value = this.getQuestionTemplate(question);
+                        this.sendMessage();
+                    });
+                });
+            }
+            
+            getQuestionTemplate(question) {
+                const templates = {
+                    '简历优化': '我想优化我的简历，让它更有竞争力，请给我一些专业建议。',
+                    '职位匹配': '请帮我分析一下我的简历与目标职位的匹配度。',
+                    '面试准备': '我即将参加面试，请帮我准备一些常见的面试问题和回答技巧。',
+                    '职业规划': '请帮我制定一个合理的职业发展规划。'
+                };
+                return templates[question] || question;
+            }
+            
+            async sendMessage() {
+                const message = this.messageInput.value.trim();
+                if (!message || this.isTyping) return;
+                
+                // 添加用户消息
+                this.addUserMessage(message);
+                this.messageInput.value = '';
+                
+                this.showTypingIndicator();
+                
+                try {
+                    const response = await fetch(`${this.apiBaseUrl}/chat`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            messages: [{ role: 'user', content: message }]
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    this.hideTypingIndicator();
+                    
+                    if (data.success) {
+                        this.addAIMessage(data.data.reply);
+                    } else {
+                        this.addAIMessage(data.error?.message || '抱歉，AI服务暂时不可用，请稍后再试。');
+                    }
+                } catch (error) {
+                    this.hideTypingIndicator();
+                    console.error('Send message failed:', error);
+                    this.addAIMessage('抱歉，网络连接出现问题，请检查您的网络设置。');
+                }
+            }
+            
+            addUserMessage(message) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message-bubble mb-4';
+                messageDiv.innerHTML = `
+                    <div class="flex items-start space-x-3 justify-end">
+                        <div class="bg-blue-600 text-white rounded-2xl rounded-tr-sm px-4 py-2 max-w-xs">
+                            <p>${message}</p>
+                        </div>
+                        <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-user text-gray-600 text-xs"></i>
+                        </div>
+                    </div>
+                `;
+                this.chatContainer.appendChild(messageDiv);
+                this.scrollToBottom();
+            }
+            
+            showTypingIndicator() {
+                this.isTyping = true;
+                const typingDiv = document.createElement('div');
+                typingDiv.className = 'typing-indicator mb-4';
+                typingDiv.id = 'typingIndicator';
+                typingDiv.innerHTML = `
+                    <div class="flex items-start space-x-3">
+                        <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-robot text-white text-xs"></i>
+                        </div>
+                        <div class="bg-gray-100 rounded-2xl rounded-tl-sm px-4 py-2">
+                            <div class="flex space-x-1">
+                                <div class="w-2 h-2 bg-gray-400 rounded-full typing-dot"></div>
+                                <div class="w-2 h-2 bg-gray-400 rounded-full typing-dot"></div>
+                                <div class="w-2 h-2 bg-gray-400 rounded-full typing-dot"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                this.chatContainer.appendChild(typingDiv);
+                this.scrollToBottom();
+            }
+            
+            hideTypingIndicator() {
+                const indicator = document.getElementById('typingIndicator');
+                if (indicator) {
+                    indicator.remove();
+                }
+                this.isTyping = false;
+            }
+            
+            // 移除本地模拟的 addAIResponse 逻辑，直接使用 addAIMessage
+            // addAIResponse(userMessage) { ... }
+
+            addAIMessage(text) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message-bubble mb-4';
+                messageDiv.innerHTML = `
+                    <div class="flex items-start space-x-3">
+                        <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-robot text-white text-xs"></i>
+                        </div>
+                        <div class="bg-gray-100 rounded-2xl rounded-tl-sm px-4 py-2 max-w-xs">
+                            <p class="text-gray-800">${text}</p>
+                        </div>
+                    </div>
+                `;
+                this.chatContainer.appendChild(messageDiv);
+                this.scrollToBottom();
+            }
+            
+            // 移除本地模拟的 AI 响应逻辑
+            // generateAIResponse(userMessage) { ... }
+            
+            handleQuickAction(action) {
+                if (action.includes('上传简历')) {
+                    window.location.href = 'upload.html';
+                } else if (action.includes('简历对比')) {
+                    window.location.href = 'comparison.html';
+                } else if (action.includes('职位推荐')) {
+                    window.location.href = 'job-management.html';
+                }
+            }
+            
+            scrollToBottom() {
+                this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
+            }
+        }
+        
+        // 初始化AI助理
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof Sidebar !== 'undefined') {
+                Sidebar.init({ active: 'resume-tools' });
+            }
+            if (typeof HeaderProfile !== 'undefined') {
+                HeaderProfile.init();
+            }
+            new AIAssistant();
+        });
+    </script>
+</body>
+</html>

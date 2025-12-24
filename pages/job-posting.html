@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>发布职位 - 争湃·简历大师</title>
+    <script src="../js/tailwindcss.js"></script>
+    <script src="../js/ui-components.js"></script>
+    <script src="../js/resume-data.js"></script>
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary': {
+                            50: '#eff6ff',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8'
+                        }
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+        html, body { width: 100%; max-width: 100%; overflow-x: hidden; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        .form-section {
+            transition: all 0.3s ease;
+        }
+        
+        .form-section:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-primary {
+            background-color: #2563eb;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background-color: #1d4ed8;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+        }
+        
+        .form-input {
+            transition: all 0.3s ease;
+        }
+        
+        .form-input:focus {
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .skill-tag {
+            background: #f0f9ff;
+            color: #0369a1;
+            border: 1px solid #38bdf8;
+            transition: all 0.3s ease;
+        }
+        
+        .skill-tag:hover {
+            background: #0284c7;
+            color: white;
+        }
+        
+        .benefit-item {
+            background: #eff6ff;
+            color: #1e40af;
+            border: 1px solid #93c5fd;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .fade-in-up {
+            animation: fadeInUp 0.6s ease forwards;
+        }
+        
+        .preview-mode {
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+        }
+        
+        .section-divider {
+            background: #e5e7eb;
+            height: 1px;
+            margin: 2rem 0;
+        }
+        
+        .form-input, select, textarea { max-width: 100%; min-width: 0; }
+    </style>
+</head>
+<body class="font-sans bg-gray-50 min-h-screen overflow-x-hidden">
+    <!-- 侧边栏 -->
+    <aside id="sidebar" class="sidebar-modern"></aside>
+    <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+    <!-- 顶部导航栏 -->
+    <header class="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20">
+        <div class="flex items-center justify-between p-4">
+            <div class="flex items-center space-x-4">
+                <button class="menu-button p-2 rounded-lg hover:bg-gray-100" id="sidebar-toggle">
+                    <i class="fas fa-bars text-gray-900"></i>
+                </button>
+                <h1 class="brand-title text-lg font-bold text-gray-900">发布职位</h1>
+            </div>
+            <div class="flex items-center space-x-4" id="header-right-section"></div>
+        </div>
+    </header>
+
+    <!-- 主内容区 -->
+    <main class="main-content pt-20 p-6 transition-all duration-300" id="main-content">
+            <!-- 页面标题 -->
+            <div class="flex items-center justify-between mb-8 fade-in-up">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 mb-2">发布职位</h1>
+                    <p class="text-lg text-gray-600">创建新的职位招聘信息，吸引优秀人才加入</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button class="px-4 py-2 bg-white text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors" id="import-btn">
+                        <i class="fas fa-cloud-download-alt mr-2"></i>一键导入
+                    </button>
+                    <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors" id="preview-btn">
+                        <i class="fas fa-eye mr-2"></i>预览
+                    </button>
+                    <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors" id="save-draft-btn">
+                        <i class="fas fa-save mr-2"></i>保存草稿
+                    </button>
+                </div>
+            </div>
+
+            <form id="job-posting-form" class="space-y-8">
+                <!-- 基本信息 -->
+                <div class="form-section bg-white rounded-2xl shadow-lg p-6 fade-in-up">
+                    <div class="flex items-center mb-6">
+                        <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-info-circle text-blue-600"></i>
+                        </div>
+                        <h2 class="text-xl font-semibold text-gray-900 ml-3">基本信息</h2>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">职位名称 *</label>
+                            <input type="text" id="job-title" class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="例：高级前端开发工程师" required>
+                        </div>
+                        
+                        
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">工作地点 *</label>
+                            <input type="text" id="job-location" class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="例：北京市朝阳区" required>
+                        </div>
+                        
+                        
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">薪资范围 *</label>
+                            <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-2 space-y-2 sm:space-y-0">
+                                <input type="number" id="salary-min" class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="最低薪资" required>
+                                <span class="text-gray-500">-</span>
+                                <input type="number" id="salary-max" class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="最高薪资" required>
+                                <select id="salary-unit" class="form-input px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="month">月</option>
+                                    <option value="year">年</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">经验要求 *</label>
+                            <select id="experience" class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                                <option value="">请选择经验要求</option>
+                                <option value="0-1">0-1年</option>
+                                <option value="1-3">1-3年</option>
+                                <option value="3-5">3-5年</option>
+                                <option value="5-10">5-10年</option>
+                                <option value="10+">10年以上</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">学历要求</label>
+                            <select id="education" class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">不限</option>
+                                <option value="high-school">高中</option>
+                                <option value="college">大专</option>
+                                <option value="bachelor">本科</option>
+                                <option value="master">硕士</option>
+                                <option value="phd">博士</option>
+                            </select>
+                        </div>
+                        
+                        
+                    </div>
+                </div>
+
+                <!-- 职位描述 -->
+                <div class="form-section bg-white rounded-2xl shadow-lg p-6 fade-in-up">
+                    <div class="flex items-center mb-6">
+                        <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-file-alt text-blue-600"></i>
+                        </div>
+                        <h2 class="text-xl font-semibold text-gray-900 ml-3">职位描述</h2>
+                    </div>
+                    
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">职位描述 *</label>
+                            <textarea id="job-description" rows="10" class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="请填写岗位职责与任职要求等完整描述" required></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 技能要求 -->
+                <div class="form-section bg-white rounded-2xl shadow-lg p-6 fade-in-up">
+                    <div class="flex items-center mb-6">
+                        <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-cogs text-blue-600"></i>
+                        </div>
+                        <h2 class="text-xl font-semibold text-gray-900 ml-3">技能要求</h2>
+                    </div>
+                    
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">推荐技能</label>
+                            <div class="flex flex-wrap gap-2 mb-3" id="required-skills-container">
+                                <!-- 推荐技能标签将在这里显示 -->
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <input type="text" id="required-skill-input" class="form-input flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="输入技能名称（可选）">
+                                <button type="button" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors" id="add-required-skill-btn" aria-label="从系统技能库选择">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        
+                    </div>
+                </div>
+
+                <!-- 福利待遇 -->
+                <div class="form-section bg-white rounded-2xl shadow-lg p-6 fade-in-up">
+                    <div class="flex items-center mb-6">
+                        <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-gift text-blue-600"></i>
+                        </div>
+                        <h2 class="text-xl font-semibold text-gray-900 ml-3">福利待遇</h2>
+                    </div>
+                    
+                    <div class="space-y-6">
+                        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                            <label class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                <input type="checkbox" name="benefits" value="five-insurance-fund" class="rounded text-blue-600 focus:ring-blue-500">
+                                <span class="text-sm">五险一金</span>
+                            </label>
+                            <label class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                <input type="checkbox" name="benefits" value="commercial-insurance" class="rounded text-blue-600 focus:ring-blue-500">
+                                <span class="text-sm">商业保险</span>
+                            </label>
+                            <label class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                <input type="checkbox" name="benefits" value="annual-bonus" class="rounded text-blue-600 focus:ring-blue-500">
+                                <span class="text-sm">年终奖</span>
+                            </label>
+                            <label class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                <input type="checkbox" name="benefits" value="flexible-work" class="rounded text-blue-600 focus:ring-blue-500">
+                                <span class="text-sm">弹性工作</span>
+                            </label>
+                            <label class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                <input type="checkbox" name="benefits" value="remote-work" class="rounded text-blue-600 focus:ring-blue-500">
+                                <span class="text-sm">远程办公</span>
+                            </label>
+                            <label class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                <input type="checkbox" name="benefits" value="paid-leave" class="rounded text-blue-600 focus:ring-blue-500">
+                                <span class="text-sm">带薪年假</span>
+                            </label>
+                            <label class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                <input type="checkbox" name="benefits" value="training" class="rounded text-blue-600 focus:ring-blue-500">
+                                <span class="text-sm">培训机会</span>
+                            </label>
+                            <label class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                <input type="checkbox" name="benefits" value="career-development" class="rounded text-blue-600 focus:ring-blue-500">
+                                <span class="text-sm">职业发展</span>
+                            </label>
+                            <label class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                <input type="checkbox" name="benefits" value="free-meals" class="rounded text-blue-600 focus:ring-blue-500">
+                                <span class="text-sm">免费餐食</span>
+                            </label>
+                            <label class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                <input type="checkbox" name="benefits" value="gym" class="rounded text-blue-600 focus:ring-blue-500">
+                                <span class="text-sm">健身房</span>
+                            </label>
+                            <label class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                <input type="checkbox" name="benefits" value="team-building" class="rounded text-blue-600 focus:ring-blue-500">
+                                <span class="text-sm">团建活动</span>
+                            </label>
+                            <label class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                <input type="checkbox" name="benefits" value="stock-options" class="rounded text-blue-600 focus:ring-blue-500">
+                                <span class="text-sm">股票期权</span>
+                            </label>
+                        </div>
+                        
+                        
+                    </div>
+                </div>
+
+                <!-- 发布设置 -->
+                <div class="form-section bg-white rounded-2xl shadow-lg p-6 fade-in-up">
+                    <div class="flex items-center mb-6">
+                        <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-cog text-blue-600"></i>
+                        </div>
+                        <h2 class="text-xl font-semibold text-gray-900 ml-3">发布设置</h2>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">有效期</label>
+                            <select id="validity-period" class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="30">30天</option>
+                                <option value="60">60天</option>
+                                <option value="90" selected>90天</option>
+                                <option value="180">180天</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">发布到</label>
+                            <div class="space-y-2">
+                                <label class="flex items-center space-x-3">
+                                    <input type="checkbox" name="publish-to" value="internal" class="rounded text-blue-600 focus:ring-blue-500" checked>
+                                    <span class="text-sm">内部招聘平台</span>
+                                </label>
+                                <label class="flex items-center space-x-3">
+                                    <input type="checkbox" name="publish-to" value="external" class="rounded text-blue-600 focus:ring-blue-500">
+                                    <span class="text-sm">外部招聘网站</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="lg:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">联系方式</label>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <input type="text" id="contact-name" class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="联系人姓名">
+                                <input type="email" id="contact-email" class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="联系邮箱">
+                                <input type="tel" id="contact-phone" class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="联系电话">
+                                <input type="text" id="contact-wechat" class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="微信号">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 提交按钮 -->
+                <div class="flex items-center justify-center space-x-4 pt-6">
+                    <button type="button" class="px-8 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors" id="cancel-btn">
+                        取消
+                    </button>
+                    <button type="button" class="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors" id="save-draft-final-btn">
+                        <i class="fas fa-save mr-2"></i>保存草稿
+                    </button>
+                    <button type="submit" class="btn-primary px-8 py-3 text-white rounded-lg font-semibold">
+                        <i class="fas fa-paper-plane mr-2"></i>立即发布
+                    </button>
+                </div>
+            </form>
+    </div>
+    
+    <!-- 预览模态框 -->
+    <div id="preview-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between p-6 border-b border-gray-200">
+                <h2 class="text-2xl font-bold text-gray-900">职位预览</h2>
+                <button class="text-gray-400 hover:text-gray-600" id="close-preview-btn">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="p-6" id="preview-content">
+                <!-- 预览内容将在这里显示 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 技能选择模态框 -->
+    <div id="skills-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+            <div class="flex items-center justify-between p-6 border-b border-gray-200">
+                <h2 class="text-xl font-bold text-gray-900">选择推荐技能</h2>
+                <button class="text-gray-400 hover:text-gray-600" id="close-skills-modal">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="flex items-center space-x-3">
+                    <div class="relative flex-1">
+                        <input type="text" id="skills-search-input" placeholder="搜索技能标签" class="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                        <div class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><i class="fas fa-search"></i></div>
+                    </div>
+                    <button id="skills-clear-selection" class="px-3 py-2 text-sm border rounded">清除选择</button>
+                </div>
+                <div id="skills-list" class="grid grid-cols-2 gap-2"></div>
+            </div>
+            <div class="flex items-center justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50">
+                <button type="button" id="cancel-skills-btn" class="px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 hover:bg-gray-50">取消</button>
+                <button type="button" id="confirm-skills-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">添加所选技能</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 页面初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            initJobPostingForm();
+            
+            initSkillsManagement();
+            initPreviewFunctionality();
+            initFormValidation();
+        });
+
+        // 初始化职位发布表单
+        function initJobPostingForm() {
+            const form = document.getElementById('job-posting-form');
+            
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                handleFormSubmit();
+            });
+        }
+
+        // 初始化侧边栏功能
+        
+
+        // 初始化技能管理
+        function initSkillsManagement() {
+            const recommendedSkills = [];
+
+            const addBtn = document.getElementById('add-required-skill-btn');
+            const inputEl = document.getElementById('required-skill-input');
+            const container = document.getElementById('required-skills-container');
+
+            addBtn.addEventListener('click', () => {
+                (window.openSkillsModal || openSkillsModal)(recommendedSkills, container);
+            });
+
+            inputEl.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const skill = inputEl.value.trim();
+                    if (skill && !recommendedSkills.includes(skill)) {
+                        recommendedSkills.push(skill);
+                        renderSkillTag(skill, container, recommendedSkills, 'blue');
+                        inputEl.value = '';
+                    }
+                }
+            });
+        }
+
+        // 渲染技能标签
+        function renderSkillTag(skill, container, skillArray, color) {
+            const tag = document.createElement('span');
+            tag.className = `inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-${color}-100 text-${color}-800 border border-${color}-300`;
+            tag.innerHTML = `
+                ${skill}
+                <button type="button" class="ml-2 text-${color}-600 hover:text-${color}-800" onclick="removeSkill('${skill}', this, ${JSON.stringify(skillArray)})">
+                    <i class="fas fa-times text-xs"></i>
+                </button>
+            `;
+            container.appendChild(tag);
+        }
+
+        // 移除技能
+        function removeSkill(skill, element, skillArray) {
+            const index = skillArray.indexOf(skill);
+            if (index > -1) {
+                skillArray.splice(index, 1);
+            }
+            element.parentElement.remove();
+        }
+
+        // 初始化预览功能
+        function initPreviewFunctionality() {
+            const previewBtn = document.getElementById('preview-btn');
+            const previewModal = document.getElementById('preview-modal');
+            const closePreviewBtn = document.getElementById('close-preview-btn');
+
+            previewBtn.addEventListener('click', showPreview);
+            closePreviewBtn.addEventListener('click', hidePreview);
+
+            // 点击模态框背景关闭
+            previewModal.addEventListener('click', (e) => {
+                if (e.target === previewModal) {
+                    hidePreview();
+                }
+            });
+        }
+
+        // 显示预览
+        function showPreview() {
+            const formData = collectFormData();
+            const previewContent = document.getElementById('preview-content');
+            
+            previewContent.innerHTML = generatePreviewHTML(formData);
+            document.getElementById('preview-modal').classList.remove('hidden');
+            document.getElementById('preview-modal').classList.add('flex');
+        }
+
+        // 隐藏预览
+        function hidePreview() {
+            document.getElementById('preview-modal').classList.add('hidden');
+            document.getElementById('preview-modal').classList.remove('flex');
+        }
+
+        // 收集表单数据
+        function collectFormData() {
+            return {
+                title: document.getElementById('job-title').value,
+                location: document.getElementById('job-location').value,
+                salaryMin: document.getElementById('salary-min').value,
+                salaryMax: document.getElementById('salary-max').value,
+                salaryUnit: document.getElementById('salary-unit').value,
+                experience: document.getElementById('experience').value,
+                education: document.getElementById('education').value,
+                description: document.getElementById('job-description').value,
+                benefits: Array.from(document.querySelectorAll('input[name="benefits"]:checked')).map(cb => cb.nextElementSibling.textContent)
+            };
+        }
+
+        // 生成预览HTML
+        function generatePreviewHTML(data) {
+            return `
+                <div class="space-y-6">
+                    <div class="border-b border-gray-200 pb-6">
+                        <h1 class="text-3xl font-bold text-gray-900 mb-4">${data.title || '职位名称'}</h1>
+                        <div class="flex flex-wrap gap-4 text-sm text-gray-600">
+                            <span><i class="fas fa-map-marker-alt mr-1"></i>${data.location || '工作地点'}</span>
+                            <span><i class="fas fa-dollar-sign mr-1"></i>${data.salaryMin || '0'}-${data.salaryMax || '0'}K/${data.salaryUnit === 'year' ? '年' : '月'}</span>
+                            <span><i class="fas fa-user-tie mr-1"></i>${data.experience || '经验要求'}</span>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-3">职位描述</h3>
+                        <div class="text-gray-700 whitespace-pre-line">${data.description || '暂无描述'}</div>
+                    </div>
+                    
+                    ${data.benefits.length > 0 ? `
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-3">福利待遇</h3>
+                        <div class="flex flex-wrap gap-2">
+                            ${data.benefits.map(benefit => `<span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">${benefit}</span>`).join('')}
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        // 初始化表单验证
+        function initFormValidation() {
+            const requiredFields = document.querySelectorAll('input[required], textarea[required], select[required]');
+            
+            requiredFields.forEach(field => {
+                field.addEventListener('blur', validateField);
+                field.addEventListener('input', clearFieldError);
+            });
+        }
+
+        // 验证字段
+        function validateField(e) {
+            const field = e.target;
+            if (!field.value.trim()) {
+                showFieldError(field, '此字段为必填项');
+            } else {
+                clearFieldError(field);
+            }
+        }
+
+        // 显示字段错误
+        function showFieldError(field, message) {
+            clearFieldError(field);
+            field.classList.add('border-red-500');
+            
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'text-red-500 text-sm mt-1 field-error';
+            errorDiv.textContent = message;
+            field.parentNode.appendChild(errorDiv);
+        }
+
+        // 清除字段错误
+        function clearFieldError(field) {
+            if (typeof field === 'object' && field.target) {
+                field = field.target;
+            }
+            field.classList.remove('border-red-500');
+            const errorDiv = field.parentNode.querySelector('.field-error');
+            if (errorDiv) {
+                errorDiv.remove();
+            }
+        }
+
+        // 处理表单提交
+        function handleFormSubmit() {
+            if (validateForm()) {
+                ui.showNotification('职位发布成功！', 'success');
+                // 这里可以添加实际的提交逻辑
+                setTimeout(() => {
+                    window.location.href = 'job-management.html';
+                }, 2000);
+            }
+        }
+
+        // 验证表单
+        function validateForm() {
+            const requiredFields = document.querySelectorAll('input[required], textarea[required], select[required]');
+            let isValid = true;
+            
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    showFieldError(field, '此字段为必填项');
+                    isValid = false;
+                }
+            });
+            
+            return isValid;
+        }
+
+        // 显示成功消息
+        // function showSuccessMessage(message) {
+        //     const toast = document.createElement('div');
+        //     toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform translate-x-full transition-transform duration-300';
+        //     toast.textContent = message;
+        //     
+        //     document.body.appendChild(toast);
+        //     
+        //     setTimeout(() => {
+        //         toast.classList.remove('translate-x-full');
+        //     }, 100);
+        //     
+        //     setTimeout(() => {
+        //         toast.classList.add('translate-x-full');
+        //         setTimeout(() => {
+        //             document.body.removeChild(toast);
+        //         }, 300);
+        //     }, 3000);
+        // }
+
+        // 保存草稿
+        function saveDraft() {
+            const formData = collectFormData();
+            localStorage.setItem('job-posting-draft', JSON.stringify(formData));
+            ui.showNotification('草稿保存成功！', 'success');
+        }
+
+        // 绑定草稿保存按钮
+        document.getElementById('save-draft-btn').addEventListener('click', saveDraft);
+        document.getElementById('save-draft-final-btn').addEventListener('click', saveDraft);
+
+        // 取消按钮
+        document.getElementById('cancel-btn').addEventListener('click', () => {
+            ui.showConfirm('确定要取消吗？未保存的内容将丢失。', () => {
+                window.location.href = 'job-management.html';
+            }, null, { type: 'warning', title: '取消确认' });
+        });
+
+        // 页面动画
+        document.addEventListener('DOMContentLoaded', () => {
+            const elements = document.querySelectorAll('.fade-in-up');
+            elements.forEach((el, index) => {
+                setTimeout(() => {
+                    el.style.opacity = '1';
+                }, index * 200);
+            });
+        });
+    </script>
+    <!-- Scripts -->
+    <script src="../js/user-auth.js"></script>
+    <script src="/js/sidebar.js"></script>
+    <script src="../js/header-profile.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize Sidebar
+            if (typeof Sidebar !== 'undefined') {
+                Sidebar.init({ active: 'job' });
+            }
+            
+            // Initialize Header Profile
+            if (typeof HeaderProfile !== 'undefined') {
+                HeaderProfile.init('#header-right-section');
+            }
+        });
+    </script>
+    <!-- 一键导入模态框 -->
+    <div id="import-job-modal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" id="import-modal-backdrop"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
+                            <i class="fas fa-cloud-download-alt text-blue-600"></i>
+                        </div>
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">一键导入职位</h3>
+                            <div class="mt-2">
+                                <p class="text-sm text-gray-500 mb-4">
+                                    输入职位链接，自动识别并填充职位信息。
+                                </p>
+                                <div class="mb-4">
+                                    <label for="import-url" class="block text-sm font-medium text-gray-700 mb-1">职位链接 URL</label>
+                                    <input type="url" name="import-url" id="import-url" class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border" placeholder="https://example.com/job/123">
+                                    <p class="mt-1 text-xs text-red-600 hidden" id="import-url-error"></p>
+                                </div>
+                                
+                                <!-- 解析结果预览 (初始隐藏) -->
+                                <div id="import-preview" class="hidden mt-4 bg-gray-50 p-3 rounded-md border border-gray-200 text-sm">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="font-medium text-gray-700">识别结果预览:</span>
+                                        <span class="text-xs text-green-600"><i class="fas fa-check-circle mr-1"></i>解析成功</span>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                                        <div><span class="font-medium">职位:</span> <span id="preview-title">--</span></div>
+                                        <div><span class="font-medium">薪资:</span> <span id="preview-salary">--</span></div>
+                                        <div><span class="font-medium">地点:</span> <span id="preview-location">--</span></div>
+                                        <div><span class="font-medium">经验:</span> <span id="preview-exp">--</span></div>
+                                    </div>
+                                </div>
+
+                                <!-- 加载中状态 -->
+                                <div id="import-loading" class="hidden mt-4 text-center py-4">
+                                    <i class="fas fa-spinner fa-spin text-blue-600 text-2xl"></i>
+                                    <p class="mt-2 text-sm text-gray-500">正在解析网页内容...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" id="confirm-import-btn" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                        导入并填充
+                    </button>
+                    <button type="button" id="cancel-import-btn" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        取消
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 一键导入功能逻辑
+        (function() {
+            const importBtn = document.getElementById('import-btn');
+            const modal = document.getElementById('import-job-modal');
+            const cancelBtn = document.getElementById('cancel-import-btn');
+            const confirmBtn = document.getElementById('confirm-import-btn');
+            const urlInput = document.getElementById('import-url');
+            const urlError = document.getElementById('import-url-error');
+            const loading = document.getElementById('import-loading');
+            const preview = document.getElementById('import-preview');
+            
+            let parsedData = null;
+
+            if (importBtn) {
+                importBtn.addEventListener('click', () => {
+                    openImportModal();
+                });
+            }
+
+            // 打开模态框函数
+            function openImportModal(url = '') {
+                modal.classList.remove('hidden');
+                urlInput.value = url;
+                urlError.classList.add('hidden');
+                preview.classList.add('hidden');
+                loading.classList.add('hidden');
+                parsedData = null;
+                confirmBtn.textContent = '开始解析';
+            }
+
+            // 检查 URL 参数是否有自动导入任务
+            const urlParams = new URLSearchParams(window.location.search);
+            const autoImportUrl = urlParams.get('importUrl');
+            if (autoImportUrl) {
+                const decodedUrl = decodeURIComponent(autoImportUrl);
+                openImportModal(decodedUrl);
+                handleParse();
+                // 清除 URL 参数
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', () => {
+                    modal.classList.add('hidden');
+                });
+            }
+            
+            // 点击遮罩关闭
+            const backdrop = document.getElementById('import-modal-backdrop');
+            if(backdrop) {
+                backdrop.addEventListener('click', () => {
+                    modal.classList.add('hidden');
+                });
+            }
+
+            if (confirmBtn) {
+                confirmBtn.addEventListener('click', async () => {
+                    if (!parsedData) {
+                        // 执行解析
+                        await handleParse();
+                    } else {
+                        // 执行填充
+                        fillForm(parsedData);
+                        modal.classList.add('hidden');
+                        ui.showNotification('职位信息填充成功', 'success');
+                    }
+                });
+            }
+
+            async function handleParse() {
+                const url = urlInput.value.trim();
+                if (!url) {
+                    showError('请输入有效的职位链接');
+                    return;
+                }
+                
+                try {
+                    new URL(url); // 验证 URL 格式
+                } catch (e) {
+                    showError('URL 格式不正确');
+                    return;
+                }
+
+                showError(null);
+                loading.classList.remove('hidden');
+                preview.classList.add('hidden');
+                confirmBtn.disabled = true;
+
+                try {
+                    const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
+                    const headers = {
+                        'Content-Type': 'application/json'
+                    };
+                    if (token) {
+                        headers['Authorization'] = `Bearer ${token}`;
+                    }
+
+                    const response = await fetch('/api/jobs/import-url', {
+                        method: 'POST',
+                        headers: headers,
+                        body: JSON.stringify({ url })
+                    });
+
+                    const result = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(result.error?.message || result.message || '解析失败');
+                    }
+
+                    parsedData = result.data;
+                    showPreview(parsedData);
+                    confirmBtn.textContent = '确认填充';
+                } catch (error) {
+                    showError(error.message);
+                } finally {
+                    loading.classList.add('hidden');
+                    confirmBtn.disabled = false;
+                }
+            }
+
+            function showError(msg) {
+                if (msg) {
+                    urlError.textContent = msg;
+                    urlError.classList.remove('hidden');
+                    urlInput.classList.add('border-red-500');
+                } else {
+                    urlError.classList.add('hidden');
+                    urlInput.classList.remove('border-red-500');
+                }
+            }
+
+            function showPreview(data) {
+                document.getElementById('preview-title').textContent = data.title || '未识别';
+                document.getElementById('preview-salary').textContent = data.salary || '面议';
+                document.getElementById('preview-location').textContent = data.location || '未识别';
+                document.getElementById('preview-exp').textContent = data.experience || '不限';
+                preview.classList.remove('hidden');
+            }
+
+            function fillForm(data) {
+                if (data.title) document.getElementById('job-title').value = data.title;
+                if (data.location) document.getElementById('job-location').value = data.location;
+                const desc = [data.description || '', data.requirements || ''].filter(Boolean).join('\n\n');
+                if (desc) document.getElementById('job-description').value = desc;
+                
+                // 简单的薪资解析填充
+                if (data.salary) {
+                    const match = data.salary.match(/(\d+).*?-.*?(\d+)/);
+                    if (match) {
+                        document.getElementById('salary-min').value = match[1];
+                        document.getElementById('salary-max').value = match[2];
+                    }
+                }
+                
+                // 经验匹配
+                if (data.experience) {
+                    const expSelect = document.getElementById('experience');
+                    for (let i = 0; i < expSelect.options.length; i++) {
+                        if (data.experience.includes(expSelect.options[i].text.replace('年', ''))) {
+                            expSelect.selectedIndex = i;
+                            break;
+                        }
+                    }
+                }
+            }
+        window.openSkillsModal = function(selectedSkills, container) {
+            const modal = document.getElementById('skills-modal');
+            const closeBtn = document.getElementById('close-skills-modal');
+            const cancelBtn = document.getElementById('cancel-skills-btn');
+            const confirmBtn = document.getElementById('confirm-skills-btn');
+            const listEl = document.getElementById('skills-list');
+            const searchEl = document.getElementById('skills-search-input');
+            const clearBtn = document.getElementById('skills-clear-selection');
+
+            let allSkills = [];
+
+            function unique(arr){ return Array.from(new Set(arr.map(s=>String(s).trim()).filter(Boolean))); }
+
+            async function loadSkills(){
+                try{
+                    let listAll = [];
+                    let listPool = [];
+                    if (window.resumeDataManager) {
+                        if (typeof window.resumeDataManager.getAllResumes==='function') {
+                            listAll = await window.resumeDataManager.getAllResumes();
+                        }
+                        if (typeof window.resumeDataManager.getTalentPoolResumes==='function') {
+                            listPool = await window.resumeDataManager.getTalentPoolResumes();
+                        }
+                    }
+                    const source = Array.isArray(listAll) && listAll.length ? listAll : (Array.isArray(window.resumeData) ? window.resumeData : []);
+                    const merged = Array.isArray(listPool) ? source.concat(listPool) : source;
+
+                    const collectFromResume = (r) => {
+                        const a = [];
+                        if (Array.isArray(r.tags)) a.push(...r.tags);
+                        if (Array.isArray(r.skills)) a.push(...r.skills);
+                        const pd = r.parsed_data || r.parsedData || {};
+                        if (pd && Array.isArray(pd.skills)) a.push(...pd.skills);
+                        return a;
+                    };
+
+                    const fromResumes = unique([].concat(...(merged||[]).map(collectFromResume)));
+                    const skillMap = {
+                        'frontend': ['JavaScript','React','Vue','HTML','CSS','TypeScript','Webpack'],
+                        'backend': ['Java','Python','Spring','MySQL','Redis','Docker','Kubernetes'],
+                        'fullstack': ['Node.js','MongoDB','AWS'],
+                        'mobile': ['Swift','Kotlin','React Native','Flutter','iOS','Android'],
+                        'ui': ['Sketch','Figma','Photoshop','交互设计','用户研究'],
+                        'pm': ['产品设计','需求分析','数据分析','Axure','项目管理'],
+                        'test': ['自动化测试','Selenium','JMeter','性能测试','接口测试'],
+                        'data': ['SQL','Tableau','Power BI','机器学习','R']
+                    };
+                    const fromMap = unique(Object.values(skillMap).flat());
+                    allSkills = unique(fromResumes.concat(fromMap));
+                }catch(_){ allSkills = ['Java','Python','JavaScript','React','Vue','SQL','Docker']; }
+            }
+
+            function renderList(filter=''){
+                const kw = filter.trim().toLowerCase();
+                listEl.innerHTML = '';
+                const filtered = allSkills.filter(s => !kw || s.toLowerCase().includes(kw));
+                filtered.forEach(skill => {
+                    const id = 'skill-'+skill.replace(/\s+/g,'-');
+                    const item = document.createElement('label');
+                    item.className = 'flex items-center space-x-2 p-2 border border-gray-200 rounded';
+                    item.innerHTML = `<input type="checkbox" class="rounded text-blue-600 focus:ring-blue-500" id="${id}" ${selectedSkills.includes(skill)?'checked':''}>
+                    <span class="text-sm">${skill}</span>`;
+                    item.dataset.skill = skill;
+                    listEl.appendChild(item);
+                });
+            }
+
+            function open(){ modal.classList.remove('hidden'); modal.classList.add('flex'); }
+            function close(){ modal.classList.add('hidden'); modal.classList.remove('flex'); }
+
+            loadSkills().then(()=>{ renderList(); open(); });
+            searchEl.oninput = function(e){ renderList(e.target.value || ''); };
+            clearBtn.onclick = function(){ Array.from(listEl.querySelectorAll('input[type="checkbox"]')).forEach(cb=>cb.checked=false); };
+
+            closeBtn.onclick = close;
+            cancelBtn.onclick = close;
+            modal.onclick = function(e){ if (e.target === modal) close(); };
+            confirmBtn.onclick = function(){
+                const selected = Array.from(listEl.querySelectorAll('label')).filter(el => el.querySelector('input') && el.querySelector('input').checked).map(el => el.dataset.skill);
+                selected.forEach(skill => {
+                    if (!selectedSkills.includes(skill)) {
+                        selectedSkills.push(skill);
+                        renderSkillTag(skill, container, selectedSkills, 'blue');
+                    }
+                });
+                close();
+                if (typeof ui !== 'undefined' && ui.showNotification) ui.showNotification('已添加所选技能', 'success');
+            };
+        }
+        })();
+    </script>
+</body>
+</html>

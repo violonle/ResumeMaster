@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>发票管理 - SuperResumeMaster 后台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="../js/user-auth.js"></script>
+    <script src="/js/sidebar.js"></script>
+    <script src="../js/header-profile.js"></script>
+    <link href="/css/sidebar.css" rel="stylesheet">
+</head>
+
+<body class="bg-gray-100">
+    <div class="flex h-screen overflow-hidden">
+        <aside id="sidebar" class="fixed left-0 top-0 bottom-0 sidebar-modern z-40"></aside>
+        <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+        <div class="flex flex-col w-0 flex-1 overflow-hidden">
+            <main class="flex-1 relative overflow-y-auto focus:outline-none" id="main-content">
+                <div class="py-6">
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 flex justify-between items-center">
+                        <h1 class="text-2xl font-semibold text-gray-900">发票管理</h1>
+                        <div class="flex items-center">
+                            <div class="flex space-x-3">
+                                <button
+                                    class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                                    <i class="fas fa-cog mr-2"></i>发票设置
+                                </button>
+                            </div>
+                            <div id="header-right-section" class="ml-4"></div>
+                        </div>
+                    </div>
+
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 mt-4">
+                        <!-- 统计卡片 -->
+                        <div class="grid grid-cols-1 gap-5 sm:grid-cols-3 mb-8">
+                            <div class="bg-white overflow-hidden shadow rounded-lg">
+                                <div class="p-5">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 bg-blue-500 rounded-md p-3">
+                                            <i class="fas fa-file-invoice text-white text-xl"></i>
+                                        </div>
+                                        <div class="ml-5 w-0 flex-1">
+                                            <dl>
+                                                <dt class="text-sm font-medium text-gray-500 truncate">已开具发票</dt>
+                                                <dd class="text-lg font-medium text-gray-900">1,024</dd>
+                                            </dl>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-white overflow-hidden shadow rounded-lg">
+                                <div class="p-5">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 bg-yellow-500 rounded-md p-3">
+                                            <i class="fas fa-hourglass-half text-white text-xl"></i>
+                                        </div>
+                                        <div class="ml-5 w-0 flex-1">
+                                            <dl>
+                                                <dt class="text-sm font-medium text-gray-500 truncate">待审核申请</dt>
+                                                <dd class="text-lg font-medium text-gray-900">12</dd>
+                                            </dl>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-white overflow-hidden shadow rounded-lg">
+                                <div class="p-5">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 bg-red-500 rounded-md p-3">
+                                            <i class="fas fa-ban text-white text-xl"></i>
+                                        </div>
+                                        <div class="ml-5 w-0 flex-1">
+                                            <dl>
+                                                <dt class="text-sm font-medium text-gray-500 truncate">红字发票</dt>
+                                                <dd class="text-lg font-medium text-gray-900">5</dd>
+                                            </dl>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 筛选栏 -->
+                        <div class="bg-white shadow rounded-lg mb-6 p-4">
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                <input type="text" placeholder="搜索发票号/抬头"
+                                    class="border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border p-2">
+                                <select
+                                    class="border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border p-2">
+                                    <option value="">所有状态</option>
+                                    <option value="issued">已开具</option>
+                                    <option value="pending">待审核</option>
+                                    <option value="red_issued">已冲红</option>
+                                </select>
+                                <input type="date"
+                                    class="border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border p-2">
+                                <button
+                                    class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">查询</button>
+                            </div>
+                        </div>
+
+                        <!-- 发票列表 -->
+                        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            发票号</th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            购买方</th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            金额</th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            类型</th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            状态</th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            开票日期</th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200" id="invoice-list">
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                            INV20231203001</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">某某科技有限公司</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
+                                            ¥1,058.94</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">增值税电子普通发票</td>
+                                        <td class="px-6 py-4 whitespace-nowrap"><span
+                                                class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">已开具</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2023-12-03</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">下载</a>
+                                            <a href="#" class="text-red-600 hover:text-red-900">冲红</a>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                            INV20231203002</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">个人</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">¥99.00
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">增值税电子普通发票</td>
+                                        <td class="px-6 py-4 whitespace-nowrap"><span
+                                                class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">待审核</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">-</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <a href="#" class="text-blue-600 hover:text-blue-900">审核</a>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <!-- 分页 -->
+                            <div
+                                class="bg-white px-4 py-3 border-t border-gray-200 flex items-center justify-between sm:px-6">
+                                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                                    <div>
+                                        <p class="text-sm text-gray-700">
+                                            显示 <span class="font-medium">1</span> 到 <span class="font-medium">10</span>
+                                            条，共 <span class="font-medium">42</span> 条
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
+                                            aria-label="Pagination">
+                                            <a href="#"
+                                                class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">上一页</a>
+                                            <a href="#"
+                                                class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">1</a>
+                                            <a href="#"
+                                                class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">2</a>
+                                            <a href="#"
+                                                class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">下一页</a>
+                                        </nav>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async function () {
+            if (!requireAuth('/pages/login.html')) return;
+            if (typeof Sidebar !== 'undefined') {
+                await Sidebar.init({ active: 'finance' });
+            }
+            if (typeof HeaderProfile !== 'undefined') {
+                HeaderProfile.init('#header-right-section');
+            }
+        });
+    </script>
+</body>
+
+</html>

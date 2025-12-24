@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据管理 - 智能简历助手</title>
+    <script src="../js/tailwindcss.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <script src="../js/user-auth.js"></script>
+    <script src="../js/header-profile.js"></script>
+    <script src="/js/sidebar.js"></script>
+    <style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .drag-over {
+            border-color: #3B82F6;
+            background-color: #EFF6FF;
+        }
+        .progress-bar {
+            transition: width 0.3s ease;
+        }
+        .batch-action-btn {
+            transition: all 0.2s ease;
+        }
+        .batch-action-btn:hover {
+            transform: translateY(-1px);
+        }
+        .data-row:hover {
+            background-color: #F9FAFB;
+        }
+        .selected-row {
+            background-color: #EFF6FF;
+        }
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .status-active {
+            background-color: #D1FAE5;
+            color: #065F46;
+        }
+        .status-completed {
+            background-color: #DBEAFE;
+            color: #1E40AF;
+        }
+        .status-draft {
+            background-color: #F3F4F6;
+            color: #374151;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <aside id="sidebar" class="fixed left-0 top-0 bottom-0 sidebar-modern z-40"></aside>
+    <header class="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20">
+        <div class="flex items-center justify-between p-4">
+            <div class="flex items-center space-x-4"><button class="menu-button p-2 rounded-lg hover:bg-gray-100"
+                    id="sidebar-toggle"><i class="fas fa-bars text-gray-600"></i></button>
+                <h1 class="brand-title text-lg font-bold text-gray-900">数据管理中心</h1>
+            </div>
+            <div class="flex items-center space-x-4" id="header-right-section">
+                <!-- User Profile will be rendered here -->
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content pt-20" id="main-content">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-4 flex justify-end space-x-4">
+             <button class="text-gray-500 hover:text-gray-700 bg-white p-2 rounded shadow-sm" id="refresh-btn" title="刷新">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+            <button class="text-gray-500 hover:text-gray-700 bg-white p-2 rounded shadow-sm" id="settings-btn" title="设置">
+                <i class="fas fa-cog"></i>
+            </button>
+        </div>
+
+    <!-- 批量操作栏 -->
+    <div id="batch-actions-bar" class="hidden bg-white border-b border-gray-200 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <span id="selected-count" class="text-sm font-medium text-gray-700">已选择 0 项</span>
+                    <div class="flex space-x-2">
+                        <button 
+                            data-batch-action="status"
+                            class="batch-action-btn px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+                        >
+                            <i class="fas fa-edit mr-1"></i>修改状态
+                        </button>
+                        <button 
+                            data-batch-action="category"
+                            class="batch-action-btn px-3 py-1 text-sm bg-green-100 text-green-700 rounded hover:bg-green-200"
+                        >
+                            <i class="fas fa-tags mr-1"></i>修改分类
+                        </button>
+                        <button 
+                            data-batch-action="tag"
+                            class="batch-action-btn px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded hover:bg-purple-200"
+                        >
+                            <i class="fas fa-plus mr-1"></i>添加标签
+                        </button>
+                        <button 
+                            data-batch-action="duplicate"
+                            class="batch-action-btn px-3 py-1 text-sm bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200"
+                        >
+                            <i class="fas fa-copy mr-1"></i>复制
+                        </button>
+                    </div>
+                </div>
+                <div class="flex space-x-2">
+                    <button 
+                        data-batch-action="export"
+                        class="batch-action-btn px-3 py-1 text-sm bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200"
+                    >
+                        <i class="fas fa-download mr-1"></i>导出
+                    </button>
+                    <button 
+                        data-batch-action="delete"
+                        class="batch-action-btn px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200"
+                    >
+                        <i class="fas fa-trash mr-1"></i>删除
+                    </button>
+                    <button 
+                        onclick="batchOperations.selectedItems.clear(); batchOperations.updateBatchActionsUI();"
+                        class="batch-action-btn px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+                    >
+                        <i class="fas fa-times mr-1"></i>取消
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- 数据导入导出区域 -->
+        <div class="glass-card rounded-xl p-6 mb-8">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">数据导入导出</h2>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- 数据导入 -->
+                <div>
+                    <h3 class="text-md font-medium text-gray-700 mb-3">数据导入</h3>
+                    <div 
+                        id="drop-zone"
+                        class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors cursor-pointer"
+                    >
+                        <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                        <p class="text-gray-600 mb-2">拖拽文件到此处或点击选择</p>
+                        <p class="text-sm text-gray-500 mb-4">支持 JSON, CSV, XML 格式</p>
+                        <input 
+                            type="file" 
+                            id="import-file" 
+                            accept=".json,.csv,.xml"
+                            class="hidden"
+                        >
+                        <button 
+                            data-import-trigger
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                            选择文件
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 数据导出 -->
+                <div>
+                    <h3 class="text-md font-medium text-gray-700 mb-3">数据导出</h3>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button 
+                            data-export-format="json"
+                            class="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                        >
+                            <i class="fas fa-code text-2xl text-blue-600 mb-2"></i>
+                            <span class="text-sm font-medium">JSON</span>
+                        </button>
+                        <button 
+                            data-export-format="csv"
+                            class="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                        >
+                            <i class="fas fa-file-csv text-2xl text-green-600 mb-2"></i>
+                            <span class="text-sm font-medium">CSV</span>
+                        </button>
+                        <button 
+                            data-export-format="xml"
+                            class="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                        >
+                            <i class="fas fa-file-code text-2xl text-purple-600 mb-2"></i>
+                            <span class="text-sm font-medium">XML</span>
+                        </button>
+                        <button 
+                            data-export-format="pdf"
+                            class="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                        >
+                            <i class="fas fa-file-pdf text-2xl text-red-600 mb-2"></i>
+                            <span class="text-sm font-medium">PDF</span>
+                        </button>
+                    </div>
+                    <div class="mt-4 flex space-x-3">
+                        <button 
+                            data-export-format="xlsx"
+                            class="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                        >
+                            <i class="fas fa-file-excel mr-2"></i>导出 Excel
+                        </button>
+                        <button 
+                            onclick="exportAllData()"
+                            class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                        >
+                            <i class="fas fa-download mr-2"></i>全部导出
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 进度条 -->
+        <div id="progress-container" class="hidden mb-6">
+            <div class="bg-white rounded-lg p-4 shadow-sm">
+                <div class="flex items-center justify-between mb-2">
+                    <span id="progress-text" class="text-sm font-medium text-gray-700">准备中...</span>
+                    <span id="progress-percent" class="text-sm text-gray-500">0%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div id="progress-bar" class="progress-bar bg-blue-600 h-2 rounded-full" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 数据表格 -->
+        <div class="glass-card rounded-xl overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <h2 class="text-lg font-semibold text-gray-900">数据列表</h2>
+                        <span class="text-sm text-gray-500">共 128 条记录</span>
+                    </div>
+                    <div class="flex space-x-3">
+                        <input 
+                            type="text"
+                            placeholder="搜索数据..."
+                            class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                        <select class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
+                            <option>所有分类</option>
+                            <option>技术开发</option>
+                            <option>创意设计</option>
+                            <option>行政经典</option>
+                        </select>
+                        <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                            <i class="fas fa-filter mr-1"></i>筛选
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left">
+                                <input type="checkbox" id="select-all" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">标题</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">分类</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">创建时间</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">价格</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200" id="data-table-body">
+                        <!-- 数据行将通过JavaScript动态生成 -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 分页 -->
+            <div class="px-6 py-4 border-t border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div class="text-sm text-gray-500">
+                        显示第 1 到 10 条，共 128 条记录
+                    </div>
+                    <div class="flex space-x-2">
+                        <button class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50" disabled>
+                            上一页
+                        </button>
+                        <button class="px-3 py-1 text-sm bg-blue-600 text-white rounded">1</button>
+                        <button class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">2</button>
+                        <button class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">3</button>
+                        <button class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">
+                            下一页
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 通知容器 -->
+    <div id="notification-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    <!-- 脚本文件 -->
+    <script src="/js/ui-components.js"></script>
+    <script src="/js/batch-operations.js"></script>
+    <script src="/js/resume-data.js"></script>
+    </main>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof Sidebar !== 'undefined') {
+                Sidebar.init({ active: 'analysis' });
+            }
+            if (typeof HeaderProfile !== 'undefined') {
+                HeaderProfile.init();
+            }
+        });
+
+        // 初始化UI组件和批量操作
+        const uiComponents = new UIComponents();
+
+        let currentData = [];
+
+        function transformResumes(resumes){
+            return (resumes||[]).map(r=>({
+                id: r.id,
+                title: r.file_name || '未命名简历',
+                category: (Array.isArray(r.tags)&&r.tags[0]) || '简历',
+                status: r.status || 'active',
+                date: (r.upload_date||'').split('T')[0] || '',
+                price: 0
+            }));
+        }
+
+        async function loadData(){
+            try{
+                const resumes = await window.resumeDataManager.getAllResumes();
+                currentData = transformResumes(resumes);
+                renderDataTable(currentData);
+                setupEventListeners();
+            }catch(e){
+                renderDataTable([]);
+                setupEventListeners();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function(){ loadData() });
+
+        function renderDataTable(data) {
+            const tableBody = document.getElementById('data-table-body');
+            tableBody.innerHTML = data.map(item => `
+                <tr class="data-row" data-item-id="${item.id}">
+                    <td class="px-6 py-4">
+                        <input type="checkbox" data-item-select value="${item.id}" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-900">${item.id}</td>
+                    <td class="px-6 py-4">
+                        <div class="text-sm font-medium text-gray-900">${item.title}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                            ${item.category}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="status-badge status-${item.status}">
+                            ${getStatusText(item.status)}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-500">${item.date}</td>
+                    <td class="px-6 py-4 text-sm text-gray-900">
+                        ${item.price === 0 ? '免费' : '¥' + item.price}
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex space-x-2">
+                            <button class="text-blue-600 hover:text-blue-800 text-sm" onclick="editItem(${item.id})">
+                                <i class="fas fa-edit mr-1"></i>编辑
+                            </button>
+                            <button class="text-green-600 hover:text-green-800 text-sm" onclick="duplicateItem(${item.id})">
+                                <i class="fas fa-copy mr-1"></i>复制
+                            </button>
+                            <button class="text-red-600 hover:text-red-800 text-sm" onclick="deleteItem(${item.id})">
+                                <i class="fas fa-trash mr-1"></i>删除
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function getStatusText(status) {
+            const statusMap = {
+                active: '进行中',
+                completed: '已完成',
+                draft: '草稿'
+            };
+            return statusMap[status] || status;
+        }
+
+        function setupEventListeners() {
+            // 刷新按钮
+            document.getElementById('refresh-btn').addEventListener('click', function() {
+                uiComponents.showNotification('数据已刷新', 'success');
+                // 这里可以添加实际的数据刷新逻辑
+            });
+
+            // 设置按钮
+            document.getElementById('settings-btn').addEventListener('click', function() {
+                uiComponents.showNotification('设置功能开发中...', 'info');
+            });
+
+            // 拖放区域
+            const dropZone = document.getElementById('drop-zone');
+            const fileInput = document.getElementById('import-file');
+
+            dropZone.addEventListener('click', function() {
+                fileInput.click();
+            });
+
+            // 导出全部数据
+            window.exportAllData = async function() {
+                const allItemIds = (currentData||[]).map(item => String(item.id));
+                const batchOps = new BatchOperations();
+                batchOps.selectedItems = new Set(allItemIds);
+                batchOps.showExportDialog();
+            };
+
+            // 单个项目操作
+            window.editItem = function(id) {
+                uiComponents.showNotification(`编辑项目 ${id}`, 'info');
+            };
+
+            window.duplicateItem = function(id) {
+                const batchOps = new BatchOperations();
+                batchOps.batchDuplicate([id.toString()]);
+            };
+
+            window.deleteItem = function(id) {
+                uiComponents.showConfirm('确定要删除这个项目吗？', () => {
+                    const batchOps = new BatchOperations();
+                    batchOps.batchDelete([id.toString()]);
+                });
+            };
+        }
+
+        // 搜索功能
+        document.querySelector('input[placeholder="搜索数据..."]').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const filteredData = (currentData||[]).filter(item => 
+                (item.title||'').toLowerCase().includes(searchTerm) ||
+                (item.category||'').toLowerCase().includes(searchTerm)
+            );
+            renderDataTable(filteredData);
+        });
+
+        // 分类筛选
+        document.querySelector('select').addEventListener('change', function(e) {
+            const category = e.target.value;
+            const filteredData = category === '所有分类' ? (currentData||[]) : (currentData||[]).filter(item => item.category === category);
+            renderDataTable(filteredData);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>服务器错误 - 争湃·简历大师</title>
+    <script src="../js/tailwindcss.js"></script>
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Adaptive Layout Styles */
+        #main-content {
+            margin-left: 280px;
+            transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            width: auto;
+        }
+        #main-content.main-content-collapsed {
+            margin-left: 80px !important;
+        }
+        @media (max-width: 768px) {
+            #main-content {
+                margin-left: 0 !important;
+            }
+        }
+        
+        /* 500数字动画 */
+        .error-number {
+            font-size: 8rem;
+            font-weight: 800;
+            color: #2563eb;
+            animation: pulse 2s infinite;
+        }
+        
+        /* 服务器图标动画 */
+        .server-icon {
+            animation: shake 3s ease-in-out infinite;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+            20%, 40%, 60%, 80% { transform: translateX(2px); }
+        }
+        
+        /* 状态指示器 */
+        .status-indicator {
+            animation: pulse 1.5s infinite;
+        }
+        
+        /* 错误波浪动画 */
+        .wave {
+            animation: wave 2s ease-in-out infinite;
+        }
+        
+        .wave:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .wave:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes wave {
+            0%, 60%, 100% {
+                transform: initial;
+            }
+            30% {
+                transform: translateY(-15px);
+            }
+        }
+        
+        /* 重试按钮动画 */
+        .retry-btn {
+            transition: all 0.3s ease;
+        }
+        
+        .retry-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen relative">
+    <aside id="sidebar" class="sidebar-modern"></aside>
+    <div id="sidebar-overlay" class="sidebar-overlay"></div>
+    
+    <div id="main-content" class="min-h-screen flex flex-col">
+        <header class="bg-white shadow-sm border-b border-gray-200 z-20">
+            <div class="flex items-center justify-between p-4">
+                <div class="flex items-center space-x-4">
+                    <button class="menu-button p-2 rounded-lg hover:bg-gray-100" id="sidebar-toggle">
+                        <i class="fas fa-bars text-gray-900"></i>
+                    </button>
+                    <h1 class="brand-title text-lg font-bold text-gray-900">服务器错误</h1>
+                </div>
+                <div class="flex items-center space-x-4" id="header-right-section"></div>
+            </div>
+        </header>
+        
+        <main class="flex-grow relative overflow-hidden">
+    <div class="relative z-10 min-h-screen flex items-center justify-center px-4">
+        <div class="max-w-4xl mx-auto text-center">
+            <!-- 服务器图标和错误号 -->
+            <div class="mb-8">
+                <div class="server-icon mb-6">
+                    <i class="fas fa-server text-6xl text-blue-600"></i>
+                </div>
+                <h1 class="error-number leading-none">500</h1>
+            </div>
+            
+            <!-- 错误信息 -->
+            <div class="mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">服务器开小差了</h2>
+                <p class="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+                    抱歉！我们的服务器遇到了一些技术问题，正在紧急修复中。请稍后重试。
+                </p>
+                
+                <!-- 错误码波浪 -->
+                <div class="flex justify-center space-x-2 mb-8">
+                    <div class="wave w-3 h-3 bg-blue-600 rounded-full"></div>
+                    <div class="wave w-3 h-3 bg-blue-600 rounded-full"></div>
+                    <div class="wave w-3 h-3 bg-blue-600 rounded-full"></div>
+                </div>
+                
+                <!-- 操作按钮 -->
+                <div class="flex flex-col sm:flex-row items-center justify-center space-y-3 sm:space-y-0 sm:space-x-4">
+                    <button onclick="window.location.reload()" class="retry-btn px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all font-medium">
+                        <i class="fas fa-sync-alt mr-2"></i>
+                        刷新重试
+                    </button>
+                    <a href="../index.html" class="px-8 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-all font-medium">
+                        <i class="fas fa-home mr-2"></i>
+                        返回首页
+                    </a>
+                    <a href="dashboard.html" class="px-8 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-all font-medium">
+                        <i class="fas fa-tachometer-alt mr-2"></i>
+                        控制面板
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 错误详情 -->
+    <div class="relative z-10 bg-white py-16">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h3 class="text-2xl font-bold text-gray-900 mb-4">错误详情</h3>
+                <p class="text-gray-600">以下是一些可能的原因和解决方案</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- 服务器过载 -->
+                <div class="bg-blue-50 rounded-2xl p-6 border border-blue-100">
+                    <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
+                        <i class="fas fa-server text-blue-600 text-xl"></i>
+                    </div>
+                    <h4 class="text-lg font-semibold text-gray-900 mb-2">服务器过载</h4>
+                    <p class="text-gray-600 text-sm mb-3">当前访问量较大，服务器正在处理中</p>
+                    <div class="text-sm text-blue-600 font-medium">预计修复时间: 5-10分钟</div>
+                </div>
+                
+                <!-- 系统维护 -->
+                <div class="bg-blue-50 rounded-2xl p-6 border border-blue-100">
+                    <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
+                        <i class="fas fa-tools text-blue-600 text-xl"></i>
+                    </div>
+                    <h4 class="text-lg font-semibold text-gray-900 mb-2">系统维护</h4>
+                    <p class="text-gray-600 text-sm mb-3">我们可能正在进行系统升级或维护</p>
+                    <div class="text-sm text-blue-600 font-medium">请关注公告通知</div>
+                </div>
+                
+                <!-- 网络问题 -->
+                <div class="bg-blue-50 rounded-2xl p-6 border border-blue-100">
+                    <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
+                        <i class="fas fa-wifi text-blue-600 text-xl"></i>
+                    </div>
+                    <h4 class="text-lg font-semibold text-gray-900 mb-2">网络连接</h4>
+                    <p class="text-gray-600 text-sm mb-3">检查您的网络连接是否正常</p>
+                    <div class="text-sm text-blue-600 font-medium">尝试刷新页面</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 联系支持 -->
+    <div class="relative z-10 bg-gray-50 py-16">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h3 class="text-2xl font-bold text-gray-900 mb-6">问题持续存在？</h3>
+            <p class="text-gray-600 mb-8">如果问题持续存在，请联系我们的技术支持团队</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+                    <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-life-ring text-blue-600 text-xl"></i>
+                    </div>
+                    <h4 class="font-semibold text-gray-900 mb-2">在线客服</h4>
+                    <p class="text-gray-600 text-sm mb-4">7×24小时在线技术支持</p>
+                    <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+                        联系客服
+                    </button>
+                </div>
+                
+                <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+                    <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-envelope text-blue-600 text-xl"></i>
+                    </div>
+                    <h4 class="font-semibold text-gray-900 mb-2">邮件反馈</h4>
+                    <p class="text-gray-600 text-sm mb-4">发送错误报告给我们</p>
+                    <button class="bg-white text-blue-600 border border-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors text-sm font-medium">
+                        发送邮件
+                    </button>
+                </div>
+                
+                <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+                    <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-chart-line text-blue-600 text-xl"></i>
+                    </div>
+                    <h4 class="font-semibold text-gray-900 mb-2">服务状态</h4>
+                    <p class="text-gray-600 text-sm mb-4">查看系统运行状态</p>
+                    <button class="bg-white text-blue-600 border border-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors text-sm font-medium">
+                        状态页面
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </main>
+    </div>
+
+    <script src="/js/user-auth.js"></script>
+    <script src="/js/header-profile.js"></script>
+    <script src="/js/sidebar.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof Sidebar !== 'undefined') {
+                Sidebar.init();
+            }
+            if (typeof HeaderProfile !== 'undefined') {
+                HeaderProfile.init('#header-right-section');
+            }
+        });
+    </script>
+    <script>
+        // 自动刷新计时器
+        let refreshTimer = null;
+        let countdownTime = 30;
+        
+        function startAutoRefresh() {
+            const refreshBtn = document.querySelector('.retry-btn');
+            const originalText = refreshBtn.innerHTML;
+            
+            refreshTimer = setInterval(() => {
+                countdownTime--;
+                refreshBtn.innerHTML = `<i class="fas fa-sync-alt mr-2"></i>自动刷新 (${countdownTime}s)`;
+                
+                if (countdownTime <= 0) {
+                    window.location.reload();
+                }
+            }, 1000);
+            
+            // 点击按钮取消自动刷新
+            refreshBtn.addEventListener('click', () => {
+                if (refreshTimer) {
+                    clearInterval(refreshTimer);
+                    refreshBtn.innerHTML = originalText;
+                }
+            });
+        }
+        
+        // 页面加载完成后启动自动刷新
+        document.addEventListener('DOMContentLoaded', () => {
+            // 延迟5秒后开始自动刷新倒计时
+            setTimeout(startAutoRefresh, 5000);
+            
+            // 错误报告收集
+            collectErrorInfo();
+        });
+        
+        function collectErrorInfo() {
+            const errorInfo = {
+                timestamp: new Date().toISOString(),
+                userAgent: navigator.userAgent,
+                url: window.location.href,
+                referrer: document.referrer,
+                viewport: `${window.innerWidth}x${window.innerHeight}`,
+                connection: navigator.connection ? {
+                    effectiveType: navigator.connection.effectiveType,
+                    downlink: navigator.connection.downlink
+                } : 'unknown'
+            };
+            
+            // 这里可以发送错误信息到服务器
+            console.log('Error Info:', errorInfo);
+            
+            // 可选: 自动发送错误报告
+            // sendErrorReport(errorInfo);
+        }
+        
+        function sendErrorReport(errorInfo) {
+            // 发送错误报告到服务器
+            fetch('/api/error-report', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(errorInfo)
+            }).catch(err => {
+                console.log('Failed to send error report:', err);
+            });
+        }
+        
+        // 连接状态检测
+        function checkConnection() {
+            return fetch('/api/health-check', {
+                method: 'HEAD',
+                mode: 'no-cors'
+            }).then(() => {
+                return true;
+            }).catch(() => {
+                return false;
+            });
+        }
+        
+        // 每30秒检测一次连接状态
+        setInterval(async () => {
+            const isConnected = await checkConnection();
+            const statusIndicator = document.querySelector('.status-indicator');
+            const statusText = statusIndicator.nextElementSibling;
+            
+            if (isConnected) {
+                statusIndicator.className = 'w-2 h-2 bg-green-500 rounded-full status-indicator';
+                statusText.textContent = '服务正常';
+                statusText.className = 'text-green-600 font-medium';
+                // 如果连接恢复，自动刷新页面
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            }
+        }, 30000);
+    </script>
+</body>
+</html>

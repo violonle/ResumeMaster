@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系统设置 - 争湃·简历大师</title>
+    <script src="../js/tailwindcss.js"></script>
+    <script src="../js/ui-components.js"></script>
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <style>
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
+        .setting-section { background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px; }
+        .toggle-switch { position: relative; display: inline-block; width: 48px; height: 24px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #3b82f6; }
+        input:checked + .slider:before { transform: translateX(24px); }
+        .main-content { padding: 0 24px; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- 侧边栏占位 -->
+    <aside id="sidebar" class="fixed left-0 top-0 bottom-0 sidebar-modern z-40"></aside>
+    
+    
+    
+    <!-- 移动端顶部导航 -->
+    <div class="lg:hidden bg-white shadow-sm border-b border-gray-200 sticky top-0 z-30">
+        <div class="flex items-center justify-between px-4 py-3">
+            <button id="mobile-sidebar-toggle" class="text-gray-600 hover:text-gray-900">
+                <i class="fas fa-bars text-xl"></i>
+            </button>
+            <h1 class="text-lg font-semibold text-gray-900">系统设置</h1>
+            <div class="flex items-center space-x-2">
+                <button class="text-gray-600 hover:text-gray-900">
+                    <i class="fas fa-bell text-lg"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主要内容 -->
+    <main class="main-content pt-0 lg:pt-0 pt-16" id="main-content">
+        <div class="p-6 lg:pl-12">
+            <!-- Desktop Header -->
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">系统设置</h1>
+                    <p class="text-gray-600 mt-1">管理系统配置和偏好设置</p>
+                </div>
+                <div id="header-right-section" class="hidden lg:block"></div>
+            </div>
+
+        <!-- 设置内容 -->
+        <div class="max-w-4xl">
+            <!-- 通知设置 -->
+            <div class="setting-section" id="notification-section">
+                <div class="p-6 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-bell text-blue-600 mr-3"></i>
+                        通知设置
+                    </h3>
+                    <p class="text-sm text-gray-600 mt-1">管理系统通知和提醒</p>
+                </div>
+                <div class="p-6">
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h4 class="font-medium text-gray-900">新简历投递通知</h4>
+                                <p class="text-sm text-gray-500">当有新简历投递时发送通知</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h4 class="font-medium text-gray-900">面试安排提醒</h4>
+                                <p class="text-sm text-gray-500">面试前30分钟发送提醒</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h4 class="font-medium text-gray-900">系统维护通知</h4>
+                                <p class="text-sm text-gray-500">系统维护和更新通知</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h4 class="font-medium text-gray-900">邮件通知</h4>
+                                <p class="text-sm text-gray-500">通过邮件接收重要通知</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- 关于系统 (已移除) -->
+
+        </div>
+    </div>
+
+    <script src="../js/user-auth.js"></script>
+    <script>
+        // 数据备份
+        function backupData() {
+            ui.showNotification('数据备份功能开发中...', 'info');
+        }
+
+        // 导出数据
+        function exportData() {
+            ui.showNotification('数据导出功能开发中...', 'info');
+        }
+
+        // 导入数据
+        function importData() {
+            ui.showNotification('数据导入功能开发中...', 'info');
+        }
+
+        // 清理数据
+        function clearData() {
+            ui.showConfirm('确定要清理数据吗？此操作不可逆！', () => {
+                ui.showNotification('数据清理功能开发中...', 'info');
+            }, null, { type: 'danger', title: '清理确认' });
+        }
+
+        // 修改密码
+        function changePassword() {
+            ui.showNotification('修改密码功能开发中...', 'info');
+        }
+
+        // 退出所有设备
+        function logoutAllDevices() {
+            ui.showConfirm('确定要退出所有设备吗？', () => {
+                ui.showNotification('退出所有设备功能开发中...', 'info');
+            }, null, { type: 'warning', title: '退出确认' });
+        }
+
+        // 检查更新
+        function checkUpdate() {
+            ui.showNotification('检查更新功能开发中...', 'info');
+        }
+
+        // 页面加载完成后的初始化（通过API获取当前用户）
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Handle tab/anchor navigation from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const tab = urlParams.get('tab');
+            if (tab) {
+                const sectionMap = {
+                    'notification': 'notification-section',
+                    'data': 'data-section',
+                    'config': 'config-section',
+                    'security': 'security-section',
+                    'about': 'about-section'
+                };
+                const sectionId = sectionMap[tab];
+                if (sectionId) {
+                    const el = document.getElementById(sectionId);
+                    if (el) {
+                        // Wait a bit for layout to settle
+                        setTimeout(() => {
+                            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            // Add a temporary highlight effect
+                            el.classList.add('ring-2', 'ring-blue-500');
+                            setTimeout(() => el.classList.remove('ring-2', 'ring-blue-500'), 2000);
+                        }, 100);
+                    }
+                }
+            }
+
+            // 访问控制：未登录跳转登录页
+            if (!requireAuth('/pages/login.html')) return;
+
+            try {
+                const user = await userAuthInstance.fetchCurrentUser();
+                if (user) {
+                    // 使用鉴权模块统一更新头像与姓名
+                    updateUserInterface(user);
+                    // 单独填充邮箱信息
+                    const emailEl = document.querySelector('[data-user-email]');
+                    if (emailEl) {
+                        emailEl.textContent = user.email || user.phone || '';
+                    }
+                } else {
+                    updateUserInterface(null);
+                }
+            } catch (e) {
+                console.error('初始化用户信息失败:', e);
+            }
+            // 引导入口按钮
+            try {
+                const wrap = document.querySelector('.p-6');
+                if (wrap) {
+                    const btn = document.createElement('button');
+                    btn.className = 'mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg';
+                    btn.textContent = '重新完善信息（三步引导）';
+                    btn.addEventListener('click', () => { localStorage.setItem('firstSetupRequired','1'); window.location.href = 'dashboard.html'; });
+                    wrap.appendChild(btn);
+                }
+            } catch(_){}
+        });
+
+        
+    </script>
+    <script src="/js/sidebar.js"></script>
+    <script src="/js/header-profile.js"></script>
+    <script>
+        Sidebar.init({ mount:'#sidebar', active:'settings' });
+        HeaderProfile.init('#header-right-section');
+    </script>
+    </div>
+    </main>
+</body>
+</html>

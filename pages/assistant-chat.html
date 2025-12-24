@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 助手对话 - 争湃·简历大师</title>
+  <script src="../js/tailwindcss.js"></script>
+  <script src="../js/marked.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+  <script src="../js/user-auth.js"></script>
+  <script src="../js/header-profile.js"></script>
+    <script src="/js/sidebar.js"></script>
+  <style>
+    body{ background:#f8fafc }
+    .shell{ width:100%; max-width:1200px; margin:40px auto; background:#fff; border-radius:16px; box-shadow:0 20px 60px rgba(15,23,42,.12); overflow:hidden; border:1px solid #e5e7eb }
+    .header{ display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid #e5e7eb; background:#ffffff }
+    .brand{ display:flex; align-items:center; gap:12px }
+    .brand .logo{ width:36px; height:36px; border-radius:10px; background:#0f172a; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700 }
+    .brand .title{ font-weight:700; color:#111827 }
+    .status{ display:flex; align-items:center; gap:8px; font-size:12px }
+    .status .dot{ width:8px; height:8px; border-radius:50%; background:#10b981 }
+    .content{ display:grid; grid-template-columns: 280px 1fr }
+    .sidebar{ border-right:1px solid #e5e7eb; background:#f9fafb; display: flex; flex-direction: column; }
+    .sidebar .section{ padding:16px 16px 8px; font-size:12px; color:#6b7280; font-weight:600 }
+    .threads{ padding:0 12px 12px; flex: 1; overflow-y: auto; }
+    .thread{ display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:10px; cursor:pointer }
+    .thread:hover{ background:#eef2f7 }
+    .thread.active{ background:#e0e7ff }
+    .chat{ display:flex; flex-direction:column; height:640px }
+    .log{ flex:1; padding:16px; overflow-y:auto }
+    .msg{ max-width:85%; padding:10px 12px; border-radius:12px; margin:6px 0; font-size:14px; line-height:1.6; word-wrap: break-word; overflow-wrap: break-word; }
+    .msg.user{ margin-left:auto; background:#2563eb; color:#fff }
+    .msg.assistant{ background:#f3f4f6; color:#111827 }
+    
+    /* Markdown Styles for Assistant */
+    .msg.assistant { overflow-x: hidden; } /* Prevent horizontal scroll on main container */
+    .msg.assistant ul, .msg.assistant ol { padding-left: 20px; margin: 8px 0; }
+    .msg.assistant li { margin: 4px 0; white-space: normal; }
+    .msg.assistant p { margin: 8px 0; white-space: normal; }
+    .msg.assistant p:first-child { margin-top: 0; }
+    .msg.assistant p:last-child { margin-bottom: 0; }
+    .msg.assistant h1, .msg.assistant h2, .msg.assistant h3 { font-weight: 700; margin: 16px 0 8px; color: #1f2937; font-size: 1.1em; }
+    .msg.assistant h1:first-child, .msg.assistant h2:first-child { margin-top: 0; }
+    .msg.assistant strong { font-weight: 700; color: #2563eb; }
+    .msg.assistant code { background: #e5e7eb; padding: 2px 5px; border-radius: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 0.9em; color: #c026d3; }
+    .msg.assistant pre { background: #1e293b; color: #f8fafc; padding: 12px; border-radius: 8px; overflow-x: auto; margin: 12px 0; }
+    .msg.assistant pre code { background: transparent; color: inherit; padding: 0; font-size: 0.85em; }
+    .msg.assistant blockquote { border-left: 4px solid #cbd5e1; padding-left: 12px; color: #4b5563; margin: 8px 0; font-style: italic; }
+    .msg.assistant table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+    .msg.assistant th, .msg.assistant td { border: 1px solid #d1d5db; padding: 8px; text-align: left; }
+    .msg.assistant th { background: #e5e7eb; font-weight: 600; }
+    
+    .composer{ display:flex; gap:8px; padding:12px; border-top:1px solid #e5e7eb; background:#ffffff; align-items: center; }
+    .input{ flex:1; border:1px solid #d1d5db; border-radius:12px; padding:12px 14px; outline:none }
+    .input:focus{ border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.15) }
+    .btn{ padding:12px 16px; border-radius:12px; font-weight:600; cursor: pointer; }
+    .btn-icon { padding: 12px; background: #f3f4f6; color: #4b5563; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .btn-icon:hover { background: #e5e7eb; color: #1f2937; }
+    .btn-primary{ background:#2563eb; color:#fff }
+    .suggests{ display:flex; gap:8px; padding:0 16px 12px }
+    .chip{ padding:8px 12px; background:#eef2f7; color:#374151; border-radius:999px; font-size:12px; cursor:pointer }
+    .chip:hover{ background:#e5e7eb }
+    @media (max-width: 768px){ .content{ grid-template-columns: 1fr } .sidebar{ display:none } .chat{ height: calc(100vh - 140px) } .shell{ margin:0; border-radius:0 }
+    }
+  </style>
+</head>
+<body>
+  <aside id="sidebar" class="fixed left-0 top-0 bottom-0 sidebar-modern z-40"></aside>
+  <header class="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20">
+      <div class="flex items-center justify-between p-4">
+          <div class="flex items-center space-x-4"><button class="menu-button p-2 rounded-lg hover:bg-gray-100"
+                  id="sidebar-toggle"><i class="fas fa-bars text-gray-600"></i></button>
+              <h1 class="brand-title text-lg font-bold text-gray-900">AI 助手对话</h1>
+          </div>
+          <div class="flex items-center space-x-4" id="header-right-section">
+              <!-- User Profile will be rendered here -->
+          </div>
+      </div>
+  </header>
+
+  <main class="main-content pt-20" id="main-content">
+  <div class="shell" style="margin-top: 20px; height: calc(100vh - 120px);">
+    <div class="header" style="display:none;"> <!-- Hide original header -->
+      <div class="brand">
+        <div class="logo">SRM</div>
+        <div class="title">AI 助手对话</div>
+      </div>
+      <div class="status"><div class="dot"></div><span>在线</span></div>
+    </div>
+    <div class="content" style="height: 100%;">
+      <aside class="sidebar" style="height: 100%;">
+        <div class="section">最近对话</div>
+        <div class="threads" id="threads">
+          <div class="thread active"><i class="fas fa-comments text-gray-900"></i><span class="text-sm text-gray-900">默认对话</span></div>
+        </div>
+        <!-- 快速提问 -->
+        <div class="mt-4 px-3 pb-4">
+            <div class="section mb-2" style="padding:0">快速提问</div>
+            <div class="grid grid-cols-1 gap-2">
+                <button onclick="document.getElementById('chat-input').value='如何让简历更有竞争力？'; doSend()" class="bg-white p-3 rounded-xl border border-gray-200 text-left hover:border-indigo-300 group transition-all w-full">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center group-hover:bg-indigo-100 transition-colors shrink-0">
+                            <i class="fas fa-file-alt text-black text-sm"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <h4 class="font-medium text-gray-900 text-sm truncate">简历优化</h4>
+                            <p class="text-xs text-gray-500 truncate">如何让简历更有竞争力？</p>
+                        </div>
+                    </div>
+                </button>
+                
+                <button onclick="document.getElementById('chat-input').value='分析我的简历匹配度'; doSend()" class="bg-white p-3 rounded-xl border border-gray-200 text-left hover:border-indigo-300 group transition-all w-full">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center group-hover:bg-indigo-100 transition-colors shrink-0">
+                            <i class="fas fa-target text-black text-sm"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <h4 class="font-medium text-gray-900 text-sm truncate">职位匹配</h4>
+                            <p class="text-xs text-gray-500 truncate">分析我的简历匹配度</p>
+                        </div>
+                    </div>
+                </button>
+                
+                <button onclick="document.getElementById('chat-input').value='面试常见问题解答'; doSend()" class="bg-white p-3 rounded-xl border border-gray-200 text-left hover:border-indigo-300 group transition-all w-full">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center group-hover:bg-indigo-100 transition-colors shrink-0">
+                            <i class="fas fa-comments text-black text-sm"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <h4 class="font-medium text-gray-900 text-sm truncate">面试准备</h4>
+                            <p class="text-xs text-gray-500 truncate">面试常见问题解答</p>
+                        </div>
+                    </div>
+                </button>
+                
+                <button onclick="document.getElementById('chat-input').value='制定职业发展路径'; doSend()" class="bg-white p-3 rounded-xl border border-gray-200 text-left hover:border-indigo-300 group transition-all w-full">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center group-hover:bg-indigo-100 transition-colors shrink-0">
+                            <i class="fas fa-chart-line text-black text-sm"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <h4 class="font-medium text-gray-900 text-sm truncate">职业规划</h4>
+                            <p class="text-xs text-gray-500 truncate">制定职业发展路径</p>
+                        </div>
+                    </div>
+                </button>
+            </div>
+        </div>
+      </aside>
+      <section class="chat">
+        <div class="log custom-scroll" id="chat-log"></div>
+        <div class="suggests" id="suggests"></div>
+        <div class="composer">
+          <button id="upload-btn" class="btn btn-icon" title="上传简历"><i class="fas fa-paperclip"></i></button>
+          <input type="file" id="file-input" hidden accept=".pdf,.doc,.docx,.txt" />
+          <input id="chat-input" class="input" placeholder="请输入问题，例如：为Java岗位生成JD要点" />
+          <button id="chat-send" class="btn btn-primary">发送</button>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof Sidebar !== 'undefined') {
+            Sidebar.init({ active: 'dashboard' });
+        }
+        if (typeof HeaderProfile !== 'undefined') {
+            HeaderProfile.init();
+        }
+    });
+
+    const log=document.getElementById('chat-log');
+    const input=document.getElementById('chat-input');
+    const sendBtn=document.getElementById('chat-send');
+    const uploadBtn=document.getElementById('upload-btn');
+    const fileInput=document.getElementById('file-input');
+    const suggests=document.getElementById('suggests');
+    const messages=[];
+    let pendingContext = null;
+
+    function append(role,text){ 
+      const el=document.createElement('div'); 
+      el.className='msg '+role; 
+      if (role === 'assistant' && typeof marked !== 'undefined') {
+        try {
+           el.innerHTML = marked.parse(text);
+        } catch (e) {
+           console.error('Markdown parse error:', e);
+           el.textContent = text;
+        }
+      } else {
+        el.textContent=text; 
+      }
+      log.appendChild(el); 
+      log.scrollTop=log.scrollHeight 
+    }
+    function setSuggests(arr){ suggests.innerHTML=''; (arr||[]).forEach(s=>{ const c=document.createElement('div'); c.className='chip'; c.textContent=s; c.addEventListener('click',()=>{ input.value=s; doSend() }); suggests.appendChild(c) }) }
+    function getUserToken(){ try{ const info = JSON.parse(localStorage.getItem('userInfo')||'null'); return info && info.token ? info.token : null }catch{ return null } }
+    
+    // File Upload Logic
+    uploadBtn.addEventListener('click', () => {
+        const token = getUserToken();
+        if (!token) {
+            append('assistant', '请先登录后再上传文件。');
+            return;
+        }
+        fileInput.click();
+    });
+
+    fileInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        // Check file type
+        const ext = file.name.split('.').pop().toLowerCase();
+        if (!['pdf', 'doc', 'docx', 'txt'].includes(ext)) {
+            append('assistant', '不支持的文件格式。请上传 PDF, DOC, DOCX 或 TXT 文件。');
+            fileInput.value = '';
+            return;
+        }
+
+        append('assistant', `正在上传文件: ${file.name}...`);
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        const token = getUserToken();
+        const headers = { 'Authorization': 'Bearer ' + token };
+        
+        // Detect API URL for upload
+        let uploadUrl = '/api/ai/upload';
+        if (window.location.port === '8083' || window.location.protocol === 'file:') {
+           uploadUrl = 'http://localhost:3001/api/ai/upload';
+        }
+
+        try {
+            // 1. Upload File
+            const uploadRes = await fetch(uploadUrl, {
+                method: 'POST',
+                headers: headers, // Fetch automatically sets Content-Type for FormData
+                body: formData
+            });
+            const uploadData = await uploadRes.json();
+            
+            if (!uploadRes.ok || !uploadData.success) {
+                throw new Error(uploadData.error?.message || '上传失败');
+            }
+            
+            const resumeId = uploadData.data.id; // Assuming structure based on resumeController/aiAnalysis
+            append('assistant', `上传成功，正在解析内容...`);
+            
+            // 2. Parse File
+            let parseUrl = '/api/assistant/parse-file';
+            if (window.location.port === '8083' || window.location.protocol === 'file:') {
+                parseUrl = 'http://localhost:3001/api/assistant/parse-file';
+            }
+            
+            const parseRes = await fetch(parseUrl, {
+                method: 'POST',
+                headers: { ...headers, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ resumeId })
+            });
+            const parseData = await parseRes.json();
+            
+            if (!parseRes.ok || !parseData.success) {
+                throw new Error(parseData.error || '解析失败');
+            }
+            
+            const text = parseData.data.text;
+            if (!text) throw new Error('解析内容为空');
+            
+            // Store context
+            pendingContext = `[Reference File Content (${file.name})]:\n${text}\n\n`;
+            append('assistant', `文件 **${file.name}** 已解析成功。内容将作为参考包含在您的下一个问题中。`);
+            
+        } catch (err) {
+            console.error('File upload error:', err);
+            append('assistant', `文件处理失败: ${err.message}`);
+        } finally {
+            fileInput.value = '';
+        }
+    });
+
+    async function doSend(){ 
+      const t=(input.value||'').trim(); 
+      if(!t) return; 
+      
+      messages.push({ role:'user', content:t }); 
+      append('user',t); 
+      input.value=''; 
+      
+      // Inject pending context if available
+      let contextMessage = t;
+      if (pendingContext) {
+          // We insert a system message or just prepend to the user message hiddenly?
+          // Usually best to just prepend to the last user message sent to API, 
+          // but keep the display message clean.
+          // However, `messages` array is what we send.
+          // Let's modify the last message in `messages` array.
+          messages[messages.length - 1].content = pendingContext + t;
+          pendingContext = null; // Clear after use
+      }
+
+      const token=getUserToken(); 
+      const headers={ 'Content-Type':'application/json' }; 
+      if(token){ headers['Authorization'] = 'Bearer '+token } 
+      
+      // 自动检测API地址
+      let apiUrl = '/api/assistant/chat';
+      // 如果是独立前端服务(如8083端口)或本地文件打开，则指向后端默认端口3001
+      if (window.location.port === '8083' || window.location.protocol === 'file:') {
+           apiUrl = 'http://localhost:3001/api/assistant/chat';
+      }
+
+      try {
+        const response = await fetch(apiUrl, { 
+          method:'POST', 
+          headers, 
+          body: JSON.stringify({ messages }) 
+        });
+        
+        let data;
+        try { data = await response.json(); } catch(e) { throw new Error('服务器响应非JSON格式'); }
+
+        if(!response.ok || !data.success){ 
+          const errorMsg = data?.error?.message || '服务暂不可用';
+          append('assistant', `错误: ${errorMsg}`); 
+          console.error('API Error:', data);
+          return; 
+        } 
+        
+        const reply = data.data.reply; 
+        messages.push({ role:'assistant', content:reply }); 
+        append('assistant',reply); 
+        setSuggests(data.data.suggestions);
+      } catch(e) { 
+        console.error('Chat Error:', e);
+        append('assistant', `网络或服务错误: ${e.message}`); 
+      }
+    }
+    sendBtn.addEventListener('click', doSend)
+    input.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); doSend() } })
+    append('assistant','您好，我是争湃·简历大师的 AI 助手。请描述您的需求。')
+    setSuggests(['生成岗位JD要点','优化候选人简历','根据JD提取关键词'])
+  </script>
+</main>
+</body>
+</html>

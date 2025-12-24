@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{PAGE_TITLE}} - 简历助手</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="/css/unified-design-system.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+        
+        /* 简约侧边栏 */
+        .sidebar {
+            background-color: var(--bg-primary);
+            border-right: 1px solid var(--border-light);
+            box-shadow: var(--shadow-sm);
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            width: 280px;
+            z-index: 40;
+            overflow-y: auto;
+        }
+        
+        .sidebar-header {
+            padding: var(--space-xl) var(--space-lg);
+            border-bottom: 1px solid var(--border-light);
+            background-color: var(--bg-primary);
+        }
+        
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+        }
+        
+        .sidebar-logo-icon {
+            width: 40px;
+            height: 40px;
+            background-color: var(--primary-color);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: var(--font-size-lg);
+        }
+        
+        .sidebar-logo-text h1 {
+            font-size: var(--font-size-lg);
+            font-weight: var(--font-weight-semibold);
+            color: var(--text-primary);
+            margin: 0;
+        }
+        
+        .sidebar-logo-text p {
+            font-size: var(--font-size-xs);
+            color: var(--text-tertiary);
+            margin: 0;
+        }
+        
+        /* 用户信息区域 */
+        .sidebar-user {
+            padding: var(--space-lg);
+            border-bottom: 1px solid var(--border-light);
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background-color: var(--primary-bg);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-color);
+            font-size: var(--font-size-sm);
+        }
+        
+        .user-details h3 {
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-weight-medium);
+            color: var(--text-primary);
+            margin: 0;
+        }
+        
+        .user-details p {
+            font-size: var(--font-size-xs);
+            color: var(--text-tertiary);
+            margin: 0;
+        }
+        
+        /* 导航菜单 */
+        .sidebar-nav {
+            padding: var(--space-md) 0;
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: var(--space-md) var(--space-lg);
+            margin: 0 var(--space-sm);
+            border-radius: var(--radius-md);
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-weight-medium);
+        }
+        
+        .nav-item:hover {
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+        
+        .nav-item.active {
+            background-color: var(--primary-bg);
+            color: var(--primary-color);
+            font-weight: var(--font-weight-semibold);
+        }
+        
+        .nav-item i {
+            width: 20px;
+            text-align: center;
+            margin-right: var(--space-md);
+            font-size: var(--font-size-base);
+        }
+        
+        /* 快速操作区域 */
+        .sidebar-actions {
+            padding: var(--space-lg);
+            border-top: 1px solid var(--border-light);
+            margin-top: auto;
+        }
+        
+        .action-title {
+            font-size: var(--font-size-xs);
+            font-weight: var(--font-weight-semibold);
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: var(--space-sm);
+        }
+        
+        .action-button {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: var(--space-sm) var(--space-md);
+            margin-bottom: var(--space-xs);
+            background-color: transparent;
+            border: 1px solid var(--border-medium);
+            border-radius: var(--radius-md);
+            color: var(--text-secondary);
+            font-size: var(--font-size-sm);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .action-button:hover {
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            border-color: var(--border-dark);
+        }
+        
+        .action-button i {
+            margin-right: var(--space-sm);
+        }
+        
+        /* 主内容区域 */
+        .main-content {
+            margin-left: 280px;
+            min-height: 100vh;
+            background-color: var(--bg-secondary);
+        }
+        
+        .content-header {
+            background-color: var(--bg-primary);
+            border-bottom: 1px solid var(--border-light);
+            padding: var(--space-xl);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: between;
+            gap: var(--space-lg);
+        }
+        
+        .header-title h1 {
+            font-size: var(--font-size-2xl);
+            font-weight: var(--font-weight-semibold);
+            color: var(--text-primary);
+            margin: 0;
+        }
+        
+        .header-title p {
+            font-size: var(--font-size-sm);
+            color: var(--text-tertiary);
+            margin: var(--space-xs) 0 0 0;
+        }
+        
+        /* 头部操作区域 */
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            margin-left: auto;
+        }
+        
+        .header-button {
+            display: flex;
+            align-items: center;
+            padding: var(--space-sm) var(--space-md);
+            background-color: transparent;
+            border: 1px solid var(--border-medium);
+            border-radius: var(--radius-md);
+            color: var(--text-secondary);
+            font-size: var(--font-size-sm);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .header-button:hover {
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            border-color: var(--border-dark);
+        }
+        
+        .header-button i {
+            margin-right: var(--space-sm);
+        }
+        
+        .header-button.primary {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .header-button.primary:hover {
+            background-color: var(--primary-dark);
+            border-color: var(--primary-dark);
+        }
+        
+        /* 内容区域 */
+        .content-body {
+            padding: var(--space-xl);
+        }
+        
+        /* 移动端适配 */
+        .mobile-header {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background-color: var(--bg-primary);
+            border-bottom: 1px solid var(--border-light);
+            padding: var(--space-md) var(--space-lg);
+            z-index: 30;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .mobile-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background-color: transparent;
+            border: none;
+            border-radius: var(--radius-md);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .mobile-toggle:hover {
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+        
+        .mobile-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 35;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .mobile-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+            
+            .mobile-overlay.open {
+                display: block;
+            }
+            
+            .content-header {
+                padding-top: calc(var(--space-xl) + 60px);
+            }
+        }
+        
+        /* 通知样式 */
+        .notification-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 400px;
+        }
+        
+        .notification {
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            padding: var(--space-md);
+            margin-bottom: var(--space-sm);
+            display: flex;
+            align-items: flex-start;
+            gap: var(--space-md);
+            animation: slideInRight 0.3s ease;
+        }
+        
+        .notification.success {
+            border-left: 4px solid var(--success-color);
+        }
+        
+        .notification.error {
+            border-left: 4px solid var(--error-color);
+        }
+        
+        .notification.warning {
+            border-left: 4px solid var(--warning-color);
+        }
+        
+        .notification.info {
+            border-left: 4px solid var(--info-color);
+        }
+        
+        .notification-icon {
+            flex-shrink: 0;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        
+        .notification.success .notification-icon {
+            background-color: var(--success-bg);
+            color: var(--success-color);
+        }
+        
+        .notification.error .notification-icon {
+            background-color: var(--error-bg);
+            color: var(--error-color);
+        }
+        
+        .notification.warning .notification-icon {
+            background-color: var(--warning-bg);
+            color: var(--warning-color);
+        }
+        
+        .notification.info .notification-icon {
+            background-color: var(--info-bg);
+            color: var(--info-color);
+        }
+        
+        .notification-content {
+            flex: 1;
+        }
+        
+        .notification-title {
+            font-weight: var(--font-weight-medium);
+            color: var(--text-primary);
+            margin-bottom: var(--space-xs);
+        }
+        
+        .notification-message {
+            font-size: var(--font-size-sm);
+            color: var(--text-secondary);
+            line-height: var(--line-height-normal);
+        }
+        
+        .notification-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0;
+            font-size: var(--font-size-base);
+            transition: color 0.2s ease;
+        }
+        
+        .notification-close:hover {
+            color: var(--text-secondary);
+        }
+        
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        /* 加载遮罩 */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            backdrop-filter: blur(4px);
+        }
+        
+        .loading-content {
+            background-color: var(--bg-primary);
+            padding: var(--space-xl);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-xl);
+            text-align: center;
+        }
+        
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border-light);
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto var(--space-md) auto;
+        }
+        
+        .loading-text {
+            color: var(--text-secondary);
+            font-size: var(--font-size-sm);
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* 内容动画 */
+        .content-fade-in {
+            animation: fadeInUp 0.4s ease-out;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 移动端头部 -->
+    <div class="mobile-header">
+        <button class="mobile-toggle" id="mobile-toggle">
+            <i class="fas fa-bars"></i>
+        </button>
+        <div class="mobile-logo">
+            <h1 class="text-lg font-semibold text-gray-900">简历助手</h1>
+        </div>
+        <button class="mobile-toggle">
+            <i class="fas fa-bell"></i>
+        </button>
+    </div>
+    
+    <!-- 移动端遮罩 -->
+    <div class="mobile-overlay" id="mobile-overlay"></div>
+
+    <!-- 左侧导航栏 -->
+    <div class="sidebar" id="sidebar">
+        <!-- Logo区域 -->
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <div class="sidebar-logo-icon">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <div class="sidebar-logo-text">
+                    <h1>简历助手</h1>
+                    <p>AI智能简历生成</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 用户信息 -->
+        <div class="sidebar-user">
+            <div class="user-info">
+                <div class="user-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="user-details">
+                    <h3 id="user-name">用户名</h3>
+                    <p id="user-role">免费用户</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主导航菜单 -->
+        <nav class="sidebar-nav">
+            <div class="space-y-1">
+                <a href="/pages/smart-dashboard.html" class="nav-item" data-page="smart-dashboard">
+                    <i class="fas fa-robot"></i>
+                    <span>智能中心</span>
+                </a>
+                <a href="/pages/dashboard.html" class="nav-item" data-page="dashboard">
+                    <i class="fas fa-file-alt"></i>
+                    <span>简历管理</span>
+                </a>
+                <a href="/pages/template-center.html" class="nav-item" data-page="template-center">
+                    <i class="fas fa-palette"></i>
+                    <span>模板中心</span>
+                </a>
+                <a href="/pages/ai-generator.html" class="nav-item" data-page="ai-generator">
+                    <i class="fas fa-magic"></i>
+                    <span>智能生成</span>
+                </a>
+                <a href="/pages/analytics-dashboard.html" class="nav-item" data-page="analytics-dashboard">
+                    <i class="fas fa-chart-line"></i>
+                    <span>数据分析</span>
+                </a>
+                <a href="/pages/advanced-search.html" class="nav-item" data-page="advanced-search">
+                    <i class="fas fa-search"></i>
+                    <span>高级搜索</span>
+                </a>
+                <a href="/pages/data-management.html" class="nav-item" data-page="data-management">
+                    <i class="fas fa-database"></i>
+                    <span>数据管理</span>
+                </a>
+                <a href="/pages/account-settings.html" class="nav-item" data-page="profile">
+                    <i class="fas fa-cog"></i>
+                    <span>账号设置</span>
+                </a>
+                <a href="/pages/company-management.html" class="nav-item" data-page="company">
+                    <i class="fas fa-building"></i>
+                    <span>企业管理</span>
+                </a>
+                <a href="/pages/subscription.html" class="nav-item" data-page="finance">
+                    <i class="fas fa-credit-card"></i>
+                    <span>订阅与财务</span>
+                </a>
+            </div>
+        </nav>
+
+        <!-- 快速操作 -->
+        <div class="sidebar-actions">
+            <h3 class="action-title">快速操作</h3>
+            <button class="action-button" onclick="createNewResume()">
+                <i class="fas fa-plus"></i>
+                <span>新建简历</span>
+            </button>
+            <button class="action-button" onclick="importData()">
+                <i class="fas fa-upload"></i>
+                <span>导入数据</span>
+            </button>
+            <button class="action-button" onclick="exportData()">
+                <i class="fas fa-download"></i>
+                <span>导出数据</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- 主内容区域 -->
+    <div class="main-content" id="main-content">
+        <!-- 顶部标题栏 -->
+        <div class="content-header">
+            <div class="header-content">
+                <div class="header-title">
+                    <h1 id="page-title">{{PAGE_TITLE}}</h1>
+                    <p id="page-subtitle">{{PAGE_SUBTITLE}}</p>
+                </div>
+                <div class="header-actions">
+                    <button class="header-button" onclick="showNotifications()">
+                        <i class="fas fa-bell"></i>
+                        <span>通知</span>
+                        <span class="notification-dot" id="notification-dot"></span>
+                    </button>
+                    <button class="header-button" onclick="showHelp()">
+                        <i class="fas fa-question-circle"></i>
+                        <span>帮助</span>
+                    </button>
+                    <button class="header-button primary" onclick="createNewResume()">
+                        <i class="fas fa-plus"></i>
+                        <span>新建简历</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 页面内容 -->
+        <div class="content-body content-fade-in">
+            {{PAGE_CONTENT}}
+        </div>
+    </div>
+
+    <!-- 通知容器 -->
+    <div class="notification-container" id="notification-container"></div>
+
+    <!-- 加载遮罩 -->
+    <div class="loading-overlay hidden" id="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <p class="loading-text">加载中...</p>
+        </div>
+    </div>
+
+    <!-- 脚本文件 -->
+    <script src="/js/ui-components.js"></script>
+    <script src="/js/resume-templates.js"></script>
+    <script src="/js/dashboard-charts.js"></script>
+    <script src="/js/advanced-search.js"></script>
+    <script src="/js/batch-operations.js"></script>
+    <script src="/js/page-integration.js"></script>
+    
+    <script>
+        // 统一布局脚本 - 简约清新版本
+        class UnifiedLayoutClean {
+            constructor() {
+                this.currentPage = '';
+                this.userData = null;
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.loadUserData();
+                this.setActiveNavigation();
+                this.checkNotifications();
+                this.setupMobileMenu();
+            }
+
+            setupEventListeners() {
+                // 点击外部关闭移动端菜单
+                document.addEventListener('click', (e) => {
+                    const sidebar = document.getElementById('sidebar');
+                    const mobileToggle = document.getElementById('mobile-toggle');
+                    const overlay = document.getElementById('mobile-overlay');
+                    
+                    if (!sidebar.contains(e.target) && !mobileToggle.contains(e.target)) {
+                        this.closeMobileMenu();
+                    }
+                });
+
+                // 窗口大小改变时的处理
+                window.addEventListener('resize', () => {
+                    if (window.innerWidth > 768) {
+                        this.closeMobileMenu();
+                    }
+                });
+            }
+
+            setupMobileMenu() {
+                const mobileToggle = document.getElementById('mobile-toggle');
+                const overlay = document.getElementById('mobile-overlay');
+                
+                mobileToggle.addEventListener('click', () => {
+                    this.toggleMobileMenu();
+                });
+                
+                overlay.addEventListener('click', () => {
+                    this.closeMobileMenu();
+                });
+            }
+
+            toggleMobileMenu() {
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.getElementById('mobile-overlay');
+                
+                sidebar.classList.toggle('open');
+                overlay.classList.toggle('open');
+            }
+
+            closeMobileMenu() {
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.getElementById('mobile-overlay');
+                
+                sidebar.classList.remove('open');
+                overlay.classList.remove('open');
+            }
+
+            loadUserData() {
+                // 模拟用户数据加载
+                this.userData = {
+                    name: '张三',
+                    role: 'VIP用户',
+                    avatar: '/images/avatar.png'
+                };
+                
+                document.getElementById('user-name').textContent = this.userData.name;
+                document.getElementById('user-role').textContent = this.userData.role;
+            }
+
+            setActiveNavigation() {
+                const currentPath = window.location.pathname;
+                const navItems = document.querySelectorAll('.nav-item');
+                
+                navItems.forEach(item => {
+                    const href = item.getAttribute('href');
+                    if (href === currentPath) {
+                        item.classList.add('active');
+                    } else {
+                        item.classList.remove('active');
+                    }
+                });
+            }
+
+            checkNotifications() {
+                // 模拟检查通知
+                const hasNotifications = Math.random() > 0.7;
+                const notificationDot = document.getElementById('notification-dot');
+                if (hasNotifications) {
+                    notificationDot.style.display = 'inline-block';
+                    notificationDot.style.cssText = `
+                        display: inline-block;
+                        width: 8px;
+                        height: 8px;
+                        background-color: var(--error-color, #ef4444);
+                        border-radius: 50%;
+                        margin-left: 4px;
+                    `;
+                } else {
+                    notificationDot.style.display = 'none';
+                }
+            }
+
+            // 公共方法
+            showNotification(message, type = 'info') {
+                this.createNotification(message, type);
+            }
+
+            createNotification(message, type = 'info') {
+                const container = document.getElementById('notification-container');
+                const notification = document.createElement('div');
+                notification.className = `notification ${type}`;
+                
+                const icons = {
+                    success: 'fa-check-circle',
+                    error: 'fa-exclamation-circle',
+                    warning: 'fa-exclamation-triangle',
+                    info: 'fa-info-circle'
+                };
+                
+                const titles = {
+                    success: '成功',
+                    error: '错误',
+                    warning: '警告',
+                    info: '提示'
+                };
+                
+                notification.innerHTML = `
+                    <div class="notification-icon">
+                        <i class="fas ${icons[type]}"></i>
+                    </div>
+                    <div class="notification-content">
+                        <div class="notification-title">${titles[type]}</div>
+                        <div class="notification-message">${message}</div>
+                    </div>
+                    <button class="notification-close" onclick="this.parentElement.remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                
+                container.appendChild(notification);
+                
+                // 自动移除通知
+                setTimeout(() => {
+                    if (notification.parentElement) {
+                        notification.remove();
+                    }
+                }, 5000);
+            }
+
+            showLoading(message = '加载中...') {
+                const overlay = document.getElementById('loading-overlay');
+                const textElement = overlay.querySelector('.loading-text');
+                textElement.textContent = message;
+                overlay.classList.remove('hidden');
+            }
+
+            hideLoading() {
+                const overlay = document.getElementById('loading-overlay');
+                overlay.classList.add('hidden');
+            }
+
+            // 页面跳转
+            navigateTo(page) {
+                this.showLoading();
+                setTimeout(() => {
+                    window.location.href = page;
+                }, 300);
+            }
+        }
+
+        // 全局函数
+        function createNewResume() {
+            if (window.unifiedLayoutClean) {
+                window.unifiedLayoutClean.navigateTo('/pages/ai-generator.html');
+            } else {
+                window.location.href = '/pages/ai-generator.html';
+            }
+        }
+
+        function importData() {
+            if (window.unifiedLayoutClean) {
+                window.unifiedLayoutClean.showNotification('导入功能开发中...', 'info');
+            }
+        }
+
+        function exportData() {
+            if (window.unifiedLayoutClean) {
+                window.unifiedLayoutClean.showNotification('导出功能开发中...', 'info');
+            }
+        }
+
+        function showNotifications() {
+            if (window.unifiedLayoutClean) {
+                window.unifiedLayoutClean.showNotification('暂无新通知', 'info');
+            }
+        }
+
+        function showHelp() {
+            if (window.unifiedLayoutClean) {
+                window.unifiedLayoutClean.showNotification('如需帮助，请联系客服', 'info');
+            }
+        }
+
+        function logout() {
+            if (window.uiComponents) {
+                window.uiComponents.showConfirm('确定要退出登录吗？', () => {
+                    window.location.href = '/pages/login.html';
+                });
+            } else if (confirm('确定要退出登录吗？')) {
+                window.location.href = '/pages/login.html';
+            }
+        }
+
+        // 初始化统一布局
+        window.unifiedLayoutClean = new UnifiedLayoutClean();
+
+        // 页面加载完成后的处理
+        document.addEventListener('DOMContentLoaded', function() {
+            // 隐藏加载遮罩
+            if (window.unifiedLayoutClean) {
+                window.unifiedLayoutClean.hideLoading();
+            }
+            
+            // 显示欢迎消息
+            setTimeout(() => {
+                if (window.unifiedLayoutClean) {
+                    window.unifiedLayoutClean.showNotification('欢迎使用简历助手！', 'success');
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>收银台 - SuperResumeMaster</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <script src="/js/user-auth.js"></script>
+    <script src="/js/header-profile.js"></script>
+    <script src="/js/sidebar.js"></script>
+    <script src="/js/payments-client.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+
+<body class="bg-gray-50">
+    <aside id="sidebar" class="fixed left-0 top-0 bottom-0 sidebar-modern z-40"></aside>
+    <header class="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20">
+        <div class="flex items-center justify-between p-4">
+            <div class="flex items-center space-x-4"><button class="menu-button p-2 rounded-lg hover:bg-gray-100"
+                    id="sidebar-toggle"><i class="fas fa-bars text-gray-600"></i></button>
+                <h1 class="brand-title text-lg font-bold text-gray-900">收银台</h1>
+            </div>
+            <div class="flex items-center space-x-4" id="header-right-section">
+                <!-- User Profile will be rendered here -->
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content pt-20" id="main-content">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="bg-white shadow rounded-lg overflow-hidden">
+                <div class="p-6 border-b border-gray-200 bg-gray-50">
+                    <h2 class="text-lg font-medium text-gray-900 mb-4">订单详情</h2>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-gray-600">商品名称</span>
+                        <span class="font-medium text-gray-900" id="product-name">加载中...</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">应付金额</span>
+                        <span class="text-2xl font-bold text-red-600" id="order-amount">¥0.00</span>
+                    </div>
+                </div>
+                <!-- ... content continues ... -->
+            </div>
+        </div>
+    </main>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof Sidebar !== 'undefined') {
+                Sidebar.init({ active: 'finance' });
+            }
+            if (typeof HeaderProfile !== 'undefined') {
+                HeaderProfile.init();
+            }
+        });
+    </script>
+
+            <div class="p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">选择支付方式</h3>
+                <div class="space-y-4">
+                    <label
+                        class="relative flex items-center p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors focus-within:ring-2 focus-within:ring-blue-500 border-blue-500 bg-blue-50"
+                        id="label-wechat">
+                        <input type="radio" name="payment-method" value="wechat"
+                            class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500" checked
+                            onchange="updateSelection(this)">
+                        <div class="ml-3 flex items-center flex-1">
+                            <i class="fab fa-weixin text-green-500 text-2xl mr-3"></i>
+                            <div>
+                                <span class="block text-sm font-medium text-gray-900">微信支付</span>
+                                <span class="block text-sm text-gray-500">亿万用户的选择，更快更安全</span>
+                            </div>
+                        </div>
+                        <i class="fas fa-check-circle text-blue-600 text-xl absolute right-4"></i>
+                    </label>
+
+                    <label
+                        class="relative flex items-center p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors focus-within:ring-2 focus-within:ring-blue-500"
+                        id="label-alipay">
+                        <input type="radio" name="payment-method" value="alipay"
+                            class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                            onchange="updateSelection(this)">
+                        <div class="ml-3 flex items-center flex-1">
+                            <i class="fab fa-alipay text-blue-500 text-2xl mr-3"></i>
+                            <div>
+                                <span class="block text-sm font-medium text-gray-900">支付宝</span>
+                                <span class="block text-sm text-gray-500">数亿用户都在用，安全可信赖</span>
+                            </div>
+                        </div>
+                        <i class="fas fa-check-circle text-blue-600 text-xl absolute right-4 hidden"></i>
+                    </label>
+                </div>
+
+                <div class="mt-8">
+                    <button id="pay-btn"
+                        class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 font-medium text-lg transition-colors flex justify-center items-center disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span>立即支付</span>
+                        <i class="fas fa-lock ml-2 text-sm opacity-75"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="qr-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-8 max-w-sm w-full text-center relative">
+            <button onclick="closeQrModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times"></i>
+            </button>
+            <h3 class="text-lg font-medium text-gray-900 mb-4">请扫码支付</h3>
+            <div id="qr-container" class="mb-4 flex justify-center p-2 border border-gray-200 rounded inline-block">
+            </div>
+            <p class="text-sm text-gray-500 mb-6">请使用<span id="pay-app-name"
+                    class="font-bold text-gray-900">微信</span>扫描二维码完成支付</p>
+            <div class="text-xs text-gray-400">支付完成后页面将自动跳转</div>
+        </div>
+    </div>
+
+    <script>
+        const userAuth = new UserAuth();
+        const paymentsClient = new PaymentsClient();
+
+        // 解析 URL 参数
+        const urlParams = new URLSearchParams(window.location.search);
+        const plan = urlParams.get('plan');
+        const amount = urlParams.get('amount');
+
+        // 验证参数
+        if (!plan || !amount) {
+            alert('无效的订单参数');
+            window.location.href = '/pages/subscription.html';
+        }
+
+        // 初始化页面
+        document.getElementById('product-name').textContent = `SuperResumeMaster ${getPlanName(plan)}会员`;
+        document.getElementById('order-amount').textContent = `¥${parseFloat(amount).toFixed(2)}`;
+
+        function getPlanName(p) {
+            const map = { 'premium': '高级版', 'enterprise': '企业版', 'basic': '基础版' };
+            return map[p] || p;
+        }
+
+        function updateSelection(radio) {
+            document.querySelectorAll('label').forEach(l => {
+                l.classList.remove('border-blue-500', 'bg-blue-50');
+                l.querySelector('.fa-check-circle').classList.add('hidden');
+            });
+            const label = radio.closest('label');
+            label.classList.add('border-blue-500', 'bg-blue-50');
+            label.querySelector('.fa-check-circle').classList.remove('hidden');
+        }
+
+        document.getElementById('pay-btn').addEventListener('click', async function () {
+            if (!userAuth.isLoggedIn()) {
+                window.location.href = `/pages/login.html?redirect=${encodeURIComponent(window.location.href)}`;
+                return;
+            }
+
+            const method = document.querySelector('input[name="payment-method"]:checked').value;
+            const btn = this;
+
+            try {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>处理中...';
+
+                // 创建订单
+                const order = await paymentsClient.createOrder(plan, method, amount);
+
+                if (method === 'alipay') {
+                    // 支付宝：跳转到支付页面（通常是表单提交）
+                    if (order.paymentData && order.paymentData.paymentUrl) {
+                        document.body.insertAdjacentHTML('beforeend', order.paymentData.paymentUrl);
+                    }
+                } else {
+                    // 微信：显示二维码
+                    if (order.paymentData && order.paymentData.codeUrl) {
+                        showQrCode(order.paymentData.codeUrl, '微信');
+                        startPolling(order.orderNo, method);
+                    } else {
+                        // 模拟环境或直接跳转
+                        alert('支付环境模拟：支付成功！');
+                        window.location.href = '/pages/subscription.html?payment=success';
+                    }
+                }
+            } catch (error) {
+                console.error(error);
+                alert('创建订单失败: ' + error.message);
+                btn.disabled = false;
+                btn.innerHTML = '<span>立即支付</span><i class="fas fa-lock ml-2 text-sm opacity-75"></i>';
+            }
+        });
+
+        function showQrCode(url, appName) {
+            const modal = document.getElementById('qr-modal');
+            const container = document.getElementById('qr-container');
+            document.getElementById('pay-app-name').textContent = appName;
+
+            container.innerHTML = '';
+            new QRCode(container, {
+                text: url,
+                width: 200,
+                height: 200
+            });
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeQrModal() {
+            document.getElementById('qr-modal').classList.add('hidden');
+            document.getElementById('pay-btn').disabled = false;
+            document.getElementById('pay-btn').innerHTML = '<span>立即支付</span><i class="fas fa-lock ml-2 text-sm opacity-75"></i>';
+            stopPolling();
+        }
+
+        let pollTimer = null;
+        function startPolling(orderNo, method) {
+            if (pollTimer) clearInterval(pollTimer);
+            pollTimer = setInterval(async () => {
+                try {
+                    const status = await paymentsClient.getOrderStatus(orderNo, method);
+                    if (status.status === 'paid') {
+                        clearInterval(pollTimer);
+                        alert('支付成功！');
+                        window.location.href = '/pages/subscription.html?payment=success';
+                    }
+                } catch (e) { console.error(e); }
+            }, 2000);
+        }
+
+        function stopPolling() {
+            if (pollTimer) clearInterval(pollTimer);
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>网络连接测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .success {
+            color: green;
+            background: #e8f5e8;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .error {
+            color: red;
+            background: #ffeaea;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .info {
+            color: blue;
+            background: #e8f4fd;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🌐 网络连接诊断测试</h1>
+    
+    <div class="test-section">
+        <h2>📋 测试环境信息</h2>
+        <div id="env-info" class="info"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔗 API连接测试</h2>
+        <button onclick="testHealth()">测试健康检查端点</button>
+        <button onclick="testLogin()">测试登录端点</button>
+        <button onclick="testAll()">运行所有测试</button>
+        <div id="test-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🛠️ 替代测试方法</h2>
+        <button onclick="testXHR()">使用XMLHttpRequest测试</button>
+        <button onclick="testImage()">使用Image对象测试</button>
+        <button onclick="testTimeout()">测试超时设置</button>
+        <div id="alt-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>📊 测试结果汇总</h2>
+        <div id="summary"></div>
+    </div>
+
+    <script>
+        // 显示环境信息
+        function showEnvInfo() {
+            const envInfo = document.getElementById('env-info');
+            const info = {
+                '协议': window.location.protocol,
+                '主机': window.location.host,
+                '来源': window.location.origin,
+                '用户代理': navigator.userAgent.substring(0, 100) + '...',
+                '时间': new Date().toLocaleString('zh-CN')
+            };
+            
+            envInfo.innerHTML = Object.entries(info).map(([key, value]) => 
+                `<strong>${key}:</strong> ${value}<br>`
+            ).join('');
+        }
+
+        // 添加测试结果
+        function addResult(containerId, title, success, data, error = null) {
+            const container = document.getElementById(containerId);
+            const resultDiv = document.createElement('div');
+            resultDiv.className = success ? 'success' : 'error';
+            resultDiv.innerHTML = `
+                <h4>${title}</h4>
+                <p><strong>状态:</strong> ${success ? '✅ 成功' : '❌ 失败'}</p>
+                ${data ? `<pre>${typeof data === 'object' ? JSON.stringify(data, null, 2) : data}</pre>` : ''}
+                ${error ? `<p><strong>错误:</strong> ${error}</p>` : ''}
+            `;
+            container.appendChild(resultDiv);
+        }
+
+        // 测试健康检查端点
+        async function testHealth() {
+            const startTime = Date.now();
+            try {
+                console.log('🧪 开始测试健康检查端点...');
+                const response = await fetch('/api/health', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    mode: 'cors',
+                    credentials: 'same-origin'
+                });
+                
+                const responseTime = Date.now() - startTime;
+                const data = await response.json();
+                
+                console.log('✅ 健康检查响应:', response.status, data);
+                addResult('test-results', '🏥 健康检查测试', true, {
+                    status: response.status,
+                    statusText: response.statusText,
+                    responseTime: `${responseTime}ms`,
+                    data: data
+                });
+                
+                return true;
+            } catch (error) {
+                const responseTime = Date.now() - startTime;
+                console.error('❌ 健康检查失败:', error);
+                addResult('test-results', '🏥 健康检查测试', false, null, 
+                    `${error.name}: ${error.message} (${responseTime}ms)`
+                );
+                return false;
+            }
+        }
+
+        // 测试登录端点
+        async function testLogin() {
+            const startTime = Date.now();
+            try {
+                console.log('🧪 开始测试登录端点...');
+                const response = await fetch('/api/auth/admin/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: 'admin',
+                        password: 'admin123'
+                    }),
+                    mode: 'cors',
+                    credentials: 'same-origin'
+                });
+                
+                const responseTime = Date.now() - startTime;
+                const data = await response.json();
+                
+                console.log('✅ 登录测试响应:', response.status, data);
+                addResult('test-results', '🔐 登录端点测试', true, {
+                    status: response.status,
+                    statusText: response.statusText,
+                    responseTime: `${responseTime}ms`,
+                    hasToken: !!data.token,
+                    user: data.user
+                });
+                
+                return true;
+            } catch (error) {
+                const responseTime = Date.now() - startTime;
+                console.error('❌ 登录测试失败:', error);
+                addResult('test-results', '🔐 登录端点测试', false, null, 
+                    `${error.name}: ${error.message} (${responseTime}ms)`
+                );
+                return false;
+            }
+        }
+
+        // 使用XMLHttpRequest测试
+        function testXHR() {
+            const startTime = Date.now();
+            try {
+                console.log('🧪 使用XMLHttpRequest测试...');
+                const xhr = new XMLHttpRequest();
+                
+                xhr.open('GET', '/api/health', true);
+                xhr.setRequestHeader('Content-Type', 'application/json');
+                
+                xhr.onload = function() {
+                    const responseTime = Date.now() - startTime;
+                    console.log('✅ XHR测试成功:', xhr.status, xhr.statusText);
+                    
+                    let responseData;
+                    try {
+                        responseData = JSON.parse(xhr.responseText);
+                    } catch (e) {
+                        responseData = xhr.responseText;
+                    }
+                    
+                    addResult('alt-results', '📡 XMLHttpRequest测试', true, {
+                        status: xhr.status,
+                        statusText: xhr.statusText,
+                        responseTime: `${responseTime}ms`,
+                        data: responseData
+                    });
+                };
+                
+                xhr.onerror = function() {
+                    const responseTime = Date.now() - startTime;
+                    console.error('❌ XHR测试失败');
+                    addResult('alt-results', '📡 XMLHttpRequest测试', false, null, 
+                        `Network error (${responseTime}ms)`
+                    );
+                };
+                
+                xhr.ontimeout = function() {
+                    const responseTime = Date.now() - startTime;
+                    console.error('❌ XHR测试超时');
+                    addResult('alt-results', '📡 XMLHttpRequest测试', false, null, 
+                        `Timeout (${responseTime}ms)`
+                    );
+                };
+                
+                xhr.timeout = 5000; // 5秒超时
+                xhr.send();
+                
+            } catch (error) {
+                const responseTime = Date.now() - startTime;
+                console.error('❌ XHR创建失败:', error);
+                addResult('alt-results', '📡 XMLHttpRequest测试', false, null, 
+                    `${error.name}: ${error.message} (${responseTime}ms)`
+                );
+            }
+        }
+
+        // 使用Image对象测试（绕过CORS）
+        function testImage() {
+            const startTime = Date.now();
+            try {
+                console.log('🧪 使用Image对象测试...');
+                const img = new Image();
+                
+                img.onload = function() {
+                    const responseTime = Date.now() - startTime;
+                    console.log('✅ Image测试成功');
+                    addResult('alt-results', '🖼️ Image对象测试', true, {
+                        responseTime: `${responseTime}ms`,
+                        note: 'Image loaded successfully - network is reachable'
+                    });
+                };
+                
+                img.onerror = function() {
+                    const responseTime = Date.now() - startTime;
+                    console.log('ℹ️ Image测试完成（可能有错误，但网络可达）');
+                    addResult('alt-results', '🖼️ Image对象测试', true, {
+                        responseTime: `${responseTime}ms`,
+                        note: 'Image error but network may be reachable'
+                    });
+                };
+                
+                // 使用带时间戳的URL避免缓存
+                img.src = '/api/health?t=' + Date.now();
+                
+            } catch (error) {
+                const responseTime = Date.now() - startTime;
+                console.error('❌ Image测试失败:', error);
+                addResult('alt-results', '🖼️ Image对象测试', false, null, 
+                    `${error.name}: ${error.message} (${responseTime}ms)`
+                );
+            }
+        }
+
+        // 测试超时设置
+        async function testTimeout() {
+            const startTime = Date.now();
+            try {
+                console.log('🧪 测试超时设置...');
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 100); // 100ms超时
+                
+                const response = await fetch('/api/health', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                const responseTime = Date.now() - startTime;
+                const data = await response.json();
+                
+                console.log('✅ 超时测试成功（快速响应）:', response.status);
+                addResult('alt-results', '⏱️ 超时测试', true, {
+                    status: response.status,
+                    responseTime: `${responseTime}ms`,
+                    note: 'Response faster than timeout'
+                });
+                
+            } catch (error) {
+                const responseTime = Date.now() - startTime;
+                console.log('❌ 超时测试结果:', error.name);
+                
+                if (error.name === 'AbortError') {
+                    addResult('alt-results', '⏱️ 超时测试', false, null, 
+                        `Request aborted due to timeout (${responseTime}ms)`
+                    );
+                } else {
+                    addResult('alt-results', '⏱️ 超时测试', false, null, 
+                        `${error.name}: ${error.message} (${responseTime}ms)`
+                    );
+                }
+            }
+        }
+
+        // 运行所有测试
+        async function testAll() {
+            console.log('🚀 开始运行所有测试...');
+            const summary = document.getElementById('summary');
+            summary.innerHTML = '<div class="info">🔄 正在运行测试，请稍候...</div>';
+            
+            // 清空之前的结果
+            document.getElementById('test-results').innerHTML = '';
+            document.getElementById('alt-results').innerHTML = '';
+            
+            const results = [];
+            
+            // 顺序运行测试以避免并发问题
+            results.push(await testHealth());
+            results.push(await testLogin());
+            
+            // 显示汇总
+            const successCount = results.filter(r => r).length;
+            const totalCount = results.length;
+            
+            summary.innerHTML = `
+                <div class="${successCount === totalCount ? 'success' : 'error'}">
+                    <h3>📊 测试结果汇总</h3>
+                    <p><strong>成功:</strong> ${successCount} / ${totalCount}</p>
+                    <p><strong>状态:</strong> ${successCount === totalCount ? '✅ 所有测试通过' : '❌ 部分测试失败'}</p>
+                    <p><strong>建议:</strong> ${successCount === totalCount ? 
+                        '网络连接正常，可以正常使用系统。' : 
+                        '检测到网络问题，请查看详细错误信息并排查。'}</p>
+                </div>
+            `;
+            
+            console.log('✅ 所有测试完成');
+        }
+
+        // 页面加载完成后显示环境信息
+        document.addEventListener('DOMContentLoaded', function() {
+            showEnvInfo();
+            console.log('🌐 网络诊断测试页面已加载');
+            console.log('📍 当前位置:', window.location.href);
+            console.log('🎯 建议：点击"运行所有测试"按钮开始诊断');
+        });
+    </script>
+</body>
+</html>

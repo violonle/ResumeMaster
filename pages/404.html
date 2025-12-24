@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>页面未找到 - 争湃·简历大师</title>
+    <script src="../js/tailwindcss.js"></script>
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Adaptive Layout Styles */
+        #main-content {
+            margin-left: 280px;
+            transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            width: auto;
+        }
+        #main-content.main-content-collapsed {
+            margin-left: 80px !important;
+        }
+        @media (max-width: 768px) {
+            #main-content {
+                margin-left: 0 !important;
+            }
+        }
+        
+        /* 404数字动画 */
+        .error-number {
+            font-size: 10rem;
+            font-weight: 800;
+            color: #2563eb;
+            animation: pulse 2s infinite;
+        }
+        
+        /* 搜索框焦点效果 */
+        .search-box:focus {
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            border-color: #3b82f6;
+        }
+        
+        /* 卡片悬停效果 */
+        .feature-card {
+            transition: all 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* 背景装饰 */
+        /* Removed AI style background decoration */
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen relative">
+    <aside id="sidebar" class="sidebar-modern"></aside>
+    <div id="sidebar-overlay" class="sidebar-overlay"></div>
+    
+    <div id="main-content" class="min-h-screen flex flex-col">
+        <header class="bg-white shadow-sm border-b border-gray-200 z-20">
+            <div class="flex items-center justify-between p-4">
+                <div class="flex items-center space-x-4">
+                    <button class="menu-button p-2 rounded-lg hover:bg-gray-100" id="sidebar-toggle">
+                        <i class="fas fa-bars text-gray-900"></i>
+                    </button>
+                    <h1 class="brand-title text-lg font-bold text-gray-900">页面未找到</h1>
+                </div>
+                <div class="flex items-center space-x-4" id="header-right-section"></div>
+            </div>
+        </header>
+        
+        <main class="flex-grow relative overflow-hidden">
+
+    <div class="relative z-10 min-h-screen flex items-center justify-center px-4">
+        <div class="max-w-4xl mx-auto text-center">
+            <!-- 404数字 -->
+            <div class="mb-8">
+                <h1 class="error-number leading-none">404</h1>
+            </div>
+            
+            <!-- 错误信息 -->
+            <div class="mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">页面走丢了</h2>
+                <p class="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+                    抱歉，您访问的页面不存在或已被移动。不过别担心，我们来帮您找到正确的方向！
+                </p>
+                
+                <!-- 搜索框 -->
+                <div class="max-w-md mx-auto mb-8">
+                    <div class="relative">
+                        <input 
+                            type="text" 
+                            placeholder="搜索页面或功能..." 
+                            class="search-box w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        >
+                        <div class="absolute left-4 top-1/2 transform -translate-y-1/2">
+                            <i class="fas fa-search text-gray-400"></i>
+                        </div>
+                        <button class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-600 text-white px-4 py-1.5 rounded-md hover:bg-blue-700 transition-colors">
+                            搜索
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 快捷操作按钮 -->
+                <div class="flex flex-col sm:flex-row items-center justify-center space-y-3 sm:space-y-0 sm:space-x-4">
+                    <a href="../index.html" class="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all font-medium">
+                        <i class="fas fa-home mr-2"></i>
+                        返回首页
+                    </a>
+                    <a href="dashboard.html" class="px-8 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-all font-medium">
+                        <i class="fas fa-tachometer-alt mr-2"></i>
+                        控制面板
+                    </a>
+                    <button onclick="history.back()" class="px-8 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:border-gray-400 hover:bg-gray-50 transition-all font-medium">
+                        <i class="fas fa-arrow-left mr-2"></i>
+                        返回上页
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 功能推荐区域 -->
+    <div class="relative z-10 bg-white py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h3 class="text-2xl font-bold text-gray-900 mb-4">或许您正在寻找这些功能</h3>
+                <p class="text-gray-600">以下是最受欢迎的功能，点击即可快速访问</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- 简历解析 -->
+                <a href="resume-upload-pc.html" class="feature-card bg-white rounded-2xl p-6 shadow-sm border border-gray-200 hover:border-blue-200">
+                    <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
+                        <i class="fas fa-file-upload text-blue-600 text-xl"></i>
+                    </div>
+                    <h4 class="text-lg font-semibold text-gray-900 mb-2">简历解析</h4>
+                    <p class="text-gray-600 text-sm">上传简历获得AI分析报告</p>
+                </a>
+                
+                <!-- AI助理 -->
+                <a href="ai-assistant.html" class="feature-card bg-white rounded-2xl p-6 shadow-sm border border-gray-200 hover:border-blue-200">
+                    <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
+                        <i class="fas fa-robot text-blue-600 text-xl"></i>
+                    </div>
+                    <h4 class="text-lg font-semibold text-gray-900 mb-2">AI助理</h4>
+                    <p class="text-gray-600 text-sm">智能对话获得专业建议</p>
+                </a>
+                
+                <!-- 简历对比 -->
+                <a href="comparison.html" class="feature-card bg-white rounded-2xl p-6 shadow-sm border border-gray-200 hover:border-blue-200">
+                    <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
+                        <i class="fas fa-balance-scale text-blue-600 text-xl"></i>
+                    </div>
+                    <h4 class="text-lg font-semibold text-gray-900 mb-2">简历对比</h4>
+                    <p class="text-gray-600 text-sm">多份简历深度对比分析</p>
+                </a>
+                
+                <!-- 简历库 -->
+                <a href="librarypool.html" class="feature-card bg-white rounded-2xl p-6 shadow-sm border border-gray-200 hover:border-blue-200">
+                    <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
+                        <i class="fas fa-folder-open text-blue-600 text-xl"></i>
+                    </div>
+                    <h4 class="text-lg font-semibold text-gray-900 mb-2">人才库</h4>
+                    <p class="text-gray-600 text-sm">管理和分析人才库</p>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 帮助信息 -->
+    <div class="relative z-10 bg-gray-50 py-16">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h3 class="text-2xl font-bold text-gray-900 mb-6">需要帮助？</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white rounded-xl p-6 shadow-sm">
+                    <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-question-circle text-blue-600 text-xl"></i>
+                    </div>
+                    <h4 class="font-semibold text-gray-900 mb-2">常见问题</h4>
+                    <p class="text-gray-600 text-sm mb-4">查看使用过程中的常见问题</p>
+                    <a href="#" class="text-blue-600 hover:text-blue-700 text-sm font-medium">查看FAQ →</a>
+                </div>
+                
+                <div class="bg-white rounded-xl p-6 shadow-sm">
+                    <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-life-ring text-blue-600 text-xl"></i>
+                    </div>
+                    <h4 class="font-semibold text-gray-900 mb-2">在线客服</h4>
+                    <p class="text-gray-600 text-sm mb-4">7×24小时在线技术支持</p>
+                    <a href="#" class="text-blue-600 hover:text-blue-700 text-sm font-medium">联系客服 →</a>
+                </div>
+                
+                <div class="bg-white rounded-xl p-6 shadow-sm">
+                    <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-book text-blue-600 text-xl"></i>
+                    </div>
+                    <h4 class="font-semibold text-gray-900 mb-2">使用指南</h4>
+                    <p class="text-gray-600 text-sm mb-4">详细的功能使用说明</p>
+                    <a href="#" class="text-blue-600 hover:text-blue-700 text-sm font-medium">阅读指南 →</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+        </main>
+    </div>
+
+    <script src="/js/ui-components.js"></script>
+    <script src="/js/user-auth.js"></script>
+    <script src="/js/header-profile.js"></script>
+    <script src="/js/sidebar.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof Sidebar !== 'undefined') {
+                Sidebar.init();
+            }
+            if (typeof HeaderProfile !== 'undefined') {
+                HeaderProfile.init('#header-right-section');
+            }
+        });
+    </script>
+    <script>
+        // 页面搜索功能
+        document.addEventListener('DOMContentLoaded', () => {
+            const ui = new UIComponents();
+            const searchInput = document.querySelector('.search-box');
+            const searchButton = document.querySelector('button');
+            
+            // 预设的页面和功能
+            const pages = {
+                '简历解析': 'resume-upload-pc.html',
+                '上传': 'resume-upload-pc.html',
+                'AI助理': 'ai-assistant.html',
+                '助理': 'ai-assistant.html',
+                '对话': 'ai-assistant.html',
+                '简历对比': 'comparison.html',
+                '对比': 'comparison.html',
+                '人才库': 'librarypool.html',
+                '库': 'librarypool.html',
+                '管理': 'librarypool.html',
+                '工作台': 'dashboard.html',
+                '控制台': 'dashboard.html',
+                '仪表板': 'dashboard.html',
+            '数据分析': 'data-analysis.html',
+            '分析': 'analysis.html',
+            '设置': 'account-settings.html',
+            '账号': 'account-settings.html',
+            '企业': 'company-management.html',
+            '公司': 'company-management.html',
+            '财务': 'subscription.html',
+            '订阅': 'subscription.html',
+            '个人': 'account-settings.html',
+            '登录': '/pages/login.html',
+            '注册': '/pages/login.html'
+            };
+            
+            function performSearch() {
+                const query = searchInput.value.trim().toLowerCase();
+                if (!query) return;
+                
+                // 寻找匹配的页面
+                for (const [keyword, page] of Object.entries(pages)) {
+                    if (keyword.toLowerCase().includes(query) || query.includes(keyword.toLowerCase())) {
+                        window.location.href = page;
+                        return;
+                    }
+                }
+                
+                // 如果没找到，跳转到搜索结果页面或显示提示
+                ui.showNotification(`没有找到与"${query}"相关的页面，请尝试其他关键词`, 'warning');
+            }
+            
+            searchButton.addEventListener('click', performSearch);
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    performSearch();
+                }
+            });
+            
+            // 自动聚焦搜索框
+            setTimeout(() => {
+                searchInput.focus();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

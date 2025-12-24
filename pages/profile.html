@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人中心 - 争湃·简历大师</title>
+    <script src="../js/tailwindcss.js"></script>
+    <script src="../js/ui-components.js"></script>
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="/js/user-auth.js"></script>
+    <style>
+        .btn-primary {
+            background: #2563eb;
+            color: #fff;
+            border-radius: .375rem;
+            padding: .5rem .75rem;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, .05)
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8
+        }
+
+        .tab-btn.active {
+            border-bottom: 2px solid #2563eb;
+            color: #2563eb;
+            background: transparent
+        }
+
+        .main-content {
+            margin-left: 280px;
+            padding: 80px 24px 24px;
+            min-height: 100vh
+        }
+
+        .sidebar-collapsed-root .main-content {
+            margin-left: 60px !important
+        }
+
+        @media (max-width:768px) {
+            .main-content {
+                margin-left: 0 !important;
+                padding: 80px 16px 16px
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="/css/sidebar.css">
+</head>
+
+<body class="bg-gray-50">
+    <aside id="sidebar" class="fixed left-0 top-0 bottom-0 sidebar-modern z-40"></aside>
+
+    <header class="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20">
+        <div class="flex items-center justify-between p-4">
+            <div class="flex items-center space-x-4">
+                <button id="sidebar-toggle" class="p-2 rounded hover:bg-gray-100">
+                    <i class="fas fa-bars text-gray-600"></i>
+                </button>
+                <h1 class="text-lg font-bold text-gray-900">个人中心</h1>
+            </div>
+            <div id="header-right-section" class="flex items-center space-x-4"></div>
+        </div>
+    </header>
+    <main id="main" class="main main-content">
+        <div class="p-6">
+            <div id="first-setup-modal"
+                class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+                <div class="bg-white rounded-xl shadow-lg w-full max-w-md p-6">
+                    <h2 class="text-xl font-bold text-gray-900 mb-4">完善个人信息</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">用户名</label>
+                            <input id="setup-username" type="text"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                                placeholder="请输入用户名">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">电话</label>
+                            <input id="setup-phone" type="tel" maxlength="11"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                                placeholder="请输入手机号">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">设置密码</label>
+                            <input id="setup-password" type="password"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                                placeholder="至少6位">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">确认密码</label>
+                            <input id="setup-password-confirm" type="password"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                                placeholder="请再次输入">
+                        </div>
+                    </div>
+                    <div class="mt-6 flex items-center justify-between">
+                        <button id="setup-skip"
+                            class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50">跳过</button>
+                        <div class="space-x-2">
+                            <button id="setup-save"
+                                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">保存</button>
+                            <button id="setup-next"
+                                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">下一步</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow mb-6">
+                <div class="border-b border-gray-200">
+                    <nav class="flex space-x-8 px-6">
+                        <button class="tab-btn active py-3 px-2 text-sm" data-tab="notify">通知设置</button>
+                        <button class="tab-btn py-3 px-2 text-sm" data-tab="security">安全设置</button>
+                        <button class="tab-btn py-3 px-2 text-sm" data-tab="backup">数据备份</button>
+                    </nav>
+                </div>
+
+                <div id="notify" class="hidden p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-semibold text-gray-900">通知设置</h3>
+                        <button class="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                            onclick="saveSection('notifications')">
+                            <i class="fas fa-save mr-1"></i>保存
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h4 class="font-medium text-gray-900 mb-3 flex items-center">
+                                <i class="fas fa-envelope text-blue-600 mr-2"></i>邮件通知
+                            </h4>
+                            <div class="space-y-3">
+                                <label class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" class="rounded border-gray-300 text-blue-600" checked>
+                                        <span class="ml-2 text-sm text-gray-700">新简历投递</span>
+                                    </div>
+                                    <span class="text-xs text-gray-500">即时</span>
+                                </label>
+                                <label class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" class="rounded border-gray-300 text-blue-600" checked>
+                                        <span class="ml-2 text-sm text-gray-700">面试安排</span>
+                                    </div>
+                                    <span class="text-xs text-gray-500">提前1小时</span>
+                                </label>
+                                <label class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" class="rounded border-gray-300 text-blue-600">
+                                        <span class="ml-2 text-sm text-gray-700">系统维护</span>
+                                    </div>
+                                    <span class="text-xs text-gray-500">每日摘要</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-900 mb-3 flex items-center">
+                                <i class="fas fa-bell text-green-600 mr-2"></i>应用通知
+                            </h4>
+                            <div class="space-y-3">
+                                <label class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" class="rounded border-gray-300 text-blue-600" checked>
+                                        <span class="ml-2 text-sm text-gray-700">桌面通知</span>
+                                    </div>
+                                    <span class="text-xs text-gray-500">允许</span>
+                                </label>
+                                <label class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" class="rounded border-gray-300 text-blue-600">
+                                        <span class="ml-2 text-sm text-gray-700">声音提醒</span>
+                                    </div>
+                                    <span class="text-xs text-gray-500">关闭</span>
+                                </label>
+                                <label class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" class="rounded border-gray-300 text-blue-600" checked>
+                                        <span class="ml-2 text-sm text-gray-700">推送通知</span>
+                                    </div>
+                                    <span class="text-xs text-gray-500">允许</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="security" class="hidden p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-semibold text-gray-900">安全设置</h3>
+                        <button class="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                            onclick="saveSection('security')">
+                            <i class="fas fa-save mr-1"></i>保存
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h4 class="font-medium text-gray-900 mb-3 flex items-center">
+                                <i class="fas fa-lock text-red-600 mr-2"></i>登录安全
+                            </h4>
+                            <div class="space-y-4">
+                                <div class="p-4 border border-gray-200 rounded-lg">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-sm font-medium text-gray-700">双重身份验证</span>
+                                        <input type="checkbox" class="rounded border-gray-300 text-blue-600" checked>
+                                    </div>
+                                    <p class="text-xs text-gray-500">使用手机验证码增强账户安全</p>
+                                </div>
+                                <div class="p-4 border border-gray-200 rounded-lg">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-sm font-medium text-gray-700">异地登录提醒</span>
+                                        <input type="checkbox" class="rounded border-gray-300 text-blue-600" checked>
+                                    </div>
+                                    <p class="text-xs text-gray-500">在新设备登录时发送通知</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-900 mb-3 flex items-center">
+                                <i class="fas fa-key text-blue-600 mr-2"></i>密码策略
+                            </h4>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">新密码</label>
+                                    <input
+                                        class="mt-1 w-full rounded-md border-gray-300 focus:ring-2 focus:ring-blue-200"
+                                        type="password" placeholder="请输入新密码">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">确认密码</label>
+                                    <input
+                                        class="mt-1 w-full rounded-md border-gray-300 focus:ring-2 focus:ring-blue-200"
+                                        type="password" placeholder="请再次输入新密码">
+                                </div>
+                                <div class="p-4 border border-gray-200 rounded-lg">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-sm font-medium text-gray-700">密码复杂度</span>
+                                        <input type="checkbox" class="rounded border-gray-300 text-blue-600" checked>
+                                    </div>
+                                    <p class="text-xs text-gray-500">要求包含大小写字母、数字和特殊字符</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="backup" class="hidden p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-semibold text-gray-900">数据备份</h3>
+                        <button class="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                            onclick="saveSection('backup')">
+                            <i class="fas fa-save mr-1"></i>保存设置
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h4 class="font-medium text-gray-900 mb-3">自动备份设置</h4>
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" class="rounded border-gray-300 text-blue-600" checked>
+                                        <span class="ml-2 text-sm text-gray-700">启用自动备份</span>
+                                    </div>
+                                    <span class="text-xs text-gray-500">每7天</span>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">备份频率</label>
+                                    <select
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+                                        <option>每天</option>
+                                        <option>每3天</option>
+                                        <option selected>每7天</option>
+                                        <option>每月</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">保留备份数量</label>
+                                    <select
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+                                        <option>3个</option>
+                                        <option selected>5个</option>
+                                        <option>10个</option>
+                                        <option>永久保留</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-900 mb-3">手动备份</h4>
+                            <div class="space-y-3">
+                                <div class="p-4 border border-gray-200 rounded-lg">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-sm font-medium text-gray-700">上次备份</span>
+                                        <span class="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded">成功</span>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mb-2">2024-11-14 14:30:25</p>
+                                    <p class="text-xs text-gray-500">文件大小: 15.2 MB</p>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button
+                                        class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                                        onclick="backupData()">
+                                        <i class="fas fa-download mr-1"></i>立即备份
+                                    </button>
+                                    <button
+                                        class="flex-1 bg-white text-blue-600 border border-blue-600 hover:bg-blue-50 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                                        onclick="importData()">
+                                        <i class="fas fa-upload mr-1"></i>恢复数据
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <script>
+        document.addEventListener('DOMContentLoaded', async function () { if (!requireAuth('/pages/login.html')) return; initTabs(); initFirstSetup(); });
+        function initTabs() { const tabs = document.querySelectorAll('.tab-btn'); const panes = { notify: document.getElementById('notify'), security: document.getElementById('security'), backup: document.getElementById('backup') }; const activeBtn = document.querySelector('.tab-btn.active'); const initKey = activeBtn ? activeBtn.getAttribute('data-tab') : 'notify'; Object.keys(panes).forEach(k => panes[k]?.classList.toggle('hidden', k !== initKey)); tabs.forEach(t => { t.addEventListener('click', e => { e.preventDefault(); const key = t.getAttribute('data-tab'); Object.keys(panes).forEach(k => panes[k]?.classList.toggle('hidden', k !== key)); tabs.forEach(x => x.classList.remove('active')); t.classList.add('active'); }); }); }
+        function initFirstSetup() { const m = document.getElementById('first-setup-modal'); try { const info = JSON.parse(localStorage.getItem('userInfo') || '{}'); const need = localStorage.getItem('firstSetupRequired') === '1' || !info?.user?.username || !info?.user?.phone; if (need) { m.classList.remove('hidden'); m.classList.add('flex'); } } catch (e) { } const saveBtn = document.getElementById('setup-save'); const nextBtn = document.getElementById('setup-next'); const skipBtn = document.getElementById('setup-skip'); const username = document.getElementById('setup-username'); const phone = document.getElementById('setup-phone'); const pwd = document.getElementById('setup-password'); const pwd2 = document.getElementById('setup-password-confirm'); const ua = new UserAuth(); const doSave = async () => { const u = username.value.trim(); const p = phone.value.trim(); if (u || p) { try { await ua.updateProfile({ username: u || undefined, phone: p || undefined }); const info = JSON.parse(localStorage.getItem('userInfo') || '{}'); if (info && info.user) { if (u) info.user.username = u; if (p) info.user.phone = p; localStorage.setItem('userInfo', JSON.stringify(info)); } } catch (e) { ui.showNotification(e.message || '保存失败', 'error'); return } } const pw = pwd.value.trim(); const pw2 = pwd2.value.trim(); if (pw || pw2) { if (pw.length < 6) { ui.showNotification('密码至少6位', 'warning'); return } if (pw !== pw2) { ui.showNotification('两次密码不一致', 'warning'); return } try { const r = await ua.setPassword(pw); if (!r.success) { ui.showNotification(r.message || '设置密码失败', 'error'); return } } catch (e) { ui.showNotification(e.message || '设置密码失败', 'error'); return } } ui.showNotification('保存成功', 'success'); localStorage.removeItem('firstSetupRequired'); }; saveBtn.addEventListener('click', async () => { await doSave() }); const goCompany = () => { localStorage.removeItem('firstSetupRequired'); window.location.href = 'company-management.html'; }; nextBtn.addEventListener('click', async () => { await doSave(); goCompany(); }); skipBtn.addEventListener('click', () => { goCompany(); }); }
+
+        // 系统设置相关函数
+        function saveSection(section) {
+            const sectionNames = {
+                'notifications': '通知设置',
+                'security': '安全设置',
+                'backup': '备份设置'
+            };
+            const name = sectionNames[section] || section;
+            ui.showNotification(`${name} 已保存！`, 'success');
+        }
+
+        function backupData() {
+            ui.showNotification('数据备份功能开发中，将生成完整的系统数据备份文件...', 'info');
+        }
+
+        function importData() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json,.csv,.xml';
+            input.onchange = function (e) {
+                const file = e.target.files[0];
+                if (file) {
+                    ui.showNotification(`正在导入数据文件: ${file.name}`, 'info');
+                }
+            };
+            input.click();
+        }
+    </script>
+    <script src="/js/sidebar.js"></script>
+    <script src="../js/header-profile.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof Sidebar !== 'undefined') {
+                Sidebar.init({ mount: '#sidebar', active: 'profile' });
+            }
+            if (typeof HeaderProfile !== 'undefined') {
+                HeaderProfile.init('#header-right-section');
+            }
+        });
+    </script>
+</body>
+
+</html>

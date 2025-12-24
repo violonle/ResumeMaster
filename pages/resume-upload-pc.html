@@ -1,0 +1,2938 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简历解析 - 争湃·简历大师</title>
+    <script src="../js/tailwindcss.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <script src="../js/user-auth.js"></script>
+    <script src="../js/ai-analyzer.js"></script>
+    <script src="../js/resume-data.js?v=3"></script>
+    <script src="../js/ui-components.js"></script>
+    <link rel="stylesheet" href="/css/design-system.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+</head>
+<body class="bg-gray-50">
+    <aside id="sidebar" class="fixed left-0 top-0 bottom-0 sidebar-modern z-40"></aside>
+    <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var s = document.createElement('script');
+            s.src = '/js/sidebar.js';
+            s.onload = function() {
+                Sidebar.init({ mount: '#sidebar', active: 'resume' }).then(() => {
+                    // 侧边栏加载完成后更新订阅信息
+                    (async function(){
+                        try{
+                            const token = (JSON.parse(localStorage.getItem('userInfo')||'{}').token)||null;
+                            const headers = token? { Authorization: 'Bearer '+token } : {};
+                            
+                            const bases = [
+                                (window.resumeDataManager && window.resumeDataManager.apiBaseUrl) ? window.resumeDataManager.apiBaseUrl : (window.userAuthInstance && window.userAuthInstance.apiBaseUrl ? window.userAuthInstance.apiBaseUrl : '/api'),
+                                'http://localhost:3001/api',
+                                'http://localhost:3000/api'
+                            ];
+
+                            let baseUrl = bases[0];
+                            let cur = null;
+                            let usage = null;
+                            for (const b of bases) {
+                                try {
+                                    const c = await fetch(`${b}/subscription/current`, { headers }).then(r=>r.json()).catch(()=>null);
+                                    const u = await fetch(`${b}/subscription/usage`, { headers }).then(r=>r.json()).catch(()=>null);
+                                    if (c || u) { baseUrl = b; cur = c; usage = u; break; }
+                                } catch (_) { continue }
+                            }
+                            
+                            const statusEl = document.getElementById('sub-status') || document.getElementById('sidebar-sub-status');
+                            const progressEl = document.getElementById('sub-progress') || document.getElementById('sidebar-sub-progress');
+                            const renewEl = document.getElementById('sub-renew') || document.getElementById('sidebar-sub-renew');
+                            
+                            if(!statusEl) return;
+            
+                            const plan = cur && cur.data ? (cur.data.planType || 'free') : 'unknown';
+                            const expiresAt = cur && cur.data ? (cur.data.expiresAt || cur.data.expires_at) : null;
+                            const leftDays = (function(){ if(!expiresAt) return null; const d = Math.ceil((new Date(expiresAt)-Date.now())/(1000*60*60*24)); return d })();
+                            
+                            statusEl.textContent = plan;
+                            
+                            const u = usage && usage.data ? usage.data : { aiAnalysis:0,resumeUpload:0,jobMatching:0 };
+                            const used = (u.aiAnalysis||0) + (u.resumeUpload||0) + (u.jobMatching||0);
+                            const pct = Math.max(0, Math.min(100, Math.round((used%100)/100*100)));
+                            
+                            if(progressEl) progressEl.style.width = pct+'%';
+                            if(renewEl) renewEl.textContent = leftDays!=null ? `距离到期还有 ${leftDays} 天` : '使用量与到期信息暂不可用';
+                        }catch(e){ console.error(e) }
+                    })();
+                });
+            };
+            document.body.appendChild(s);
+        });
+    </script>
+
+    
+
+    <!-- 头部 -->
+    <header>
+        <div class="header-content">
+            <div class="flex items-center space-x-4">
+                <button class="menu-button p-2 rounded-lg hover:bg-gray-100" id="sidebar-toggle">
+                    <i class="fas fa-bars text-gray-900"></i>
+                </button>
+                <h1 class="text-lg font-bold text-gray-900">简历解析</h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button class="p-2 rounded-lg hover:bg-gray-100">
+                    <i class="fas fa-upload text-gray-900"></i>
+                </button>
+                <button class="p-2 rounded-lg hover:bg-gray-100">
+                    <i class="fas fa-user-circle text-gray-900"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主要内容 -->
+    <main class="main-content" id="main-content">
+        <div class="p-6">
+
+    <div class="max-w-7xl mx-auto p-6">
+        <!-- 页面标题 -->
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-gray-900 mb-4">AI简历智能解析</h1>
+            <p class="text-xl text-gray-600 mb-8">选择简历进行解析，获得专业的AI分析报告和优化建议</p>
+            
+            <!-- 功能特色 -->
+            <div class="flex justify-center space-x-8 text-sm text-gray-500">
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-check-circle text-green-500"></i>
+                    <span>支持多种格式</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-check-circle text-green-500"></i>
+                    <span>AI智能分析</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-check-circle text-green-500"></i>
+                    <span>专业优化建议</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-check-circle text-green-500"></i>
+                    <span>安全隐私保护</span>
+                </div>
+            </div>
+        </div>
+
+        
+
+        <div class="w-full">
+            <!-- 主内容区域 -->
+            <div class="space-y-6">
+                <!-- 最新导入简历 -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200">
+                    <div class="flex items-center justify-between p-6 border-b border-gray-200">
+                        <h2 class="text-2xl font-semibold text-gray-900">已选择简历</h2>
+                        <div class="flex items-center space-x-4">
+                            <button id="upload-resume-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center">
+                                <i class="fas fa-upload mr-2"></i>
+                                选择解析的简历
+                            </button>
+                            <span class="text-sm text-gray-500" id="selected-resume-count">已选择 0 份简历</span>
+                        </div>
+                    </div>
+                    
+                    <!-- 搜索和筛选区域 -->
+                    <div class="p-6 space-y-4 border-b border-gray-200 bg-gray-50 hidden">
+                        <div class="flex flex-col sm:flex-row gap-4">
+                            <!-- 搜索框 -->
+                            <div class="flex-1">
+                                <div class="relative">
+                                    <input type="text" id="library-search-input" placeholder="搜索简历名称、姓名或关键词..." 
+                                           class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    <div class="absolute left-3 top-1/2 transform -translate-y-1/2">
+                                        <i class="fas fa-search text-gray-400"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 职位筛选 -->
+                            <div class="sm:w-48">
+                                <select id="library-position-filter" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="">全部职位</option>
+                                    <option value="frontend">前端开发</option>
+                                    <option value="backend">后端开发</option>
+                                    <option value="fullstack">全栈开发</option>
+                                    <option value="mobile">移动开发</option>
+                                    <option value="ui">设计师</option>
+                                    <option value="pm">产品经理</option>
+                                    <option value="test">测试工程师</option>
+                                    <option value="data">数据分析</option>
+                                    <option value="ops">运营专员</option>
+                                    <option value="other">其他</option>
+                                </select>
+                            </div>
+                            
+                            <!-- 排序方式 -->
+                            <div class="sm:w-40">
+                                <select id="library-sort-filter" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="time-desc">最新上传</option>
+                                    <option value="time-asc">最早上传</option>
+                                    <option value="name-asc">姓名 A-Z</option>
+                                    <option value="name-desc">姓名 Z-A</option>
+                                    <option value="score-desc">评分高低</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- 统计信息和操作 -->
+                        <div class="flex items-center justify-between text-sm text-gray-600">
+                            <div class="flex items-center space-x-4">
+                                <span id="library-filtered-count">共找到 0 份简历</span>
+                                <span id="library-selected-count">已选择 0 份</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <button id="library-select-all-btn" class="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                                    <i class="fas fa-check-square mr-1"></i>全选
+                                </button>
+                                <button id="library-clear-selection-btn" class="text-gray-600 hover:text-gray-700 text-sm font-medium">
+                                    <i class="fas fa-times mr-1"></i>清空选择
+                                </button>
+                                <button id="add-to-list-btn" class="text-green-600 hover:text-green-700 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                    <i class="fas fa-plus mr-1"></i>加入清单 (<span id="add-to-list-count">0</span>)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 简历列表区域 -->
+                    <div class="flex-1 flex flex-col min-h-0">
+                        <div class="overflow-y-auto px-6 py-4" style="max-height: 500px;">
+                            <div class="space-y-2" id="selected-resume-list">
+                                <!-- 简历项目将由JavaScript动态生成 -->
+                            </div>
+                        </div>
+                        
+                        <!-- 分页控件 -->
+                        <div class="flex-shrink-0 border-t border-gray-200 px-6 py-4 bg-gray-50 hidden">
+                            <div class="flex items-center justify-between">
+                                <div class="text-sm text-gray-600">
+                                    显示第 <span id="library-page-info-start">1</span>-<span id="library-page-info-end">10</span> 条，共 <span id="library-page-info-total">0</span> 条
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <button id="library-first-page-btn" class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                        <i class="fas fa-angle-double-left mr-1"></i>首页
+                                    </button>
+                                    <button id="library-prev-page-btn" class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                        <i class="fas fa-angle-left mr-1"></i>上一页
+                                    </button>
+                                    <div class="flex items-center space-x-1" id="library-page-numbers">
+                                        <!-- 页码按钮将由JavaScript动态生成 -->
+                                    </div>
+                                    <button id="library-next-page-btn" class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">
+                                        下一页<i class="fas fa-angle-right ml-1"></i>
+                                    </button>
+                                    <button id="library-last-page-btn" class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">
+                                        尾页<i class="fas fa-angle-double-right ml-1"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 底部操作区域 -->
+                    <div class="flex-shrink-0 border-t border-gray-200 p-6 bg-white">
+                        <div class="text-center">
+                            <div class="flex items-center justify-center space-x-4">
+                                <button id="add-to-analysis-list-btn" class="bg-white border-2 border-blue-600 text-blue-600 py-4 px-8 rounded-xl font-medium hover:bg-blue-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-lg inline-flex items-center" disabled>
+                                    <i class="fas fa-plus mr-2"></i>
+                                    加入分析清单 (<span id="analysis-list-count">0</span>)
+                                </button>
+                                <button id="analyze-btn" type="button" class="bg-blue-600 text-white py-4 px-8 rounded-xl font-medium hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-lg inline-flex items-center" disabled>
+                                    <i class="fas fa-cog mr-2"></i>
+                                    开始解析 (<span id="library-analyze-count">0</span>)
+                                </button>
+                            </div>
+                            <p class="text-sm text-gray-500 mt-3">选择简历后点击“加入分析清单”，然后点击“开始分析”；或直接点击“开始解析”</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 文件列表 -->
+                <div id="file-list-container" class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hidden">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900">待分析文件</h3>
+                        <button class="text-sm text-gray-500 hover:text-gray-700">清空列表</button>
+                    </div>
+                    <div id="file-list" class="space-y-3"></div>
+                </div>
+                
+                <!-- 分析结果预览 -->
+                <div id="analysis-preview" class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hidden">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">分析进度</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600">解析文档结构</span>
+                            <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-check text-green-600 text-xs"></i>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600">提取个人信息</span>
+                            <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-check text-green-600 text-xs"></i>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600">AI智能分析</span>
+                            <div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center analysis-progress">
+                                <i class="fas fa-spinner fa-spin text-blue-600 text-xs"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 单人分析结果 -->
+                <div id="single-analysis-result" class="bg-white rounded-2xl shadow-lg p-6 hidden">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h2 id="sar-name" class="text-2xl font-bold text-gray-900">候选人</h2>
+                            <p id="sar-sub" class="text-gray-600">毕业院校 / 最近公司与岗位 / 薪资要求</p>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <div id="sar-score-badge" class="hidden px-4 py-2 bg-blue-100 text-blue-800 rounded-lg font-bold text-lg">
+                                综合评分 <span id="sar-score-val">0</span>
+                            </div>
+                            <button id="sar-download-pdf" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"><i class="fas fa-file-pdf mr-2"></i>导出PDF</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Row 1: Basic Info & Radar Chart -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                        <!-- Basic Info (1 col) -->
+                        <div class="bg-white rounded-2xl p-6 border shadow-sm">
+                            <h3 class="text-lg font-bold text-gray-900 mb-4">基本信息</h3>
+                            <div id="sar-basic" class="space-y-3 text-sm text-gray-700"></div>
+                        </div>
+                        <!-- Radar Chart (2 cols) -->
+                        <div class="bg-white rounded-2xl p-6 border shadow-sm lg:col-span-2">
+                            <h3 class="text-lg font-bold text-gray-900 mb-4">能力雷达图</h3>
+                            <div style="height:300px; width:100%"><div id="sar-radar" style="width:100%;height:100%"></div></div>
+                        </div>
+                    </div>
+
+                    <!-- Row 2: Strengths, Weaknesses, Advice -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                        <div class="bg-white rounded-2xl p-6 border shadow-sm">
+                            <h4 class="font-semibold text-blue-800 mb-3 bg-blue-50 p-2 rounded text-center">核心优势</h4>
+                            <ul id="sar-strengths" class="list-disc list-inside space-y-2 text-sm text-gray-700 pl-2"></ul>
+                        </div>
+                        <div class="bg-white rounded-2xl p-6 border shadow-sm">
+                            <h4 class="font-semibold text-orange-800 mb-3 bg-orange-50 p-2 rounded text-center">潜在不足</h4>
+                            <ul id="sar-weaknesses" class="list-disc list-inside space-y-2 text-sm text-gray-700 pl-2"></ul>
+                        </div>
+                        <div class="bg-white rounded-2xl p-6 border shadow-sm">
+                            <h4 class="font-semibold text-green-800 mb-3 bg-green-50 p-2 rounded text-center">职业发展建议</h4>
+                            <ul id="sar-advices" class="list-disc list-inside space-y-2 text-sm text-gray-700 pl-2"></ul>
+                        </div>
+                    </div>
+                    
+                    <!-- Row 3: Summary Report -->
+                    <div class="bg-white rounded-2xl p-6 border shadow-sm">
+                        <h3 class="text-lg font-bold text-gray-900 mb-4">总结报告</h3>
+                        <p id="sar-summary" class="text-gray-700 leading-relaxed text-sm whitespace-pre-wrap"></p>
+                    </div>
+                </div>
+
+                <!-- 简历对比结果 -->
+                <div id="comparison-analysis-result" class="bg-white rounded-2xl shadow-lg p-6 hidden">
+                    <div class="border-b pb-4 mb-6">
+                        <h2 class="text-2xl font-bold text-gray-900">简历对比分析报告</h2>
+                    </div>
+                    
+                    <!-- 对比雷达图 -->
+                    <div class="mb-8 bg-white p-4 rounded-xl border">
+                         <h3 class="font-bold text-gray-900 mb-4 text-center">能力维度对比</h3>
+                         <div style="height:400px; width:100%"><div id="comparison-radar" style="width:100%;height:100%"></div></div>
+                    </div>
+                    
+                    <!-- 对比表格 -->
+                    <div class="overflow-x-auto mb-8 rounded-xl border">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">对比维度</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/3">简历 A</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/3">简历 B</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">胜出</th>
+                                </tr>
+                            </thead>
+                            <tbody id="comparison-table-body" class="bg-white divide-y divide-gray-200 text-sm"></tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- 总结建议 -->
+                    <div class="bg-blue-50 p-6 rounded-xl border border-blue-100">
+                        <h3 class="font-bold text-blue-900 mb-3">总结建议</h3>
+                        <div id="comparison-summary" class="text-blue-800 text-sm leading-relaxed"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 上传简历模态框 -->
+    <div id="upload-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl max-w-[1100px] w-full max-h-[80vh] overflow-hidden flex flex-col">
+            <!-- 模态框头部 -->
+            <div class="flex-shrink-0 flex items-center justify-between p-6 border-b border-gray-200">
+                <h2 class="text-2xl font-bold text-gray-900">选择解析的简历</h2>
+                <button id="close-upload-modal" class="text-gray-400 hover:text-gray-600 text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto p-8">
+                <div class="grid grid-cols-2 gap-8">
+                    <div class="p-6 border-2 border-dashed border-gray-200 rounded-xl">
+                        <div class="w-20 h-20 mx-auto bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-cloud-upload-alt text-3xl text-blue-600"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-900 mb-3 text-center">文件上传</h3>
+                        <div id="modal-drop-zone" class="drop-zone border-3 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-blue-400 hover:bg-blue-50 transition-all cursor-pointer">
+                            <div class="space-y-2">
+                                <h4 class="text-base font-medium text-gray-900">拖拽文件到这里</h4>
+                                <p class="text-sm text-gray-600">或点击选择文件</p>
+                                <p class="text-xs text-gray-500">支持 PDF、DOC、DOCX、TXT，≤10MB</p>
+                            </div>
+                        </div>
+                        <input type="file" id="modal-file-input" class="hidden" accept=".pdf,.doc,.docx,.txt" multiple>
+                        <div id="modal-file-list-container" class="hidden mt-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-sm font-semibold text-gray-900">已选择文件</h3>
+                                <button id="modal-clear-files-btn" class="text-xs text-gray-500 hover:text-gray-700">清空列表</button>
+                            </div>
+                            <div id="modal-file-list" class="space-y-2"></div>
+                        </div>
+                        <button id="modal-import-from-link-btn" class="mt-6 w-full p-4 border-2 border-dashed border-gray-200 rounded-xl hover:border-orange-300 hover:bg-orange-50 transition-all">
+                            <div class="flex items-center justify-center space-x-2 text-orange-600">
+                                <i class="fas fa-link"></i>
+                                <span>链接导入</span>
+                            </div>
+                        </button>
+                    </div>
+                    <div class="p-6 border rounded-xl">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-gray-900">人才库</h3>
+                            <div class="text-sm text-gray-600" id="library-selected-count">已选择 0 份</div>
+                        </div>
+                        <div class="flex flex-col sm:flex-row gap-3 mb-4">
+                            <div class="flex-1">
+                                <div class="relative">
+                                    <input id="library-search-input" type="text" placeholder="搜索姓名、职位或关键词" class="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    <div class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><i class="fas fa-search"></i></div>
+                                </div>
+                            </div>
+                            <div class="sm:w-40">
+                                <select id="library-position-filter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="">全部职位</option>
+                                    <option value="frontend">前端开发</option>
+                                    <option value="backend">后端开发</option>
+                                    <option value="fullstack">全栈开发</option>
+                                    <option value="mobile">移动开发</option>
+                                    <option value="ui">设计师</option>
+                                    <option value="pm">产品经理</option>
+                                    <option value="test">测试工程师</option>
+                                    <option value="data">数据分析</option>
+                                    <option value="ops">运营专员</option>
+                                    <option value="other">其他</option>
+                                </select>
+                            </div>
+                            <div class="sm:w-36">
+                                <select id="library-sort-filter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="time-desc">最新上传</option>
+                                    <option value="time-asc">最早上传</option>
+                                    <option value="name-asc">姓名 A-Z</option>
+                                    <option value="name-desc">姓名 Z-A</option>
+                                    <option value="score-desc">评分高低</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="text-sm text-gray-600 mb-2" id="library-filtered-count">共找到 0 份简历</div>
+                        <div id="library-resume-list" class="space-y-2" style="max-height:40vh; overflow:hidden"></div>
+                        <div class="flex items-center justify-between mt-4">
+                            <div class="text-xs text-gray-600">显示第 <span id="library-page-info-start">0</span>-<span id="library-page-info-end">0</span> 条，共 <span id="library-page-info-total">0</span> 条</div>
+                            <div class="flex items-center space-x-2">
+                                <button id="library-first-page-btn" class="px-3 py-1 text-xs border border-gray-300 rounded-lg hover:bg-gray-100" disabled>首页</button>
+                                <button id="library-prev-page-btn" class="px-3 py-1 text-xs border border-gray-300 rounded-lg hover:bg-gray-100" disabled>上一页</button>
+                                <button id="library-next-page-btn" class="px-3 py-1 text-xs border border-gray-300 rounded-lg hover:bg-gray-100">下一页</button>
+                                <button id="library-last-page-btn" class="px-3 py-1 text-xs border border-gray-300 rounded-lg hover:bg-gray-100">尾页</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex-shrink-0 p-6 border-t border-gray-200 bg-white">
+                <div class="flex items-center justify-between">
+                    <p class="text-sm text-gray-500">一次最多可上传 5 个文件</p>
+                    <div class="flex space-x-3">
+                        <button id="cancel-upload-modal" class="px-6 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all">取消</button>
+                        <button id="confirm-upload-btn" class="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed" disabled>确定</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 链接导入模态框 -->
+    <div id="link-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900">从链接导入</h2>
+                    <button id="close-link-modal" class="text-gray-400 hover:text-gray-600 text-2xl">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">简历链接地址</label>
+                        <input type="url" id="resume-link-input" placeholder="https://www.linkedin.com/in/yourprofile" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div class="text-sm text-gray-500">
+                        <p>支持的平台：</p>
+                        <ul class="list-disc list-inside mt-1 space-y-1">
+                            <li>LinkedIn 个人档案</li>
+                            <li>GitHub Profile</li>
+                            <li>个人简历网站</li>
+                        </ul>
+                    </div>
+                    <div class="flex space-x-3 pt-4">
+                        <button id="import-link-btn" class="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-all">
+                            <i class="fas fa-download mr-2"></i>开始导入
+                        </button>
+                        <button id="cancel-link-modal" class="px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all">
+                            取消
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 简历详情模态框 -->
+    <div id="view-resume-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col">
+            <div class="p-6 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
+                <h2 class="text-xl font-bold text-gray-900" id="view-resume-title">简历详情</h2>
+                <button id="close-view-resume-modal" class="text-gray-400 hover:text-gray-600 text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1" id="view-resume-content">
+                <!-- Content will be loaded here -->
+                <div class="flex justify-center items-center h-full">
+                    <i class="fas fa-spinner fa-spin text-4xl text-blue-500"></i>
+                </div>
+            </div>
+            <div class="p-6 border-t border-gray-200 flex justify-end space-x-3 flex-shrink-0 bg-gray-50">
+                <a id="download-resume-btn" href="#" target="_blank" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all">
+                    <i class="fas fa-download mr-2"></i>下载原件
+                </a>
+                <button id="close-view-resume-btn" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all">
+                    关闭
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class EnhancedResumeUploader {
+            constructor() {
+                // 简历库相关元素
+                this.analyzeBtn = document.getElementById('analyze-btn');
+                this.analysisPreview = document.getElementById('analysis-preview');
+                this.addToAnalysisListBtn = document.getElementById('add-to-analysis-list-btn');
+                this.addToListBtn = document.getElementById('add-to-list-btn');
+                
+                // 上传模态框相关元素
+                this.uploadModal = document.getElementById('upload-modal');
+                this.modalDropZone = document.getElementById('modal-drop-zone');
+                this.modalFileInput = document.getElementById('modal-file-input');
+                this.modalFileListContainer = document.getElementById('modal-file-list-container');
+                this.modalFileList = document.getElementById('modal-file-list');
+                this.fileListContainer = this.modalFileListContainer;
+                this.fileList = this.modalFileList;
+                
+                this.uploadedFiles = [];
+                this.maxFiles = 5;
+                this.maxFileSize = 10 * 1024 * 1024; // 10MB
+                
+                // 简历库相关状态
+                this.libraryCurrentPage = 1;
+                this.libraryPageSize = 10;
+                this.librarySelectedResumes = new Set();
+                this.selectedResumes = new Set();
+                this.analysisListResumes = new Set(); // 新增：分析清单
+                this.librarySearchKeyword = '';
+                this.libraryPositionFilter = '';
+                this.librarySortFilter = 'time-desc';
+                this.libraryTotalPages = 1;
+                
+                this.initEventListeners();
+                this.initLibraryData();
+                this.updateAnalysisListCount();
+                this.updateLibrarySelectionCount();
+                this.renderSelectedResumeList();
+            }
+            
+            initEventListeners() {
+                // 分析按钮
+                if (this.analyzeBtn) {
+                    this.analyzeBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        // 使用bind确保this指向实例
+                        window.resumeUploader && window.resumeUploader.startAnalysis ? window.resumeUploader.startAnalysis() : null;
+                        return false;
+                    });
+                }
+                
+                // 加入分析清单按钮
+                if (this.addToAnalysisListBtn) {
+                    this.addToAnalysisListBtn.addEventListener('click', function() {
+                        window.resumeUploader && window.resumeUploader.addSelectedToAnalysisList ? window.resumeUploader.addSelectedToAnalysisList() : null;
+                    });
+                }
+                
+                // 上传简历按钮
+                const uploadResumeBtn = document.getElementById('upload-resume-btn');
+                if (uploadResumeBtn) {
+                    uploadResumeBtn.addEventListener('click', function() {
+                        window.resumeUploader && window.resumeUploader.showUploadModal ? window.resumeUploader.showUploadModal() : null;
+                    });
+                }
+                
+                // 简历库相关事件
+                this.initLibraryEventListeners();
+                
+                // 上传模态框相关事件
+                this.initUploadModalEventListeners();
+                
+                // 快捷操作按钮
+                this.initQuickActionButtons();
+            }
+            
+            handleFiles(files) {
+                files.forEach(function(file) {
+                    if (this.validateFile(file) && this.uploadedFiles.length < this.maxFiles) {
+                        this.addFile(file);
+                    }
+                }.bind(this));
+                this.updateFileList();
+                this.updateAnalyzeButton();
+            }
+            
+            validateFile(file) {
+                // 检查文件类型
+                const allowedTypes = [
+                    'application/pdf',
+                    'application/msword',
+                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                    'text/plain'
+                ];
+                
+                if (!allowedTypes.includes(file.type)) {
+                    ui.showNotification('不支持的文件格式。请上传PDF、DOC、DOCX或TXT文件。', 'warning');
+                    return false;
+                }
+                
+                // 检查文件大小
+                if (file.size > this.maxFileSize) {
+                    ui.showNotification('文件大小不能超过10MB。', 'warning');
+                    return false;
+                }
+                
+                // 检查文件数量
+                if (this.uploadedFiles.length >= this.maxFiles) {
+                    ui.showNotification('最多只能上传' + this.maxFiles + '个文件。', 'warning');
+                    return false;
+                }
+                
+                return true;
+            }
+            
+            addFile(file) {
+                const fileData = {
+                    id: Date.now() + Math.random(),
+                    file: file,
+                    name: file.name,
+                    size: file.size,
+                    type: file.type,
+                    status: 'ready'
+                };
+                
+                this.uploadedFiles.push(fileData);
+            }
+            
+            updateFileList() {
+                if (this.uploadedFiles.length === 0) {
+                    this.fileListContainer.classList.add('hidden');
+                    const confirmUploadBtn = document.getElementById('confirm-upload-btn');
+                    if (confirmUploadBtn) confirmUploadBtn.disabled = (this.librarySelectedResumes.size === 0);
+                    return;
+                }
+                
+                this.fileListContainer.classList.remove('hidden');
+                this.fileList.innerHTML = '';
+                
+                this.uploadedFiles.forEach(function(fileData, index) {
+                    const fileItem = this.createFileItem(fileData, index);
+                    this.fileList.appendChild(fileItem);
+                }.bind(this));
+                const confirmUploadBtn = document.getElementById('confirm-upload-btn');
+                if (confirmUploadBtn) confirmUploadBtn.disabled = false;
+            }
+            
+            createFileItem(fileData, index) {
+                const div = document.createElement('div');
+                div.className = 'file-preview flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors';
+                
+                const fileIcon = this.getFileIcon(fileData.type);
+                const fileSize = this.formatFileSize(fileData.size);
+                
+                div.innerHTML = '<div class="flex items-center space-x-4">\
+                        <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">'+fileIcon+'\
+                        </div>\
+                        <div>\
+                            <h4 class="font-medium text-gray-900">'+fileData.name+'</h4>\
+                            <p class="text-sm text-gray-500">'+fileSize+' • 准备就绪</p>\
+                        </div>\
+                    </div>\
+                    <div class="flex items-center space-x-2">\
+                        <button class="p-2 text-gray-400 hover:text-blue-600 transition-colors" title="预览">\
+                            <i class="fas fa-eye"></i>\
+                        </button>\
+                        <button class="p-2 text-gray-400 hover:text-red-600 transition-colors remove-file" data-index="'+index+'" title="删除">\
+                            <i class="fas fa-trash"></i>\
+                        </button>\
+                    </div>';
+                
+                // 添加删除事件
+                const removeBtn = div.querySelector('.remove-file');
+                removeBtn.addEventListener('click', function() { window.resumeUploader && window.resumeUploader.removeFile ? window.resumeUploader.removeFile(index) : null; });
+                
+                return div;
+            }
+            
+            getFileIcon(type) {
+                const iconMap = {
+                    'application/pdf': '<i class="fas fa-file-pdf text-red-500 text-lg"></i>',
+                    'application/msword': '<i class="fas fa-file-word text-blue-500 text-lg"></i>',
+                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '<i class="fas fa-file-word text-blue-500 text-lg"></i>',
+                    'text/plain': '<i class="fas fa-file-alt text-gray-500 text-lg"></i>'
+                };
+                
+                return iconMap[type] || '<i class="fas fa-file text-gray-500 text-lg"></i>';
+            }
+            
+            formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+            
+            removeFile(index) {
+                this.uploadedFiles.splice(index, 1);
+                this.updateFileList();
+                this.updateAnalyzeButton();
+            }
+            
+            updateAnalyzeButton() {
+                const uploadedCount = this.uploadedFiles.length;
+                // Fix: Check selectedResumes (main list) instead of librarySelectedResumes (modal list)
+                const selectedCount = this.selectedResumes ? this.selectedResumes.size : 0;
+                const listCount = this.analysisListResumes ? this.analysisListResumes.size : 0;
+                const canAnalyze = (uploadedCount > 0) || (selectedCount > 0) || (listCount > 0);
+                this.analyzeBtn.disabled = !canAnalyze;
+                if (uploadedCount > 0) {
+                    this.analyzeBtn.innerHTML = '<i class="fas fa-cog mr-2"></i>开始解析 (' + uploadedCount + '个文件)';
+                } else if (selectedCount > 0 || listCount > 0) {
+                    var total = listCount > 0 ? listCount : selectedCount;
+                    this.analyzeBtn.innerHTML = '<i class="fas fa-cog mr-2"></i>开始分析 (' + total + '份简历)';
+                } else {
+                    this.analyzeBtn.innerHTML = '<i class="fas fa-cog mr-2"></i>请选择要分析的简历';
+                }
+            }
+            
+            updateAnalyzeButtonState() {
+                this.updateAnalyzeButton();
+            }
+            
+            // startAnalysis moved to later section (real implementation)
+
+
+            clearUploadedFiles() {
+                this.uploadedFiles = [];
+                if (this.modalFileList) this.modalFileList.innerHTML = '';
+                if (this.modalFileListContainer) this.modalFileListContainer.classList.add('hidden');
+                this.updateAnalyzeButton();
+                const confirmUploadBtn = document.getElementById('confirm-upload-btn');
+                if (confirmUploadBtn) confirmUploadBtn.disabled = (this.librarySelectedResumes.size === 0);
+            }
+
+            async confirmUpload() {
+                if (!this.uploadedFiles.length) { ui.showNotification('请先选择要上传的文件', 'warning'); return }
+                let token = null;
+                try {
+                    token = (JSON.parse(localStorage.getItem('userInfo')||'{}').token)||null;
+                } catch (_){
+                    token = null;
+                }
+                const headers = token ? { Authorization: 'Bearer '+token } : {};
+                
+                const bases = [
+                    (window.resumeDataManager && window.resumeDataManager.apiBaseUrl) ? window.resumeDataManager.apiBaseUrl : (window.userAuthInstance && window.userAuthInstance.apiBaseUrl ? window.userAuthInstance.apiBaseUrl : '/api'),
+                    'http://localhost:3001/api',
+                    'http://localhost:3000/api'
+                ];
+                
+                try{
+                    const newResumeIds = [];
+                    const tempResumes = []; // Store temp objects to persist across reloads
+
+                    for (const fileData of this.uploadedFiles) {
+                        const fd = new FormData();
+                        fd.append('file', fileData.file);
+                        let json = null;
+                        let ok = false;
+                        for (const b of bases) {
+                            try {
+                                const res = await fetch(`${b}/ai/upload`, { method:'POST', headers, body: fd });
+                                json = await res.json();
+                                if (res.ok && json && json.success) { ok = true; baseUrl = b; break; }
+                            } catch (_){ continue }
+                        }
+                        if (!ok) throw new Error(((json && json.error && json.error.message) ? json.error.message : '上传失败'));
+                        
+                        // 收集新上传的简历ID
+                        if (json.data && (json.data.resumeId || json.data.id)) {
+                            const newId = json.data.resumeId || json.data.id;
+                            newResumeIds.push(newId);
+                            
+                            // Manually add to allResumes to ensure immediate availability
+                            if (!this.allResumes) this.allResumes = [];
+                            
+                            // Check if already exists
+                            const exists = this.allResumes.some(r => r.id === newId);
+                            if (!exists) {
+                                // Prioritize the name from database response (which might have been fixed for encoding)
+                                const fileName = json.data.file_name || (json.file && json.file.originalName ? json.file.originalName : (fileData.file ? fileData.file.name : 'Unknown'));
+                                const extMatch = fileName.match(/\.(pdf|docx|doc|txt)$/i);
+                                const fileType = extMatch ? ('.' + extMatch[1].toLowerCase()) : '.pdf';
+                                const name = fileName.replace(/\.[^/.]+$/, '');
+                                
+                                // Construct a temporary resume object
+                                const newResume = {
+                                    id: newId,
+                                    name: name,
+                                    position: '待解析', // Default
+                                    positionType: 'other',
+                                    fileName: fileName,
+                                    fileType: fileType,
+                                    uploadTime: new Date(),
+                                    score: 0,
+                                    skills: [],
+                                    experience: '—',
+                                    education: '—',
+                                    salary: '—'
+                                };
+                                this.allResumes.unshift(newResume); // Add to beginning
+                                tempResumes.push(newResume); // Keep a copy
+                            }
+                        }
+                    }
+                    ui.showNotification('文件上传成功', 'success');
+                    
+                    // 自动选中新上传的简历
+                    if (newResumeIds.length > 0) {
+                        newResumeIds.forEach(id => this.selectedResumes.add(id));
+                        this.updateSelectionCount();
+                    }
+                    
+                    // Reload list
+                    await this.prepareRealResumes();
+                    
+                    // Re-apply manual addition if server missed it (fix for race condition)
+                     if (newResumeIds.length > 0) {
+                        // Restore any temp resumes that are missing from the fresh list
+                        tempResumes.forEach(tempR => {
+                             const exists = this.allResumes.some(r => r.id === tempR.id);
+                             if (!exists) {
+                                 this.allResumes.unshift(tempR);
+                             }
+                        });
+
+                        // Re-add selection
+                        newResumeIds.forEach(id => this.selectedResumes.add(id));
+                        this.updateSelectionCount();
+                    }
+                    
+                    this.loadResumeList();
+                    this.renderSelectedResumeList();
+                }catch(e){
+                    ui.showNotification('上传失败: '+(e.message||'未知错误'), 'error');
+                } finally {
+                    // 关闭模态并清理
+                    if (this.uploadModal) {
+                        this.uploadModal.classList.add('hidden');
+                        this.uploadModal.classList.remove('flex');
+                    }
+                    this.clearUploadedFiles();
+                }
+            }
+            
+            updateStepIndicator(step) {
+                const indicators = document.querySelectorAll('.step-indicator');
+                indicators.forEach(function(indicator, index) {
+                    indicator.classList.remove('active', 'completed');
+                    if (index + 1 === step) {
+                        indicator.classList.add('active');
+                    } else if (index + 1 < step) {
+                        indicator.classList.add('completed');
+                    }
+                });
+            }
+            
+            // 显示从简历库导入对话框
+            showImportFromLibraryDialog() {
+                const modal = document.getElementById('library-modal');
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                
+                // 初始化简历库数据
+                this.initLibraryData();
+                
+                // 添加事件监听
+                this.initLibraryModalEvents();
+                
+                // 加载简历列表
+                this.loadResumeList();
+            }
+            
+            // 显示从链接导入对话框
+            showImportFromLinkDialog() {
+                const modal = document.getElementById('link-modal');
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                
+                // 清空输入框
+                const input = document.getElementById('resume-link-input');
+                input.value = '';
+                input.focus();
+                
+                // 添加事件监听
+                this.initLinkModalEvents();
+            }
+            
+            // 显示分析历史
+            showAnalysisHistory() {
+                ui.showNotification('分析历史功能开发中。将在这里显示您的所有历史分析记录和结果。', 'info');
+            }
+            
+            // 显示简历对比分析
+            showResumeComparison() {
+                ui.showNotification('简历对比功能开发中。将支持两份或多份简历的对比分析，为您提供详细的对比报告。', 'info');
+            }
+            
+            // 导出分析报告
+            exportAnalysisReport() {
+                ui.showNotification('导出功能开发中。将支持将分析结果导出为PDF、Word或Excel格式。', 'info');
+            }
+            
+            // 验证URL的格式
+            validateUrl(url) {
+                try {
+                    const urlPattern = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/;
+                    return urlPattern.test(url);
+                } catch(e) {
+                    return false;
+                }
+            }
+            
+            // 初始化简历库数据
+            initLibraryData() {
+                // 初始化页面状态
+                this.currentPage = 1;
+                this.pageSize = 10; // 横排显示，每页显示10条
+                this.selectedResumes = new Set();
+                this.searchKeyword = '';
+                this.positionFilter = '';
+                this.sortFilter = 'time-desc';
+                this.isLoading = false;
+                this.totalPages = 1;
+                
+                // 清空选择状态
+                this.updateSelectionCount();
+            }
+            
+            async prepareRealResumes() {
+                try{
+                    const [resumes, analyses] = await Promise.all([
+                        window.resumeDataManager.getAllResumes(),
+                        window.resumeDataManager.getAllAnalyses()
+                    ]);
+                    const latestMap = {};
+                    (analyses||[]).forEach(function(a){ var k=a.resume_id; if(!latestMap[k] || new Date(a.analysis_date)>new Date(latestMap[k].date)) { latestMap[k]={score:a.overall_score,date:a.analysis_date}; } });
+                    this.allResumes = (resumes||[]).map(function(r){
+                        const fileName = r.file_name || '未知文件';
+                        const extMatch = fileName.match(/\.(pdf|docx|doc|txt)$/i);
+                        const fileType = extMatch ? ('.' + extMatch[1].toLowerCase()) : '.pdf';
+                        const name = fileName.replace(/\.[^/.]+$/, '');
+                        const tags = Array.isArray(r.tags)? r.tags: [];
+                    var score = (latestMap[r.id] && typeof latestMap[r.id].score==='number') ? latestMap[r.id].score : 0;
+                        const posType = this.inferPositionType(tags);
+                        return { id:r.id, name, position: tags[0]||'未知职位', positionType: posType, fileName, fileType, uploadTime: new Date(r.upload_date||Date.now()), score, skills: tags, experience: '—', education: '—', salary: '—' }
+                    }).sort(function(a,b){ return b.uploadTime - a.uploadTime; })
+                }catch(e){ this.allResumes = [] }
+            }
+            inferPositionType(tags){
+                const t=(tags||[]).join(' ').toLowerCase();
+                if(/(前端|javascript|react|vue)/.test(t)) return 'frontend';
+                if(/(后端|java|python|spring|mysql|node)/.test(t)) return 'backend';
+                if(/(android|ios|移动|flutter|react native)/.test(t)) return 'mobile';
+                return 'fullstack';
+            }
+            
+            generateRandomSkills(posType) {
+                const skillMap = {
+                    'frontend': ['JavaScript', 'React', 'Vue', 'HTML', 'CSS', 'TypeScript', 'Webpack'],
+                    'backend': ['Java', 'Python', 'Spring', 'MySQL', 'Redis', 'Docker', 'Kubernetes'],
+                    'fullstack': ['JavaScript', 'Node.js', 'React', 'Python', 'MongoDB', 'AWS'],
+                    'mobile': ['Swift', 'Kotlin', 'React Native', 'Flutter', 'iOS', 'Android'],
+                    'ui': ['Sketch', 'Figma', 'Photoshop', 'Principle', '交互设计', '用户研究'],
+                    'pm': ['产品设计', '需求分析', '数据分析', 'Axure', '项目管理'],
+                    'test': ['自动化测试', 'Selenium', 'JMeter', '性能测试', '接口测试'],
+                    'data': ['Python', 'SQL', 'Tableau', 'Power BI', '机器学习', 'R'],
+                    'ops': ['内容运营', '数据分析', '用户增长', 'SEM', 'SEO'],
+                    'other': ['沟通协调', '团队管理', '项目管理', 'Office']
+                };
+                
+                const skills = skillMap[posType] || skillMap['other'];
+                const selectedSkills = [];
+                const count = Math.floor(Math.random() * 4) + 3; // 3-6个技能
+                
+                for (let i = 0; i < count; i++) {
+                    const skill = skills[Math.floor(Math.random() * skills.length)];
+                    if (!selectedSkills.includes(skill)) {
+                        selectedSkills.push(skill);
+                    }
+                }
+                
+                return selectedSkills;
+            }
+            
+            // 初始化简历库模态框事件
+            initLibraryModalEvents() {
+                const modal = document.getElementById('library-modal');
+                const closeBtn = document.getElementById('close-library-modal');
+                const cancelBtn = document.getElementById('cancel-library-modal');
+                const searchInput = document.getElementById('resume-search-input');
+                const positionFilter = document.getElementById('position-filter');
+                const sortFilter = document.getElementById('sort-filter');
+                const selectAllBtn = document.getElementById('select-all-btn');
+                const clearSelectionBtn = document.getElementById('clear-selection-btn');
+                const importSelectedBtn = document.getElementById('import-selected-btn');
+                const firstPageBtn = document.getElementById('first-page-btn');
+                const prevPageBtn = document.getElementById('prev-page-btn');
+                const nextPageBtn = document.getElementById('next-page-btn');
+                const lastPageBtn = document.getElementById('last-page-btn');
+                
+                // 关闭模态框
+                function closeModal(){
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                    this.selectedResumes.clear();
+                    this.updateSelectionCount();
+                }
+                
+                closeBtn.onclick = closeModal;
+                cancelBtn.onclick = closeModal;
+                
+                // 点击背景关闭
+                modal.onclick = function(e){
+                    if (e.target === modal) {
+                        closeModal();
+                    }
+                };
+                
+                // 搜索功能
+                var searchTimeout;
+                searchInput.oninput = function(e) {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(function(){
+                        window.resumeUploader.searchKeyword = e.target.value.trim();
+                        window.resumeUploader.currentPage = 1;
+                        window.resumeUploader.loadResumeList();
+                    }, 300);
+                };
+                
+                // 筛选功能
+                positionFilter.onchange = function(e){
+                    window.resumeUploader.positionFilter = e.target.value;
+                    window.resumeUploader.currentPage = 1;
+                    window.resumeUploader.loadResumeList();
+                };
+                
+                sortFilter.onchange = function(e){
+                    window.resumeUploader.sortFilter = e.target.value;
+                    window.resumeUploader.currentPage = 1;
+                    window.resumeUploader.loadResumeList();
+                };
+                
+                // 全选功能
+                selectAllBtn.onclick = function(){
+                    var currentItems = document.querySelectorAll('#resume-list .resume-item');
+                    Array.prototype.forEach.call(currentItems, function(item){
+                        var resumeId = parseInt(item.dataset.resumeId);
+                        window.resumeUploader.selectedResumes.add(resumeId);
+                        var checkbox = item.querySelector('input[type="checkbox"]');
+                        if (checkbox) checkbox.checked = true;
+                        item.classList.add('selected');
+                    });
+                    window.resumeUploader.updateSelectionCount();
+                };
+                
+                // 清空选择
+                clearSelectionBtn.onclick = function(){
+                    window.resumeUploader.selectedResumes.clear();
+                    var items = document.querySelectorAll('#resume-list .resume-item');
+                    Array.prototype.forEach.call(items, function(item){
+                        var checkbox = item.querySelector('input[type="checkbox"]');
+                        if (checkbox) checkbox.checked = false;
+                        item.classList.remove('selected');
+                    });
+                    window.resumeUploader.updateSelectionCount();
+                };
+                
+                // 导入选中的简历
+                importSelectedBtn.onclick = function(){
+                    if (window.resumeUploader.selectedResumes.size === 0) {
+                        ui.showNotification('请先选择要导入的简历', 'warning');
+                        return;
+                    }
+                    
+                    var selectedCount = window.resumeUploader.selectedResumes.size;
+                    ui.showNotification('功能开发中。将导入 ' + selectedCount + ' 份选中的简历进行分析。', 'info');
+                    closeModal();
+                };
+                
+                // 分页控件事件
+                firstPageBtn.onclick = function(){
+                    if (this.currentPage > 1) {
+                        this.currentPage = 1;
+                        this.loadResumeList();
+                    }
+                };
+                
+                prevPageBtn.onclick = function(){
+                    if (this.currentPage > 1) {
+                        this.currentPage--;
+                        this.loadResumeList();
+                    }
+                };
+                
+                nextPageBtn.onclick = function(){
+                    if (this.currentPage < this.totalPages) {
+                        this.currentPage++;
+                        this.loadResumeList();
+                    }
+                };
+                
+                lastPageBtn.onclick = function(){
+                    if (this.currentPage < this.totalPages) {
+                        this.currentPage = this.totalPages;
+                        this.loadResumeList();
+                    }
+                };
+            }
+            
+            // 加载简历列表
+            async loadResumeList() {
+                this.isLoading = true;
+                
+                // 获取所有简历数据
+                if (!this.allResumes) {
+                    await this.prepareRealResumes();
+                }
+                
+                // 筛选和搜索
+                var filteredResumes = this.allResumes.filter(function(resume){
+                    // 搜索筛选
+                    if (this.searchKeyword) {
+                        const keyword = this.searchKeyword.toLowerCase();
+                        if (!resume.name.toLowerCase().includes(keyword) && 
+                            !resume.position.toLowerCase().includes(keyword) &&
+                            !resume.fileName.toLowerCase().includes(keyword) &&
+                            !Array.prototype.some.call(resume.skills || [], function(skill){ return String(skill).toLowerCase().includes(keyword); })) {
+                            return false;
+                        }
+                    }
+                    
+                    // 职位筛选
+                    if (this.positionFilter && resume.positionType !== this.positionFilter) {
+                        return false;
+                    }
+                    
+                    return true;
+                }.bind(this));
+                
+                // 排序
+                filteredResumes.sort((function(a, b){
+                    switch (this.sortFilter) {
+                        case 'time-desc':
+                            return b.uploadTime - a.uploadTime;
+                        case 'time-asc':
+                            return a.uploadTime - b.uploadTime;
+                        case 'name-asc':
+                            return a.name.localeCompare(b.name, 'zh-CN');
+                        case 'name-desc':
+                            return b.name.localeCompare(a.name, 'zh-CN');
+                        case 'score-desc':
+                            return b.score - a.score;
+                        default:
+                            return 0;
+                    }
+                }).bind(this));
+                
+                // 计算分页信息
+                this.totalItems = filteredResumes.length;
+                this.totalPages = Math.ceil(this.totalItems / this.pageSize);
+                
+                // 确保当前页码在有效范围内
+                if (this.currentPage > this.totalPages) {
+                    this.currentPage = Math.max(1, this.totalPages);
+                }
+                
+                // 分页
+                const startIndex = (this.currentPage - 1) * this.pageSize;
+                const endIndex = Math.min(startIndex + this.pageSize, this.totalItems);
+                const currentPageData = filteredResumes.slice(startIndex, endIndex);
+                
+                // 更新统计信息
+                document.getElementById('resume-count').textContent = '共找到 ' + this.totalItems + ' 份简历';
+                
+                // 渲染列表
+                this.renderResumeList(currentPageData);
+                
+                // 更新分页控件
+                this.updatePagination();
+                
+                this.isLoading = false;
+            }
+            
+            // 渲染简历列表
+            renderResumeList(resumes) {
+                const container = document.getElementById('resume-list');
+                if (!container) return;
+                container.innerHTML = '';
+                
+                const self = this;
+                resumes.forEach(function(resume){
+                    const resumeItem = self.createResumeItem(resume);
+                    container.appendChild(resumeItem);
+                });
+            }
+            
+            // 创建简历项目（横排布局，优化行高）
+            createResumeItem(resume) {
+                const div = document.createElement('div');
+                var _base = 'resume-item bg-white border border-gray-200 rounded-lg px-4 py-3 hover:border-blue-300 hover:shadow-sm transition-all cursor-pointer ';
+                var _extra = this.selectedResumes.has(resume.id) ? 'selected border-blue-500 bg-blue-50' : '';
+                div.className = _base + _extra;
+                div.dataset.resumeId = resume.id;
+                
+                const fileIcon = this.getFileIcon(resume.fileType);
+                const scoreColor = this.getScoreColor(resume.score);
+                
+                var isChecked = this.selectedResumes.has(resume.id) ? 'checked' : '';
+                var skillsHtml = '';
+                var arr = (resume.skills || []).slice(0, 3);
+                for (var i = 0; i < arr.length; i++) {
+                    skillsHtml += '<span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">' + arr[i] + '</span>';
+                }
+                var moreSkillsHtml = (resume.skills && resume.skills.length > 3) ? ('<span class="text-xs text-gray-400">+' + (resume.skills.length - 3) + '</span>') : '';
+                
+                div.innerHTML = 
+                    '<div class="flex items-center space-x-4">' +
+                        '<div class="flex items-center space-x-2 flex-shrink-0">' +
+                            '<label class="flex items-center cursor-pointer">' +
+                                '<input type="checkbox" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4" ' + isChecked + '>' +
+                            '</label>' +
+                            '<div class="w-8 h-8 bg-gray-100 rounded flex items-center justify-center">' +
+                                fileIcon.replace('text-lg', 'text-sm') +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="flex-1 min-w-0 flex items-center space-x-3">' +
+                            '<div class="flex-1 min-w-0">' +
+                                '<div class="flex items-center space-x-2">' +
+                                    '<h4 class="font-medium text-gray-900 text-base truncate">' + resume.name + '</h4>' +
+                                    '<div class="text-xs px-2 py-0.5 rounded ' + scoreColor + ' font-medium flex-shrink-0">' +
+                                        resume.score + '分' +
+                                    '</div>' +
+                                '</div>' +
+                                '<div class="flex items-center space-x-2 text-sm text-gray-600 mt-0.5">' +
+                                    '<span class="truncate">' + resume.position + '</span>' +
+                                    '<span class="text-gray-400">|</span>' +
+                                    '<span class="text-xs text-gray-500 truncate" title="' + resume.fileName + '">' + resume.fileName + '</span>' +
+                                '</div>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="flex-shrink-0 w-40">' +
+                            '<div class="flex flex-wrap gap-1">' +
+                                skillsHtml +
+                                moreSkillsHtml +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="flex-shrink-0 w-20 text-center">' +
+                            '<div class="text-sm text-gray-700 font-medium">' + resume.experience + '</div>' +
+                            '<div class="text-xs text-gray-500">' + resume.education + '</div>' +
+                        '</div>' +
+                        '<div class="flex-shrink-0 w-18 text-center">' +
+                            '<div class="text-sm text-blue-600 font-medium">' + resume.salary + '</div>' +
+                        '</div>' +
+                        '<div class="flex-shrink-0 w-20 text-center">' +
+                            '<div class="text-xs text-gray-500">' + this.formatDate(resume.uploadTime) + '</div>' +
+                        '</div>' +
+                        '<div class="flex-shrink-0">' +
+                            '<button class="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors" ' +
+                            'onclick="event.stopPropagation(); window.resumeUploader.viewResume(' + resume.id + ')">' +
+                            '查看' +
+                            '</button>' +
+                        '</div>' +
+                    '</div>';
+                
+                // 添加点击事件
+                div.addEventListener('click', function(e) {
+                    if (e.target.type === 'checkbox' || e.target.tagName === 'BUTTON') return;
+                    
+                    const checkbox = div.querySelector('input[type="checkbox"]');
+                    checkbox.checked = !checkbox.checked;
+                    
+                    if (checkbox.checked) {
+                        window.resumeUploader && window.resumeUploader.selectedResumes && window.resumeUploader.selectedResumes.add ? window.resumeUploader.selectedResumes.add(resume.id) : null;
+                        div.classList.add('selected', 'border-blue-500', 'bg-blue-50');
+                        div.classList.remove('border-gray-200');
+                    } else {
+                        window.resumeUploader && window.resumeUploader.selectedResumes && window.resumeUploader.selectedResumes.delete ? window.resumeUploader.selectedResumes.delete(resume.id) : null;
+                        div.classList.remove('selected', 'border-blue-500', 'bg-blue-50');
+                        div.classList.add('border-gray-200');
+                    }
+                    
+                    window.resumeUploader && window.resumeUploader.updateSelectionCount ? window.resumeUploader.updateSelectionCount() : null;
+                });
+                
+                // 复选框事件
+                const checkbox = div.querySelector('input[type="checkbox"]');
+                checkbox.addEventListener('change', function(e) {
+                    if (e.target.checked) {
+                        window.resumeUploader && window.resumeUploader.selectedResumes && window.resumeUploader.selectedResumes.add ? window.resumeUploader.selectedResumes.add(resume.id) : null;
+                        div.classList.add('selected', 'border-blue-500', 'bg-blue-50');
+                        div.classList.remove('border-gray-200');
+                    } else {
+                        window.resumeUploader && window.resumeUploader.selectedResumes && window.resumeUploader.selectedResumes.delete ? window.resumeUploader.selectedResumes.delete(resume.id) : null;
+                        div.classList.remove('selected', 'border-blue-500', 'bg-blue-50');
+                        div.classList.add('border-gray-200');
+                    }
+                    
+                    window.resumeUploader && window.resumeUploader.updateSelectionCount ? window.resumeUploader.updateSelectionCount() : null;
+                });
+                
+                return div;
+            }
+            
+            // 获取文件图标
+            getFileIcon(fileType) {
+                const iconMap = {
+                    '.pdf': '<i class="fas fa-file-pdf text-red-500"></i>',
+                    '.docx': '<i class="fas fa-file-word text-blue-500"></i>',
+                    '.doc': '<i class="fas fa-file-word text-blue-500"></i>',
+                    '.txt': '<i class="fas fa-file-alt text-gray-500"></i>'
+                };
+                return iconMap[fileType] || '<i class="fas fa-file text-gray-500"></i>';
+            }
+            
+            // 获取评分颜色
+            getScoreColor(score) {
+                if (score >= 90) return 'bg-green-100 text-green-800';
+                if (score >= 80) return 'bg-blue-100 text-blue-800';
+                if (score >= 70) return 'bg-yellow-100 text-yellow-800';
+                return 'bg-red-100 text-red-800';
+            }
+            
+            // 格式化日期显示
+            formatDate(date) {
+                const now = new Date();
+                const diffTime = Math.abs(now - date);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                if (diffDays <= 1) {
+                    return '今天';
+                } else if (diffDays <= 7) {
+                    return '' + diffDays + '天前';
+                } else if (diffDays <= 30) {
+                    return '' + Math.floor(diffDays / 7) + '周前';
+                } else {
+                    return date.toLocaleDateString('zh-CN', { month: 'numeric', day: 'numeric' });
+                }
+            }
+
+            // 开始分析
+            async startAnalysis() {
+                var self = this;
+                var resumesToAnalyze = [];
+                
+                if (this.analysisListResumes.size > 0) {
+                    this.analysisListResumes.forEach(function(r){ resumesToAnalyze.push(r); });
+                } else if (this.selectedResumes && this.selectedResumes.size > 0) {
+                     var all = this.allResumes || [];
+                     all.forEach(function(r){
+                         if (self.selectedResumes.has(r.id)) resumesToAnalyze.push(r);
+                     });
+                } else if (this.librarySelectedResumes.size > 0) {
+                     var all = this.allResumes || [];
+                     all.forEach(function(r){
+                         if (self.librarySelectedResumes.has(r.id)) resumesToAnalyze.push(r);
+                     });
+                } else if (this.uploadedFiles && this.uploadedFiles.length > 0) {
+                    ui.showNotification('请先将文件添加到分析列表', 'warning');
+                    return;
+                }
+                
+                if (resumesToAnalyze.length === 0) {
+                    ui.showNotification('请选择要分析的简历', 'warning');
+                    return;
+                }
+                
+                var resume = resumesToAnalyze[0];
+                
+                if (this.analyzeBtn) {
+                    this.analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>分析中...';
+                    this.analyzeBtn.disabled = true;
+                }
+                
+                try {
+                    const api = (window.resumeDataManager && typeof window.resumeDataManager.apiRequest === 'function')
+                      ? window.resumeDataManager
+                      : null;
+                    if (!api) {
+                        console.error('ResumeDataManager 未初始化');
+                        ui.showNotification('分析请求失败', 'error');
+                        throw new Error('API not initialized');
+                    }
+                    
+                    const res = await api.apiRequest('/ai/analyze', 'POST', { resumeId: resume.id });
+                    
+                    console.log('Analysis response:', res);
+                    
+                    if (res && res.success) {
+                        if (res.status === 'processing') {
+                            console.log('Analysis is processing, starting polling...');
+                            if (self.analyzeBtn) self.analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>分析中...';
+                            await self.pollAnalysisStatus(resume.id);
+                        } else {
+                            console.log('Analysis completed immediately, rendering results:', res.data);
+                            console.log('Immediate analysis data type:', typeof res.data);
+                            console.log('Immediate analysis data keys:', res.data ? Object.keys(res.data) : 'N/A');
+                            const immediateData = (res && res.data && res.data.analysis) ? res.data.analysis : res.data;
+                            self.renderSingleAnalysisResult(immediateData);
+                            var resultEl = document.getElementById('single-analysis-result');
+                            if (resultEl) resultEl.scrollIntoView({ behavior: 'smooth' });
+                        }
+                    } else {
+                        console.error('Analysis failed:', res);
+                        ui.showNotification('分析失败: ' + ((res && res.error && res.error.message) || '未知错误'), 'error');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    ui.showNotification('分析请求失败: ' + (err && err.message ? err.message : '未知错误'), 'error');
+                } finally {
+                    if (self.analyzeBtn) {
+                        self.analyzeBtn.innerHTML = '<i class="fas fa-play mr-2"></i>开始分析';
+                        self.analyzeBtn.disabled = false;
+                    }
+                }
+            }
+
+            // 轮询分析状态
+            async pollAnalysisStatus(resumeId) {
+                const self = this;
+                const MAX_ATTEMPTS = 120;
+                let attempts = 0;
+                let delayMs = 2000;
+                const MAX_DELAY_MS = 10000;
+
+                while (attempts < MAX_ATTEMPTS) {
+                    attempts++;
+                    try {
+                        const api = window.resumeDataManager;
+                        const res = await api.apiRequest(`/ai/status/${resumeId}`, 'GET');
+                        
+                        console.log('Status check response:', res);
+                        
+                        if (res && res.success) {
+                            const status = res.data.status;
+                            
+                            if (status === 'analyzed') {
+                                // 获取结果
+                                const resultRes = await api.apiRequest(`/ai/result/${resumeId}`, 'GET');
+                                console.log('Analysis result response:', resultRes);
+                                if (resultRes && resultRes.success) {
+                                    const immediateData = (resultRes && resultRes.data && resultRes.data.analysis) ? resultRes.data.analysis : resultRes.data;
+                                    self.renderSingleAnalysisResult(immediateData);
+                                    var resultEl = document.getElementById('single-analysis-result');
+                                    if (resultEl) resultEl.scrollIntoView({ behavior: 'smooth' });
+                                    return;
+                                }
+                            } else if (status === 'failed') {
+                                throw new Error('分析失败，请重试');
+                            } else {
+                                try {
+                                    if (attempts % 3 === 0) {
+                                        const rr = await api.apiRequest(`/ai/result/${resumeId}`, 'GET');
+                                        if (rr && rr.success && rr.data) {
+                                            const fallbackData = (rr && rr.data && rr.data.analysis) ? rr.data.analysis : rr.data;
+                                            self.renderSingleAnalysisResult(fallbackData);
+                                            var resultEl2 = document.getElementById('single-analysis-result');
+                                            if (resultEl2) resultEl2.scrollIntoView({ behavior: 'smooth' });
+                                            return;
+                                        }
+                                    }
+                                } catch (_) {}
+                            }
+                        }
+                    } catch (e) {
+                        console.warn('Polling warning:', e);
+                        if (e && (e.status === 401 || e.status === 403)) {
+                            throw new Error('未登录或无权限');
+                        }
+                        if (e.message && e.message.includes('分析失败')) throw e;
+                    }
+                    
+                    await new Promise(resolve => setTimeout(resolve, delayMs));
+                    delayMs = Math.min(MAX_DELAY_MS, Math.round(delayMs * 1.3));
+                }
+                throw new Error('分析超时，请稍后在历史记录中查看');
+            }
+
+            // 渲染单份简历分析结果
+            renderSingleAnalysisResult(data) {
+                console.log('renderSingleAnalysisResult called with data:', data);
+                var resultEl = document.getElementById('single-analysis-result');
+                var comparisonEl = document.getElementById('comparison-analysis-result');
+                if (resultEl) resultEl.classList.remove('hidden');
+                if (comparisonEl) comparisonEl.classList.add('hidden');
+                
+                var basic = data.basic_info || data.basicInfo || {};
+                var report = data.evaluation_report || data.report || {};
+                var scores = data.radar_scores || data.radarScores || {};
+                var overallScore = data.overall_score || data.overallScore || 0;
+                
+                console.log('Extracted data:', {
+                    basic: basic,
+                    report: report,
+                    scores: scores,
+                    overallScore: overallScore
+                });
+                
+                document.getElementById('sar-name').textContent = basic.name || '候选人';
+                document.getElementById('sar-sub').textContent = [basic.school, basic.last_company || basic.company, basic.salary_expectation || basic.salary].filter(Boolean).join(' / ');
+                
+                // Update score badge
+                var scoreBadge = document.getElementById('sar-score-badge');
+                var scoreVal = document.getElementById('sar-score-val');
+                if (scoreBadge && scoreVal) {
+                    scoreBadge.classList.remove('hidden');
+                    scoreVal.textContent = overallScore;
+                }
+
+                var basicHtml = '';
+                basicHtml += '<div><span class="text-gray-500">姓名：</span>' + (basic.name || '-') + '</div>';
+                basicHtml += '<div><span class="text-gray-500">学历：</span>' + (basic.education || '-') + '</div>';
+                basicHtml += '<div><span class="text-gray-500">院校：</span>' + (basic.school || '-') + '</div>';
+                basicHtml += '<div><span class="text-gray-500">工作年限：</span>' + (basic.work_years || basic.experience || '-') + '</div>';
+                basicHtml += '<div><span class="text-gray-500">上一公司：</span>' + (basic.last_company || basic.company || '-') + '</div>';
+                basicHtml += '<div><span class="text-gray-500">上一职位：</span>' + (basic.last_position || basic.position || '-') + '</div>';
+                basicHtml += '<div><span class="text-gray-500">期望薪资：</span>' + (basic.salary_expectation || basic.salary || '-') + '</div>';
+                document.getElementById('sar-basic').innerHTML = basicHtml;
+                
+                function renderList(id, list) {
+                    var el = document.getElementById(id);
+                    if (el) {
+                        console.log('Rendering list for', id, ':', list);
+                        el.innerHTML = (list || []).map(function(item){ return '<li>' + item + '</li>'; }).join('');
+                    }
+                }
+                renderList('sar-strengths', report.core_strengths || report.strengths);
+                renderList('sar-weaknesses', report.potential_issues || report.potential_weaknesses || report.weaknesses);
+                renderList('sar-advices', report.career_advice || report.suggestions);
+                
+                console.log('Setting summary:', data.summary || report.summary || '');
+                document.getElementById('sar-summary').textContent = data.summary || report.summary || '';
+                
+                var radarEl = document.getElementById('sar-radar');
+                console.log('Radar element found:', !!radarEl, 'Echarts available:', !!window.echarts);
+                if (radarEl && window.echarts) {
+                    if (this.singleChart) this.singleChart.dispose();
+                    this.singleChart = echarts.init(radarEl);
+                    var radarData = [
+                        scores.job_match || 0,
+                        scores.skill_match || 0,
+                        scores.experience_match || 0,
+                        scores.learning_ability || 0,
+                        scores.teamwork || 0
+                    ];
+                    console.log('Radar data:', radarData);
+                    var option = {
+                        radar: {
+                            indicator: [
+                                { name: '岗位匹配度', max: 5 },
+                                { name: '技能匹配度', max: 5 },
+                                { name: '经验匹配度', max: 5 },
+                                { name: '学习能力', max: 5 },
+                                { name: '团队协作', max: 5 }
+                            ]
+                        },
+                        series: [{
+                            name: '能力评估',
+                            type: 'radar',
+                            data: [{
+                                value: radarData,
+                                name: basic.name || '候选人'
+                            }]
+                        }]
+                    };
+                    this.singleChart.setOption(option);
+                    var self = this;
+                    window.addEventListener('resize', function(){ self.singleChart && self.singleChart.resize(); });
+                } else {
+                    console.log('Radar chart not initialized - missing element or echarts');
+                }
+
+                // 下载PDF逻辑
+                var downloadBtn = document.getElementById('sar-download-pdf');
+                if (downloadBtn) {
+                    downloadBtn.onclick = function() {
+                        if (!window.html2canvas || !window.jspdf) {
+                            ui.showNotification('PDF导出组件未加载，请刷新页面重试', 'error');
+                            return;
+                        }
+                        
+                        var btnText = downloadBtn.innerHTML;
+                        downloadBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>生成中...';
+                        downloadBtn.disabled = true;
+                        
+                        var element = document.getElementById('single-analysis-result');
+                        
+                        // 临时隐藏下载按钮以避免包含在PDF中
+                        downloadBtn.style.display = 'none';
+                        
+                        window.html2canvas(element, {
+                            scale: 2,
+                            useCORS: true,
+                            logging: false
+                        }).then(function(canvas) {
+                            try {
+                                var imgData = canvas.toDataURL('image/jpeg', 1.0);
+                                var pdf = new window.jspdf.jsPDF('p', 'mm', 'a4');
+                                var imgWidth = 210; 
+                                var pageHeight = 297;  
+                                var imgHeight = canvas.height * imgWidth / canvas.width;
+                                var heightLeft = imgHeight;
+                                var position = 0;
+
+                                pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+                                heightLeft -= pageHeight;
+
+                                while (heightLeft >= 0) {
+                                    position = heightLeft - imgHeight;
+                                    pdf.addPage();
+                                    pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+                                    heightLeft -= pageHeight;
+                                }
+                                pdf.save((basic.name || 'report') + '_analysis.pdf');
+                            } catch(e) {
+                                console.error(e);
+                                ui.showNotification('PDF生成失败', 'error');
+                            } finally {
+                                downloadBtn.innerHTML = btnText;
+                                downloadBtn.disabled = false;
+                                downloadBtn.style.display = 'inline-block'; // 恢复显示
+                            }
+                        }).catch(function(e){
+                             console.error(e);
+                             ui.showNotification('PDF生成出错', 'error');
+                             downloadBtn.innerHTML = btnText;
+                             downloadBtn.disabled = false;
+                             downloadBtn.style.display = 'inline-block';
+                        });
+                    };
+                }
+            }
+
+            // 显示简历对比
+            showResumeComparison() {
+                var self = this;
+                var selectedIds = [];
+                this.librarySelectedResumes.forEach(function(id){ selectedIds.push(id); });
+                
+                if (selectedIds.length < 2) {
+                    ui.showNotification('请至少选择2份简历进行对比', 'warning');
+                    return;
+                }
+                if (selectedIds.length > 5) {
+                    ui.showNotification('最多支持5份简历对比', 'warning');
+                    return;
+                }
+                
+                var selectedResumes = [];
+                var all = this.allResumes || [];
+                // 保持选择顺序或按列表顺序
+                selectedIds.forEach(function(id){
+                    for(var i=0; i<all.length; i++) {
+                        if(all[i].id == id) {
+                            selectedResumes.push(all[i]);
+                            break;
+                        }
+                    }
+                });
+                
+                (function(){
+                    const api = (window.resumeDataManager && typeof window.resumeDataManager.apiRequest === 'function')
+                      ? window.resumeDataManager
+                      : null;
+                    if (!api) {
+                        console.error('ResumeDataManager 未初始化');
+                        ui.showNotification('对比请求失败', 'error');
+                        return;
+                    }
+                    api.apiRequest('/ai/compare-resumes', 'POST', { resumeIds: selectedIds })
+                      .then(function(res){
+                          if (res && res.success) {
+                              self.renderComparisonResult(res.data, selectedResumes);
+                              var resultEl = document.getElementById('comparison-analysis-result');
+                              if (resultEl) resultEl.scrollIntoView({ behavior: 'smooth' });
+                          } else {
+                              ui.showNotification('对比失败: ' + ((res && res.error && res.error.message) || '未知错误'), 'error');
+                          }
+                      })
+                      .catch(function(err){
+                          console.error(err);
+                          ui.showNotification('对比请求失败: ' + (err && err.message ? err.message : '未知错误'), 'error');
+                      });
+                })();
+            }
+
+            // 渲染对比结果
+            renderComparisonResult(data, resumes) {
+                var resultEl = document.getElementById('single-analysis-result');
+                var comparisonEl = document.getElementById('comparison-analysis-result');
+                if (resultEl) resultEl.classList.add('hidden');
+                if (comparisonEl) comparisonEl.classList.remove('hidden');
+                
+                var scores = data.radar_scores || {};
+                var table = data.comparison_table || [];
+                var summary = data.summary_report || '';
+                
+                // 生成标签 A, B, C...
+                var labels = [];
+                for(var i=0; i<resumes.length; i++) {
+                    labels.push(String.fromCharCode(65 + i));
+                }
+                
+                var radarEl = document.getElementById('comparison-radar');
+                if (radarEl && window.echarts) {
+                    if (this.compareChart) this.compareChart.dispose();
+                    this.compareChart = echarts.init(radarEl);
+                    
+                    var legendData = [];
+                    var seriesData = [];
+                    
+                    resumes.forEach(function(r, idx) {
+                        var label = labels[idx];
+                        var name = '简历' + label + ' (' + r.name + ')';
+                        legendData.push(name);
+                        
+                        seriesData.push({
+                            value: [
+                                scores.job_match ? (scores.job_match[label] || 0) : 0,
+                                scores.skill_match ? (scores.skill_match[label] || 0) : 0,
+                                scores.experience_match ? (scores.experience_match[label] || 0) : 0,
+                                scores.learning_ability ? (scores.learning_ability[label] || 0) : 0,
+                                scores.teamwork ? (scores.teamwork[label] || 0) : 0
+                            ],
+                            name: name
+                        });
+                    });
+                    
+                    var option = {
+                        legend: { data: legendData, bottom: 0 },
+                        tooltip: {},
+                        radar: {
+                            indicator: [
+                                { name: '岗位匹配度', max: 5 },
+                                { name: '技能匹配度', max: 5 },
+                                { name: '经验匹配度', max: 5 },
+                                { name: '学习能力', max: 5 },
+                                { name: '团队协作', max: 5 }
+                            ]
+                        },
+                        series: [{
+                            name: '对比评估',
+                            type: 'radar',
+                            data: seriesData
+                        }]
+                    };
+                    this.compareChart.setOption(option);
+                    var self = this;
+                    window.addEventListener('resize', function(){ self.compareChart && self.compareChart.resize(); });
+                }
+                
+                // 生成表格头部
+                var theadHtml = '<tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">维度</th>';
+                resumes.forEach(function(r, idx) {
+                    theadHtml += '<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">简历' + labels[idx] + ' (' + r.name + ')</th>';
+                });
+                theadHtml += '<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">对比结果</th></tr>';
+                document.getElementById('comparison-table-head').innerHTML = theadHtml;
+                
+                // 生成表格内容
+                var tableHtml = '';
+                table.forEach(function(row){
+                    tableHtml += '<tr>';
+                    tableHtml += '<td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">' + row.dimension + '</td>';
+                    
+                    labels.forEach(function(label) {
+                        tableHtml += '<td class="px-6 py-4 text-sm text-gray-500">' + (row[label] || '-') + '</td>';
+                    });
+                    
+                    var winnerLabel = row.winner;
+                    var winnerText = '持平';
+                    var winnerClass = 'text-gray-500';
+                    
+                    if (winnerLabel && winnerLabel !== 'Tie') {
+                         var wIdx = labels.indexOf(winnerLabel);
+                         if (wIdx >= 0) {
+                             winnerText = '简历' + winnerLabel + ' 胜出';
+                             // 简单的轮转颜色
+                             var colors = ['text-blue-600', 'text-green-600', 'text-purple-600', 'text-red-600', 'text-yellow-600'];
+                             winnerClass = colors[wIdx % colors.length];
+                         }
+                    }
+                    
+                    tableHtml += '<td class="px-6 py-4 text-sm font-medium ' + winnerClass + '">' + winnerText + '</td>';
+                    tableHtml += '</tr>';
+                });
+                document.getElementById('comparison-table-body').innerHTML = tableHtml;
+                
+                document.getElementById('comparison-summary').textContent = summary;
+            }
+            
+            // 更新选择计数
+            updateSelectionCount() {
+                const count = this.selectedResumes.size;
+                const selectedCountEl = document.getElementById('selected-count');
+                if (selectedCountEl) selectedCountEl.textContent = '已选择 ' + count + ' 份';
+                const importCountEl = document.getElementById('import-count');
+                if (importCountEl) importCountEl.textContent = count;
+                const pageSelectedCountEl = document.getElementById('selected-resume-count');
+                if (pageSelectedCountEl) pageSelectedCountEl.textContent = '已选择 ' + count + ' 份简历';
+                // Disable auto-render on selection change to prevent items from disappearing when unchecked
+                // this.renderSelectedResumeList();
+                
+                const importBtn = document.getElementById('import-selected-btn');
+                if (count > 0) {
+                    if (importBtn) { importBtn.disabled = false; importBtn.classList.remove('opacity-50', 'cursor-not-allowed'); }
+                } else {
+                    if (importBtn) { importBtn.disabled = true; importBtn.classList.add('opacity-50', 'cursor-not-allowed'); }
+                }
+
+                // 更新"加入分析清单"按钮状态 (基于主列表选择)
+                if (this.addToAnalysisListBtn) {
+                    if (count > 0) {
+                        this.addToAnalysisListBtn.disabled = false;
+                        this.addToAnalysisListBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                        this.addToAnalysisListBtn.innerHTML = '<i class="fas fa-plus mr-2"></i>加入分析清单 (' + count + ')';
+                    } else {
+                        this.addToAnalysisListBtn.disabled = true;
+                        this.addToAnalysisListBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                        this.addToAnalysisListBtn.innerHTML = '<i class="fas fa-plus mr-2"></i>加入分析清单 (0)';
+                    }
+                }
+
+                // 同步更新分析按钮状态
+                this.updateAnalyzeButtonState();
+            }
+
+            renderSelectedResumeList() {
+                const container = document.getElementById('selected-resume-list');
+                if (!container) return;
+                container.innerHTML = '';
+                const ids = Array.from(this.selectedResumes);
+                if (ids.length === 0) {
+                    container.innerHTML = '<div class="text-center py-12 text-gray-500"><i class="fas fa-inbox text-4xl mb-4 text-gray-300"></i><p class="text-lg font-medium mb-2">暂无已选择简历</p><p class="text-sm">请点击右上角“选择解析的简历”进行选择</p></div>';
+                    return;
+                }
+                if (!this.allResumes) return;
+                var map = new Map(this.allResumes.map(function(r){ return [r.id, r]; }));
+                ids.forEach(function(id){ var r = map.get(id); if (r) { var item = window.resumeUploader.createResumeItem(r); container.appendChild(item); } });
+            }
+            
+            // 更新分页控件
+            updatePagination() {
+                // 更新页面信息
+                const startIndex = (this.currentPage - 1) * this.pageSize + 1;
+                const endIndex = Math.min(this.currentPage * this.pageSize, this.totalItems);
+                
+                document.getElementById('page-info-start').textContent = this.totalItems > 0 ? startIndex : 0;
+                document.getElementById('page-info-end').textContent = endIndex;
+                document.getElementById('page-info-total').textContent = this.totalItems;
+                
+                // 更新按钮状态
+                const firstPageBtn = document.getElementById('first-page-btn');
+                const prevPageBtn = document.getElementById('prev-page-btn');
+                const nextPageBtn = document.getElementById('next-page-btn');
+                const lastPageBtn = document.getElementById('last-page-btn');
+                
+                // 首页和上一页按钮
+                const isFirstPage = this.currentPage <= 1;
+                firstPageBtn.disabled = isFirstPage;
+                prevPageBtn.disabled = isFirstPage;
+                
+                if (isFirstPage) {
+                    firstPageBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    prevPageBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                } else {
+                    firstPageBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    prevPageBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+                
+                // 下一页和尾页按钮
+                const isLastPage = this.currentPage >= this.totalPages;
+                nextPageBtn.disabled = isLastPage;
+                lastPageBtn.disabled = isLastPage;
+                
+                if (isLastPage) {
+                    nextPageBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    lastPageBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                } else {
+                    nextPageBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    lastPageBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+                
+                // 更新页码按钮
+                this.renderPageNumbers();
+            }
+            
+            // 渲染页码按钮
+            renderPageNumbers() {
+                const container = document.getElementById('page-numbers');
+                container.innerHTML = '';
+                
+                if (this.totalPages <= 1) return;
+                
+                // 计算显示的页码范围
+                let startPage = Math.max(1, this.currentPage - 2);
+                let endPage = Math.min(this.totalPages, this.currentPage + 2);
+                
+                // 调整范围以显示更多页码
+                if (endPage - startPage < 4) {
+                    if (startPage === 1) {
+                        endPage = Math.min(this.totalPages, startPage + 4);
+                    } else if (endPage === this.totalPages) {
+                        startPage = Math.max(1, endPage - 4);
+                    }
+                }
+                
+                // 渲染页码按钮
+                for (let i = startPage; i <= endPage; i++) {
+                    const button = document.createElement('button');
+                    var btnCls = 'px-3 py-2 text-sm border rounded-lg transition-colors ' + (i === this.currentPage ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-300 hover:bg-gray-100 text-gray-700');
+                    button.className = btnCls;
+                    button.textContent = i;
+                    button.onclick = function(){
+                        window.resumeUploader.currentPage = i;
+                        window.resumeUploader.loadResumeList();
+                    };
+                    container.appendChild(button);
+                }
+                
+                // 如果有省略，显示省略号
+                if (startPage > 1) {
+                    const ellipsis = document.createElement('span');
+                    ellipsis.className = 'px-2 text-gray-500';
+                    ellipsis.textContent = '...';
+                    container.insertBefore(ellipsis, container.firstChild);
+                    
+                    const firstButton = document.createElement('button');
+                    firstButton.className = 'px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-100 text-gray-700';
+                    firstButton.textContent = '1';
+                    firstButton.onclick = function(){
+                        window.resumeUploader.currentPage = 1;
+                        window.resumeUploader.loadResumeList();
+                    };
+                    container.insertBefore(firstButton, container.firstChild);
+                }
+                
+                if (endPage < this.totalPages) {
+                    const ellipsis = document.createElement('span');
+                    ellipsis.className = 'px-2 text-gray-500';
+                    ellipsis.textContent = '...';
+                    container.appendChild(ellipsis);
+                    
+                    const lastButton = document.createElement('button');
+                    lastButton.className = 'px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-100 text-gray-700';
+                    lastButton.textContent = this.totalPages;
+                    lastButton.onclick = function(){
+                        window.resumeUploader.currentPage = window.resumeUploader.totalPages;
+                        window.resumeUploader.loadResumeList();
+                    };
+                    container.appendChild(lastButton);
+                }
+            }
+            
+            // 初始化链接导入模态框事件
+            initLinkModalEvents() {
+                const modal = document.getElementById('link-modal');
+                const closeBtn = document.getElementById('close-link-modal');
+                const cancelBtn = document.getElementById('cancel-link-modal');
+                const importBtn = document.getElementById('import-link-btn');
+                const input = document.getElementById('resume-link-input');
+                
+                // 关闭按钮
+                function closeModal(){
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }
+                
+                closeBtn.onclick = closeModal;
+                cancelBtn.onclick = closeModal;
+                
+                // 点击背景关闭
+                modal.onclick = function(e){
+                    if (e.target === modal) {
+                        closeModal();
+                    }
+                };
+                
+                // 导入按钮
+                importBtn.onclick = async function(){
+                    var url = input.value.trim();
+                    if (!url) {
+                        ui.showNotification('请输入简历链接地址', 'warning');
+                        return;
+                    }
+                    
+                    if (!window.resumeUploader || !window.resumeUploader.validateUrl || !window.resumeUploader.validateUrl(url)) {
+                        ui.showNotification('请输入有效的URL链接！', 'warning');
+                        return;
+                    }
+                    
+                    // Disable button
+                    const originalText = importBtn.innerHTML;
+                    importBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>导入中...';
+                    importBtn.disabled = true;
+
+                    let token = null;
+                    try {
+                        token = (JSON.parse(localStorage.getItem('userInfo')||'{}').token)||null;
+                    } catch (_){ token = null; }
+                    const headers = token ? { Authorization: 'Bearer '+token, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
+
+                    const bases = [
+                        (window.resumeDataManager && window.resumeDataManager.apiBaseUrl) ? window.resumeDataManager.apiBaseUrl : (window.userAuthInstance && window.userAuthInstance.apiBaseUrl ? window.userAuthInstance.apiBaseUrl : '/api'),
+                        'http://localhost:3001/api',
+                        'http://localhost:3000/api'
+                    ];
+
+                    try {
+                        let json = null;
+                        let ok = false;
+                        for (const b of bases) {
+                            try {
+                                const res = await fetch(`${b}/ai/import-link`, {
+                                    method: 'POST',
+                                    headers: headers,
+                                    body: JSON.stringify({ url: url })
+                                });
+                                json = await res.json();
+                                if (res.ok && json && json.success) { ok = true; break; }
+                            } catch (_){ continue }
+                        }
+                        if (!ok) {
+                            throw new Error(json && json.error ? json.error.message : '导入失败');
+                        }
+                        
+                        ui.showNotification('链接导入成功', 'success');
+                        
+                        // Add to list
+                        if (json.data) {
+                            const newId = json.data.resumeId || json.data.id;
+                            if (window.resumeUploader) {
+                                if (!window.resumeUploader.allResumes) window.resumeUploader.allResumes = [];
+                                
+                                // Check if exists
+                                if (!window.resumeUploader.allResumes.some(r => r.id === newId)) {
+                                    const newResume = {
+                                        id: newId,
+                                        name: json.data.file_name || '外部链接简历',
+                                        position: '待解析',
+                                        positionType: 'other',
+                                        fileName: json.data.file_name || url,
+                                        fileType: '.link',
+                                        uploadTime: new Date(),
+                                        score: 0,
+                                        skills: [],
+                                        experience: '—',
+                                        education: '—',
+                                        salary: '—'
+                                    };
+                                    window.resumeUploader.allResumes.unshift(newResume);
+                                }
+                                
+                                // Select it
+                                if (window.resumeUploader.selectedResumes) {
+                                    window.resumeUploader.selectedResumes.add(newId);
+                                    window.resumeUploader.updateSelectionCount();
+                                }
+                                
+                                window.resumeUploader.loadResumeList();
+                                window.resumeUploader.renderSelectedResumeList();
+                            }
+                        }
+                        
+                        closeModal();
+                    } catch (e) {
+                        ui.showNotification('导入失败: ' + e.message, 'error');
+                    } finally {
+                        importBtn.innerHTML = originalText;
+                        importBtn.disabled = false;
+                    }
+                };
+            }
+            
+            // 查看简历详情
+            async viewResume(id) {
+                const modal = document.getElementById('view-resume-modal');
+                const titleEl = document.getElementById('view-resume-title');
+                const contentEl = document.getElementById('view-resume-content');
+                const downloadBtn = document.getElementById('download-resume-btn');
+                const closeBtn = document.getElementById('close-view-resume-modal');
+                const closeBtn2 = document.getElementById('close-view-resume-btn');
+                
+                if (!modal) return;
+                
+                // Show modal
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                contentEl.innerHTML = '<div class="flex justify-center items-center h-full"><i class="fas fa-spinner fa-spin text-4xl text-blue-500"></i></div>';
+                
+                // Close handlers
+                const closeModal = () => {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                };
+                closeBtn.onclick = closeModal;
+                closeBtn2.onclick = closeModal;
+                modal.onclick = (e) => { if(e.target === modal) closeModal(); };
+                
+                // Fetch data
+                try {
+                    let token = null;
+                    try {
+                        token = (JSON.parse(localStorage.getItem('userInfo')||'{}').token)||null;
+                    } catch (_){ token = null; }
+                    const headers = token ? { Authorization: 'Bearer '+token } : {};
+
+                    const bases2 = [
+                        (window.resumeDataManager && window.resumeDataManager.apiBaseUrl) ? window.resumeDataManager.apiBaseUrl : (window.userAuthInstance && window.userAuthInstance.apiBaseUrl ? window.userAuthInstance.apiBaseUrl : '/api'),
+                        'http://localhost:3001/api',
+                        'http://localhost:3000/api'
+                    ];
+
+                    let res = null;
+                    let json = null;
+                    let ok = false;
+                    for (const b of bases2) {
+                        try {
+                            res = await fetch(`${b}/resumes/${id}`, { headers });
+                            json = await res.json();
+                            if (res.ok && json && json.success) { ok = true; break; }
+                        } catch (_){ continue }
+                    }
+                    if (!ok) {
+                        throw new Error(json && json.message ? json.message : '加载失败');
+                    }
+                    
+                    const data = json.data;
+                    titleEl.textContent = data.file_name || '简历详情';
+                    
+                    // Set download link
+                    if (data.file_path) {
+                        // Ensure path is correct (if relative)
+                        const path = data.file_path.startsWith('http') ? data.file_path : (baseUrl.replace('/api', '') + data.file_path);
+                        downloadBtn.href = path;
+                        downloadBtn.style.display = 'inline-flex';
+                    } else {
+                        downloadBtn.style.display = 'none';
+                    }
+                    
+                    // Render content
+                    let html = '<div class="space-y-6">';
+                    
+                    // Basic Info
+                    html += '<div class="bg-gray-50 p-4 rounded-lg">';
+                    html += '<div class="grid grid-cols-2 gap-4 text-sm">';
+                    html += `<div><span class="text-gray-500">上传时间：</span>${new Date(data.upload_date).toLocaleString()}</div>`;
+                    html += `<div><span class="text-gray-500">文件类型：</span>${data.file_type || '-'}</div>`;
+                    html += `<div><span class="text-gray-500">文件大小：</span>${this.formatFileSize(data.file_size || 0)}</div>`;
+                    html += `<div><span class="text-gray-500">解析状态：</span><span class="px-2 py-0.5 rounded text-xs ${data.status==='parsed'?'bg-green-100 text-green-800':'bg-yellow-100 text-yellow-800'}">${data.status==='parsed'?'已解析':'待解析'}</span></div>`;
+                    html += '</div></div>';
+                    
+                    // Parsing Result
+                    if (data.parsing_result) {
+                        const result = typeof data.parsing_result === 'string' ? JSON.parse(data.parsing_result) : data.parsing_result;
+                        
+                        // Basic Info from Parsing
+                        if (result.basic_info) {
+                             html += '<div><h3 class="text-lg font-semibold mb-3 border-l-4 border-blue-500 pl-3">基本信息</h3>';
+                             html += '<div class="grid grid-cols-2 gap-4 text-sm">';
+                             html += `<div><span class="text-gray-500">姓名：</span>${result.basic_info.name || '-'}</div>`;
+                             html += `<div><span class="text-gray-500">邮箱：</span>${result.basic_info.email || '-'}</div>`;
+                             html += `<div><span class="text-gray-500">电话：</span>${result.basic_info.phone || '-'}</div>`;
+                             html += `<div><span class="text-gray-500">年龄：</span>${result.basic_info.age || '-'}</div>`;
+                             html += `<div><span class="text-gray-500">学历：</span>${result.basic_info.education || '-'}</div>`;
+                             html += `<div><span class="text-gray-500">工作年限：</span>${result.basic_info.years_of_experience || '-'}</div>`;
+                             html += '</div></div>';
+                        }
+                        
+                        // Skills
+                        if (result.skills && result.skills.length) {
+                            html += '<div><h3 class="text-lg font-semibold mb-3 border-l-4 border-blue-500 pl-3">技能专长</h3>';
+                            html += '<div class="flex flex-wrap gap-2">';
+                            result.skills.forEach(skill => {
+                                html += `<span class="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm">${skill}</span>`;
+                            });
+                            html += '</div></div>';
+                        }
+                        
+                        // Work Experience
+                        if (result.work_experience && result.work_experience.length) {
+                            html += '<div><h3 class="text-lg font-semibold mb-3 border-l-4 border-blue-500 pl-3">工作经历</h3>';
+                            html += '<div class="space-y-4">';
+                            result.work_experience.forEach(exp => {
+                                html += '<div class="border-l-2 border-gray-200 pl-4 pb-4 relative">';
+                                html += '<div class="absolute -left-1.5 top-1.5 w-3 h-3 bg-gray-300 rounded-full"></div>';
+                                html += `<div class="font-medium text-gray-900">${exp.company || '未知公司'}</div>`;
+                                html += `<div class="text-sm text-gray-600 mb-1">${exp.position || '未知职位'} | ${exp.duration || '-'}</div>`;
+                                html += `<div class="text-sm text-gray-700">${exp.description || ''}</div>`;
+                                html += '</div>';
+                            });
+                            html += '</div></div>';
+                        }
+                        
+                        // Education
+                        if (result.education && result.education.length) {
+                            html += '<div><h3 class="text-lg font-semibold mb-3 border-l-4 border-blue-500 pl-3">教育经历</h3>';
+                            html += '<div class="space-y-4">';
+                            result.education.forEach(edu => {
+                                html += '<div class="border-l-2 border-gray-200 pl-4 pb-4 relative">';
+                                html += '<div class="absolute -left-1.5 top-1.5 w-3 h-3 bg-gray-300 rounded-full"></div>';
+                                html += `<div class="font-medium text-gray-900">${edu.school || '未知学校'}</div>`;
+                                html += `<div class="text-sm text-gray-600 mb-1">${edu.major || '未知专业'} | ${edu.degree || '-'} | ${edu.duration || '-'}</div>`;
+                                html += '</div>';
+                            });
+                            html += '</div></div>';
+                        }
+                    } else {
+                        html += '<div class="text-center py-8 text-gray-500">暂无解析数据，请点击"开始分析"按钮进行解析</div>';
+                    }
+                    
+                    html += '</div>';
+                    contentEl.innerHTML = html;
+                    
+                } catch (e) {
+                    contentEl.innerHTML = `<div class="text-center py-8 text-red-500"><i class="fas fa-exclamation-circle text-4xl mb-2"></i><p>${e.message}</p></div>`;
+                }
+            }
+
+            // === 新增的方法 ===
+            
+            // 初始化简历库数据（改为从API加载）
+            initLibraryData() {
+                this.libraryCurrentPage = 1;
+                this.libraryPageSize = 10;
+                this.librarySelectedResumes = new Set();
+                this.librarySearchKeyword = '';
+                this.libraryPositionFilter = '';
+                this.librarySortFilter = 'time-desc';
+                this.libraryTotalPages = 1;
+                this.updateLibrarySelectionCount();
+                this.loadLibraryResumeList();
+            }
+            
+            // 初始化简历库事件监听器
+            initLibraryEventListeners() {
+                // 搜索事件
+                const searchInput = document.getElementById('library-search-input');
+                if (searchInput) {
+                    var searchTimeout;
+                    searchInput.oninput = function(e){
+                        clearTimeout(searchTimeout);
+                        searchTimeout = setTimeout(function(){
+                            window.resumeUploader.librarySearchKeyword = e.target.value.trim();
+                            window.resumeUploader.libraryCurrentPage = 1;
+                            window.resumeUploader.loadLibraryResumeList();
+                        }, 300);
+                    };
+                }
+                
+                // 筛选事件
+                const positionFilter = document.getElementById('library-position-filter');
+                if (positionFilter) {
+                    positionFilter.onchange = function(e){
+                        window.resumeUploader.libraryPositionFilter = e.target.value;
+                        window.resumeUploader.libraryCurrentPage = 1;
+                        window.resumeUploader.loadLibraryResumeList();
+                    };
+                }
+                
+                const sortFilter = document.getElementById('library-sort-filter');
+                if (sortFilter) {
+                    sortFilter.onchange = function(e){
+                        window.resumeUploader.librarySortFilter = e.target.value;
+                        window.resumeUploader.libraryCurrentPage = 1;
+                        window.resumeUploader.loadLibraryResumeList();
+                    };
+                }
+                
+                // 全选和清空选择
+                const selectAllBtn = document.getElementById('library-select-all-btn');
+                if (selectAllBtn) {
+                    selectAllBtn.onclick = function(){
+                        var currentItems = document.querySelectorAll('#library-resume-list .library-resume-item');
+                        Array.prototype.forEach.call(currentItems, function(item){
+                            var resumeId = parseInt(item.dataset.resumeId);
+                            window.resumeUploader.librarySelectedResumes.add(resumeId);
+                            var checkbox = item.querySelector('input[type="checkbox"]');
+                            if (checkbox) checkbox.checked = true;
+                            item.classList.add('selected');
+                        });
+                        window.resumeUploader.updateLibrarySelectionCount();
+                    };
+                }
+                
+                const clearSelectionBtn = document.getElementById('library-clear-selection-btn');
+                if (clearSelectionBtn) {
+                    clearSelectionBtn.onclick = function(){
+                        window.resumeUploader.librarySelectedResumes.clear();
+                        var nodes = document.querySelectorAll('#library-resume-list .library-resume-item');
+                        Array.prototype.forEach.call(nodes, function(item){
+                            var checkbox = item.querySelector('input[type="checkbox"]');
+                            if (checkbox) checkbox.checked = false;
+                            item.classList.remove('selected');
+                        });
+                        window.resumeUploader.updateLibrarySelectionCount();
+                    };
+                }
+                
+                // 加入清单按钮
+                if (this.addToListBtn) {
+                    this.addToListBtn.onclick = function(){
+                        window.resumeUploader.addSelectedToAnalysisList();
+                    };
+                }
+                
+                // 分页按钮
+                this.initLibraryPaginationEvents();
+            }
+            
+            // 初始化简历库分页事件
+            initLibraryPaginationEvents() {
+                const firstPageBtn = document.getElementById('library-first-page-btn');
+                const prevPageBtn = document.getElementById('library-prev-page-btn');
+                const nextPageBtn = document.getElementById('library-next-page-btn');
+                const lastPageBtn = document.getElementById('library-last-page-btn');
+                
+                if (firstPageBtn) {
+                    firstPageBtn.onclick = function(){
+                        if (this.libraryCurrentPage > 1) {
+                            this.libraryCurrentPage = 1;
+                            this.loadLibraryResumeList();
+                        }
+                    };
+                }
+                
+                if (prevPageBtn) {
+                    prevPageBtn.onclick = function(){
+                        if (this.libraryCurrentPage > 1) {
+                            this.libraryCurrentPage--;
+                            this.loadLibraryResumeList();
+                        }
+                    };
+                }
+                
+                if (nextPageBtn) {
+                    nextPageBtn.onclick = function(){
+                        if (this.libraryCurrentPage < this.libraryTotalPages) {
+                            this.libraryCurrentPage++;
+                            this.loadLibraryResumeList();
+                        }
+                    };
+                }
+                
+                if (lastPageBtn) {
+                    lastPageBtn.onclick = function(){
+                        if (this.libraryCurrentPage < this.libraryTotalPages) {
+                            this.libraryCurrentPage = this.libraryTotalPages;
+                            this.loadLibraryResumeList();
+                        }
+                    };
+                }
+            }
+            
+            // 初始化上传模态框事件
+            initUploadModalEventListeners() {
+                if (!this.uploadModal) return;
+                
+                // 关闭按钮
+                const closeBtn = document.getElementById('close-upload-modal');
+                const cancelBtn = document.getElementById('cancel-upload-modal');
+                
+                var self = this;
+                var closeModal = function(){
+                    if (!self.uploadModal) return;
+                    self.uploadModal.classList.add('hidden');
+                    self.uploadModal.classList.remove('flex');
+                    self.clearUploadedFiles();
+                };
+                
+                if (closeBtn) closeBtn.onclick = closeModal;
+                if (cancelBtn) cancelBtn.onclick = closeModal;
+                
+                // 点击背景关闭
+                this.uploadModal.onclick = function(e){
+                    if (e.target === self.uploadModal) {
+                        closeModal();
+                    }
+                };
+                
+                // 拖拽上传事件
+                if (this.modalDropZone) {
+                    this.modalDropZone.addEventListener('click', function(){ window.resumeUploader.modalFileInput.click(); });
+                    
+                    this.modalDropZone.addEventListener('dragover', function(e){ e.preventDefault(); window.resumeUploader.modalDropZone.classList.add('border-blue-400','bg-blue-100'); });
+                    
+                    this.modalDropZone.addEventListener('dragleave', function(){ window.resumeUploader.modalDropZone.classList.remove('border-blue-400','bg-blue-100'); });
+                    
+                    this.modalDropZone.addEventListener('drop', function(e){ e.preventDefault(); window.resumeUploader.modalDropZone.classList.remove('border-blue-400','bg-blue-100'); window.resumeUploader.handleFiles(Array.from(e.dataTransfer.files)); });
+                }
+                
+                // 文件选择
+                if (this.modalFileInput) {
+                    this.modalFileInput.addEventListener('change', function(e){ window.resumeUploader.handleFiles(Array.from(e.target.files)); e.target.value=''; });
+                }
+                
+                // 清空文件列表
+                const clearFilesBtn = document.getElementById('modal-clear-files-btn');
+                if (clearFilesBtn) {
+                    clearFilesBtn.onclick = function(){ window.resumeUploader.clearUploadedFiles(); };
+                }
+                
+                // 确认上传按钮
+                const confirmUploadBtn = document.getElementById('confirm-upload-btn');
+                if (confirmUploadBtn) {
+                    confirmUploadBtn.onclick = function(){ window.resumeUploader.confirmSelection(); };
+                }
+            }
+            async confirmSelection() {
+                const hasFiles = this.uploadedFiles && this.uploadedFiles.length > 0;
+                const hasChosen = this.librarySelectedResumes && this.librarySelectedResumes.size > 0;
+                if (!hasFiles && !hasChosen) {
+                    const modal = document.getElementById('upload-modal');
+                    if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+                    this.updateAnalyzeButtonState();
+                    return;
+                }
+                if (hasFiles) {
+                    await this.confirmUpload();
+                }
+                if (hasChosen) {
+                    // 合并选择到主列表
+                    this.librarySelectedResumes.forEach(id => this.selectedResumes.add(id));
+                    
+                    // 清空简历库选择状态
+                    this.librarySelectedResumes.clear();
+                    this.updateLibrarySelectionCount();
+                    
+                    // 更新主列表UI
+                    this.updateSelectionCount();
+                    this.renderSelectedResumeList();
+                }
+                const modal = document.getElementById('upload-modal');
+                if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+                this.updateAnalyzeButtonState();
+            }
+            
+            // 初始化快捷操作按钮
+            initQuickActionButtons() {
+                // 查看分析历史按钮
+                const viewHistoryBtn = document.getElementById('view-history-btn');
+                if (viewHistoryBtn) {
+                    viewHistoryBtn.addEventListener('click', function(){ window.resumeUploader.showAnalysisHistory(); });
+                }
+                
+                // 简历对比分析按钮
+                const compareResumesBtn = document.getElementById('compare-resumes-btn');
+                if (compareResumesBtn) {
+                    compareResumesBtn.addEventListener('click', function(){ window.resumeUploader.showResumeComparison(); });
+                }
+                
+                // 导出分析报告按钮
+                const exportReportBtn = document.getElementById('export-report-btn');
+                if (exportReportBtn) {
+                    exportReportBtn.addEventListener('click', function(){ window.resumeUploader.exportAnalysisReport(); });
+                }
+                
+                // 链接导入
+                const importFromLinkBtn = document.getElementById('import-from-link-btn');
+                const modalImportFromLinkBtn = document.getElementById('modal-import-from-link-btn');
+                
+                if (importFromLinkBtn) {
+                    importFromLinkBtn.addEventListener('click', function(){ window.resumeUploader.showImportFromLinkDialog(); });
+                }
+                
+                if (modalImportFromLinkBtn) {
+                    modalImportFromLinkBtn.addEventListener('click', function(){ window.resumeUploader.showImportFromLinkDialog(); });
+                }
+            }
+            
+            // 显示上传模态框
+            showUploadModal() {
+                if (this.uploadModal) {
+                    this.uploadModal.classList.remove('hidden');
+                    this.uploadModal.classList.add('flex');
+                    this.loadLibraryResumeList();
+                    const confirmUploadBtn = document.getElementById('confirm-upload-btn');
+                    if (confirmUploadBtn) {
+                        const hasFiles = this.uploadedFiles && this.uploadedFiles.length > 0;
+                        const hasChosen = this.librarySelectedResumes && this.librarySelectedResumes.size > 0;
+                        confirmUploadBtn.disabled = !(hasFiles || hasChosen);
+                    }
+                }
+            }
+            
+            // 加入分析清单
+            addSelectedToAnalysisList() {
+                // 优先检查主列表选择
+                if (this.selectedResumes && this.selectedResumes.size > 0) {
+                    this.selectedResumes.forEach(function(id){ window.resumeUploader.analysisListResumes.add(id); });
+                    this.selectedResumes.clear();
+                    this.updateSelectionCount();
+                    this.updateAnalysisListCount();
+                    this.renderSelectedResumeList();
+                    return;
+                }
+
+                if (this.librarySelectedResumes.size === 0) {
+                    ui.showNotification('请先选择要加入清单的简历', 'warning');
+                    return;
+                }
+                
+                // 将选中的简历加入分析清单
+                this.librarySelectedResumes.forEach(function(id){ window.resumeUploader.analysisListResumes.add(id); });
+                
+                const addedCount = this.librarySelectedResumes.size;
+                
+                // 清空选择
+                this.librarySelectedResumes.clear();
+                Array.prototype.forEach.call(document.querySelectorAll('#library-resume-list .library-resume-item'), function(item){ var checkbox = item.querySelector('input[type="checkbox"]'); if (checkbox) checkbox.checked = false; item.classList.remove('selected'); });
+                
+                // 更新显示
+                this.updateLibrarySelectionCount();
+                this.updateAnalysisListCount();
+                
+                // 不再弹出提示框，只是静默加入清单
+            }
+            
+            // 更新简历库选择计数
+            updateLibrarySelectionCount() {
+                const count = this.librarySelectedResumes.size;
+                const selectedCountEl = document.getElementById('library-selected-count');
+                const addToListCountEl = document.getElementById('add-to-list-count');
+                
+                if (selectedCountEl) {
+                    selectedCountEl.textContent = '已选择 ' + count + ' 份';
+                }
+                
+                if (addToListCountEl) {
+                    addToListCountEl.textContent = count;
+                }
+                
+                // 移除对右侧分析按钮状态的影响 - 只有分析清单变化时才更新
+                // this.updateAnalyzeButtonState();
+                
+                if (this.addToAnalysisListBtn) {
+                    if (count > 0) {
+                        this.addToAnalysisListBtn.disabled = false;
+                        this.addToAnalysisListBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    } else {
+                        this.addToAnalysisListBtn.disabled = true;
+                        this.addToAnalysisListBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    }
+                }
+                
+                if (this.addToListBtn) {
+                    if (count > 0) {
+                        this.addToListBtn.disabled = false;
+                        this.addToListBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    } else {
+                        this.addToListBtn.disabled = true;
+                        this.addToListBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    }
+                }
+                // 同步右侧分析按钮状态
+                this.updateAnalyzeButtonState();
+                const confirmUploadBtn = document.getElementById('confirm-upload-btn');
+                if (confirmUploadBtn) {
+                    const hasFiles = this.uploadedFiles && this.uploadedFiles.length > 0;
+                    confirmUploadBtn.disabled = !(count > 0 || hasFiles);
+                }
+            }
+            
+            // 更新分析清单计数
+            updateAnalysisListCount() {
+                const count = this.analysisListResumes.size;
+                const analysisListCountEl = document.getElementById('analysis-list-count');
+                
+                if (analysisListCountEl) {
+                    analysisListCountEl.textContent = count;
+                }
+                
+                // 更新右侧按钮状态
+                this.updateAnalyzeButtonState();
+            }
+            
+            // 更新分析按钮状态
+            updateAnalyzeButtonState() {
+                const listCount = this.analysisListResumes.size;
+                const librarySelectedCount = this.librarySelectedResumes ? this.librarySelectedResumes.size : 0;
+                const mainSelectedCount = this.selectedResumes ? this.selectedResumes.size : 0;
+                const uploadedCount = this.uploadedFiles ? this.uploadedFiles.length : 0;
+                const canAnalyze = (listCount > 0) || (librarySelectedCount > 0) || (mainSelectedCount > 0) || (uploadedCount > 0);
+                
+                if (!this.analyzeBtn) return;
+                const analyzeIcon = this.analyzeBtn.querySelector('i');
+                this.analyzeBtn.disabled = !canAnalyze;
+                this.analyzeBtn.classList.toggle('opacity-50', !canAnalyze);
+                this.analyzeBtn.classList.toggle('cursor-not-allowed', !canAnalyze);
+                
+                if (listCount > 0) {
+                    if (analyzeIcon) analyzeIcon.className = 'fas fa-play mr-2';
+                    this.analyzeBtn.innerHTML = '<i class="fas fa-play mr-2"></i>开始分析 (' + listCount + '份简历)';
+                } else if (mainSelectedCount > 0) {
+                    if (analyzeIcon) analyzeIcon.className = 'fas fa-play mr-2';
+                    this.analyzeBtn.innerHTML = '<i class="fas fa-play mr-2"></i>开始分析 (' + mainSelectedCount + '份简历)';
+                } else if (librarySelectedCount > 0) {
+                    if (analyzeIcon) analyzeIcon.className = 'fas fa-play mr-2';
+                    this.analyzeBtn.innerHTML = '<i class="fas fa-play mr-2"></i>开始分析 (' + librarySelectedCount + '份简历)';
+                } else if (uploadedCount > 0) {
+                    if (analyzeIcon) analyzeIcon.className = 'fas fa-cog mr-2';
+                    this.analyzeBtn.innerHTML = '<i class="fas fa-cog mr-2"></i>开始解析 (' + uploadedCount + '个文件)';
+                } else {
+                    if (analyzeIcon) analyzeIcon.className = 'fas fa-cog mr-2';
+                    this.analyzeBtn.innerHTML = '<i class="fas fa-cog mr-2"></i>请选择要分析的简历';
+                }
+            }
+            
+            
+            // 初始化简历库数据（保留同名方法，统一为API版本）
+            initLibraryData() {
+                this.libraryCurrentPage = 1;
+                this.libraryPageSize = 10;
+                this.librarySelectedResumes = new Set();
+                this.librarySearchKeyword = '';
+                this.libraryPositionFilter = '';
+                this.librarySortFilter = 'time-desc';
+                this.libraryTotalPages = 1;
+                this.updateLibrarySelectionCount();
+                this.loadLibraryResumeList();
+            }
+            
+            // 加载简历库列表（改为从API加载数据）
+            async loadLibraryResumeList() {
+                if (!this.allResumes) {
+                    await this.prepareRealResumes();
+                }
+                
+                var filteredResumes = this.allResumes.filter(function(resume){
+                    // 搜索筛选
+                    if (this.librarySearchKeyword) {
+                        const keyword = this.librarySearchKeyword.toLowerCase();
+                        if (!resume.name.toLowerCase().includes(keyword) && 
+                            !resume.position.toLowerCase().includes(keyword) &&
+                            !resume.fileName.toLowerCase().includes(keyword) &&
+                            !Array.prototype.some.call(resume.skills || [], function(skill){ return String(skill).toLowerCase().includes(keyword); })) {
+                            return false;
+                        }
+                    }
+                    
+                    // 职位筛选
+                    if (this.libraryPositionFilter && resume.positionType !== this.libraryPositionFilter) {
+                        return false;
+                    }
+                    
+                    return true;
+                });
+                
+                // 排序
+                filteredResumes.sort(function(a, b){
+                    switch (this.librarySortFilter) {
+                        case 'time-desc':
+                            return b.uploadTime - a.uploadTime;
+                        case 'time-asc':
+                            return a.uploadTime - b.uploadTime;
+                        case 'name-asc':
+                            return a.name.localeCompare(b.name, 'zh-CN');
+                        case 'name-desc':
+                            return b.name.localeCompare(a.name, 'zh-CN');
+                        case 'score-desc':
+                            return b.score - a.score;
+                        default:
+                            return 0;
+                    }
+                });
+                
+                const totalItems = this.allResumes.length;
+                const filteredCount = filteredResumes.length;
+                const totalPages = Math.ceil(filteredCount / this.libraryPageSize);
+                this.libraryTotalPages = totalPages;
+                
+                // 确保当前页码在有效范围内
+                if (this.libraryCurrentPage > totalPages) {
+                    this.libraryCurrentPage = Math.max(1, totalPages);
+                }
+                
+                // 分页
+                const startIndex = (this.libraryCurrentPage - 1) * this.libraryPageSize;
+                const endIndex = Math.min(startIndex + this.libraryPageSize, filteredCount);
+                const currentPageData = filteredResumes.slice(startIndex, endIndex);
+                
+                // 更新统计信息
+                this.updateLibraryStats(totalItems, filteredCount);
+                
+                const startDisplay = filteredCount > 0 ? startIndex + 1 : 0;
+                const endDisplay = startIndex + currentPageData.length;
+                const startEl = document.getElementById('library-page-info-start');
+                const endEl = document.getElementById('library-page-info-end');
+                const totalEl = document.getElementById('library-page-info-total');
+                if (startEl) startEl.textContent = startDisplay;
+                if (endEl) endEl.textContent = endDisplay;
+                if (totalEl) totalEl.textContent = filteredCount;
+                
+                const firstBtn = document.getElementById('library-first-page-btn');
+                const prevBtn = document.getElementById('library-prev-page-btn');
+                const nextBtn = document.getElementById('library-next-page-btn');
+                const lastBtn = document.getElementById('library-last-page-btn');
+                const isFirst = this.libraryCurrentPage <= 1;
+                const isLast = this.libraryCurrentPage >= this.libraryTotalPages || this.libraryTotalPages <= 1;
+                if (firstBtn) { firstBtn.disabled = isFirst; firstBtn.classList.toggle('opacity-50', isFirst); firstBtn.classList.toggle('cursor-not-allowed', isFirst); }
+                if (prevBtn) { prevBtn.disabled = isFirst; prevBtn.classList.toggle('opacity-50', isFirst); prevBtn.classList.toggle('cursor-not-allowed', isFirst); }
+                if (nextBtn) { nextBtn.disabled = isLast; nextBtn.classList.toggle('opacity-50', isLast); nextBtn.classList.toggle('cursor-not-allowed', isLast); }
+                if (lastBtn) { lastBtn.disabled = isLast; lastBtn.classList.toggle('opacity-50', isLast); lastBtn.classList.toggle('cursor-not-allowed', isLast); }
+                
+                // 渲染列表
+                this.renderLibraryResumeList(currentPageData);
+            }
+            
+            // 更新简历库统计信息
+            updateLibraryStats(totalCount, filteredCount) {
+                const resumeCountEl = document.getElementById('library-resume-count');
+                const filteredCountEl = document.getElementById('library-filtered-count');
+                
+                if (resumeCountEl) {
+                    resumeCountEl.textContent = '共 ' + totalCount + ' 份简历';
+                }
+                
+                if (filteredCountEl) {
+                    filteredCountEl.textContent = '共找到 ' + filteredCount + ' 份简历';
+                }
+            }
+            
+            // 渲染简历库列表
+            renderLibraryResumeList(resumes) {
+                const container = document.getElementById('library-resume-list');
+                if (!container) return;
+                
+                container.innerHTML = '';
+                
+                if (resumes.length === 0) {
+                    container.innerHTML = '<div class="text-center py-12 text-gray-500">\
+                            <i class="fas fa-inbox text-4xl mb-4 text-gray-300"></i>\
+                            <p class="text-lg font-medium mb-2">暂未找到符合条件的简历</p>\
+                            <p class="text-sm">请调整搜索关键词或筛选条件</p>\
+                        </div>';
+                    return;
+                }
+                
+                resumes.forEach(function(resume){
+                    const resumeItem = this.createLibraryResumeItem(resume);
+                    container.appendChild(resumeItem);
+                });
+            }
+            
+            // 创建简历库项目
+            createLibraryResumeItem(resume) {
+                const div = document.createElement('div');
+                var _libBase = 'library-resume-item bg-white border border-gray-200 rounded-lg px-4 py-3 hover:border-blue-300 hover:shadow-sm transition-all cursor-pointer ';
+                var _libExtra = this.librarySelectedResumes.has(resume.id) ? 'selected border-blue-500 bg-blue-50' : '';
+                div.className = _libBase + _libExtra;
+                div.dataset.resumeId = resume.id;
+                
+                const fileIcon = this.getFileIcon(resume.fileType);
+                const scoreColor = this.getScoreColor(resume.score);
+                
+                var checkedAttr = this.librarySelectedResumes.has(resume.id) ? 'checked' : '';
+                var skillsArr = (resume.skills || []).slice(0,3);
+                var skillsHtml = '';
+                for (var i=0;i<skillsArr.length;i++){ skillsHtml += '<span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">'+skillsArr[i]+'</span>'; }
+                var skillsMore = (resume.skills && resume.skills.length>3) ? ('<span class="text-xs text-gray-400">+'+(resume.skills.length-3)+'</span>') : '';
+                var upText = this.formatDate(resume.uploadTime);
+                div.innerHTML = '<div class="flex items-center space-x-4">\
+                        <div class="flex items-center space-x-2 flex-shrink-0">\
+                            <label class="flex items-center cursor-pointer">\
+                                <input type="checkbox" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4" '+checkedAttr+'>\
+                            </label>\
+                            <div class="w-8 h-8 bg-gray-100 rounded flex items-center justify-center">'+fileIcon.replace('text-lg','text-sm')+'\
+                            </div>\
+                        </div>\
+                        <div class="flex-1 min-w-0 flex items-center space-x-3">\
+                            <div class="flex-1 min-w-0">\
+                                <div class="flex items-center space-x-2">\
+                                    <h4 class="font-medium text-gray-900 text-base truncate">'+resume.name+'</h4>\
+                                    <div class="text-xs px-2 py-0.5 rounded '+scoreColor+' font-medium flex-shrink-0">'+(resume.score)+'分</div>\
+                                </div>\
+                                <div class="flex items-center space-x-2 text-sm text-gray-600 mt-0.5">\
+                                    <span class="truncate">'+resume.position+'</span>\
+                                    <span class="text-gray-400">|</span>\
+                                    <span class="text-xs text-gray-500 truncate" title="'+resume.fileName+'">'+resume.fileName+'</span>\
+                                </div>\
+                            </div>\
+                        </div>\
+                        <div class="flex-shrink-0 w-40">\
+                            <div class="flex flex-wrap gap-1">'+skillsHtml+skillsMore+'\
+                            </div>\
+                        </div>\
+                        <div class="flex-shrink-0 w-20 text-center">\
+                            <div class="text-sm text-gray-700 font-medium">'+resume.experience+'</div>\
+                            <div class="text-xs text-gray-500">'+resume.education+'</div>\
+                        </div>\
+                        <div class="flex-shrink-0 w-18 text-center">\
+                            <div class="text-sm text-blue-600 font-medium">'+resume.salary+'</div>\
+                        </div>\
+                        <div class="flex-shrink-0 w-20 text-center">\
+                            <div class="text-xs text-gray-500">'+upText+'</div>\
+                        </div>\
+                    </div>';
+                
+                // 添加点击事件
+                div.addEventListener('click', function(e) {
+                    if (e.target.type === 'checkbox') return;
+                    
+                    const checkbox = div.querySelector('input[type="checkbox"]');
+                    checkbox.checked = !checkbox.checked;
+                    
+                    if (checkbox.checked) {
+                        window.resumeUploader && window.resumeUploader.librarySelectedResumes && window.resumeUploader.librarySelectedResumes.add ? window.resumeUploader.librarySelectedResumes.add(resume.id) : null;
+                        div.classList.add('selected', 'border-blue-500', 'bg-blue-50');
+                        div.classList.remove('border-gray-200');
+                    } else {
+                        window.resumeUploader && window.resumeUploader.librarySelectedResumes && window.resumeUploader.librarySelectedResumes.delete ? window.resumeUploader.librarySelectedResumes.delete(resume.id) : null;
+                        div.classList.remove('selected', 'border-blue-500', 'bg-blue-50');
+                        div.classList.add('border-gray-200');
+                    }
+                    
+                    window.resumeUploader && window.resumeUploader.updateLibrarySelectionCount ? window.resumeUploader.updateLibrarySelectionCount() : null;
+                });
+                
+                // 复选框事件
+                const checkbox = div.querySelector('input[type="checkbox"]');
+                checkbox.addEventListener('change', function(e) {
+                    if (e.target.checked) {
+                        window.resumeUploader && window.resumeUploader.librarySelectedResumes && window.resumeUploader.librarySelectedResumes.add ? window.resumeUploader.librarySelectedResumes.add(resume.id) : null;
+                        div.classList.add('selected', 'border-blue-500', 'bg-blue-50');
+                        div.classList.remove('border-gray-200');
+                    } else {
+                        window.resumeUploader && window.resumeUploader.librarySelectedResumes && window.resumeUploader.librarySelectedResumes.delete ? window.resumeUploader.librarySelectedResumes.delete(resume.id) : null;
+                        div.classList.remove('selected', 'border-blue-500', 'bg-blue-50');
+                        div.classList.add('border-gray-200');
+                    }
+                    
+                    window.resumeUploader && window.resumeUploader.updateLibrarySelectionCount ? window.resumeUploader.updateLibrarySelectionCount() : null;
+                });
+                
+                return div;
+            }
+            
+            // 获取评分颜色
+            getScoreColor(score) {
+                if (score >= 90) return 'bg-green-100 text-green-800';
+                if (score >= 80) return 'bg-blue-100 text-blue-800';
+                if (score >= 70) return 'bg-yellow-100 text-yellow-800';
+                return 'bg-red-100 text-red-800';
+            }
+            
+            // 格式化日期显示
+            formatDate(date) {
+                const now = new Date();
+                const diffTime = Math.abs(now - date);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                if (diffDays <= 1) {
+                    return '今天';
+                } else if (diffDays <= 7) {
+                    return '' + diffDays + '天前';
+                } else if (diffDays <= 30) {
+                    return '' + Math.floor(diffDays / 7) + '周前';
+                } else {
+                    return date.toLocaleDateString('zh-CN', { month: 'numeric', day: 'numeric' });
+                }
+            }
+        }
+        
+        // 初始化应用
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化简历上传器
+            window.resumeUploader = new EnhancedResumeUploader();
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script>
+        (function(){
+            var s=document.createElement('script');
+            s.src='/js/sidebar.js';
+            s.async=false;
+            s.onload=function(){ Sidebar.init({ mount:'#sidebar', active:'resume' }); };
+            document.body.appendChild(s);
+        })();
+    </script>
+</body>
+</html>

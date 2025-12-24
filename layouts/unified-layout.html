@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{PAGE_TITLE}} - 简历助手</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="/css/design-system.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        .sidebar {
+            background: #ffffff;
+            border-right: 1px solid rgba(229, 231, 235, 1);
+        }
+        
+        .sidebar-nav-item {
+            transition: all 0.3s ease;
+            border-radius: 12px;
+            margin: 4px 8px;
+        }
+        
+        .sidebar-nav-item:hover {
+            background: rgba(243, 244, 246, 1);
+            transform: translateX(4px);
+        }
+        
+        .sidebar-nav-item.active {
+            background: rgba(239, 246, 255, 1);
+            color: #2563eb;
+        }
+        
+        .main-content {
+            background: #f9fafb;
+            min-height: 100vh;
+        }
+        
+        .content-header {
+            background: #ffffff;
+            border-bottom: 1px solid rgba(229, 231, 235, 1);
+        }
+        
+        .user-menu {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .nav-toggle {
+            display: none;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            
+            .nav-toggle {
+                display: block;
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+        }
+        
+        .notification-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- 移动端导航切换按钮 -->
+    <button class="nav-toggle fixed top-4 left-4 z-50 bg-white p-3 rounded-lg shadow-lg md:hidden" onclick="toggleSidebar()">
+        <i class="fas fa-bars text-gray-600"></i>
+    </button>
+
+    <!-- 左侧导航栏 -->
+    <div class="sidebar fixed left-0 top-0 h-full w-64 text-white z-40" id="sidebar">
+        <!-- Logo区域 -->
+        <div class="p-6 border-b border-white border-opacity-20">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-file-alt text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold">简历助手</h1>
+                    <p class="text-xs opacity-80">AI智能简历生成</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 用户信息 -->
+        <div class="p-4">
+            <div class="user-menu p-3">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                        <i class="fas fa-user text-sm text-white"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-gray-800" id="user-name">用户名</p>
+                        <p class="text-xs text-gray-500" id="user-role">免费用户</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主导航菜单 -->
+        <nav class="px-2 pb-4">
+            <div class="space-y-1">
+                <!-- 智能中心 -->
+                <div class="sidebar-nav-item">
+                    <a href="/pages/smart-dashboard.html" class="flex items-center space-x-3 p-3 text-sm font-medium" onclick="setActiveNav(this)">
+                        <i class="fas fa-robot text-blue-300"></i>
+                        <span>智能中心</span>
+                    </a>
+                </div>
+
+                <!-- 简历管理 -->
+                <div class="sidebar-nav-item">
+                    <a href="/pages/dashboard.html" class="flex items-center space-x-3 p-3 text-sm font-medium" onclick="setActiveNav(this)">
+                        <i class="fas fa-file-alt text-green-300"></i>
+                        <span>简历管理</span>
+                    </a>
+                </div>
+
+                <!-- 模板中心 -->
+                <div class="sidebar-nav-item">
+                    <a href="/pages/template-center.html" class="flex items-center space-x-3 p-3 text-sm font-medium" onclick="setActiveNav(this)">
+                        <i class="fas fa-palette text-purple-300"></i>
+                        <span>模板中心</span>
+                    </a>
+                </div>
+
+                <!-- 智能生成 -->
+                <div class="sidebar-nav-item">
+                    <a href="/pages/ai-generator.html" class="flex items-center space-x-3 p-3 text-sm font-medium" onclick="setActiveNav(this)">
+                        <i class="fas fa-magic text-yellow-300"></i>
+                        <span>智能生成</span>
+                    </a>
+                </div>
+
+                <!-- 数据分析 -->
+                <div class="sidebar-nav-item">
+                    <a href="/pages/analytics-dashboard.html" class="flex items-center space-x-3 p-3 text-sm font-medium" onclick="setActiveNav(this)">
+                        <i class="fas fa-chart-line text-red-300"></i>
+                        <span>数据分析</span>
+                    </a>
+                </div>
+
+                <!-- 高级搜索 -->
+                <div class="sidebar-nav-item">
+                    <a href="/pages/advanced-search.html" class="flex items-center space-x-3 p-3 text-sm font-medium" onclick="setActiveNav(this)">
+                        <i class="fas fa-search text-indigo-300"></i>
+                        <span>高级搜索</span>
+                    </a>
+                </div>
+
+                <!-- 数据管理 -->
+                <div class="sidebar-nav-item">
+                    <a href="/pages/data-management.html" class="flex items-center space-x-3 p-3 text-sm font-medium" onclick="setActiveNav(this)">
+                        <i class="fas fa-database text-teal-300"></i>
+                        <span>数据管理</span>
+                    </a>
+                </div>
+
+                <!-- 账号设置 -->
+                <div class="sidebar-nav-item">
+                    <a href="/pages/account-settings.html" class="flex items-center space-x-3 p-3 text-sm font-medium" onclick="setActiveNav(this)">
+                        <i class="fas fa-user text-orange-300"></i>
+                        <span>账号设置</span>
+                    </a>
+                </div>
+
+                <!-- 企业设置 -->
+                <div class="sidebar-nav-item">
+                    <a href="/pages/company-management.html" class="flex items-center space-x-3 p-3 text-sm font-medium" onclick="setActiveNav(this)">
+                        <i class="fas fa-building text-gray-300"></i>
+                        <span>企业管理</span>
+                    </a>
+                </div>
+
+                <!-- 订阅与财务 -->
+                <div class="sidebar-nav-item">
+                    <a href="/pages/subscription.html" class="flex items-center space-x-3 p-3 text-sm font-medium" onclick="setActiveNav(this)">
+                        <i class="fas fa-credit-card text-pink-300"></i>
+                        <span>订阅与财务</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 分隔线 -->
+            <div class="border-t border-white border-opacity-20 my-4"></div>
+
+            <!-- 快速操作 -->
+            <div class="px-2">
+                <h3 class="text-xs font-semibold text-white text-opacity-70 uppercase tracking-wide mb-2">快速操作</h3>
+                <div class="space-y-1">
+                    <button class="w-full text-left p-2 text-sm hover:bg-white hover:bg-opacity-10 rounded-lg transition-colors" onclick="createNewResume()">
+                        <i class="fas fa-plus mr-2"></i>新建简历
+                    </button>
+                    <button class="w-full text-left p-2 text-sm hover:bg-white hover:bg-opacity-10 rounded-lg transition-colors" onclick="importData()">
+                        <i class="fas fa-upload mr-2"></i>导入数据
+                    </button>
+                    <button class="w-full text-left p-2 text-sm hover:bg-white hover:bg-opacity-10 rounded-lg transition-colors" onclick="exportData()">
+                        <i class="fas fa-download mr-2"></i>导出数据
+                    </button>
+                </div>
+            </div>
+        </nav>
+    </div>
+
+    <!-- 主内容区域 -->
+    <div class="main-content ml-64" id="main-content">
+        <!-- 顶部标题栏 -->
+        <div class="content-header p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800" id="page-title">{{PAGE_TITLE}}</h1>
+                    <p class="text-gray-600 mt-1" id="page-subtitle">{{PAGE_SUBTITLE}}</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <!-- 通知铃铛 -->
+                    <button class="relative p-2 text-gray-600 hover:text-gray-800 transition-colors" onclick="showNotifications()">
+                        <i class="fas fa-bell text-lg"></i>
+                        <span class="absolute -top-1 -right-1 w-3 h-3 bg-blue-600 rounded-full" id="notification-dot"></span>
+                    </button>
+                    
+                    <!-- 帮助按钮 -->
+                    <button class="p-2 text-gray-600 hover:text-gray-800 transition-colors" onclick="showHelp()">
+                        <i class="fas fa-question-circle text-lg"></i>
+                    </button>
+                    
+                    <!-- 用户菜单 -->
+                    <div class="relative">
+                        <button class="flex items-center space-x-2 p-2 hover:bg-gray-100 rounded-lg transition-colors" onclick="toggleUserMenu()">
+                            <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                                <i class="fas fa-user text-sm text-white"></i>
+                            </div>
+                            <i class="fas fa-chevron-down text-gray-600"></i>
+                        </button>
+                        <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border hidden" id="user-menu-dropdown">
+                            <a href="/pages/account-settings.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">个人资料</a>
+                            <a href="/pages/account-settings.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">账户设置</a>
+                            <div class="border-t"></div>
+                            <button class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100" onclick="logout()">退出登录</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 页面内容 -->
+        <div class="p-6">
+            {{PAGE_CONTENT}}
+        </div>
+    </div>
+
+    <!-- 通知容器 -->
+    <div class="notification-container" id="notification-container"></div>
+
+    <!-- 加载遮罩 -->
+    <div class="loading-overlay hidden" id="loading-overlay">
+        <div class="bg-white p-8 rounded-xl shadow-2xl text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+            <p class="text-gray-600">加载中...</p>
+        </div>
+    </div>
+
+    <!-- 脚本文件 -->
+    <script src="/js/ui-components.js"></script>
+    <script src="/js/resume-templates.js"></script>
+    <script src="/js/dashboard-charts.js"></script>
+    <script src="/js/advanced-search.js"></script>
+    <script src="/js/batch-operations.js"></script>
+    
+    <script>
+        // 统一布局脚本
+        class UnifiedLayout {
+            constructor() {
+                this.currentPage = '';
+                this.userData = null;
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.loadUserData();
+                this.setActiveNavigation();
+                this.checkNotifications();
+            }
+
+            setupEventListeners() {
+                // 点击外部关闭用户菜单
+                document.addEventListener('click', (e) => {
+                    const userMenu = document.getElementById('user-menu-dropdown');
+                    const userMenuButton = e.target.closest('button[onclick="toggleUserMenu()"]');
+                    if (!userMenuButton && userMenu && !userMenu.contains(e.target)) {
+                        userMenu.classList.add('hidden');
+                    }
+                });
+
+                // 响应式处理
+                window.addEventListener('resize', () => {
+                    if (window.innerWidth > 768) {
+                        document.getElementById('sidebar').classList.remove('open');
+                    }
+                });
+            }
+
+            loadUserData() {
+                // 模拟用户数据加载
+                this.userData = {
+                    name: '张三',
+                    role: 'VIP用户',
+                    avatar: '/images/avatar.png'
+                };
+                
+                document.getElementById('user-name').textContent = this.userData.name;
+                document.getElementById('user-role').textContent = this.userData.role;
+            }
+
+            setActiveNavigation() {
+                const currentPath = window.location.pathname;
+                const navLinks = document.querySelectorAll('.sidebar-nav-item a');
+                
+                navLinks.forEach(link => {
+                    if (link.getAttribute('href') === currentPath) {
+                        link.parentElement.classList.add('active');
+                    }
+                });
+            }
+
+            checkNotifications() {
+                // 模拟检查通知
+                const hasNotifications = Math.random() > 0.7;
+                const notificationDot = document.getElementById('notification-dot');
+                if (hasNotifications) {
+                    notificationDot.style.display = 'block';
+                } else {
+                    notificationDot.style.display = 'none';
+                }
+            }
+
+            // 公共方法
+            showNotification(message, type = 'info') {
+                if (window.uiComponents) {
+                    window.uiComponents.showNotification(message, type);
+                } else {
+                    console.log(`[${type.toUpperCase()}] ${message}`);
+                }
+            }
+
+            showLoading(message = '加载中...') {
+                const overlay = document.getElementById('loading-overlay');
+                const messageEl = overlay.querySelector('p');
+                messageEl.textContent = message;
+                overlay.classList.remove('hidden');
+            }
+
+            hideLoading() {
+                const overlay = document.getElementById('loading-overlay');
+                overlay.classList.add('hidden');
+            }
+
+            // 页面跳转
+            navigateTo(page) {
+                this.showLoading();
+                setTimeout(() => {
+                    window.location.href = page;
+                }, 300);
+            }
+        }
+
+        // 全局函数
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('open');
+        }
+
+        function setActiveNav(element) {
+            // 移除所有active类
+            document.querySelectorAll('.sidebar-nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // 添加active类到当前项
+            element.parentElement.classList.add('active');
+        }
+
+        function toggleUserMenu() {
+            const menu = document.getElementById('user-menu-dropdown');
+            menu.classList.toggle('hidden');
+        }
+
+        function showNotifications() {
+            if (window.uiComponents) {
+                window.uiComponents.showNotification('暂无新通知', 'info');
+            }
+        }
+
+        function showHelp() {
+            if (window.uiComponents) {
+                window.uiComponents.showModal({
+                    title: '使用帮助',
+                    content: `
+                        <div class="space-y-4">
+                            <h3 class="font-semibold text-gray-800">快速开始</h3>
+                            <ul class="list-disc list-inside space-y-2 text-sm text-gray-600">
+                                <li>点击左侧导航栏切换不同功能模块</li>
+                                <li>使用模板中心选择合适的简历模板</li>
+                                <li>在智能生成页面创建新简历</li>
+                                <li>通过数据分析查看简历效果</li>
+                            </ul>
+                            <h3 class="font-semibold text-gray-800">联系我们</h3>
+                            <p class="text-sm text-gray-600">如有问题，请联系客服：support@resume-assistant.com</p>
+                        </div>
+                    `,
+                    size: 'medium'
+                });
+            }
+        }
+
+        function createNewResume() {
+            if (window.unifiedLayout) {
+                window.unifiedLayout.navigateTo('/pages/ai-generator.html');
+            } else {
+                window.location.href = '/pages/ai-generator.html';
+            }
+        }
+
+        function importData() {
+            if (window.uiComponents) {
+                window.uiComponents.showNotification('导入功能开发中...', 'info');
+            }
+        }
+
+        function exportData() {
+            if (window.uiComponents) {
+                window.uiComponents.showNotification('导出功能开发中...', 'info');
+            }
+        }
+
+        function logout() {
+            if (window.uiComponents) {
+                window.uiComponents.showConfirm('确定要退出登录吗？', () => {
+                    window.location.href = '/pages/login.html';
+                });
+            } else if (confirm('确定要退出登录吗？')) {
+                window.location.href = '/pages/login.html';
+            }
+        }
+
+        // 初始化统一布局
+        window.unifiedLayout = new UnifiedLayout();
+
+        // 页面加载完成后的处理
+        document.addEventListener('DOMContentLoaded', function() {
+            // 隐藏加载遮罩
+            if (window.unifiedLayout) {
+                window.unifiedLayout.hideLoading();
+            }
+            
+            // 显示欢迎消息
+            setTimeout(() => {
+                if (window.uiComponents) {
+                    window.uiComponents.showNotification('欢迎使用简历助手！', 'success');
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

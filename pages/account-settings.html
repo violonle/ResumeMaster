@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>账号设置 - 争湃·简历大师</title>
+    <script src="../js/tailwindcss.js"></script>
+    <script src="../js/ui-components.js"></script>
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="/js/user-auth.js"></script>
+    <link rel="stylesheet" href="/css/sidebar.css">
+    
+</head>
+
+<body class="bg-gray-50">
+    <aside id="sidebar" class="fixed left-0 top-0 bottom-0 sidebar-modern z-40"></aside>
+
+    <header class="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20">
+        <div class="flex items-center justify-between p-4">
+            <div class="flex items-center space-x-4">
+                <button class="menu-button p-2 rounded-lg hover:bg-gray-100" id="sidebar-toggle">
+                    <i class="fas fa-bars text-gray-900"></i>
+                </button>
+                <h1 class="brand-title text-lg font-bold text-gray-900">账号设置</h1>
+            </div>
+            <div class="flex items-center space-x-4" id="header-right-section">
+                <!-- User Profile rendered by HeaderProfile -->
+            </div>
+        </div>
+    </header>
+    <main id="main" class="main-content pt-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="flex flex-col md:flex-row gap-6">
+                <!-- Settings Sidebar -->
+                <aside class="w-full md:w-64 flex-shrink-0">
+                    <div class="bg-white rounded-xl shadow-sm overflow-hidden sticky top-24">
+                        <nav class="flex flex-col space-y-1 py-2">
+                            <a href="#basic" id="nav-basic" class="flex items-center px-6 py-4 bg-blue-50 text-blue-600 border-l-4 border-blue-600 font-medium transition-colors">
+                                <i class="fas fa-user-circle w-6"></i> 个人信息
+                            </a>
+                            <a href="#security" id="nav-security" class="flex items-center px-6 py-4 text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-l-4 border-transparent transition-colors">
+                                <i class="fas fa-shield-alt w-6"></i> 账号安全
+                            </a>
+                            <a href="#privacy" id="nav-privacy" class="flex items-center px-6 py-4 text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-l-4 border-transparent transition-colors">
+                                <i class="fas fa-lock w-6"></i> 隐私设置
+                            </a>
+                        </nav>
+                    </div>
+                </aside>
+
+                <!-- Content Area -->
+                <div class="flex-1 space-y-6">
+                    <!-- Personal Info Card -->
+                    <div id="basic-section" class="bg-white rounded-xl shadow-sm p-6 md:p-8">
+                        <div class="flex justify-between items-start mb-6">
+                             <div>
+                                <h2 class="text-xl font-bold text-gray-900">个人信息</h2>
+                                <p class="text-sm text-gray-500 mt-1">管理您的个人资料和联系方式</p>
+                            </div>
+                            <button onclick="openPersonalEditModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shadow-sm">
+                                <i class="fas fa-edit mr-2"></i>编辑
+                            </button>
+                        </div>
+                        
+                        <div class="flex flex-col sm:flex-row items-center sm:items-start mb-8 pb-8 border-b border-gray-100">
+                            <div class="relative group">
+                                <div class="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-3xl overflow-hidden">
+                                    <i class="fas fa-user" id="avatar-icon"></i>
+                                </div>
+                                <button class="absolute bottom-0 right-0 bg-white rounded-full p-2 shadow-md border border-gray-200 text-gray-600 hover:text-blue-600 transition-colors">
+                                    <i class="fas fa-camera text-xs"></i>
+                                </button>
+                            </div>
+                            <div class="mt-4 sm:mt-2 sm:ml-6 text-center sm:text-left">
+                                <h3 class="text-lg font-bold text-gray-900" data-personal-name>—</h3>
+                                <p class="text-gray-500" data-personal-position>未设置职位</p>
+                                <div class="mt-2 flex flex-wrap justify-center sm:justify-start gap-2">
+                                    <span class="px-2 py-1 bg-gray-100 rounded text-xs text-gray-600">ID: <span data-personal-id>—</span></span>
+                                    <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">已验证</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-500 mb-1">用户名</label>
+                                <div class="text-gray-900 font-medium" data-personal-name-inline>—</div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-500 mb-1">职位头衔</label>
+                                <div class="text-gray-900 font-medium" data-personal-position-inline>—</div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-500 mb-1">联系电话</label>
+                                <div class="flex items-center">
+                                    <span class="text-gray-900 font-medium mr-2" data-personal-phone>—</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-500 mb-1">电子邮箱</label>
+                                <div class="flex items-center">
+                                    <span class="text-gray-900 font-medium mr-2" data-personal-email>—</span>
+                                    <span class="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">已绑定</span>
+                                </div>
+                            </div>
+                             <div>
+                                <label class="block text-sm font-medium text-gray-500 mb-1">所属公司</label>
+                                <div class="text-gray-900 font-medium" data-personal-company>—</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Security Section -->
+                    <div id="security-section" class="bg-white rounded-xl shadow-sm p-6 md:p-8">
+                        <div class="mb-6">
+                            <h2 class="text-xl font-bold text-gray-900">账号安全</h2>
+                            <p class="text-sm text-gray-500 mt-1">保护您的账号安全</p>
+                        </div>
+                        
+                        <div class="space-y-6">
+                            <div class="flex items-center justify-between py-4 border-b border-gray-100">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 mr-4">
+                                        <i class="fas fa-key"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-base font-medium text-gray-900">登录密码</h4>
+                                        <p class="text-sm text-gray-500">建议定期修改密码以保护账号安全</p>
+                                    </div>
+                                </div>
+                                <button onclick="openChangePasswordModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                    修改
+                                </button>
+                            </div>
+                            
+                            <div class="flex items-center justify-between py-4 border-b border-gray-100">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-600 mr-4">
+                                        <i class="fas fa-mobile-alt"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-base font-medium text-gray-900">两步验证</h4>
+                                        <p class="text-sm text-gray-500">开启后，登录时需要验证手机验证码</p>
+                                    </div>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" value="" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                </label>
+                            </div>
+
+                             <div class="flex items-center justify-between py-4">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center text-green-600 mr-4">
+                                        <i class="fas fa-history"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-base font-medium text-gray-900">登录历史</h4>
+                                        <p class="text-sm text-gray-500">查看最近的登录记录</p>
+                                    </div>
+                                </div>
+                                <button class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                    查看
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Privacy Section -->
+                    <div id="privacy-section" class="bg-white rounded-xl shadow-sm p-6 md:p-8 hidden">
+                        <div class="mb-6">
+                            <h2 class="text-xl font-bold text-gray-900">隐私设置</h2>
+                            <p class="text-sm text-gray-500 mt-1">管理您的数据隐私和可见性</p>
+                        </div>
+                        
+                        <div class="space-y-6">
+                            <div class="flex items-center justify-between py-4 border-b border-gray-100">
+                                <div>
+                                    <h4 class="text-base font-medium text-gray-900">简历对外可见</h4>
+                                    <p class="text-sm text-gray-500">开启后，招聘企业可以搜索并查看您的简历</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" checked class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                </label>
+                            </div>
+
+                            <div class="flex items-center justify-between py-4 border-b border-gray-100">
+                                <div>
+                                    <h4 class="text-base font-medium text-gray-900">搜索引擎收录</h4>
+                                    <p class="text-sm text-gray-500">允许搜索引擎（如百度、Google）收录您的公开主页</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                </label>
+                            </div>
+
+                            <div class="flex items-center justify-between py-4">
+                                <div>
+                                    <h4 class="text-base font-medium text-gray-900">个性化推荐</h4>
+                                    <p class="text-sm text-gray-500">根据您的浏览记录为您推荐相关职位</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" checked class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <script src="../js/header-profile.js"></script>
+    <!-- Edit Profile Modal -->
+    <div id="edit-profile-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-lg w-full max-w-md p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-900">编辑个人信息</h2>
+                <button onclick="closePersonalEditModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">用户名</label>
+                    <input id="edit-username" type="text"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                        placeholder="请输入用户名">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">职位</label>
+                    <input id="edit-position" type="text"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                        placeholder="请输入职位">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">电话</label>
+                    <input id="edit-phone" type="tel" maxlength="11"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                        placeholder="请输入手机号">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">邮箱</label>
+                    <input id="edit-email" type="email"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                        placeholder="请输入邮箱">
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end space-x-3">
+                <button onclick="closePersonalEditModal()"
+                    class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50">取消</button>
+                <button onclick="savePersonalProfile()"
+                    class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div id="change-password-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-lg w-full max-w-md p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-900">修改密码</h2>
+                <button onclick="closeChangePasswordModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">新密码</label>
+                    <input id="new-password" type="password"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                        placeholder="至少6位">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">确认新密码</label>
+                    <input id="confirm-password" type="password"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                        placeholder="请再次输入">
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end space-x-3">
+                <button onclick="closeChangePasswordModal()"
+                    class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50">取消</button>
+                <button onclick="savePassword()"
+                    class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/sidebar.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async function () { 
+            if (!requireAuth('/pages/login.html')) return; 
+            
+            HeaderProfile.init();
+            if (window.Sidebar) {
+                Sidebar.init({ active: 'profile' });
+            }
+
+            initTabs();
+            loadPersonalData();
+        });
+
+        function initTabs() {
+            const tabs = {
+                'basic': 'basic-section',
+                'security': 'security-section',
+                'privacy': 'privacy-section'
+            };
+
+            function switchTab(tabId) {
+                // Update URL hash without scrolling
+                history.replaceState(null, null, '#' + tabId);
+
+                Object.keys(tabs).forEach(key => {
+                    const sectionId = tabs[key];
+                    const navId = 'nav-' + key;
+                    const section = document.getElementById(sectionId);
+                    const nav = document.getElementById(navId);
+
+                    if (key === tabId) {
+                        // Show section
+                        section.classList.remove('hidden');
+                        
+                        // Active nav style
+                        nav.classList.remove('text-gray-600', 'hover:bg-gray-50', 'hover:text-gray-900', 'border-transparent');
+                        nav.classList.add('bg-blue-50', 'text-blue-600', 'border-blue-600');
+                    } else {
+                        // Hide section
+                        section.classList.add('hidden');
+                        
+                        // Inactive nav style
+                        nav.classList.add('text-gray-600', 'hover:bg-gray-50', 'hover:text-gray-900', 'border-transparent');
+                        nav.classList.remove('bg-blue-50', 'text-blue-600', 'border-blue-600');
+                    }
+                });
+            }
+
+            // Bind click events
+            Object.keys(tabs).forEach(key => {
+                const nav = document.getElementById('nav-' + key);
+                if (nav) {
+                    nav.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        switchTab(key);
+                    });
+                }
+            });
+
+            // Handle initial state
+            const hash = window.location.hash.slice(1);
+            if (tabs[hash]) {
+                switchTab(hash);
+            } else {
+                switchTab('basic');
+            }
+        }
+
+        async function loadPersonalData() {
+            try { 
+                const user = await userAuthInstance.fetchCurrentUser(); 
+                setText('[data-personal-name]', user?.name || user?.username || '未设置'); 
+                setText('[data-personal-position]', user?.position || '未设置'); 
+                setText('[data-personal-email]', user?.email || '—'); 
+                setText('[data-personal-phone]', user?.phone || '—'); 
+                setText('[data-personal-id]', (user && user.id) ? String(user.id) : '—');
+                setText('[data-personal-company]', user?.company_name || '—');
+                setText('[data-personal-name-inline]', user?.name || user?.username || '—');
+                setText('[data-personal-position-inline]', user?.position || '—');
+                
+            } catch (e) { } 
+        }
+
+        function setText(selector, value, defaultVal = '') {
+            const el = document.querySelector(selector);
+            if (el) el.textContent = value || defaultVal;
+        }
+
+        // Edit Profile Functions
+        async function openPersonalEditModal() {
+            const modal = document.getElementById('edit-profile-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            // Load current data
+            const user = await userAuthInstance.fetchCurrentUser();
+            document.getElementById('edit-username').value = user?.username || '';
+            document.getElementById('edit-position').value = user?.position || '';
+            document.getElementById('edit-phone').value = user?.phone || '';
+            document.getElementById('edit-email').value = user?.email || '';
+        }
+
+        function closePersonalEditModal() {
+            const modal = document.getElementById('edit-profile-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        async function savePersonalProfile() {
+            const username = document.getElementById('edit-username').value.trim();
+            const position = document.getElementById('edit-position').value.trim();
+            const phone = document.getElementById('edit-phone').value.trim();
+            const email = document.getElementById('edit-email').value.trim();
+
+            if (!username) {
+                ui.showNotification('用户名不能为空', 'warning');
+                return;
+            }
+
+            try {
+                // Mock API call or real one if exists. 
+                // Currently userAuthInstance.updateProfile might support some fields.
+                // Assuming updateProfile takes an object.
+                await userAuthInstance.updateProfile({ username, position, phone, email });
+                
+                // Update local storage manually if needed or fetchCurrentUser again
+                const info = JSON.parse(localStorage.getItem('userInfo') || '{}');
+                if (info && info.user) {
+                    info.user.username = username;
+                    info.user.position = position;
+                    info.user.phone = phone;
+                    info.user.email = email;
+                    localStorage.setItem('userInfo', JSON.stringify(info));
+                }
+
+                ui.showNotification('个人信息已保存', 'success');
+                closePersonalEditModal();
+                loadPersonalData(); // Reload display
+            } catch (e) {
+                ui.showNotification(e.message || '保存失败', 'error');
+            }
+        }
+
+        // Change Password Functions
+        function openChangePasswordModal() {
+            const modal = document.getElementById('change-password-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.getElementById('new-password').value = '';
+            document.getElementById('confirm-password').value = '';
+        }
+
+        function closeChangePasswordModal() {
+            const modal = document.getElementById('change-password-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        async function savePassword() {
+            const newPwd = document.getElementById('new-password').value.trim();
+            const confirmPwd = document.getElementById('confirm-password').value.trim();
+
+            if (newPwd.length < 6) {
+                ui.showNotification('密码至少6位', 'warning');
+                return;
+            }
+            if (newPwd !== confirmPwd) {
+                ui.showNotification('两次密码不一致', 'warning');
+                return;
+            }
+
+            try {
+                const r = await userAuthInstance.setPassword(newPwd);
+                if (!r.success) {
+                    ui.showNotification(r.message || '设置密码失败', 'error');
+                    return;
+                }
+                ui.showNotification('密码修改成功', 'success');
+                closeChangePasswordModal();
+            } catch (e) {
+                ui.showNotification(e.message || '设置密码失败', 'error');
+            }
+        }
+        
+        
+    </script>
+</body>
+</html>

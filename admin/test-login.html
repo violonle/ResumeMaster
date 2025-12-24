@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简化登录测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 400px;
+            margin: 100px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .login-container {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            width: 100%;
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #5a67d8;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .success {
+            background: #e8f5e8;
+            color: #2d5a2d;
+            border: 1px solid #c3e6c3;
+        }
+        .error {
+            background: #ffeaea;
+            color: #8b3a3a;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #e8f4fd;
+            color: #1e4a6b;
+            border: 1px solid #b8daff;
+        }
+        .debug-info {
+            margin-top: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            font-size: 12px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .test-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .test-buttons button {
+            flex: 1;
+            padding: 8px;
+            font-size: 12px;
+            background: #6c757d;
+        }
+        .test-buttons button:hover {
+            background: #5a6268;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h2>🚀 简化登录测试</h2>
+        
+        <div class="form-group">
+            <label for="username">用户名</label>
+            <input type="text" id="username" value="admin" placeholder="请输入用户名">
+        </div>
+        
+        <div class="form-group">
+            <label for="password">密码</label>
+            <input type="password" id="password" value="admin123" placeholder="请输入密码">
+        </div>
+        
+        <button id="loginBtn" onclick="handleLogin()">🔐 登录</button>
+        
+        <div class="test-buttons">
+            <button onclick="testConnection()">🌐 测试连接</button>
+            <button onclick="showDebugInfo()">🐛 调试信息</button>
+        </div>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        let debugInfo = {
+            attempts: 0,
+            lastError: null,
+            connectionTests: []
+        };
+
+        // 显示调试信息
+        function showDebugInfo() {
+            const result = document.getElementById('result');
+            const info = {
+                '当前时间': new Date().toLocaleString('zh-CN'),
+                '页面协议': window.location.protocol,
+                '页面主机': window.location.host,
+                '页面路径': window.location.pathname,
+                '尝试次数': debugInfo.attempts,
+                '最后错误': debugInfo.lastError || '无',
+                '连接测试': debugInfo.connectionTests.length > 0 ? 
+                    debugInfo.connectionTests.slice(-3) : '无'
+            };
+            
+            result.className = 'result info';
+            result.innerHTML = `
+                <h4>🔍 调试信息</h4>
+                ${Object.entries(info).map(([key, value]) => 
+                    `<strong>${key}:</strong> ${JSON.stringify(value, null, 2)}<br>`
+                ).join('')}
+            `;
+        }
+
+        // 测试连接
+        async function testConnection() {
+            const result = document.getElementById('result');
+            const loginBtn = document.getElementById('loginBtn');
+            
+            loginBtn.disabled = true;
+            result.className = 'result info';
+            result.innerHTML = '🔄 正在测试网络连接...';
+            
+            const testStart = Date.now();
+            
+            try {
+                console.log('🧪 开始网络连接测试...');
+                
+                // 测试1: 健康检查
+                console.log('📍 测试健康检查端点...');
+                const healthResponse = await fetch('/api/health', {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' },
+                    mode: 'cors',
+                    credentials: 'same-origin'
+                });
+                
+                const healthData = await healthResponse.json();
+                console.log('✅ 健康检查成功:', healthData);
+                
+                // 测试2: 登录预检
+                console.log('📍 测试登录端点...');
+                const loginResponse = await fetch('/api/auth/admin/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: 'admin',
+                        password: 'admin123'
+                    }),
+                    mode: 'cors',
+                    credentials: 'same-origin'
+                });
+                
+                const loginData = await loginResponse.json();
+                console.log('✅ 登录测试成功:', { hasToken: !!loginData.token });
+                
+                const responseTime = Date.now() - testStart;
+                
+                // 记录测试成功
+                debugInfo.connectionTests.push({
+                    time: new Date().toLocaleString('zh-CN'),
+                    success: true,
+                    responseTime: `${responseTime}ms`,
+                    health: healthData.status,
+                    login: !!loginData.token
+                });
+                
+                result.className = 'result success';
+                result.innerHTML = `
+                    <h4>✅ 网络连接测试成功</h4>
+                    <p><strong>响应时间:</strong> ${responseTime}ms</p>
+                    <p><strong>服务器状态:</strong> ${healthData.status}</p>
+                    <p><strong>登录测试:</strong> ${loginData.token ? '✅ 成功获取Token' : '❌ 无Token返回'}</p>
+                    <p><strong>结论:</strong> 网络连接正常，可以正常登录</p>
+                `;
+                
+            } catch (error) {
+                const responseTime = Date.now() - testStart;
+                
+                // 记录测试失败
+                debugInfo.connectionTests.push({
+                    time: new Date().toLocaleString('zh-CN'),
+                    success: false,
+                    responseTime: `${responseTime}ms`,
+                    error: error.name,
+                    message: error.message
+                });
+                
+                debugInfo.lastError = `${error.name}: ${error.message}`;
+                
+                console.error('❌ 网络测试失败:', error);
+                result.className = 'result error';
+                result.innerHTML = `
+                    <h4>❌ 网络连接测试失败</h4>
+                    <p><strong>错误类型:</strong> ${error.name}</p>
+                    <p><strong>错误信息:</strong> ${error.message}</p>
+                    <p><strong>响应时间:</strong> ${responseTime}ms</p>
+                    <p><strong>建议:</strong></p>
+                    <ul>
+                        <li>检查浏览器开发者工具 (F12) 的Network标签</li>
+                        <li>确认后端服务器是否运行</li>
+                        <li>检查是否有CORS或安全策略阻止</li>
+                        <li>尝试刷新页面或清除浏览器缓存</li>
+                    </ul>
+                `;
+            } finally {
+                loginBtn.disabled = false;
+            }
+        }
+
+        // 处理登录
+        async function handleLogin() {
+            const result = document.getElementById('result');
+            const loginBtn = document.getElementById('loginBtn');
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            debugInfo.attempts++;
+            loginBtn.disabled = true;
+            result.className = 'result info';
+            result.innerHTML = '🔄 正在登录...';
+            
+            const loginStart = Date.now();
+            
+            try {
+                console.log('🚀 开始登录流程...');
+                console.log('📍 用户名:', username);
+                console.log('📍 密码长度:', password.length);
+                
+                const response = await fetch('/api/auth/admin/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password
+                    }),
+                    mode: 'cors',
+                    credentials: 'same-origin'
+                });
+                
+                console.log('📍 响应状态:', response.status, response.statusText);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('📍 响应数据:', { hasToken: !!data.token, hasUser: !!data.user });
+                
+                const responseTime = Date.now() - loginStart;
+                
+                if (data.token && data.user) {
+                    // 登录成功
+                    localStorage.setItem('admin-token', data.token);
+                    
+                    result.className = 'result success';
+                    result.innerHTML = `
+                        <h4>✅ 登录成功</h4>
+                        <p><strong>用户名:</strong> ${data.user.username}</p>
+                        <p><strong>角色:</strong> ${data.user.role}</p>
+                        <p><strong>响应时间:</strong> ${responseTime}ms</p>
+                        <p><strong>Token:</strong> ${data.token.substring(0, 20)}...</p>
+                        <p>🎉 正在跳转到管理面板...</p>
+                    `;
+                    
+                    // 2秒后跳转到主应用
+                    setTimeout(() => {
+                        window.location.href = '/dashboard';
+                    }, 2000);
+                    
+                } else {
+                    throw new Error('登录响应格式错误：缺少token或user数据');
+                }
+                
+            } catch (error) {
+                const responseTime = Date.now() - loginStart;
+                debugInfo.lastError = `${error.name}: ${error.message}`;
+                
+                console.error('❌ 登录失败:', error);
+                result.className = 'result error';
+                result.innerHTML = `
+                    <h4>❌ 登录失败</h4>
+                    <p><strong>错误类型:</strong> ${error.name}</p>
+                    <p><strong>错误信息:</strong> ${error.message}</p>
+                    <p><strong>响应时间:</strong> ${responseTime}ms</p>
+                    <p><strong>建议:</strong></p>
+                    <ul>
+                        <li>确认用户名和密码是否正确</li>
+                        <li>检查网络连接状态</li>
+                        <li>查看浏览器控制台获取更多信息</li>
+                        <li>点击"测试连接"按钮检查网络状态</li>
+                    </ul>
+                `;
+                
+            } finally {
+                loginBtn.disabled = false;
+            }
+        }
+
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 简化登录测试页面已加载');
+            console.log('📍 当前位置:', window.location.href);
+            console.log('🎯 建议：先点击"测试连接"按钮检查网络状态');
+            
+            // 自动聚焦到用户名输入框
+            document.getElementById('username').focus();
+            
+            // 回车键触发登录
+            document.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    handleLogin();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

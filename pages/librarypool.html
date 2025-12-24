@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>人才库 - 争湃·简历大师</title>
+  <script src="../js/tailwindcss.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
+  <script src="../js/user-auth.js"></script>
+  <script src="../js/resume-data.js?v=2"></script>
+  <link rel="stylesheet" href="/css/sidebar.css">
+  <style>
+    /* 基础样式 */
+    body { background-color: #f9fafb; }
+    
+
+    /* 新版 Modern UI 样式 */
+    .stat-card {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.08);
+    }
+    
+    .resume-card {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .resume-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.1);
+      border-color: #bfdbfe; /* blue-200 */
+    }
+    
+    .tag-pill {
+      transition: all 0.2s ease;
+    }
+    .tag-pill:hover {
+      transform: translateY(-1px);
+    }
+    
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in-up {
+      animation: fadeInUp 0.5s ease forwards;
+    }
+
+    /* 自定义滚动条 */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+  </style>
+</head>
+<body class="font-sans text-gray-900 antialiased">
+  
+  <!-- Sidebar -->
+  <aside id="sidebar" class="fixed left-0 top-0 bottom-0 sidebar-modern z-40"></aside>
+  
+  <!-- Header -->
+  <header class="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md shadow-sm border-b border-gray-200 z-20">
+    <div class="flex items-center justify-between p-4">
+      <div class="flex items-center space-x-4">
+        <button class="menu-button p-2 rounded-lg hover:bg-gray-100 transition-colors" id="sidebar-toggle"><i class="fas fa-bars text-gray-900"></i></button>
+        <h1 class="brand-title text-lg font-bold text-gray-900">争湃·简历大师</h1>
+      </div>
+      <div class="flex items-center space-x-4" id="header-right-section"></div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content pt-20" id="main-content">
+    <div class="p-8 max-w-[1600px] mx-auto">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-900 tracking-tight">人才库</h1>
+          <p class="text-gray-500 mt-2 text-sm">集中管理您的所有人才资源，高效筛选与跟进。</p>
+        </div>
+        <div class="flex gap-3">
+            <button onclick="window.location.reload()" class="px-4 py-2.5 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-xl shadow-sm transition-colors text-sm font-medium">
+                <i class="fas fa-sync-alt mr-2"></i> 刷新
+            </button>
+            <input id="libraryUploadInput" type="file" accept=".pdf,.doc,.docx,.txt" class="hidden" />
+            <button onclick="document.getElementById('libraryUploadInput').click()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-md shadow-blue-200 transition-all hover:shadow-lg flex items-center text-sm font-bold">
+              <i class="fas fa-plus mr-2"></i> 上传简历
+            </button>
+            <button onclick="openLibraryEmailImportModal()" class="px-5 py-2.5 bg-white border border-blue-600 text-blue-600 hover:bg-blue-50 rounded-xl shadow-md transition-all flex items-center text-sm font-bold">
+              <i class="fas fa-envelope mr-2"></i> 从邮箱导入
+            </button>
+        </div>
+      </div>
+
+      <!-- Stats Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+        <!-- Total -->
+        <div class="stat-card bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden group cursor-pointer" onclick="window.location.reload()">
+          <div class="absolute right-0 top-0 w-24 h-24 bg-blue-50 rounded-bl-full -mr-4 -mt-4 opacity-50 transition-transform group-hover:scale-110"></div>
+          <div class="relative z-10">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
+                    <i class="fas fa-users"></i>
+                </div>
+            </div>
+            <p class="text-sm font-medium text-gray-500 mb-1">总简历数</p>
+            <h3 id="total-resumes-count" class="text-3xl font-bold text-gray-900 tracking-tight">0</h3>
+          </div>
+    </div>
+
+    <div id="emailImportOverlay" class="fixed inset-0 bg-black/40 z-50 hidden"></div>
+    <div id="emailImportModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold text-gray-900">从邮箱导入</h3>
+          <button class="text-gray-400 hover:text-gray-600" onclick="closeLibraryEmailImportModal()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm text-gray-700 mb-1">邮箱地址</label>
+            <input id="libEmailAddress" type="email" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="name@example.com">
+          </div>
+          <div>
+            <label class="block text-sm text-gray-700 mb-1">用户名</label>
+            <input id="libEmailUsername" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="邮箱登录用户名">
+          </div>
+          <div>
+            <label class="block text-sm text-gray-700 mb-1">密码</label>
+            <input id="libEmailPassword" type="password" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="邮箱登录密码">
+          </div>
+          <div class="grid grid-cols-3 gap-3">
+            <div class="col-span-2">
+              <label class="block text-sm text-gray-700 mb-1">邮件服务器(IMAP)</label>
+              <input id="libEmailServer" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="imap.example.com">
+            </div>
+            <div>
+              <label class="block text-sm text-gray-700 mb-1">端口</label>
+              <input id="libEmailPort" type="number" value="993" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            </div>
+          </div>
+          <div class="flex items-center justify-between">
+            <label class="inline-flex items-center"><input id="libEmailSecure" type="checkbox" class="mr-2" checked>使用SSL</label>
+            <div class="text-sm text-gray-500">未读邮件附件与正文将导入人才库</div>
+          </div>
+        </div>
+        <div class="flex items-center justify-between mt-6">
+          <button class="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200" onclick="closeLibraryEmailImportModal()">取消</button>
+          <button id="libEmailStartBtn" class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700" onclick="submitLibraryEmailImport()">开始导入</button>
+        </div>
+        <div id="libEmailProgress" class="mt-4 hidden">
+          <div class="w-full bg-gray-200 rounded-full h-2">
+            <div id="libEmailProgressBar" class="bg-blue-600 h-2 rounded-full" style="width:10%"></div>
+          </div>
+          <p id="libEmailProgressText" class="text-sm text-gray-600 mt-2">准备连接邮箱...</p>
+          <p class="text-xs text-gray-500">已导入 <span id="libEmailProgressCount">0</span> 条</p>
+        </div>
+      </div>
+    </div>
+
+        <!-- Excellent -->
+        <div class="stat-card bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden group">
+           <div class="absolute right-0 top-0 w-24 h-24 bg-blue-50 rounded-bl-full -mr-4 -mt-4 opacity-50 transition-transform group-hover:scale-110"></div>
+           <div class="relative z-10">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
+                    <i class="fas fa-star"></i>
+                </div>
+            </div>
+            <p class="text-sm font-medium text-gray-500 mb-1">优秀人才 (90+)</p>
+            <h3 id="excellent-resumes-count" class="text-3xl font-bold text-gray-900 tracking-tight">0</h3>
+          </div>
+        </div>
+        
+        <!-- Average Score -->
+        <div class="stat-card bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden group">
+           <div class="absolute right-0 top-0 w-24 h-24 bg-blue-50 rounded-bl-full -mr-4 -mt-4 opacity-50 transition-transform group-hover:scale-110"></div>
+           <div class="relative z-10">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
+                    <i class="fas fa-chart-pie"></i>
+                </div>
+            </div>
+            <p class="text-sm font-medium text-gray-500 mb-1">平均得分</p>
+            <h3 id="average-score" class="text-3xl font-bold text-gray-900 tracking-tight">0</h3>
+          </div>
+        </div>
+        
+        <!-- Pending -->
+        <div class="stat-card bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden group">
+           <div class="absolute right-0 top-0 w-24 h-24 bg-blue-50 rounded-bl-full -mr-4 -mt-4 opacity-50 transition-transform group-hover:scale-110"></div>
+           <div class="relative z-10">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
+                    <i class="fas fa-clock"></i>
+                </div>
+            </div>
+            <p class="text-sm font-medium text-gray-500 mb-1">待处理简历</p>
+            <h3 id="pending-resumes-count" class="text-3xl font-bold text-gray-900 tracking-tight">0</h3>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Filter & List Area -->
+      <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+        <!-- Top Filter Bar -->
+        <div class="p-6 border-b border-gray-100 bg-gray-50/30">
+          <div class="flex flex-col lg:flex-row gap-4 mb-6">
+            <div class="relative flex-1 group">
+              <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <i class="fas fa-search text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
+              </div>
+              <input type="text" id="search-box" placeholder="搜索候选人姓名、职位、技能..." 
+                     class="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all text-sm shadow-sm">
+            </div>
+            
+            <div class="flex items-center gap-3">
+              <button id="filter-toggle-btn" class="px-5 py-3 bg-white border border-gray-200 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center shadow-sm">
+                <i class="fas fa-sliders-h mr-2"></i> 筛选器
+              </button>
+              <div class="h-10 w-px bg-gray-200 mx-1"></div>
+              <div class="text-sm text-gray-500 whitespace-nowrap">
+                已筛选 <span id="filtered-resumes-count" class="font-bold text-gray-900">0</span> 人
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Filters -->
+          <div class="space-y-4">
+            <div id="role-filters" class="flex flex-wrap gap-2 items-center">
+              <span class="text-xs font-bold text-gray-400 uppercase tracking-wider mr-2">职位</span>
+              <button class="role-filter active px-3 py-1.5 text-xs font-medium rounded-lg transition-all bg-gray-900 text-white shadow-md" data-role="all">全部</button>
+              <button class="role-filter px-3 py-1.5 text-xs font-medium rounded-lg transition-all bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-gray-50" data-role="产品经理">产品经理</button>
+              <button class="role-filter px-3 py-1.5 text-xs font-medium rounded-lg transition-all bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-gray-50" data-role="前端工程师">前端工程师</button>
+              <button class="role-filter px-3 py-1.5 text-xs font-medium rounded-lg transition-all bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-gray-50" data-role="后端工程师">后端工程师</button>
+              <button class="role-filter px-3 py-1.5 text-xs font-medium rounded-lg transition-all bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-gray-50" data-role="测试工程师">测试工程师</button>
+              <button class="role-filter px-3 py-1.5 text-xs font-medium rounded-lg transition-all bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-gray-50" data-role="数据分析师">数据分析师</button>
+            </div>
+            
+            <div id="tag-filters" class="flex flex-wrap gap-2 items-center">
+              <span class="text-xs font-bold text-gray-400 uppercase tracking-wider mr-2">技能</span>
+              <button class="tag-filter active px-3 py-1.5 text-xs font-medium rounded-lg transition-all bg-blue-600 text-white shadow-md" data-tag="all">全部</button>
+              <button class="tag-filter px-3 py-1.5 text-xs font-medium rounded-lg transition-all bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-gray-50" data-tag="Java">Java</button>
+              <button class="tag-filter px-3 py-1.5 text-xs font-medium rounded-lg transition-all bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-gray-50" data-tag="Python">Python</button>
+              <button class="tag-filter px-3 py-1.5 text-xs font-medium rounded-lg transition-all bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-gray-50" data-tag="市场营销">市场营销</button>
+              <button class="tag-filter px-3 py-1.5 text-xs font-medium rounded-lg transition-all bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-gray-50" data-tag="React">React</button>
+              <button class="tag-filter px-3 py-1.5 text-xs font-medium rounded-lg transition-all bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-gray-50" data-tag="Vue">Vue</button>
+              <button class="tag-filter px-3 py-1.5 text-xs font-medium rounded-lg transition-all bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-gray-50" data-tag="SQL">SQL</button>
+            </div>
+             <div class="hidden"><button class="category-filter active" data-category="all" style="display:none"></button></div>
+          </div>
+
+          <!-- Advanced Filters (Hidden) -->
+          <div id="advanced-filters" class="hidden mt-6 pt-6 border-t border-gray-100 grid grid-cols-1 md:grid-cols-4 gap-6 animate-fade-in">
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 uppercase mb-2">综合评分</label>
+              <div class="flex items-center gap-3">
+                <input type="range" id="score-range" min="0" max="100" value="0" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                <span id="score-value" class="text-sm font-bold text-blue-600 min-w-[2.5rem]">0+</span>
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 uppercase mb-2">工作经验</label>
+              <select id="work-experience" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 transition-colors">
+                <option value="any">不限</option>
+                <option value="0-1">1年以下</option>
+                <option value="1-3">1-3年</option>
+                <option value="3-5">3-5年</option>
+                <option value="5-10">5-10年</option>
+                <option value="10+">10年以上</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 uppercase mb-2">学历要求</label>
+              <select id="education-level" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 transition-colors">
+                <option value="any">不限</option>
+                <option value="bachelor">本科</option>
+                <option value="master">硕士</option>
+                <option value="doctor">博士</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 uppercase mb-2">精准职位</label>
+              <input type="text" id="job-title-filter" placeholder="输入职位名称..." class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 transition-colors">
+            </div>
+          </div>
+        </div>
+
+        <!-- Resume Grid -->
+        <div class="p-6 bg-gray-50/30 min-h-[500px]">
+          <div id="resume-cards-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+          
+          <!-- States -->
+          <div id="loading-indicator" class="text-center py-12 hidden">
+            <i class="fas fa-circle-notch fa-spin text-3xl text-blue-500 mb-3"></i>
+            <p class="text-gray-500 text-sm">正在加载简历数据...</p>
+          </div>
+          
+          <div id="empty-state" class="text-center py-20 hidden flex flex-col items-center justify-center">
+            <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+              <i class="fas fa-search text-4xl text-gray-400"></i>
+            </div>
+            <h3 class="text-lg font-bold text-gray-900 mb-2">未找到匹配的简历</h3>
+            <p class="text-gray-500 max-w-sm mx-auto">尝试调整筛选条件，或者使用更通用的关键词进行搜索。</p>
+            <button onclick="window.location.reload()" class="mt-6 px-6 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-medium">
+              重置所有筛选
+            </button>
+          </div>
+          
+          <div id="pagination-container" class="flex justify-center mt-10"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/sidebar.js"></script>
+  <script>
+    // 统一组件初始化
+    document.addEventListener('DOMContentLoaded', () => { Sidebar.init({ mount: '#sidebar', active: 'librarypool' }) });
+
+    // Auth & Sub Check
+    (async function(){
+      try{
+        const token = (JSON.parse(localStorage.getItem('userInfo')||'{}').token)||null;
+        const headers = token? { Authorization: 'Bearer '+token } : {};
+        const [cur, usage] = await Promise.all([
+          fetch('/api/subscription/current', { headers }).then(r=>r.json()).catch(()=>null),
+          fetch('/api/subscription/usage', { headers }).then(r=>r.json()).catch(()=>null)
+        ]);
+        const statusEl = document.getElementById('sub-status');
+        const progressEl = document.getElementById('sub-progress');
+        const renewEl = document.getElementById('sub-renew');
+        const plan = cur && cur.data ? (cur.data.planType || 'free') : 'unknown';
+        const expiresAt = cur && cur.data ? (cur.data.expiresAt || cur.data.expires_at) : null;
+        const leftDays = (function(){ if(!expiresAt) return null; const d = Math.ceil((new Date(expiresAt)-Date.now())/(1000*60*60*24)); return d })();
+        statusEl.textContent = plan;
+        const u = usage && usage.data ? usage.data : { aiAnalysis:0,resumeUpload:0,jobMatching:0 };
+        const used = (u.aiAnalysis||0) + (u.resumeUpload||0) + (u.jobMatching||0);
+        const pct = Math.max(0, Math.min(100, Math.round((used%100)/100*100)));
+        progressEl.style.width = pct+'%';
+        renewEl.textContent = leftDays!=null ? `距离到期还有 ${leftDays} 天` : '使用量与到期信息暂不可用';
+      }catch(e){}
+    })();
+
+    function navigateToJobPosting(){window.location.href='job-posting.html'}
+    function navigateToResumeUpload(){window.location.href='resume-upload-pc.html'}
+    function navigateToAnalytics(){window.location.href='data-analysis.html'}
+
+    // Resume Logic
+    // 人才库本地上传加入库
+    (function(){
+      const inp = document.getElementById('libraryUploadInput');
+      if (inp) {
+        inp.addEventListener('change', async function(ev){
+          const file = ev.target.files && ev.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = async function(){
+            try{
+              const base64 = reader.result;
+              await window.resumeDataManager.apiRequest('/library/upload', 'POST', { file_name: file.name, file_base64: base64 });
+              notify('已加入人才库','success');
+              window.location.reload();
+            }catch(e){ notify(e.message||'上传失败','error') }
+          };
+          reader.readAsDataURL(file);
+        });
+      }
+      function notify(msg, type){ try{ if (typeof UIComponents==='function'){ new UIComponents().showNotification(msg,type||'info') } else { console.log(`[${type||'info'}]`, msg) } }catch(_){ console.log(msg) } }
+      window.openLibraryEmailImportModal = function(){
+        const ov = document.getElementById('emailImportOverlay');
+        const md = document.getElementById('emailImportModal');
+        ov.classList.remove('hidden');
+        md.classList.remove('hidden');
+        try{
+          const raw = localStorage.getItem('emailConfig');
+          const cfg = raw ? JSON.parse(raw) : null;
+          if (cfg && cfg.configured){
+            document.getElementById('libEmailAddress').value = cfg.email || '';
+            document.getElementById('libEmailUsername').value = cfg.username || '';
+            document.getElementById('libEmailServer').value = cfg.server || '';
+            document.getElementById('libEmailPort').value = cfg.port || 993;
+            document.getElementById('libEmailSecure').checked = cfg.secure !== false;
+          }
+        }catch(_){ }
+      }
+      window.closeLibraryEmailImportModal = function(){
+        document.getElementById('emailImportOverlay').classList.add('hidden');
+        document.getElementById('emailImportModal').classList.add('hidden');
+      }
+      window.submitLibraryEmailImport = async function(){
+        try{
+          const email = document.getElementById('libEmailAddress').value.trim();
+          const username = document.getElementById('libEmailUsername').value.trim();
+          const password = document.getElementById('libEmailPassword').value;
+          const host = document.getElementById('libEmailServer').value.trim();
+          const port = parseInt(document.getElementById('libEmailPort').value||'993',10);
+          const secure = !!document.getElementById('libEmailSecure').checked;
+          if (!email || !password || !host) return notify('请填写邮箱、密码和服务器','warn');
+          document.getElementById('libEmailProgress').classList.remove('hidden');
+          document.getElementById('libEmailProgressText').textContent = '连接邮箱...';
+          document.getElementById('libEmailProgressBar').style.width = '25%';
+          setTimeout(()=>{ document.getElementById('libEmailProgressText').textContent = '扫描未读邮件...'; document.getElementById('libEmailProgressBar').style.width = '50%'; }, 600);
+          const payload = { host, port, secure, email, username, password, limit: 50 };
+          const j = await window.resumeDataManager.apiRequest('/library/email-import', 'POST', payload);
+          document.getElementById('libEmailProgressText').textContent = '导入完成';
+          document.getElementById('libEmailProgressBar').style.width = '100%';
+          const ic = (j && j.data && (j.data.importedCount || (j.data.imported && j.data.imported.length))) || 0;
+          document.getElementById('libEmailProgressCount').textContent = String(ic);
+          try{ localStorage.setItem('emailConfig', JSON.stringify({ configured:true, email, username, server:host, port, secure })) }catch(_){ }
+          notify('邮箱导入完成','success');
+          setTimeout(()=>{ window.location.reload() }, 800);
+        }catch(e){
+          document.getElementById('libEmailProgressText').textContent = '导入失败';
+          notify(e.message||'导入失败','error');
+        }
+      }
+    })();
+    class ResumeFilterManager {
+        constructor(resumes) {
+            this.allResumes = resumes;
+            this.filteredResumes = [...resumes];
+            this.itemsPerPage = 9;
+            this.currentPage = 1;
+            this.initElements();
+            this.initEventListeners();
+            this.updateCounts();
+            this.renderPage(1);
+        }
+
+        initElements() {
+            this.searchBox = document.getElementById('search-box');
+            this.filterToggleBtn = document.getElementById('filter-toggle-btn');
+            this.advancedFilters = document.getElementById('advanced-filters');
+            this.roleFilters = document.querySelectorAll('.role-filter');
+            this.tagFilters = document.querySelectorAll('.tag-filter');
+            this.categoryFilters = document.querySelectorAll('.category-filter');
+            this.scoreRange = document.getElementById('score-range');
+            this.scoreValue = document.getElementById('score-value');
+            this.workExperience = document.getElementById('work-experience');
+            this.educationLevel = document.getElementById('education-level');
+            this.jobTitleFilter = document.getElementById('job-title-filter');
+            this.cardsContainer = document.getElementById('resume-cards-container');
+            this.paginationContainer = document.getElementById('pagination-container');
+            this.loadingIndicator = document.getElementById('loading-indicator');
+            this.emptyState = document.getElementById('empty-state');
+            this.totalResumesCount = document.getElementById('total-resumes-count');
+            this.excellentResumesCount = document.getElementById('excellent-resumes-count');
+            this.averageScore = document.getElementById('average-score');
+            this.pendingResumesCount = document.getElementById('pending-resumes-count');
+            this.filteredCountBadge = document.getElementById('filtered-resumes-count');
+        }
+
+        initEventListeners() {
+            this.searchBox.addEventListener('input', () => this.filterAndRender());
+            this.filterToggleBtn.addEventListener('click', () => this.toggleAdvancedFilters());
+            
+            this.roleFilters.forEach(btn => btn.addEventListener('click', (e) => {
+                this.roleFilters.forEach(b => b.classList.remove('active', 'bg-gray-900', 'text-white'));
+                this.roleFilters.forEach(b => b.classList.add('bg-white', 'text-gray-600', 'border-gray-200'));
+                
+                e.target.classList.remove('bg-white', 'text-gray-600', 'border-gray-200');
+                e.target.classList.add('active', 'bg-gray-900', 'text-white');
+                
+                this.jobTitleFilter.value = e.target.dataset.role === 'all' ? '' : e.target.dataset.role;
+                this.filterAndRender();
+            }));
+
+            this.tagFilters.forEach(btn => btn.addEventListener('click', (e) => {
+                this.tagFilters.forEach(b => b.classList.remove('active', 'bg-blue-600', 'text-white'));
+                this.tagFilters.forEach(b => b.classList.add('bg-white', 'text-gray-600', 'border-gray-200'));
+                
+                e.target.classList.remove('bg-white', 'text-gray-600', 'border-gray-200');
+                e.target.classList.add('active', 'bg-blue-600', 'text-white');
+                
+                const val = e.target.dataset.tag;
+                if(val !== 'all') this.searchBox.value = val;
+                else this.searchBox.value = '';
+                
+                this.filterAndRender();
+            }));
+
+            this.categoryFilters.forEach(btn => btn.addEventListener('click', e => this.handleCategoryFilter(e)));
+            this.scoreRange.addEventListener('input', () => {
+                this.scoreValue.textContent = `${this.scoreRange.value}+`;
+                this.filterAndRender();
+            });
+            this.workExperience.addEventListener('change', () => this.filterAndRender());
+            this.educationLevel.addEventListener('change', () => this.filterAndRender());
+            this.jobTitleFilter.addEventListener('input', () => this.filterAndRender());
+        }
+
+        toggleAdvancedFilters() {
+            this.advancedFilters.classList.toggle('hidden');
+            this.filterToggleBtn.classList.toggle('bg-blue-50');
+            this.filterToggleBtn.classList.toggle('text-blue-600');
+            this.filterToggleBtn.classList.toggle('border-blue-200');
+        }
+
+        handleCategoryFilter(e) {
+            this.categoryFilters.forEach(btn => btn.classList.remove('active'));
+            e.target.classList.add('active');
+            this.filterAndRender();
+        }
+
+        filterAndRender() {
+            this.loadingIndicator.classList.remove('hidden');
+            this.cardsContainer.classList.add('hidden');
+            this.emptyState.classList.add('hidden');
+            
+            setTimeout(() => {
+                this.applyFilters();
+                this.renderPage(1);
+                this.loadingIndicator.classList.add('hidden');
+                this.cardsContainer.classList.remove('hidden');
+            }, 200);
+        }
+
+        applyFilters() {
+            const searchTerm = this.searchBox.value.toLowerCase();
+            const activeCategory = document.querySelector('.category-filter.active') ? document.querySelector('.category-filter.active').dataset.category : 'all';
+            const minScore = parseInt(this.scoreRange.value);
+            const exp = this.workExperience.value;
+            const edu = this.educationLevel.value;
+            const jobTitle = this.jobTitleFilter.value.toLowerCase();
+
+            this.filteredResumes = this.allResumes.filter(resume => {
+                const nameMatch = resume.name.toLowerCase().includes(searchTerm);
+                const positionMatch = resume.position.toLowerCase().includes(searchTerm);
+                const skillsMatch = resume.skills.some(skill => skill.toLowerCase().includes(searchTerm));
+                const searchMatch = nameMatch || positionMatch || skillsMatch;
+                
+                const categoryMatch = activeCategory === 'all' || resume.status === activeCategory;
+                const scoreMatch = resume.score >= minScore;
+                const expMatch = exp === 'any' || this.matchExperience(resume.experience, exp);
+                const eduMatch = edu === 'any' || resume.education.toLowerCase().startsWith(edu);
+                const jobTitleMatch = !jobTitle || resume.position.toLowerCase().includes(jobTitle);
+
+                return searchMatch && categoryMatch && scoreMatch && expMatch && eduMatch && jobTitleMatch;
+            });
+            this.updateFilteredCount();
+        }
+
+        matchExperience(resumeExp, filterExp) {
+            const resumeExpNum = parseInt(resumeExp);
+            if (isNaN(resumeExpNum)) return false;
+            if (filterExp === '0-1') return resumeExpNum < 1;
+            if (filterExp === '1-3') return resumeExpNum >= 1 && resumeExpNum <= 3;
+            if (filterExp === '3-5') return resumeExpNum > 3 && resumeExpNum <= 5;
+            if (filterExp === '5-10') return resumeExpNum > 5 && resumeExpNum <= 10;
+            if (filterExp === '10+') return resumeExpNum > 10;
+            return false;
+        }
+
+        renderPage(page) {
+            this.currentPage = page;
+            this.cardsContainer.innerHTML = '';
+            this.paginationContainer.innerHTML = '';
+
+            if (this.filteredResumes.length === 0) {
+                this.emptyState.classList.remove('hidden');
+                return;
+            }
+
+            const start = (page - 1) * this.itemsPerPage;
+            const end = start + this.itemsPerPage;
+            const paginatedItems = this.filteredResumes.slice(start, end);
+
+            paginatedItems.forEach(resume => {
+                const card = this.createResumeCard(resume);
+                this.cardsContainer.appendChild(card);
+            });
+
+            this.renderPagination();
+        }
+
+        createResumeCard(resume) {
+            const card = document.createElement('div');
+            card.className = 'resume-card group relative bg-white rounded-2xl border border-gray-100 hover:border-blue-300 p-6 flex flex-col h-full transition-all duration-300 hover:shadow-lg cursor-pointer overflow-hidden';
+            card.style.animationDelay = `${(this.filteredResumes.indexOf(resume) % this.itemsPerPage) * 0.05}s`;
+            card.classList.add('fade-in-up');
+            
+            card.onclick = (e) => {
+                window.location.href = `resume-details.html?id=${resume.id}`;
+            };
+
+            const scoreBg = resume.score >= 80 ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-600/20' : 
+                           (resume.score >= 60 ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-600/20' : 'bg-blue-50 text-blue-700 ring-1 ring-blue-600/20');
+            
+            card.innerHTML = `
+                <div class="flex justify-between items-start mb-4">
+                    <div class="flex-1 min-w-0 mr-4">
+                        <h3 class="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors truncate tracking-tight mb-1" title="${resume.name}">${resume.name}</h3>
+                        <p class="text-sm text-blue-600 font-semibold truncate flex items-center" title="${resume.position}">
+                            ${resume.position}
+                        </p>
+                    </div>
+                    <div class="px-2.5 py-1 rounded-md text-sm font-bold ${scoreBg} flex-shrink-0">
+                        ${resume.score}分
+                    </div>
+                </div>
+                
+                <div class="space-y-3 mb-6 flex-grow">
+                    <div class="flex items-center text-sm text-gray-500 group-hover:text-gray-700 transition-colors">
+                        <i class="fas fa-briefcase w-5 text-gray-400"></i>
+                        <span class="truncate font-medium">${resume.experience}年经验</span>
+                    </div>
+                    <div class="flex items-center text-sm text-gray-500 group-hover:text-gray-700 transition-colors">
+                        <i class="fas fa-graduation-cap w-5 text-gray-400"></i>
+                        <span class="truncate font-medium">${resume.education}</span>
+                    </div>
+                    <div class="flex items-center text-sm text-gray-500 group-hover:text-gray-700 transition-colors">
+                        <i class="far fa-clock w-5 text-gray-400"></i>
+                        <span class="truncate text-xs">更新于 ${resume.lastUpdated}</span>
+                    </div>
+                </div>
+                
+                <div class="pt-4 border-t border-gray-50 mt-auto">
+                    <div class="flex flex-wrap gap-2 mb-4 h-[24px] overflow-hidden">
+                        ${resume.skills.slice(0, 3).map(skill => 
+                            `<span class="text-xs px-2 py-1 bg-gray-50 text-gray-600 rounded-md border border-gray-100 font-medium truncate max-w-[80px]">${skill}</span>`
+                        ).join('')}
+                        ${resume.skills.length > 3 ? `<span class="text-xs px-1.5 py-1 text-gray-400 bg-gray-50 rounded-md border border-gray-100">+${resume.skills.length - 3}</span>` : ''}
+                    </div>
+                    <button class="w-full py-2.5 text-center text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-sm shadow-blue-200 transition-all duration-200 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0">
+                        查看详情
+                    </button>
+                    <div class="h-[42px] w-full hidden group-hover:hidden"></div> 
+                </div>
+                <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-blue-50 rounded-full opacity-50 pointer-events-none"></div>
+            `;
+            return card;
+        }
+
+        getScoreClass(score) {
+            if (score >= 90) return 'score-excellent';
+            if (score >= 80) return 'score-good';
+            if (score >= 60) return 'score-average';
+            return 'score-poor';
+        }
+
+        renderPagination() {
+            const pageCount = Math.ceil(this.filteredResumes.length / this.itemsPerPage);
+            if (pageCount <= 1) return;
+
+            this.paginationContainer.appendChild(this.createPageButton(this.currentPage - 1, '«', this.currentPage > 1));
+
+            for (let i = 1; i <= pageCount; i++) {
+                if (i === this.currentPage) {
+                    this.paginationContainer.appendChild(this.createPageButton(i, i, true, true));
+                } else if (i === 1 || i === pageCount || (i >= this.currentPage - 1 && i <= this.currentPage + 1)) {
+                    this.paginationContainer.appendChild(this.createPageButton(i, i));
+                } else if (i === this.currentPage - 2 || i === this.currentPage + 2) {
+                    const dots = document.createElement('span');
+                    dots.className = 'px-4 py-2 text-gray-400';
+                    dots.textContent = '...';
+                    this.paginationContainer.appendChild(dots);
+                }
+            }
+
+            this.paginationContainer.appendChild(this.createPageButton(this.currentPage + 1, '»', this.currentPage < pageCount));
+        }
+
+        createPageButton(page, text, enabled = true, active = false) {
+            const button = document.createElement('button');
+            button.textContent = text;
+            let classes = 'w-8 h-8 mx-1 rounded-lg text-sm font-medium transition-all flex items-center justify-center ';
+            
+            if (active) {
+                classes += 'bg-blue-600 text-white shadow-md';
+            } else if (enabled) {
+                classes += 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:text-blue-600';
+            } else {
+                classes += 'bg-gray-50 text-gray-300 cursor-not-allowed';
+            }
+            
+            button.className = classes;
+            if (enabled && !active) {
+                button.onclick = () => this.renderPage(page);
+            }
+            return button;
+        }
+
+        updateCounts() {
+            this.totalResumesCount.textContent = this.allResumes.length;
+            this.excellentResumesCount.textContent = this.allResumes.filter(r => r.score >= 90).length;
+            const totalScore = this.allResumes.reduce((sum, r) => sum + r.score, 0);
+            this.averageScore.textContent = this.allResumes.length > 0 ? (totalScore / this.allResumes.length).toFixed(1) : 0;
+            this.pendingResumesCount.textContent = this.allResumes.filter(r => r.status === 'pending').length;
+            this.updateFilteredCount();
+        }
+
+        updateFilteredCount() {
+            this.filteredCountBadge.textContent = this.filteredResumes.length;
+        }
+    }
+
+    function normalizeResumes(arr){
+      function fmtDate(iso){ try{ var d=new Date(iso); var diff=Math.ceil((Date.now()-d.getTime())/(1000*60*60*24)); if(diff<=1) return '今天'; if(diff<=7) return diff+'天前'; if(diff<=30) return Math.floor(diff/7)+'周前'; return d.toISOString().slice(0,10); }catch(_){ return '—' } }
+      var out=[]; for(var i=0;i<arr.length;i++){
+        var r=arr[i]||{}; var pd=r.parsed_data||{};
+        var name = pd.name || String(r.file_name||'未知').replace(/\.[^/.]+$/,'');
+        var pos = pd.jobTitle || (Array.isArray(r.tags)&&r.tags[0] ? r.tags[0] : '未知职位');
+        var skills = Array.isArray(pd.skills)? pd.skills : (Array.isArray(r.tags)? r.tags: []);
+        var score = (typeof r.overall_score==='number') ? r.overall_score : 0;
+        var exp = (typeof pd.experience_years==='number') ? pd.experience_years : '—';
+        var edu = (pd.education && pd.education[0] && pd.education[0].degree) ? pd.education[0].degree : '—';
+        var last = fmtDate(r.upload_date||Date.now());
+        out.push({ id: r.id || (i+1), name:name, position:pos, skills:skills, score:score, experience:exp, education:edu, avatar:'https://ui-avatars.com/api/?name='+encodeURIComponent(name)+'&background=E5E7EB&color=111827', lastUpdated:last, status: r.status || 'uploaded' });
+      }
+      return out;
+    }
+
+    document.addEventListener('DOMContentLoaded',async()=>{
+      let data = typeof window.resumeData !== 'undefined' ? window.resumeData : undefined;
+      if (!Array.isArray(data)) {
+        try {
+          if (window.resumeDataManager && typeof window.resumeDataManager.getAllResumes === 'function') {
+            const list = await window.resumeDataManager.getTalentPoolResumes();
+            data = Array.isArray(list) ? list : [];
+            window.resumeData = data;
+          }
+        } catch (_) {}
+      }
+      if (!Array.isArray(data) || data.length===0) {
+        document.getElementById('empty-state').classList.remove('hidden');
+        data = [];
+      }
+      if (Array.isArray(data)) {
+        var normalized = normalizeResumes(data);
+        window.resumeFilterManager = new ResumeFilterManager(normalized);
+        if (data.length === 0) {
+          document.getElementById('empty-state').classList.remove('hidden');
+        }
+      } else {
+        document.getElementById('empty-state').classList.remove('hidden');
+        document.getElementById('empty-state').innerHTML='<i class="fas fa-exclamation-triangle text-6xl text-red-400 mb-4"></i><h3 class="text-xl font-semibold text-gray-700 mb-2">加载数据失败</h3><p class="text-gray-500">无法加载简历数据，请检查控制台错误。</p>';
+      }
+    });
+  </script>
+    <script src="/js/header-profile.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            HeaderProfile.init('#header-right-section');
+        });
+    </script>
+</body>
+</html>
