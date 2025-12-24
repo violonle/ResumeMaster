@@ -19,8 +19,14 @@ backend/database.sqlite
 
 .vercel/
 .vscode/
+.trae/
 
-uploads/resumes/
+uploads/
 
-!images/
-!images/**
+backend/uploads/**
+!backend/uploads/
+!backend/uploads/avatars/
+backend/uploads/avatars/*
+!backend/uploads/avatars/user_6_1765374552691.png
+
+测试简历.txt
