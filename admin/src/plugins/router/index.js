@@ -96,6 +96,86 @@ const routes = [
     ]
   },
   {
+    path: '/resumes',
+    name: 'resumes',
+    component: DefaultLayout,
+    meta: {
+      requiresAuth: true,
+      permission: 'resumes.view',
+      title: '简历管理'
+    },
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/resumes/Index.vue')
+      }
+    ]
+  },
+  {
+    path: '/resumes/:id',
+    name: 'resume-detail',
+    component: DefaultLayout,
+    meta: {
+      requiresAuth: true,
+      permission: 'resumes.view',
+      title: '简历详情'
+    },
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/resumes/Detail.vue')
+      }
+    ]
+  },
+  {
+    path: '/resumes/company/:id',
+    name: 'company-resumes',
+    component: DefaultLayout,
+    meta: {
+      requiresAuth: true,
+      permission: 'resumes.view',
+      title: '企业简历'
+    },
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/resumes/CompanyResumes.vue')
+      }
+    ]
+  },
+  {
+    path: '/companies/jobs/:id',
+    name: 'company-jobs',
+    component: DefaultLayout,
+    meta: {
+      requiresAuth: true,
+      permission: 'companies.view',
+      title: '企业职位'
+    },
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/companies/CompanyJobs.vue')
+      }
+    ]
+  },
+  {
+    path: '/jobs/:id',
+    name: 'job-detail',
+    component: DefaultLayout,
+    meta: {
+      requiresAuth: true,
+      permission: 'companies.view',
+      title: '职位详情'
+    },
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/jobs/Detail.vue')
+      }
+    ]
+  },
+  {
     path: '/subscriptions',
     name: 'subscriptions',
     component: DefaultLayout,

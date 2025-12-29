@@ -3,7 +3,7 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { authenticateToken, requireAdmin } = require('../middleware/adminAuth');
-const { User, Company, Subscription, SubscriptionPlan, ModelProvider, ModelKey, SystemConfig, sequelize, AnalysisResult, Order, AuditLog, UserActivity } = require('../models');
+const { User, Company, Subscription, SubscriptionPlan, ModelProvider, ModelKey, SystemConfig, sequelize, AnalysisResult, Order, AuditLog, UserActivity, ResumeJob, Resume, Job } = require('../models');
 const { Op } = require('sequelize');
 const axios = require('axios');
 const multer = require('multer');
@@ -430,7 +430,8 @@ router.get('/companies', authenticateToken, requireAdmin, async (req, res) => {
       where,
       limit,
       offset,
-      order: [[sortBy, sortOrder]]
+      order: [[sortBy, sortOrder]],
+      include: [{ model: User, as: 'Contact', attributes: ['id', 'username', 'real_name'] }]
     });
 
     res.json({
@@ -469,6 +470,23 @@ router.post('/companies/:id/verify', authenticateToken, requireAdmin, async (req
   } catch (error) {
     console.error('Verify company error:', error);
     res.status(500).json({ message: '企业认证失败' });
+  }
+});
+
+// 企业详情
+router.get('/companies/:id', authenticateToken, requireAdmin, async (req, res) => {
+  console.log('Backend: Getting company detail for ID:', req.params.id);
+  try {
+    const company = await Company.findByPk(req.params.id);
+    if (!company) {
+      console.log('Backend: Company not found for ID:', req.params.id);
+      return res.status(404).json({ message: '企业不存在' });
+    }
+    console.log('Backend: Found company:', company.name);
+    res.json(company);
+  } catch (error) {
+    console.error('Get company detail error:', error);
+    res.status(500).json({ message: '获取企业详情失败' });
   }
 });
 
@@ -1154,21 +1172,222 @@ router.post('/models/keys/batch-test', authenticateToken, requireAdmin, async (r
 });
 
 
+// 职位列表
+router.get('/jobs', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { page = 1, limit = 10, company_id, search } = req.query;
+    const offset = (page - 1) * limit;
+
+    const where = {};
+    if (company_id) {
+      where.company_id = company_id;
+    }
+
+    if (search) {
+      where.title = { [Op.like]: `%${search}%` };
+    }
+
+    const { count, rows } = await Job.findAndCountAll({
+      where,
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      order: [['created_at', 'DESC']],
+      include: [
+        { model: Company, attributes: ['id', 'name'] }
+      ]
+    });
+
+    res.json({
+      total: count,
+      list: rows
+    });
+  } catch (error) {
+    console.error('Get jobs error:', error);
+    res.status(500).json({ message: '获取职位列表失败' });
+  }
+});
+
+router.post('/jobs', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const job = await Job.create(req.body);
+    res.status(201).json(job);
+  } catch (error) {
+    console.error('Create job error:', error);
+    res.status(500).json({ message: '创建职位失败' });
+  }
+});
+
+router.patch('/jobs/:id', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const job = await Job.findByPk(req.params.id);
+    if (!job) return res.status(404).json({ message: '职位不存在' });
+    await job.update(req.body);
+    res.json(job);
+  } catch (error) {
+    console.error('Update job error:', error);
+    res.status(500).json({ message: '更新职位失败' });
+  }
+});
+
+router.delete('/jobs/:id', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const job = await Job.findByPk(req.params.id);
+    if (!job) return res.status(404).json({ message: '职位不存在' });
+    await job.destroy();
+    res.json({ message: '删除成功' });
+  } catch (error) {
+    console.error('Delete job error:', error);
+    res.status(500).json({ message: '删除职位失败' });
+  }
+});
+
+// 简历列表
+router.get('/resumes', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { page = 1, limit = 10, company_id, search } = req.query;
+    const offset = (page - 1) * limit;
+
+    const where = {};
+    if (company_id) {
+      where.company_id = company_id;
+    }
+
+    // 搜索逻辑：支持按简历文件名搜索
+    if (search) {
+      where.file_name = { [Op.like]: `%${search}%` };
+    }
+
+    const { count, rows } = await Resume.findAndCountAll({
+      where,
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      include: [
+        { model: Company, as: 'Company', attributes: ['id', 'name'] },
+        { 
+          model: ResumeJob, 
+          include: [{ model: Job, attributes: ['id', 'title'] }] 
+        }
+      ],
+      order: [['upload_date', 'DESC']]
+    });
+
+    res.json({
+      total: count,
+      list: rows.map(item => {
+        // 将绝对路径转换为相对 uploads 目录的路径
+        let relativePath = item.file_path;
+        if (relativePath) {
+          // 统一使用正斜杠
+          relativePath = relativePath.replace(/\\/g, '/');
+          if (relativePath.includes('uploads/')) {
+            const parts = relativePath.split('uploads/');
+            relativePath = parts[parts.length - 1];
+          }
+        }
+
+        return {
+          id: item.id,
+          file_name: item.file_name,
+          name: item.name || (item.parsed_data && item.parsed_data.name) || '未知',
+          file_path: relativePath,
+          Company: item.Company,
+          ResumeJobs: item.ResumeJobs,
+          upload_date: item.upload_date,
+          parsed_data: item.parsed_data
+        };
+      })
+    });
+  } catch (error) {
+    console.error('Get resumes error:', error);
+    res.status(500).json({ message: '获取简历列表失败' });
+  }
+});
+
+// 简历统计
+router.get('/resumes/stats', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const total = await Resume.count();
+    
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthCount = await Resume.count({
+      where: {
+        upload_date: { [Op.gte]: startOfMonth }
+      }
+    });
+
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
+    const weekCount = await Resume.count({
+      where: {
+        upload_date: { [Op.gte]: startOfWeek }
+      }
+    });
+
+    res.json({
+      total,
+      month: monthCount,
+      week: weekCount
+    });
+  } catch (error) {
+    console.error('Get resume stats error:', error);
+    res.status(500).json({ message: '获取简历统计失败' });
+  }
+});
+
+// 获取简历详情
+router.get('/resumes/:id', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const resume = await Resume.findByPk(req.params.id, {
+      include: [
+        { model: Company, as: 'Company', attributes: ['id', 'name'] },
+        { 
+          model: ResumeJob, 
+          include: [{ model: Job, attributes: ['id', 'title'] }] 
+        }
+      ]
+    });
+    if (!resume) return res.status(404).json({ message: '简历不存在' });
+    
+    // 处理文件路径为相对路径
+    const item = resume.toJSON();
+    if (item.file_path) {
+      // 统一使用正斜杠
+      let relativePath = item.file_path.replace(/\\/g, '/');
+      if (relativePath.includes('uploads/')) {
+        const parts = relativePath.split('uploads/');
+        relativePath = parts[parts.length - 1];
+      }
+      item.file_path = relativePath;
+    }
+    
+    res.json(item);
+  } catch (error) {
+    console.error('Get resume detail error:', error);
+    res.status(500).json({ message: '获取简历详情失败' });
+  }
+});
+
 // 仪表板统计
 router.get('/dashboard/stats', authenticateToken, requireAdmin, async (req, res) => {
   try {
-    const totalUsers = await User.count();
-    const enterpriseUsers = await User.count({ where: { role: 'enterprise' } });
-    const activeSubscriptions = await Subscription.count({ where: { status: 'active' } });
-    const aiCalls = await (sequelize.models.AnalysisResult || AnalysisResult).count();
+    const Resume = sequelize.models.Resume;
+    const Job = sequelize.models.Job;
+    const Company = sequelize.models.Company;
+    const Subscription = sequelize.models.Subscription;
 
-    // 为了兼容旧前端字段，同时返回旧字段
-    const totalCustomers = totalUsers;
+    const totalResumes = await Resume.count();
+    const totalJobs = await Job.count();
     const totalCompanies = await Company.count();
-    const totalSubscriptions = await Subscription.count();
-    const activeAIModels = await ModelProvider.count({ where: { enabled: true } });
+    const activeSubscriptions = await Subscription.count({ where: { status: 'active' } });
 
-    res.json({ totalUsers, enterpriseUsers, activeSubscriptions, aiCalls, totalCustomers, totalCompanies, totalSubscriptions, activeAIModels, systemHealth: 'good' });
+    res.json({
+      totalResumes,
+      totalJobs,
+      totalCompanies,
+      activeSubscriptions
+    });
   } catch (error) {
     console.error('Get dashboard stats error:', error);
     res.status(500).json({ message: '获取仪表板统计失败' });

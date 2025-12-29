@@ -13,7 +13,7 @@ const execAsync = promisify(exec);
 class DatabaseBackupManager {
   constructor(config = {}) {
     this.config = {
-      host: config.host || process.env.DB_HOST || 'localhost',
+      host: config.host || process.env.DB_HOST || '',
       port: config.port || process.env.DB_PORT || '3306',
       user: config.user || process.env.DB_USERNAME || 'root',
       password: config.password || process.env.DB_PASSWORD || '',

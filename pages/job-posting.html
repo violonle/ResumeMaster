@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>发布职位 - 争湃·简历大师</title>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <script src="../js/tailwindcss.js"></script>
     <script src="../js/ui-components.js"></script>
     <script src="../js/resume-data.js"></script>
@@ -59,18 +60,6 @@
         
         .form-input:focus {
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-        
-        .skill-tag {
-            background: #f0f9ff;
-            color: #0369a1;
-            border: 1px solid #38bdf8;
-            transition: all 0.3s ease;
-        }
-        
-        .skill-tag:hover {
-            background: #0284c7;
-            color: white;
         }
         
         .benefit-item {
@@ -230,33 +219,6 @@
                     </div>
                 </div>
 
-                <!-- 技能要求 -->
-                <div class="form-section bg-white rounded-2xl shadow-lg p-6 fade-in-up">
-                    <div class="flex items-center mb-6">
-                        <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-cogs text-blue-600"></i>
-                        </div>
-                        <h2 class="text-xl font-semibold text-gray-900 ml-3">技能要求</h2>
-                    </div>
-                    
-                    <div class="space-y-6">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">推荐技能</label>
-                            <div class="flex flex-wrap gap-2 mb-3" id="required-skills-container">
-                                <!-- 推荐技能标签将在这里显示 -->
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <input type="text" id="required-skill-input" class="form-input flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="输入技能名称（可选）">
-                                <button type="button" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors" id="add-required-skill-btn" aria-label="从系统技能库选择">
-                                    <i class="fas fa-plus"></i>
-                                </button>
-                            </div>
-                        </div>
-                        
-                        
-                    </div>
-                </div>
-
                 <!-- 福利待遇 -->
                 <div class="form-section bg-white rounded-2xl shadow-lg p-6 fade-in-up">
                     <div class="flex items-center mb-6">
@@ -398,38 +360,11 @@
         </div>
     </div>
 
-    <!-- 技能选择模态框 -->
-    <div id="skills-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
-            <div class="flex items-center justify-between p-6 border-b border-gray-200">
-                <h2 class="text-xl font-bold text-gray-900">选择推荐技能</h2>
-                <button class="text-gray-400 hover:text-gray-600" id="close-skills-modal">
-                    <i class="fas fa-times text-xl"></i>
-                </button>
-            </div>
-            <div class="p-6 space-y-4">
-                <div class="flex items-center space-x-3">
-                    <div class="relative flex-1">
-                        <input type="text" id="skills-search-input" placeholder="搜索技能标签" class="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-blue-500 focus:border-blue-500">
-                        <div class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><i class="fas fa-search"></i></div>
-                    </div>
-                    <button id="skills-clear-selection" class="px-3 py-2 text-sm border rounded">清除选择</button>
-                </div>
-                <div id="skills-list" class="grid grid-cols-2 gap-2"></div>
-            </div>
-            <div class="flex items-center justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50">
-                <button type="button" id="cancel-skills-btn" class="px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 hover:bg-gray-50">取消</button>
-                <button type="button" id="confirm-skills-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">添加所选技能</button>
-            </div>
-        </div>
-    </div>
-
     <script>
         // 页面初始化
         document.addEventListener('DOMContentLoaded', () => {
             initJobPostingForm();
             
-            initSkillsManagement();
             initPreviewFunctionality();
             initFormValidation();
         });
@@ -446,53 +381,6 @@
 
         // 初始化侧边栏功能
         
-
-        // 初始化技能管理
-        function initSkillsManagement() {
-            const recommendedSkills = [];
-
-            const addBtn = document.getElementById('add-required-skill-btn');
-            const inputEl = document.getElementById('required-skill-input');
-            const container = document.getElementById('required-skills-container');
-
-            addBtn.addEventListener('click', () => {
-                (window.openSkillsModal || openSkillsModal)(recommendedSkills, container);
-            });
-
-            inputEl.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    const skill = inputEl.value.trim();
-                    if (skill && !recommendedSkills.includes(skill)) {
-                        recommendedSkills.push(skill);
-                        renderSkillTag(skill, container, recommendedSkills, 'blue');
-                        inputEl.value = '';
-                    }
-                }
-            });
-        }
-
-        // 渲染技能标签
-        function renderSkillTag(skill, container, skillArray, color) {
-            const tag = document.createElement('span');
-            tag.className = `inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-${color}-100 text-${color}-800 border border-${color}-300`;
-            tag.innerHTML = `
-                ${skill}
-                <button type="button" class="ml-2 text-${color}-600 hover:text-${color}-800" onclick="removeSkill('${skill}', this, ${JSON.stringify(skillArray)})">
-                    <i class="fas fa-times text-xs"></i>
-                </button>
-            `;
-            container.appendChild(tag);
-        }
-
-        // 移除技能
-        function removeSkill(skill, element, skillArray) {
-            const index = skillArray.indexOf(skill);
-            if (index > -1) {
-                skillArray.splice(index, 1);
-            }
-            element.parentElement.remove();
-        }
 
         // 初始化预览功能
         function initPreviewFunctionality() {
@@ -616,13 +504,33 @@
         }
 
         // 处理表单提交
-        function handleFormSubmit() {
+        async function handleFormSubmit() {
             if (validateForm()) {
-                ui.showNotification('职位发布成功！', 'success');
-                // 这里可以添加实际的提交逻辑
-                setTimeout(() => {
-                    window.location.href = 'job-management.html';
-                }, 2000);
+                const formData = collectFormData();
+                
+                // Map frontend data to backend API format
+                const jobData = {
+                    title: formData.title,
+                    location: formData.location,
+                    salary_range: `${formData.salaryMin}-${formData.salaryMax}K/${formData.salaryUnit === 'year' ? '年' : '月'}`,
+                    experience_required: formData.experience,
+                    education_required: formData.education,
+                    description: formData.description,
+                    // Combine benefits into description or separate field if backend supports
+                    requirements: `【福利待遇】\n${formData.benefits.join('、')}`, 
+                    status: 'active'
+                };
+
+                try {
+                    await window.resumeDataManager.createJob(jobData);
+                    ui.showNotification('职位发布成功！', 'success');
+                    setTimeout(() => {
+                        window.location.href = 'job-management.html';
+                    }, 1500);
+                } catch (error) {
+                    console.error('发布职位失败:', error);
+                    ui.showNotification(error.message || '发布失败，请重试', 'error');
+                }
             }
         }
 
@@ -922,104 +830,68 @@
                 // 经验匹配
                 if (data.experience) {
                     const expSelect = document.getElementById('experience');
+                    const expText = data.experience.replace('经验', '').replace('以内', '');
                     for (let i = 0; i < expSelect.options.length; i++) {
-                        if (data.experience.includes(expSelect.options[i].text.replace('年', ''))) {
+                        // 模糊匹配: "1-3" matches "1-3年"
+                        if (expSelect.options[i].text.includes(expText) || expText.includes(expSelect.options[i].value)) {
                             expSelect.selectedIndex = i;
                             break;
                         }
                     }
                 }
-            }
-        window.openSkillsModal = function(selectedSkills, container) {
-            const modal = document.getElementById('skills-modal');
-            const closeBtn = document.getElementById('close-skills-modal');
-            const cancelBtn = document.getElementById('cancel-skills-btn');
-            const confirmBtn = document.getElementById('confirm-skills-btn');
-            const listEl = document.getElementById('skills-list');
-            const searchEl = document.getElementById('skills-search-input');
-            const clearBtn = document.getElementById('skills-clear-selection');
 
-            let allSkills = [];
-
-            function unique(arr){ return Array.from(new Set(arr.map(s=>String(s).trim()).filter(Boolean))); }
-
-            async function loadSkills(){
-                try{
-                    let listAll = [];
-                    let listPool = [];
-                    if (window.resumeDataManager) {
-                        if (typeof window.resumeDataManager.getAllResumes==='function') {
-                            listAll = await window.resumeDataManager.getAllResumes();
-                        }
-                        if (typeof window.resumeDataManager.getTalentPoolResumes==='function') {
-                            listPool = await window.resumeDataManager.getTalentPoolResumes();
+                // 学历匹配
+                if (data.education) {
+                    const eduSelect = document.getElementById('education');
+                    const eduMap = {
+                        '高中': 'high-school',
+                        '中专': 'high-school', // Map closely
+                        '大专': 'college',
+                        '本科': 'bachelor',
+                        '硕士': 'master',
+                        '研究生': 'master',
+                        '博士': 'phd'
+                    };
+                    // Find partial match
+                    for (const [key, value] of Object.entries(eduMap)) {
+                        if (data.education.includes(key)) {
+                            eduSelect.value = value;
+                            break;
                         }
                     }
-                    const source = Array.isArray(listAll) && listAll.length ? listAll : (Array.isArray(window.resumeData) ? window.resumeData : []);
-                    const merged = Array.isArray(listPool) ? source.concat(listPool) : source;
+                }
 
-                    const collectFromResume = (r) => {
-                        const a = [];
-                        if (Array.isArray(r.tags)) a.push(...r.tags);
-                        if (Array.isArray(r.skills)) a.push(...r.skills);
-                        const pd = r.parsed_data || r.parsedData || {};
-                        if (pd && Array.isArray(pd.skills)) a.push(...pd.skills);
-                        return a;
+                // 福利待遇匹配 (从描述中提取或后端返回)
+                if (data.description) {
+                    const benefitsMap = {
+                        '五险一金': 'five-insurance-fund',
+                        '商业保险': 'commercial-insurance',
+                        '年终奖': 'annual-bonus',
+                        '弹性工作': 'flexible-work',
+                        '远程': 'remote-work',
+                        '带薪年假': 'paid-leave',
+                        '培训': 'training',
+                        '晋升': 'career-development',
+                        '餐补': 'free-meals',
+                        '包吃': 'free-meals',
+                        '健身': 'gym',
+                        '团建': 'team-building',
+                        '股票': 'stock-options',
+                        '期权': 'stock-options'
                     };
-
-                    const fromResumes = unique([].concat(...(merged||[]).map(collectFromResume)));
-                    const skillMap = {
-                        'frontend': ['JavaScript','React','Vue','HTML','CSS','TypeScript','Webpack'],
-                        'backend': ['Java','Python','Spring','MySQL','Redis','Docker','Kubernetes'],
-                        'fullstack': ['Node.js','MongoDB','AWS'],
-                        'mobile': ['Swift','Kotlin','React Native','Flutter','iOS','Android'],
-                        'ui': ['Sketch','Figma','Photoshop','交互设计','用户研究'],
-                        'pm': ['产品设计','需求分析','数据分析','Axure','项目管理'],
-                        'test': ['自动化测试','Selenium','JMeter','性能测试','接口测试'],
-                        'data': ['SQL','Tableau','Power BI','机器学习','R']
-                    };
-                    const fromMap = unique(Object.values(skillMap).flat());
-                    allSkills = unique(fromResumes.concat(fromMap));
-                }catch(_){ allSkills = ['Java','Python','JavaScript','React','Vue','SQL','Docker']; }
-            }
-
-            function renderList(filter=''){
-                const kw = filter.trim().toLowerCase();
-                listEl.innerHTML = '';
-                const filtered = allSkills.filter(s => !kw || s.toLowerCase().includes(kw));
-                filtered.forEach(skill => {
-                    const id = 'skill-'+skill.replace(/\s+/g,'-');
-                    const item = document.createElement('label');
-                    item.className = 'flex items-center space-x-2 p-2 border border-gray-200 rounded';
-                    item.innerHTML = `<input type="checkbox" class="rounded text-blue-600 focus:ring-blue-500" id="${id}" ${selectedSkills.includes(skill)?'checked':''}>
-                    <span class="text-sm">${skill}</span>`;
-                    item.dataset.skill = skill;
-                    listEl.appendChild(item);
-                });
-            }
-
-            function open(){ modal.classList.remove('hidden'); modal.classList.add('flex'); }
-            function close(){ modal.classList.add('hidden'); modal.classList.remove('flex'); }
-
-            loadSkills().then(()=>{ renderList(); open(); });
-            searchEl.oninput = function(e){ renderList(e.target.value || ''); };
-            clearBtn.onclick = function(){ Array.from(listEl.querySelectorAll('input[type="checkbox"]')).forEach(cb=>cb.checked=false); };
-
-            closeBtn.onclick = close;
-            cancelBtn.onclick = close;
-            modal.onclick = function(e){ if (e.target === modal) close(); };
-            confirmBtn.onclick = function(){
-                const selected = Array.from(listEl.querySelectorAll('label')).filter(el => el.querySelector('input') && el.querySelector('input').checked).map(el => el.dataset.skill);
-                selected.forEach(skill => {
-                    if (!selectedSkills.includes(skill)) {
-                        selectedSkills.push(skill);
-                        renderSkillTag(skill, container, selectedSkills, 'blue');
+                    
+                    const checkboxes = document.querySelectorAll('input[name="benefits"]');
+                    // Reset first
+                    checkboxes.forEach(cb => cb.checked = false);
+                    
+                    for (const [key, value] of Object.entries(benefitsMap)) {
+                        if (data.description.includes(key)) {
+                            const cb = document.querySelector(`input[name="benefits"][value="${value}"]`);
+                            if (cb) cb.checked = true;
+                        }
                     }
-                });
-                close();
-                if (typeof ui !== 'undefined' && ui.showNotification) ui.showNotification('已添加所选技能', 'success');
-            };
-        }
+                }
+            }
         })();
     </script>
 </body>

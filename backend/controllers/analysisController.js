@@ -1,4 +1,11 @@
-const { AnalysisResult } = require('../models');
+const { AnalysisResult, Resume } = require('../models');
+const AIAnalysisService = require('../services/aiAnalysisService');
+const promptService = require('../services/promptService');
+const textExtractor = require('../services/textExtractor');
+const ResumeParseService = require('../services/resumeParseService');
+
+const aiAnalysisService = new AIAnalysisService();
+const resumeParseService = new ResumeParseService();
 
 // 获取所有分析结果
 const getAllAnalysisResults = async (req, res) => {

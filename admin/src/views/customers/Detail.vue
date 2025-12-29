@@ -99,11 +99,11 @@
 
               <div class="d-flex align-center justify-space-between pa-3 bg-grey-lighten-4 rounded">
                 <div>
-                  <div class="text-h5 font-weight-bold text-info">{{ customerStats?.totalUsage || 0 }}</div>
-                  <div class="text-caption text-medium-emphasis">AI使用次数</div>
+                  <div class="text-h5 font-weight-bold text-info">{{ customerStats?.totalResumes || 0 }}</div>
+                  <div class="text-caption text-medium-emphasis">总简历数</div>
                 </div>
                 <VAvatar color="info" variant="tonal" rounded>
-                  <VIcon icon="mdi-robot" />
+                  <VIcon icon="mdi-file-document-outline" />
                 </VAvatar>
               </div>
             </div>
@@ -400,7 +400,7 @@ const customer = computed(() => customerStore.currentCustomer)
 const customerStats = ref({
   totalResumes: 15,
   totalDownloads: 128,
-  totalUsage: 256
+  totalJobs: 0
 })
 
 // 订阅数据（模拟数据）

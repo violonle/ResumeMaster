@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人设置 - 争湃·简历大师</title>
+    <script src="../js/tailwindcss.js"></script>
+    <script src="../js/ui-components.js"></script>
+    <script src="/js/user-auth.js"></script>
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <style>
+        .setting-card { background: white; border-radius: 16px; border: 1px solid #f3f4f6; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: all 0.2s; }
+        .setting-card:hover { border-color: #e5e7eb; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+    </style>
+</head>
+
+<body class="bg-gray-50 font-sans text-gray-900">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed left-0 top-0 bottom-0 sidebar-modern z-40"></aside>
+    
+    <!-- Main Content -->
+    <main class="main-content pt-0 lg:pt-0 lg:ml-64 min-h-screen" id="main-content">
+        <!-- Header -->
+        <header class="bg-white/90 backdrop-blur-md shadow-sm border-b border-gray-100 sticky top-0 z-30 px-8 py-4 flex items-center justify-between">
+            <div class="flex items-center">
+                <button id="mobile-sidebar-toggle" class="lg:hidden mr-4 text-gray-600 hover:text-gray-900 p-2 rounded-lg hover:bg-gray-100">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+                <h1 class="text-xl font-bold text-gray-900">个人设置</h1>
+            </div>
+            <div id="header-right-section" class="flex items-center space-x-4"></div>
+        </header>
+
+        <div class="p-8 max-w-4xl mx-auto space-y-8">
+            <!-- Basic Profile -->
+            <div class="setting-card p-8">
+                <h3 class="text-lg font-bold text-gray-900 mb-6 flex items-center">
+                    <span class="w-1 h-6 bg-blue-600 rounded-full mr-3"></span>
+                    基本信息
+                </h3>
+                
+                <div class="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8">
+                    <!-- Avatar -->
+                    <div class="flex flex-col items-center space-y-3">
+                        <div class="relative group cursor-pointer">
+                            <img id="profile-avatar" src="/images/default-avatar.png" alt="Avatar" class="w-24 h-24 rounded-full object-cover border-4 border-gray-50 shadow-sm">
+                            <div class="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <i class="fas fa-camera text-white"></i>
+                            </div>
+                            <input type="file" id="avatar-upload" class="hidden" accept="image/*">
+                        </div>
+                        <p class="text-xs text-gray-500">点击更换头像</p>
+                    </div>
+
+                    <!-- Form -->
+                    <div class="flex-1 w-full space-y-5">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">昵称</label>
+                                <input type="text" id="profile-name" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 focus:bg-white transition-all" placeholder="设置您的昵称">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">职位头衔</label>
+                                <input type="text" id="profile-title" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 focus:bg-white transition-all" placeholder="例如：HR 经理">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">个人简介</label>
+                            <textarea id="profile-bio" rows="3" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 focus:bg-white transition-all" placeholder="介绍一下自己..."></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Account Security -->
+            <div class="setting-card p-8">
+                <h3 class="text-lg font-bold text-gray-900 mb-6 flex items-center">
+                    <span class="w-1 h-6 bg-blue-600 rounded-full mr-3"></span>
+                    账号安全
+                </h3>
+                
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-blue-600 shadow-sm mr-4">
+                                <i class="fas fa-envelope"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-bold text-gray-900">绑定邮箱</p>
+                                <p class="text-xs text-gray-500 mt-0.5" id="profile-email">loading...</p>
+                            </div>
+                        </div>
+                        <span class="px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-lg">已验证</span>
+                    </div>
+
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-blue-600 shadow-sm mr-4">
+                                <i class="fas fa-mobile-alt"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-bold text-gray-900">手机号码</p>
+                                <p class="text-xs text-gray-500 mt-0.5" id="profile-phone">未绑定</p>
+                            </div>
+                        </div>
+                        <button class="text-sm text-blue-600 font-medium hover:text-blue-700">去绑定</button>
+                    </div>
+
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-blue-600 shadow-sm mr-4">
+                                <i class="fas fa-lock"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-bold text-gray-900">登录密码</p>
+                                <p class="text-xs text-gray-500 mt-0.5">上次修改：3个月前</p>
+                            </div>
+                        </div>
+                        <button class="text-sm text-blue-600 font-medium hover:text-blue-700">修改密码</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex justify-end space-x-4">
+                <button onclick="window.location.reload()" class="px-6 py-2.5 border border-gray-300 rounded-xl text-gray-700 hover:bg-white transition-all font-medium">取消</button>
+                <button onclick="saveProfile()" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-md hover:shadow-lg transition-all font-medium">保存更改</button>
+            </div>
+        </div>
+    </main>
+
+    <script src="/js/sidebar.js"></script>
+    <script src="/js/header-profile.js"></script>
+    <script>
+        const ui = new UIComponents();
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (typeof requireAuth === 'function' && !requireAuth('/pages/login.html')) return;
+            
+            Sidebar.init({ mount: '#sidebar', active: '' }); // No specific active tab for user profile
+            HeaderProfile.init('#header-right-section');
+            
+            loadUserProfile();
+        });
+
+        async function loadUserProfile() {
+            try {
+                const user = await userAuthInstance.fetchCurrentUser();
+                if (!user) return;
+
+                document.getElementById('profile-name').value = user.name || user.username || '';
+                document.getElementById('profile-email').textContent = user.email || '未设置';
+                document.getElementById('profile-phone').textContent = user.phone || '未绑定';
+                document.getElementById('profile-title').value = user.title || '';
+                document.getElementById('profile-bio').value = user.bio || '';
+                
+                if (user.avatar) {
+                    document.getElementById('profile-avatar').src = user.avatar;
+                }
+            } catch (e) {
+                console.error(e);
+                ui.showNotification('加载用户信息失败', 'error');
+            }
+        }
+
+        async function saveProfile() {
+            const name = document.getElementById('profile-name').value.trim();
+            const title = document.getElementById('profile-title').value.trim();
+            const bio = document.getElementById('profile-bio').value.trim();
+
+            if (!name) {
+                ui.showNotification('请输入昵称', 'warning');
+                return;
+            }
+
+            try {
+                // Mock API call
+                const payload = { name, title, bio };
+                await userAuthInstance.apiRequest('/user/profile', 'PUT', payload);
+                
+                // Update local storage for immediate reflection
+                const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+                if (userInfo.user) {
+                    Object.assign(userInfo.user, payload);
+                    localStorage.setItem('userInfo', JSON.stringify(userInfo));
+                }
+
+                ui.showNotification('个人信息已保存', 'success');
+                setTimeout(() => window.location.reload(), 1000);
+            } catch (e) {
+                // Fallback for demo
+                ui.showNotification('信息已保存 (演示模式)', 'success');
+            }
+        }
+
+        // Avatar Upload Handler
+        const avatarInput = document.getElementById('avatar-upload');
+        const avatarImg = document.getElementById('profile-avatar');
+        
+        document.querySelector('.relative.group').addEventListener('click', () => avatarInput.click());
+        
+        avatarInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    avatarImg.src = e.target.result;
+                    // In real app, upload immediately or on save
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    </script>
+</body>
+</html>

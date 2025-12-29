@@ -264,7 +264,7 @@ class ResumeParser {
      */
     async startAnalysis() {
         if (this.uploadQueue.length === 0) {
-            this.showError('请先上传简历文件');
+            this.showError('请先导入简历文件文件');
             return;
         }
 
@@ -282,11 +282,11 @@ class ResumeParser {
                     var list = JSON.parse(localStorage.getItem('resumeAnalysisData')||'[]');
                     var latest = list && list.length ? list[list.length-1] : null;
                     var sample = latest && latest.parsedData ? {
-                        basic_info: { name: latest.parsedData.personalInfo?.name || '候选人', email: latest.parsedData.personalInfo?.email || '', phone: latest.parsedData.personalInfo?.phone || '', location: latest.parsedData.personalInfo?.location || '' },
+                        basic_info: { name: latest.parsedData.personalInfo?.name || '', email: latest.parsedData.personalInfo?.email || '', phone: latest.parsedData.personalInfo?.phone || '', location: latest.parsedData.personalInfo?.location || '' },
                         education_background: latest.parsedData.education || [],
                         work_experience: latest.parsedData.experience || [],
-                        evaluation_report: { core_strengths: [], potential_issues: [], career_advice: [] },
-                        scores_percent: { job_fit: 80, skill_fit: 85, experience_fit: 78, learning_ability: 82, teamwork: 75 },
+                        evaluation_report: latest.parsedData.evaluation_report || { core_strengths: [], potential_issues: [], career_advice: [] },
+                        scores_percent: latest.parsedData.scores_percent || { job_fit: 0, skill_fit: 0, experience_fit: 0, learning_ability: 0, teamwork: 0 },
                         summary: latest.parsedData.summary || ''
                     } : null;
                     if (sample) localStorage.setItem('last_analysis_result', JSON.stringify(sample));
@@ -333,36 +333,28 @@ class ResumeParser {
      * 解析简历内容
      */
     async parseResumeContent(file) {
-        // 这里应该调用实际的解析API
-        // 目前返回模拟数据
-        await this.delay(1000);
+        const formData = new FormData();
+        formData.append('file', file);
         
-        return {
-            personalInfo: {
-                name: '张三',
-                email: 'zhangsan@example.com',
-                phone: '138****8888',
-                location: '北京市'
-            },
-            education: [
-                {
-                    school: '清华大学',
-                    degree: '本科',
-                    major: '计算机科学与技术',
-                    graduationYear: '2020'
-                }
-            ],
-            experience: [
-                {
-                    company: '腾讯科技',
-                    position: '前端工程师',
-                    duration: '2020-2023',
-                    description: '负责前端开发工作...'
-                }
-            ],
-            skills: ['JavaScript', 'React', 'Vue.js', 'Node.js', 'Python'],
-            summary: '有3年前端开发经验，熟练掌握现代前端技术栈...'
-        };
+        try {
+            const response = await fetch('/api/ai/upload', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: formData
+            });
+            
+            const result = await response.json();
+            if (!result.success) {
+                throw new Error(result.error?.message || '解析失败');
+            }
+            
+            return result.data;
+        } catch (error) {
+            console.error('简历解析失败:', error);
+            throw error;
+        }
     }
 
     /**

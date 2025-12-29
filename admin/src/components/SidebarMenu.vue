@@ -10,8 +10,8 @@
   >
     <!-- Logo Area -->
     <div class="pa-4 d-flex flex-column align-center justify-center">
-      <div class="mb-2" :style="{ width: localRail ? '48px' : '160px', height: localRail ? '48px' : 'auto' }">
-        <VImg src="/uploads/avatars/user_6_1765374552691.png" alt="Logo" contain />
+      <div class="mb-2" :style="{ width: localRail ? '48px' : '50px', height: localRail ? '48px' : 'auto' }">
+        <VImg :src="`${baseUrl}logo.png`" alt="Logo" contain />
       </div>
       <div v-if="!localRail" class="text-h6 font-weight-bold mt-1 text-truncate w-100 text-center">争湃·简历大师</div>
       <div v-if="!localRail" class="text-caption text-medium-emphasis">后台管理系统</div>
@@ -37,7 +37,7 @@
         v-if="can('customers.view')"
         prepend-icon="mdi-account-group-outline"
         title="账号管理"
-        :to="{ name: 'accounts' }"
+        :to="{ name: 'customers' }"
         color="primary"
         rounded="lg"
         class="mb-1"
@@ -47,6 +47,15 @@
         prepend-icon="mdi-office-building-outline"
         title="企业管理"
         :to="{ name: 'companies' }"
+        color="primary"
+        rounded="lg"
+        class="mb-1"
+      />
+      <VListItem
+        v-if="can('resumes.view')"
+        prepend-icon="mdi-file-document-outline"
+        title="简历管理"
+        :to="{ name: 'resumes' }"
         color="primary"
         rounded="lg"
         class="mb-1"
@@ -170,6 +179,7 @@ const localRail = ref(props.rail)
 const router = useRouter()
 const userStore = useUserStore()
 
+const baseUrl = import.meta.env.BASE_URL
 const can = (p) => userStore.hasPermission(p)
 
 // Sync props to local state

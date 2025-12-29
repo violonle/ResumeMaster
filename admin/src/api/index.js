@@ -27,6 +27,21 @@ export const companyAPI = {
   upload: (id, formData) => apiClient.post(`/admin/companies/${id}/upload`, formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
 }
 
+export const jobAPI = {
+  getList: (params) => apiClient.get('/admin/jobs', { params }),
+  getDetail: (id) => apiClient.get(`/admin/jobs/${id}`),
+  create: (data) => apiClient.post('/admin/jobs', data),
+  update: (id, data) => apiClient.patch(`/admin/jobs/${id}`, data),
+  delete: (id) => apiClient.delete(`/admin/jobs/${id}`),
+  getStats: () => apiClient.get('/admin/jobs/stats'),
+}
+
+export const resumeAPI = {
+  getList: (params) => apiClient.get('/admin/resumes', { params }),
+  getDetail: (id) => apiClient.get(`/admin/resumes/${id}`),
+  getStats: () => apiClient.get('/admin/resumes/stats'),
+}
+
 export const subscriptionAPI = {
   getList: (params) => apiClient.get('/admin/subscriptions', { params }),
   getDetail: (companyId) => apiClient.get(`/admin/subscriptions/${companyId}`),
@@ -69,10 +84,10 @@ export const aiModelAPI = {
 }
 
 export const promptAPI = {
-  getList: () => apiClient.get('/prompts'),
-  getDetail: (key) => apiClient.get(`/prompts/${key}`),
-  create: (data) => apiClient.post('/prompts', data),
-  update: (key, data) => apiClient.put(`/prompts/${key}`, data),
+  getList: () => apiClient.get('/admin/prompts'),
+  getDetail: (key) => apiClient.get(`/admin/prompts/${key}`),
+  create: (data) => apiClient.post('/admin/prompts', data),
+  update: (key, data) => apiClient.put(`/admin/prompts/${key}`, data),
 }
 
 export const systemAPI = {

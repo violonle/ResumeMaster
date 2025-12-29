@@ -74,10 +74,32 @@ class HeaderProfile {
                     displayName = user.phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
                 }
                 
+                // Role mapping based on subscription levels
+                let roleDisplay = '普通用户';
+                let enterpriseDisplay = '争湃·简历大师免费版';
+                
+                switch(user.role) {
+                    case 'admin':
+                        roleDisplay = '管理员';
+                        enterpriseDisplay = '争湃·简历大师管理后台';
+                        break;
+                    case 'enterprise':
+                        roleDisplay = '企业成员';
+                        enterpriseDisplay = user.enterpriseName || user.company_name || '争湃·简历大师企业版';
+                        break;
+                    case 'premium':
+                        roleDisplay = '专业会员';
+                        enterpriseDisplay = '争湃·简历大师专业版';
+                        break;
+                    default: // 'user'
+                        roleDisplay = '普通用户';
+                        enterpriseDisplay = '争湃·简历大师免费版';
+                }
+
                 return {
                     username: displayName || 'Guest',
-                    role: user.role === 'admin' ? 'HR经理' : 'HR专员',
-                    enterpriseName: user.enterpriseName || user.company_name || '争湃·简历大师企业版',
+                    role: roleDisplay,
+                    enterpriseName: enterpriseDisplay,
                     avatar: user.avatar || '',
                     email: user.email || ''
                 };
@@ -162,38 +184,22 @@ class HeaderProfile {
                             </div>
                         </div>
                         
-                        <div class="py-1">
-                            <a href="/pages/account-settings.html" class="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">
-                                <div class="w-8 flex justify-center"><i class="fas fa-user-cog text-gray-900"></i></div>
-                                账号设置
-                            </a>
-                            <a href="/pages/company-management.html" class="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">
-                                <div class="w-8 flex justify-center"><i class="fas fa-building text-gray-900"></i></div>
-                                企业设置
-                            </a>
-                            <a href="/pages/subscription.html" class="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">
-                                <div class="w-8 flex justify-center"><i class="fas fa-file-invoice-dollar text-gray-900"></i></div>
-                                订阅与财务
-                            </a>
-                        </div>
-                        
-                        <div class="border-t border-gray-100 py-1">
-                            <a href="/pages/settings.html" class="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">
-                                <div class="w-8 flex justify-center"><i class="fas fa-bell text-gray-900"></i></div>
-                                通知设置
-                            </a>
-                            <a href="/pages/security-backup.html" class="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">
-                                <div class="w-8 flex justify-center"><i class="fas fa-shield-alt text-gray-900"></i></div>
-                                安全与备份
-                            </a>
-                        </div>
-
-                        <div class="border-t border-gray-100 py-1">
-                            <button id="header-logout-btn" class="w-full text-left group flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">
-                                <div class="w-8 flex justify-center"><i class="fas fa-sign-out-alt text-red-400 group-hover:text-red-600"></i></div>
-                                退出登录
-                            </button>
-                        </div>
+                        <a href="user-profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center">
+                            <i class="fas fa-user-circle w-5 mr-2 text-gray-400"></i>个人设置
+                        </a>
+                        <a href="company-management.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center">
+                            <i class="fas fa-building w-5 mr-2 text-gray-400"></i>企业设置
+                        </a>
+                        <a href="subscription.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center">
+                            <i class="fas fa-credit-card w-5 mr-2 text-gray-400"></i>订阅与财务
+                        </a>
+                        <a href="settings.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center">
+                            <i class="fas fa-cog w-5 mr-2 text-gray-400"></i>系统设置
+                        </a>
+                        <div class="border-t border-gray-100 my-1"></div>
+                        <a href="#" id="header-logout-btn" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100 flex items-center">
+                            <i class="fas fa-sign-out-alt w-5 mr-2 text-red-400"></i>退出登录
+                        </a>
                     </div>
                 </div>
             </div>

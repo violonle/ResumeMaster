@@ -16,7 +16,7 @@
     <!-- 统计卡片 -->
     <VRow class="mb-6">
       <VCol cols="12" md="3" sm="6">
-        <VCard class="h-100">
+        <VCard class="h-100" :loading="dashboardStore.loading">
           <VCardText class="d-flex align-center pa-4">
             <VAvatar
               rounded="lg"
@@ -25,18 +25,38 @@
               size="48"
               class="me-4"
             >
-              <VIcon icon="mdi-account-group" size="24" />
+              <VIcon icon="mdi-file-document-multiple" size="24" />
             </VAvatar>
             <div>
-              <div class="text-h5 font-weight-bold">{{ dashboardStore.stats.totalUsers }}</div>
-              <div class="text-caption text-medium-emphasis">总用户数</div>
+              <div class="text-h5 font-weight-bold">{{ dashboardStore.stats.totalResumes || 0 }}</div>
+              <div class="text-caption text-medium-emphasis">总简历数</div>
             </div>
           </VCardText>
         </VCard>
       </VCol>
 
       <VCol cols="12" md="3" sm="6">
-        <VCard class="h-100">
+        <VCard class="h-100" :loading="dashboardStore.loading">
+          <VCardText class="d-flex align-center pa-4">
+            <VAvatar
+              rounded="lg"
+              color="info"
+              variant="tonal"
+              size="48"
+              class="me-4"
+            >
+              <VIcon icon="mdi-briefcase-variant" size="24" />
+            </VAvatar>
+            <div>
+              <div class="text-h5 font-weight-bold">{{ dashboardStore.stats.totalJobs || 0 }}</div>
+              <div class="text-caption text-medium-emphasis">总职位数</div>
+            </div>
+          </VCardText>
+        </VCard>
+      </VCol>
+
+      <VCol cols="12" md="3" sm="6">
+        <VCard class="h-100" :loading="dashboardStore.loading">
           <VCardText class="d-flex align-center pa-4">
             <VAvatar
               rounded="lg"
@@ -48,15 +68,15 @@
               <VIcon icon="mdi-office-building" size="24" />
             </VAvatar>
             <div>
-              <div class="text-h5 font-weight-bold">{{ dashboardStore.stats.totalCompanies }}</div>
-              <div class="text-caption text-medium-emphasis">企业用户</div>
+              <div class="text-h5 font-weight-bold">{{ dashboardStore.stats.totalCompanies || 0 }}</div>
+              <div class="text-caption text-medium-emphasis">企业数量</div>
             </div>
           </VCardText>
         </VCard>
       </VCol>
 
       <VCol cols="12" md="3" sm="6">
-        <VCard class="h-100">
+        <VCard class="h-100" :loading="dashboardStore.loading">
           <VCardText class="d-flex align-center pa-4">
             <VAvatar
               rounded="lg"
@@ -68,28 +88,8 @@
               <VIcon icon="mdi-credit-card" size="24" />
             </VAvatar>
             <div>
-              <div class="text-h5 font-weight-bold">{{ dashboardStore.stats.activeSubscriptions }}</div>
+              <div class="text-h5 font-weight-bold">{{ dashboardStore.stats.activeSubscriptions || 0 }}</div>
               <div class="text-caption text-medium-emphasis">活跃订阅</div>
-            </div>
-          </VCardText>
-        </VCard>
-      </VCol>
-
-      <VCol cols="12" md="3" sm="6">
-        <VCard class="h-100">
-          <VCardText class="d-flex align-center pa-4">
-            <VAvatar
-              rounded="lg"
-              color="info"
-              variant="tonal"
-              size="48"
-              class="me-4"
-            >
-              <VIcon icon="mdi-robot" size="24" />
-            </VAvatar>
-            <div>
-              <div class="text-h5 font-weight-bold">{{ dashboardStore.stats.aiCalls }}</div>
-              <div class="text-caption text-medium-emphasis">AI使用次数</div>
             </div>
           </VCardText>
         </VCard>
@@ -190,8 +190,8 @@ const handleCreate = () => {
   console.log('Create project clicked')
 }
 
-const chartOptions = ref({ chart:{ type:'line', height:350, toolbar:{ show:false }, fontFamily: 'inherit' }, stroke:{ curve:'smooth', width:3 }, markers:{ size:5 }, xaxis:{ type:'datetime' }, yaxis:{ title:{ text:'用户数量' } }, colors:['#3B82F6'], grid: { borderColor: '#f3f4f6' } })
-const userGrowthSeries = computed(() => { const data = (dashboardStore.chartData.userGrowth||[]).map(item => [item.date, item.count || 0]); return data.length ? [{ name:'用户数量', data }] : [] })
+const chartOptions = ref({ chart:{ type:'line', height:350, toolbar:{ show:false }, fontFamily: 'inherit' }, stroke:{ curve:'smooth', width:3 }, markers:{ size:5 }, xaxis:{ type:'datetime' }, yaxis:{ title:{ text:'增长趋势' } }, colors:['#3B82F6'], grid: { borderColor: '#f3f4f6' } })
+const userGrowthSeries = computed(() => { const data = (dashboardStore.chartData.userGrowth||[]).map(item => [item.date, item.count || 0]); return data.length ? [{ name:'数量', data }] : [] })
 const subscriptionChartOptions = ref({ chart:{ type:'donut', height:300, fontFamily: 'inherit' }, labels:[], colors:['#10B981','#F59E0B','#3B82F6','#EF4444','#8B5CF6','#06B6D4'], legend:{ position:'bottom' }, plotOptions: { pie: { donut: { size: '70%' } } } })
 const subscriptionLabels = computed(() => (dashboardStore.chartData.subscriptionDistribution||[]).map(item => item.name))
 const subscriptionSeries = computed(() => (dashboardStore.chartData.subscriptionDistribution||[]).map(item => item.count))

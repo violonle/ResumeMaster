@@ -97,88 +97,45 @@ class AdvancedSearch {
             return;
         }
 
-        // 显示加载状态
         this.showLoadingState();
 
-        // 模拟搜索延迟
-        setTimeout(() => {
-            const results = this.searchInData(searchQuery, this.filters);
+        this.searchInData(searchQuery, this.filters).then(results => {
             this.displayResults(results);
             this.addToSearchHistory(searchQuery);
-        }, 500);
-    }
-
-    searchInData(query, filters) {
-        // 模拟数据搜索
-        const mockData = this.getMockData();
-        let results = [...mockData];
-
-        // 文本搜索
-        if (query) {
-            results = results.filter(item => {
-                return Object.values(item).some(value => 
-                    String(value).toLowerCase().includes(query.toLowerCase())
-                );
-            });
-        }
-
-        // 应用筛选器
-        Object.keys(filters).forEach(filterType => {
-            results = results.filter(item => {
-                switch (filterType) {
-                    case 'date':
-                        return this.filterByDate(item, filters[filterType]);
-                    case 'category':
-                        return item.category === filters[filterType];
-                    case 'status':
-                        return item.status === filters[filterType];
-                    case 'price':
-                        return this.filterByPrice(item, filters[filterType]);
-                    default:
-                        return true;
-                }
-            });
+        }).catch(error => {
+            console.error('Search failed:', error);
+            this.showNotification('搜索失败: ' + error.message, 'error');
         });
-
-        return results;
     }
 
-    getMockData() {
-        return [];
-    }
-
-    filterByDate(item, filterValue) {
-        const itemDate = new Date(item.date);
-        const now = new Date();
-        
-        switch (filterValue) {
-            case 'today':
-                return itemDate.toDateString() === now.toDateString();
-            case 'week':
-                const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-                return itemDate >= weekAgo;
-            case 'month':
-                const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-                return itemDate >= monthAgo;
-            default:
-                return true;
+    async searchInData(query, filters) {
+        try {
+            const response = await fetch('/api/resumes/search', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({ query, filters })
+            });
+            
+            const result = await response.json();
+            if (!result.success) {
+                throw new Error(result.error?.message || '搜索失败');
+            }
+            
+            return result.data || [];
+        } catch (error) {
+            console.error('API search failed:', error);
+            return [];
         }
     }
 
-    filterByPrice(item, filterValue) {
-        const price = item.price;
-        
-        switch (filterValue) {
-            case 'free':
-                return price === 0;
-            case 'paid':
-                return price > 0;
-            case 'premium':
-                return price >= 100;
-            default:
-                return true;
-        }
-    }
+
+
+
+
+
 
     showSuggestions(query) {
         const suggestions = this.generateSuggestions(query);
@@ -204,15 +161,7 @@ class AdvancedSearch {
 
     generateSuggestions(query) {
         const suggestions = [];
-        const mockData = this.getMockData();
         
-        // 标题建议
-        mockData.forEach(item => {
-            if (item.title.toLowerCase().includes(query.toLowerCase())) {
-                suggestions.push({ text: item.title, type: '标题' });
-            }
-        });
-
         // 分类建议
         const categories = ['技术开发', '创意设计', '行政经典', '学术研究', '现代专业', '应届毕业生'];
         categories.forEach(category => {

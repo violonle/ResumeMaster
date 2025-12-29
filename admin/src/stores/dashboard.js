@@ -4,10 +4,10 @@ import { dashboardAPI } from '@/api'
 
 export const useDashboardStore = defineStore('dashboard', () => {
   const stats = ref({
-    totalUsers: 0,
+    totalResumes: 0,
+    totalJobs: 0,
     totalCompanies: 0,
     activeSubscriptions: 0,
-    aiCalls: 0,
   })
   
   const chartData = ref({
@@ -24,7 +24,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     loading.value = true
     try {
       const response = await dashboardAPI.getStats()
-      const defaults = { totalUsers: 0, totalCompanies: 0, activeSubscriptions: 0, aiCalls: 0 }
+      const defaults = { totalResumes: 0, totalCompanies: 0, activeSubscriptions: 0, totalJobs: 0 }
       stats.value = { ...defaults, ...(response.data || {}) }
     } catch (error) {
       console.error('Failed to fetch dashboard stats:', error)

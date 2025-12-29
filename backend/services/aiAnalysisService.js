@@ -4,6 +4,7 @@
  */
 const fs = require('fs').promises;
 const path = require('path');
+const promptService = require('./promptService');
 
 class AIAnalysisService {
     constructor() {
@@ -28,7 +29,7 @@ class AIAnalysisService {
                 enabled: !!process.env.GOOGLE_API_KEY
             },
             local: {
-                baseUrl: process.env.LOCAL_API_URL || 'http://localhost:11434',
+                baseUrl: process.env.LOCAL_API_URL || '',
                 models: ['llama2', 'codellama', 'mistral'],
                 enabled: !!process.env.LOCAL_API_URL
             }
@@ -81,7 +82,10 @@ class AIAnalysisService {
             }
 
             // 构建分析提示词
-            const prompt = this.buildAnalysisPrompt(resumeText, targetJob, analysisOptions);
+            const prompt = await promptService.getPrompt('resume_evaluation', {
+                resumeText,
+                targetJobSection: promptService.prepareTargetJobSection(targetJob)
+            });
 
             // 调用AI API
             let analysisResult;
@@ -262,66 +266,6 @@ class AIAnalysisService {
     }
 
     /**
-     * 构建分析提示词
-     */
-    buildAnalysisPrompt(resumeText, targetJob, options) {
-        let prompt = `请分析以下简历内容并提供详细评估：
-
-**简历内容：**
-${resumeText}
-
-**分析要求：**
-1. 整体评分（1-100分）
-2. 各维度评分：基础匹配度、经验相关度、技能匹配度、学习能力、发展潜力、团队合作
-3. 3-5个主要优势
-4. 2-3个需要改进的方面
-5. 具体的优化建议
-6. 如果有目标职位，请针对该职位进行分析`;
-
-        if (targetJob) {
-            prompt += `
-**目标职位：**
-- 职位：${targetJob.title || '未指定'}
-- 要求：${targetJob.requirements || '未提供'}
-- 薪资：${targetJob.salary || '未提供'}
-- 地点：${targetJob.location || '未提供'}`;
-        }
-
-        prompt += `
-**请以JSON格式返回结果，格式如下：**
-{
-  "overall_score": 85,
-  "dimensions": {
-    "basic_match": 90,
-    "experience_relevance": 85,
-    "skill_match": 80,
-    "learning_ability": 88,
-    "development_potential": 85,
-    "teamwork": 87
-  },
-  "strengths": ["技能匹配度高", "项目经验丰富"],
-  "weaknesses": ["需要加强某些技术栈"],
-  "suggestions": [
-    {
-      "type": "skill",
-      "priority": "high",
-      "title": "技能提升建议",
-      "description": "具体建议内容",
-      "actionItems": ["具体行动项1", "具体行动项2"]
-    }
-  ],
-  "detailed_analysis": {
-    "skill_analysis": "技能分析详情",
-    "experience_analysis": "经验分析详情",
-    "education_analysis": "教育背景分析",
-    "project_analysis": "项目分析"
-  }
-}`;
-
-        return prompt;
-    }
-
-    /**
      * 解析AI返回的结果
      */
     parseAIResponse(aiResponse, targetJob) {
@@ -410,7 +354,7 @@ ${resumeText}
     }
 
     /**
-     * 文档内容提取（PDF、DOCX等）
+     * 文档内容提取（PDF、DOCX、DOC等）
      */
     async extractDocumentContent(filePath) {
         const ext = path.extname(filePath).toLowerCase();
@@ -421,6 +365,8 @@ ${resumeText}
                     return await this.extractPDFContent(filePath);
                 case '.docx':
                     return await this.extractDOCXContent(filePath);
+                case '.doc':
+                    return await this.extractDOCContent(filePath);
                 case '.txt':
                 case '.html':
                     return await this.extractTextContent(filePath);
@@ -460,6 +406,20 @@ ${resumeText}
         } catch (error) {
             console.error('DOCX解析错误:', error);
             throw new Error('DOCX文件解析失败');
+        }
+    }
+
+    /**
+     * 提取DOC内容
+     */
+    async extractDOCContent(filePath) {
+        try {
+            const officeParser = require('officeparser');
+            const result = await officeParser.parseOffice(filePath);
+            return result.text || '';
+        } catch (error) {
+            console.error('DOC解析错误:', error);
+            throw new Error('DOC文件解析失败');
         }
     }
 

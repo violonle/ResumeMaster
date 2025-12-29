@@ -264,23 +264,9 @@ class DomesticAIService {
     const { service, model, apiKey } = await this.selectOptimalService('resume_analysis', userCtx);
 
     try {
-      const prompt = `作为一个资深的招聘专家，请根据以下招聘数据进行非量化的、模糊的趋势预测分析。
-数据概览：
-${JSON.stringify(data, null, 2)}
-
-要求：
-1. 不要进行具体的数字预测（如"下周将收到5份简历"），而是给出趋势性的描述（如"简历投递量呈现稳步增长趋势"、"面试转化率近期有所放缓"）。
-2. 分析招聘漏斗的健康度，指出可能存在的瓶颈。
-3. 给出针对性的改进建议。
-4. 语言风格要专业、客观但具有前瞻性。
-
-请返回如下 JSON 格式：
-{
-  "trend_analysis": "一段关于招聘趋势的文字描述...",
-  "pipeline_health": "一段关于漏斗健康度的定性评价...",
-  "potential_bottlenecks": ["瓶颈1", "瓶颈2"],
-  "suggestions": ["建议1", "建议2"]
-}`;
+      const prompt = await promptService.getPrompt('recruitment_forecast', {
+        dataJson: JSON.stringify(data, null, 2)
+      });
 
       const result = await this.callAIService(service, model, prompt, apiKey);
       const responseTime = Date.now() - startTime;
@@ -486,9 +472,18 @@ ${JSON.stringify(data, null, 2)}
     const startTime = Date.now();
     const { service, model, apiKey } = await this.selectOptimalService('chat', userCtx);
     try {
-      const result = await this.callAIService(service, model, messages, apiKey);
+      // 从提示词模板获取系统身份设定
+      const systemPrompt = await promptService.getPrompt('chat', { message: '' });
+      
+      // 构建包含系统提示词的消息列表
+      const finalMessages = [
+        { role: 'system', content: systemPrompt },
+        ...messages
+      ];
+
+      const result = await this.callAIService(service, model, finalMessages, apiKey);
       const responseTime = Date.now() - startTime;
-      const tokens = Math.ceil(JSON.stringify(messages).length / 4);
+      const tokens = Math.ceil(JSON.stringify(finalMessages).length / 4);
       this.recordServiceStats(service, true, tokens, responseTime);
       return { success:true, data: result, service, model, cost: this.calculateCost(service, tokens), responseTime };
     } catch (error) {
@@ -733,48 +728,6 @@ ${JSON.stringify(data, null, 2)}
     });
   }
 
-  // 构建简历分析提示词
-  buildResumeAnalysisPrompt(resumeText, jobDescription) {
-    return `你是资深人力资源分析师。请对以下简历进行结构化解析与评估，并严格返回 JSON（不包含任何额外文本）。
-
-输入说明：已为你提供从 PDF/Word/网页抽取的纯文本：
-${resumeText}
-
-${jobDescription ? `目标职位描述：
-${jobDescription}
-` : ''}
-
-请输出如下 JSON 结构（字段必须存在，允许为空；中文内容优先）：
-{
-  "basic_info": { "name": "", "email": "", "phone": "", "location": "", "age": "", "education": "", "school": "", "work_years": "", "last_company": "", "last_position": "", "salary_expectation": "" },
-  "education_background": [ { "school": "", "degree": "", "major": "", "start_date": "", "end_date": "" } ],
-  "work_experience": [ { "company": "", "title": "", "start_date": "", "end_date": "", "responsibilities": "" } ],
-  "project_experience": [ { "name": "", "role": "", "stack": [""], "description": "", "impact": "" } ],
-  "skills_certifications": { "skills": [""], "certifications": ["" ] },
-  "self_evaluation": "",
-  "evaluation_report": {
-    "core_strengths": ["专业技能/项目亮点/职业稳定性"],
-    "potential_issues": ["经验断层/技能短板/职业规划模糊"],
-    "career_advice": ["技能提升方向/岗位推荐/成长路径"]
-  },
-  "radar_scores": {
-    "job_match": 3,
-    "skill_match": 3,
-    "experience_match": 3,
-    "learning_ability": 3,
-    "teamwork": 3
-  },
-  "overall_score": 85,
-  "summary": "100-150字总结候选人的整体情况"
-}
-
-要求：
-- 结合文本上下文做合理推断并在缺失处补全，但避免杜撰；
-- 如为推断请在对应字符串尾部加上“（推断）”；
-- radar_scores 中的评分范围 1-5（整数）；
-- 返回必须是有效 JSON。`;
-  }
-
   // 简历对比
   async compareResumes(resumeList, jobDescription = '') {
     // 兼容旧调用方式
@@ -815,110 +768,6 @@ ${jobDescription}
     } catch (error) {
       this.recordServiceStats(service, false);
       return { success: false, error: error.message };
-    }
-  }
-
-  // 构建简历对比提示词
-  buildResumeComparisonPrompt(resumeList, jobDescription = '') {
-    let resumesText = '';
-    const labels = [];
-    resumeList.forEach((r, index) => {
-        const label = String.fromCharCode(65 + index); // A, B, C...
-        labels.push(label);
-        resumesText += `简历${label} (文件名: ${r.name}):\n${r.text.substring(0, 3000)}\n\n`; 
-    });
-
-    return `你是资深人力资源专家。请对比以下${resumeList.length}份简历，并严格依据目标岗位与简历文本证据做客观评估，仅返回有效 JSON（不包含代码块）。
-
-${resumesText}
-
-${jobDescription ? `目标职位（JD）：\n${jobDescription}\n` : ''}
-
-评估规则：
-1) 评分范围 1-5：1=不符合/无证据，2=较弱/证据有限，3=一般，4=较强，5=高度匹配/多处证据。
-2) 禁止编造信息；每项结论需提供证据片段。
-3) global_scores = 将 radar_scores 按权重计算到百分制（job_match 25%、skill_match 40%、experience_match 25%、learning_ability 5%、teamwork 5%），取整。
-4) winner 与最高 global_scores 保持一致；若分数相同则为 Tie。
-
-请输出如下 JSON 结构：
-{
-  "radar_scores": {
-    "job_match": {"A": 4, "B": 3},
-    "skill_match": {"A": 5, "B": 4},
-    "experience_match": {"A": 3, "B": 5},
-    "learning_ability": {"A": 4, "B": 4},
-  "teamwork": {"A": 4, "B": 5}
-  },
-  "global_scores": {"A": 88, "B": 82},
-  "comparison_table": [
-    {"dimension": "教育背景", "A": "...", "B": "...", "winner": "A/B/Tie", "comment": "..."},
-    {"dimension": "工作经验", "A": "...", "B": "...", "winner": "A/B/Tie", "comment": "..."},
-    {"dimension": "技能专长", "A": "...", "B": "...", "winner": "A/B/Tie", "comment": "..."}
-  ],
-  "recommendation": {
-    "winner": "A", 
-    "reason": "...",
-    "notes": "..."
-  },
-  "evidence_refs": [
-    {"resume": "A", "snippet": "..."},
-    {"resume": "B", "snippet": "..."}
-  ],
-  "summary_report": "..."
-}
-
-要求：
-- 必须包含所有简历（${labels.join(', ')}）在各维度的评分；
-- 必须提供 global_scores 并与推荐结论一致；
-- comparison_table 必须覆盖关键维度并给出胜出者；
-- 每条结论需在 evidence_refs 中至少提供一个证据片段；
-- 返回必须是有效 JSON。`;
-  }
-
-  // 构建职位匹配提示词
-  buildJobMatchingPrompt(resumeText, jobs) {
-    return `请分析简历与以下职位的匹配度：
-
-简历内容：
-${resumeText}
-
-职位列表：
-${JSON.stringify(jobs, null, 2)}
-
-请返回匹配度最高的前5个职位，格式如下（JSON）：
-[
-  {
-    "job_id": "职位ID",
-    "match_score": 85,
-    "reason": "匹配原因",
-    "recommendations": ["建议1", "建议2"]
-  }
-]`;
-  }
-
-  // 构建内容生成提示词
-  buildContentGenerationPrompt(type, data) {
-    switch (type) {
-      case 'resume_summary':
-        return `请根据以下信息生成专业的简历摘要：
-${JSON.stringify(data, null, 2)}
-
-要求：简洁、专业、突出关键优势，字数控制在200字以内。`;
-      
-      case 'cover_letter':
-        return `请根据以下信息生成求职信：
-${JSON.stringify(data, null, 2)}
-
-要求：格式规范、内容真诚、突出匹配度，字数控制在500字以内。`;
-      
-      case 'job_description':
-        return `请根据以下信息优化职位描述：
-${JSON.stringify(data, null, 2)}
-
-要求：清晰、准确、吸引人，突出职位亮点。`;
-      
-      default:
-        return data.prompt || '请生成相关内容';
     }
   }
 

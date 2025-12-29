@@ -1,32 +1,48 @@
+# System Files
 .DS_Store
 **/.DS_Store
 
+# Environment & Sensitive
 .env
 .env.*
 !.env.example
 
+# Dependencies
 node_modules/
 **/node_modules/
 
+# Build outputs
 dist/
 build/
 coverage/
 .vite/
+admin/dist/
 
+# Logs
 *.log
 
+# Databases
+*.db
+*.sqlite
 backend/database.sqlite
+mysql_data/
 
+# Temporary & Large Files
+*.tar
+*.zip
+resume_image.tar
+
+# IDEs
 .vercel/
 .vscode/
 .trae/
+.idea/
 
+# Project Specific
 uploads/
-
 backend/uploads/**
 !backend/uploads/
 !backend/uploads/avatars/
 backend/uploads/avatars/*
 !backend/uploads/avatars/user_6_1765374552691.png
-
 测试简历.txt

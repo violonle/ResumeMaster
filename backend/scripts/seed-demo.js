@@ -55,7 +55,8 @@ async function seedDemo() {
           user_id: admin.id,
           file_name: fileName,
           file_size: 1024 * (120 + Math.floor(Math.random() * 80)),
-          file_type: 'application/pdf',
+          file_type: 'pdf',
+          file_path: '/uploads/demo.pdf',
           upload_date: new Date(Date.now() - (i * 86400000)),
           parsed_data: {
             name: c.name,
@@ -83,6 +84,7 @@ async function seedDemo() {
           };
 
           await AnalysisResult.create({
+            user_id: admin.id,
             resume_id: resume.id,
             analysis_date: new Date(Date.now() - (i * 86400000) + 3600 * 1000),
             overall_score: score,

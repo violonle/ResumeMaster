@@ -200,13 +200,6 @@
                                         本科及以上
                                     </span>
                                 </div>
-                                <div class="flex flex-wrap gap-2 mb-3">
-                                    <span class="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-blue-100 text-blue-800">React</span>
-                                    <span class="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-blue-100 text-blue-800">Vue.js</span>
-                                    <span class="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-blue-100 text-blue-800">TypeScript</span>
-                                    <span class="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-blue-100 text-blue-800">Node.js</span>
-                                    <span class="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-blue-100 text-blue-800">Webpack</span>
-                                </div>
                                 <div class="text-sm text-gray-500">
                                     发布时间：2024-01-15 | 更新时间：2024-01-16 | 职位编号：JOB-2024-001
                                 </div>
@@ -408,15 +401,10 @@
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center space-x-4">
                                         <input type="checkbox" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                                        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80" alt="简历头像" class="w-12 h-12 rounded-full object-cover">
+                                        <img src="https://ui-avatars.com/api/?name=张三&background=random&color=fff" alt="简历头像" class="w-12 h-12 rounded-full object-cover">
                                         <div>
                                             <h4 class="text-lg font-medium text-gray-900">张三</h4>
                                             <p class="text-sm text-gray-600">5年前端开发经验 | 本科 | 北京</p>
-                                            <div class="flex items-center space-x-2 mt-1">
-                                                <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">React</span>
-                                                <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">Vue.js</span>
-                                                <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">TypeScript</span>
-                                            </div>
                                         </div>
                                     </div>
                                     <div class="flex items-center space-x-4">
@@ -441,15 +429,10 @@
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center space-x-4">
                                         <input type="checkbox" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                                        <img src="https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80" alt="简历头像" class="w-12 h-12 rounded-full object-cover">
+                                        <img src="https://ui-avatars.com/api/?name=李四&background=random&color=fff" alt="简历头像" class="w-12 h-12 rounded-full object-cover">
                                         <div>
                                             <h4 class="text-lg font-medium text-gray-900">李四</h4>
                                             <p class="text-sm text-gray-600">4年前端开发经验 | 硕士 | 上海</p>
-                                            <div class="flex items-center space-x-2 mt-1">
-                                                <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">Vue.js</span>
-                                                <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">Node.js</span>
-                                                <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">Python</span>
-                                            </div>
                                         </div>
                                     </div>
                                     <div class="flex items-center space-x-4">
@@ -599,6 +582,7 @@
     </div>
 
     <script src="/js/user-auth.js"></script>
+    <script src="/js/resume-data.js"></script>
     <script src="/js/header-profile.js"></script>
     <script src="/js/sidebar.js"></script>
     <script>
@@ -919,7 +903,7 @@
         async function startEmailImportAndScreen(jobId, cfg){
           try{
             const token = (JSON.parse(localStorage.getItem('userInfo')||'{}').token)||null;
-            const bases = [ (window.resumeDataManager && window.resumeDataManager.apiBaseUrl) ? window.resumeDataManager.apiBaseUrl : '/api', 'http://localhost:3001/api', 'http://localhost:3000/api' ];
+            const bases = [ (window.resumeDataManager && window.resumeDataManager.apiBaseUrl) ? window.resumeDataManager.apiBaseUrl : '/api', '/api' ];
             let lastErr=null;
             for (const b of bases){
               try{
@@ -942,7 +926,7 @@
     <script>
       async function apiRecruitment(path, body){
         const token = (JSON.parse(localStorage.getItem('userInfo')||'{}').token)||null
-        const bases = [ (window.resumeDataManager && window.resumeDataManager.apiBaseUrl) ? window.resumeDataManager.apiBaseUrl : '/api', 'http://localhost:3001/api', 'http://localhost:3000/api' ]
+        const bases = [ (window.resumeDataManager && window.resumeDataManager.apiBaseUrl) ? window.resumeDataManager.apiBaseUrl : '/api', '/api' ]
         let lastErr=null
         for (const b of bases){
           try{

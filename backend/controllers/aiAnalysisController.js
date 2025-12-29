@@ -3,14 +3,16 @@
  * 处理真实的AI简历分析请求
  */
 const AIAnalysisService = require('../services/aiAnalysisService');
+const OptimizedResumeParseService = require('../services/optimizedResumeParseService');
 const { Resume } = require('../models');
 const multer = require('multer');
 const path = require('path');
+const { extractTextFromFile } = require('../services/textExtractor');
 
 // 配置multer用于文件上传
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, 'uploads/');
+        cb(null, 'uploads/resumes');
     },
     filename: (req, file, cb) => {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
@@ -24,13 +26,13 @@ const upload = multer({
         fileSize: 10 * 1024 * 1024 // 10MB限制
     },
     fileFilter: (req, file, cb) => {
-        const allowedTypes = ['.pdf', '.docx', '.txt', '.html'];
+        const allowedTypes = ['.pdf', '.docx', '.doc', '.txt', '.html'];
         const ext = path.extname(file.originalname).toLowerCase();
         
         if (allowedTypes.includes(ext)) {
             cb(null, true);
         } else {
-            cb(new Error('不支持的文件格式。请上传PDF、DOCX、TXT或HTML文件。'));
+            cb(new Error('不支持的文件格式。请上传PDF、DOC、DOCX、TXT或HTML文件。'));
         }
     }
 });
@@ -62,7 +64,7 @@ const uploadAndParseDocument = async (req, res) => {
         // 提取文档内容
         let resumeContent;
         try {
-            resumeContent = await aiAnalysisService.extractDocumentContent(filePath);
+            resumeContent = await extractTextFromFile(filePath);
         } catch (error) {
             // 清理上传的文件
             require('fs').unlink(filePath, () => {});
@@ -75,15 +77,52 @@ const uploadAndParseDocument = async (req, res) => {
             });
         }
 
+        // 使用优化的解析服务解析简历
+        let parsedData = {};
+        try {
+            const parseService = new OptimizedResumeParseService();
+            const fileType = path.extname(fileName).replace('.', '').toLowerCase() || 'txt';
+            parsedData = await parseService.parseResumeContent(resumeContent, fileType);
+            console.log('简历解析结果:', JSON.stringify({
+                name: parsedData.name,
+                email: parsedData.email,
+                phone: parsedData.phone,
+                skills_count: parsedData.skills?.length || 0,
+                education_count: parsedData.education?.length || 0,
+                work_experience_count: parsedData.work_experience?.length || 0,
+                summary_length: parsedData.summary?.length || 0
+            }, null, 2));
+        } catch (parseError) {
+            console.warn('简历解析失败，使用原始内容:', parseError.message);
+            parsedData = { content: resumeContent };
+        }
+
         // 保存简历到数据库
         const resume = await Resume.create({
             user_id: req.user.id,
             file_name: fileName,
             file_size: fileSize,
             file_type: path.extname(fileName),
+            file_path: filePath,
             upload_date: new Date(),
-            parsed_data: { content: resumeContent },
-            status: 'uploaded'
+            parsed_data: parsedData,
+            raw_text: resumeContent,
+            status: 'uploaded',
+            // 从解析数据中提取各个字段
+            name: parsedData.name || null,
+            phone: parsedData.phone || null,
+            email: parsedData.email || null,
+            location: parsedData.location || parsedData.city || parsedData.expectCity || null,
+            job_title: parsedData.job_title || null,
+            experience_years: parsedData.experience_years || null,
+            highest_education: parsedData.highest_education || null,
+            job_status: parsedData.job_status || null,
+            expected_salary: parsedData.expected_salary || null,
+            work_experience: parsedData.work_experience || null,
+            education: parsedData.education || null,
+            skills: parsedData.skills || null,
+            summary: parsedData.summary || null,
+            projects: parsedData.projects || null
         });
 
         // 清理临时文件

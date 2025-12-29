@@ -12,20 +12,26 @@ router.get('/stats', authenticate, async (req, res) => {
         const userId = req.user.id;
         const companyId = req.user.company_id;
 
-        const whereUser = { user_id: userId };
-        // 如果是企业用户，可能需要查看整个企业的数据
-        // 这里暂时只看个人的，或者根据权限调整
+        const whereUser = companyId 
+            ? { company_id: companyId }
+            : { user_id: userId };
         
-        // 1. 候选人总数 (已上传的简历)
-        const totalCandidates = await Resume.count({ where: whereUser });
+        // 1. 候选人总数 (人才库中的简历)
+        const totalCandidates = await Resume.count({ 
+            where: {
+                ...whereUser,
+                is_talent_pool: true
+            } 
+        });
 
-        // 2. 今日新增
+        // 2. 今日新增 (人才库中的简历)
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
         const newCandidatesToday = await Resume.count({
             where: {
                 ...whereUser,
-                updated_at: { [Op.gte]: todayStart }
+                upload_date: { [Op.gte]: todayStart },
+                is_talent_pool: true
             }
         });
 

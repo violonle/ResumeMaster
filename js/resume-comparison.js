@@ -80,7 +80,7 @@ class ResumeComparison {
     });
     const dimSet = new Set();
     resumes.forEach(r => Object.keys(r.scores).forEach(k => dimSet.add(k)));
-    const dimensions = Array.from(dimSet);
+    const dimensions = Array.from(dimSet).filter(d => !d.includes('技能') && !d.includes('skill'));
     const result = { resumes, dimensions, timestamp: new Date().toISOString() };
     result.winner = this.determineWinner(resumes);
     this.comparisonData = result;

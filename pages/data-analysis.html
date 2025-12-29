@@ -6,6 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>数据分析 - 争湃·简历大师</title>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <script src="../js/tailwindcss.js"></script>
     <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -31,8 +32,8 @@
             </div>
         </div>
     </header>
-    <main class="main-content pt-20" id="main-content">
-        <div class="p-6">
+    <main class="main-content pt-20 p-6" id="main-content">
+        <div>
             <div class="flex justify-between items-center mb-6">
                 <div>
                     <h1 class="text-3xl font-bold text-gray-900">数据分析</h1>
@@ -53,9 +54,9 @@
                 <div class="rounded-lg p-6 text-white bg-blue-600 hover:bg-blue-700 transition-colors">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm opacity-90">简历总数</p>
+                            <p class="text-sm opacity-90">总简历数</p>
                             <p class="text-3xl font-bold" id="total-resumes-count">—</p>
-                            <p class="text-sm opacity-75 mt-1"><i class="fas fa-arrow-up mr-1"></i>+12.5%</p>
+                            <p class="text-sm opacity-75 mt-1" id="total-resumes-growth"><i class="fas fa-arrow-up mr-1"></i>+0%</p>
                         </div>
                         <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                             <i class="fas fa-file-alt text-blue-600 text-2xl"></i>
@@ -65,12 +66,12 @@
                 <div class="rounded-lg p-6 text-white bg-blue-600 hover:bg-blue-700 transition-colors">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm opacity-90">匹配成功</p>
-                            <p class="text-3xl font-bold" id="matches-success-count">—</p>
-                            <p class="text-sm opacity-75 mt-1"><i class="fas fa-arrow-up mr-1"></i>+8.3%</p>
+                            <p class="text-sm opacity-90">总职位数</p>
+                            <p class="text-3xl font-bold" id="total-jobs-count">—</p>
+                            <p class="text-sm opacity-75 mt-1" id="total-jobs-growth"><i class="fas fa-arrow-up mr-1"></i>+0%</p>
                         </div>
                         <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                            <i class="fas fa-handshake text-blue-600 text-2xl"></i>
+                            <i class="fas fa-briefcase text-blue-600 text-2xl"></i>
                         </div>
                     </div>
                 </div>
@@ -79,7 +80,7 @@
                         <div>
                             <p class="text-sm opacity-90">面试安排</p>
                             <p class="text-3xl font-bold" id="interviews-count">—</p>
-                            <p class="text-sm opacity-75 mt-1"><i class="fas fa-arrow-down mr-1"></i>-3.2%</p>
+                            <p class="text-sm opacity-75 mt-1" id="interviews-growth"><i class="fas fa-arrow-up mr-1"></i>+0%</p>
                         </div>
                         <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                             <i class="fas fa-calendar-check text-blue-600 text-2xl"></i>
@@ -91,7 +92,7 @@
                         <div>
                             <p class="text-sm opacity-90">入职率</p>
                             <p class="text-3xl font-bold" id="onboarding-rate">—</p>
-                            <p class="text-sm opacity-75 mt-1"><i class="fas fa-arrow-up mr-1"></i>+5.1%</p>
+                            <p class="text-sm opacity-75 mt-1" id="onboarding-growth"><i class="fas fa-arrow-up mr-1"></i>+0%</p>
                         </div>
                         <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                             <i class="fas fa-user-check text-blue-600 text-2xl"></i>
@@ -138,21 +139,21 @@
                         <div class="space-y-4">
                             <div class="flex justify-between items-center"><span
                                     class="text-sm text-gray-600">平均招聘周期</span><span
-                                    class="font-medium text-gray-900">18天</span></div>
+                                    class="font-medium text-gray-900" id="avg-cycle-days">—</span></div>
                             <div class="w-full bg-gray-200 rounded-full h-2">
-                                <div class="bg-blue-600 h-2 rounded-full" style="width:75%"></div>
+                                <div class="bg-blue-600 h-2 rounded-full" id="avg-cycle-bar" style="width:0%"></div>
                             </div>
                             <div class="flex justify-between items-center"><span
                                     class="text-sm text-gray-600">简历筛选通过率</span><span
-                                    class="font-medium text-gray-900">32%</span></div>
+                                    class="font-medium text-gray-900" id="screening-pass-rate">—</span></div>
                             <div class="w-full bg-gray-200 rounded-full h-2">
-                                <div class="bg-green-600 h-2 rounded-full" style="width:32%"></div>
+                                <div class="bg-green-600 h-2 rounded-full" id="screening-pass-bar" style="width:0%"></div>
                             </div>
                             <div class="flex justify-between items-center"><span
                                     class="text-sm text-gray-600">面试到入职转化率</span><span
-                                    class="font-medium text-gray-900">68%</span></div>
+                                    class="font-medium text-gray-900" id="interview-conversion-rate">—</span></div>
                             <div class="w-full bg-gray-200 rounded-full h-2">
-                                <div class="bg-purple-600 h-2 rounded-full" style="width:68%"></div>
+                                <div class="bg-purple-600 h-2 rounded-full" id="interview-conversion-bar" style="width:0%"></div>
                             </div>
                         </div>
                     </div>
@@ -163,12 +164,19 @@
     <script src="/js/header-profile.js"></script>
     <script>
         const uiComponents = { showNotification: (msg, type)=>{ try{ console.log(`[${type||'info'}]`, msg) }catch(_){ } } };
+        let resumeChart = null;
+        let matchChart = null;
         document.addEventListener('DOMContentLoaded', function () {
             HeaderProfile.init('#header-right-section');
             Sidebar.init({ mount: '#sidebar', active: 'analysis' }).then(() => {
                 updateSubscriptionInfo();
             });
             initCharts();
+            
+            window.addEventListener('resumeDataUpdated', function(e) {
+                console.log('收到简历数据更新事件，来源:', e.detail.source);
+                initCharts();
+            });
         });
 
         async function updateSubscriptionInfo() {
@@ -201,43 +209,137 @@
 
         async function initCharts() {
             try {
-                const [resumeStats, analysisStats, funnelStats] = await Promise.all([
-                    userAuthInstance.apiRequest('/company/resume-stats').catch(()=>({ data:{ total:0, weekCounts:[0,0,0,0,0,0,0], typeCounts:{ pdf:0, doc:0, docx:0, txt:0, other:0 } } })),
+                const [talentPoolData, analysisStats, funnelStats, recruitmentStats, efficiencyStats] = await Promise.all([
+                    window.resumeDataManager.getTalentPoolResumes().catch(()=>[]),
                     userAuthInstance.apiRequest('/company/analysis-stats').catch(()=>({ data:{ total:0, excellent:0, weekCounts:[0,0,0,0,0,0,0] } })),
-                    userAuthInstance.apiRequest('/company/funnel-stats').catch(()=>({ data:null }))
+                    userAuthInstance.apiRequest('/company/funnel-stats').catch(()=>({ data:{ applied:0, screening:0, interview:0, offer:0, hired:0, rejected:0 } })),
+                    userAuthInstance.apiRequest('/company/recruitment-stats').catch(()=>({ data:{ total:0, active:0, paused:0, closed:0, draft:0 } })),
+                    userAuthInstance.apiRequest('/company/efficiency-stats').catch(()=>({ data:{ avgCycleDays:15, screeningPassRate:30, interviewConversionRate:60 } }))
                 ]);
-                const rs = resumeStats?.data || { total: 0, weekCounts: [0, 0, 0, 0, 0, 0, 0], typeCounts: { pdf: 0, doc: 0, docx: 0, txt: 0, other: 0 } };
+                const totalResumes = Array.isArray(talentPoolData) ? talentPoolData.length : 0;
                 const as = analysisStats?.data || { total: 0, excellent: 0, weekCounts: [0, 0, 0, 0, 0, 0, 0] };
+                const funnel = funnelStats?.data || { applied:0, screening:0, interview:0, offer:0, hired:0, rejected:0 };
+                const jobStats = recruitmentStats?.data || { total:0, active:0, paused:0, closed:0, draft:0 };
+                const eff = efficiencyStats?.data || { avgCycleDays:15, screeningPassRate:30, interviewConversionRate:60 };
+                
                 const totalEl = document.getElementById('total-resumes-count');
-                const matchEl = document.getElementById('matches-success-count');
+                const jobTotalEl = document.getElementById('total-jobs-count');
                 const interviewEl = document.getElementById('interviews-count');
                 const onboardEl = document.getElementById('onboarding-rate');
-                if (totalEl) totalEl.textContent = rs.total;
-                if (matchEl) matchEl.textContent = as.excellent;
-                if (interviewEl) interviewEl.textContent = as.total;
-                const onboarding = as.total ? Math.round((as.excellent / as.total) * 100) : 0;
+                
+                // 增长率元素
+                const resumesGrowthEl = document.getElementById('total-resumes-growth');
+                const jobsGrowthEl = document.getElementById('total-jobs-growth');
+                const interviewsGrowthEl = document.getElementById('interviews-growth');
+                const onboardingGrowthEl = document.getElementById('onboarding-growth');
+                
+                if (totalEl) totalEl.textContent = totalResumes;
+                if (jobTotalEl) jobTotalEl.textContent = jobStats.total;
+                if (interviewEl) interviewEl.textContent = funnel.interview;
+                const onboarding = funnel.applied ? Math.round((funnel.hired / funnel.applied) * 100) : 0;
                 if (onboardEl) onboardEl.textContent = onboarding + '%';
+
+                // 更新增长率
+                const gr = eff.growthRates || { resumes: '+0%', jobs: '+0%', interviews: '+0%', onboarding: '+0%' };
+                
+                const updateGrowth = (el, val) => {
+                    if (!el) return;
+                    const isDown = val.startsWith('-');
+                    el.innerHTML = `<i class="fas fa-arrow-${isDown ? 'down' : 'up'} mr-1"></i>${val}`;
+                    // 可以根据正负值调整颜色，但目前样式是 opacity-75，保持一致
+                };
+
+                updateGrowth(resumesGrowthEl, gr.resumes);
+                updateGrowth(jobsGrowthEl, gr.jobs);
+                updateGrowth(interviewsGrowthEl, gr.interviews);
+                updateGrowth(onboardingGrowthEl, gr.onboarding);
+
+                // 更新效率统计
+                const cycleDaysEl = document.getElementById('avg-cycle-days');
+                const cycleBarEl = document.getElementById('avg-cycle-bar');
+                const screeningRateEl = document.getElementById('screening-pass-rate');
+                const screeningBarEl = document.getElementById('screening-pass-bar');
+                const conversionRateEl = document.getElementById('interview-conversion-rate');
+                const conversionBarEl = document.getElementById('interview-conversion-bar');
+
+                if (cycleDaysEl) cycleDaysEl.textContent = eff.avgCycleDays + '天';
+                if (cycleBarEl) cycleBarEl.style.width = Math.min(100, (eff.avgCycleDays / 30) * 100) + '%'; // 假设30天为100%
+                if (screeningRateEl) screeningRateEl.textContent = eff.screeningPassRate + '%';
+                if (screeningBarEl) screeningBarEl.style.width = eff.screeningPassRate + '%';
+                if (conversionRateEl) conversionRateEl.textContent = eff.interviewConversionRate + '%';
+                if (conversionBarEl) conversionBarEl.style.width = eff.interviewConversionRate + '%';
+                
                 const weekLabels = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
                 const rctx = document.getElementById('resumeChart').getContext('2d');
-                new Chart(rctx, { type: 'line', data: { labels: weekLabels, datasets: [{ label: '简历投递数', data: rs.weekCounts, borderColor: 'rgb(59,130,246)', backgroundColor: 'rgba(59,130,246,0.1)', tension: 0.4 }] }, options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } } });
+                if (resumeChart) {
+                    resumeChart.destroy();
+                }
+                resumeChart = new Chart(rctx, { type: 'line', data: { labels: weekLabels, datasets: [{ label: '简历投递数', data: as.weekCounts, borderColor: 'rgb(59,130,246)', backgroundColor: 'rgba(59,130,246,0.1)', tension: 0.4 }] }, options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } } });
                 const catLabels = ['技术类', '产品类', '设计类', '运营类', '销售类'];
                 const mctx = document.getElementById('matchChart').getContext('2d');
-                new Chart(mctx, { type: 'bar', data: { labels: catLabels, datasets: [{ label: '匹配成功', data: [as.excellent, 0, 0, 0, 0], backgroundColor: 'rgba(34,197,94,0.8)' }, { label: '待匹配', data: [Math.max(as.total - as.excellent, 0), 0, 0, 0, 0], backgroundColor: 'rgba(156,163,175,0.8)' }] }, options: { responsive: true, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true } } } });
-                // 招聘漏斗（分段横条 + 指标）
-                const funnel = funnelStats?.data || { applied:0, screening:0, interview:0, offer:0, hired:0 };
+                if (matchChart) {
+                    matchChart.destroy();
+                }
+                matchChart = new Chart(mctx, { type: 'bar', data: { labels: catLabels, datasets: [{ label: '匹配成功', data: [as.excellent, 0, 0, 0, 0], backgroundColor: 'rgba(34,197,94,0.8)' }, { label: '待匹配', data: [Math.max(as.total - as.excellent, 0), 0, 0, 0, 0], backgroundColor: 'rgba(156,163,175,0.8)' }] }, options: { responsive: true, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true } } } });
                 (function(){
-                  var mock = { applied: 150, screening: 100, interview: 60, offer: 30, hired: 18 };
-                  var data = (funnel && funnel.applied) ? funnel : mock;
-                  var total = Math.max(1, data.applied);
+                  // 移除硬编码的 mock 数据，优先使用 API 返回的数据
+                  var data = funnel || { applied: 0, screening: 0, interview: 0, offer: 0, hired: 0 };
+                  
+                  // 如果没有任何数据，显示空状态提示
+                  var total = Math.max(0, data.applied || 0);
+                  var bar = document.getElementById('funnel2-bar');
+                  
+                  if (!bar) return;
+
+                  if (total === 0) {
+                    bar.innerHTML = '<div class="w-full h-full flex items-center justify-center text-gray-400 text-xs bg-gray-50 italic">暂无招聘流程数据</div>';
+                    const metrics = document.getElementById('funnel2-metrics');
+                    if (metrics) metrics.innerHTML = '';
+                    const legend = document.getElementById('funnel2-legend');
+                    if (legend) legend.innerHTML = '';
+                    return;
+                  }
+
+                  // Apply cumulative logic to match dashboard behavior
+                  // Logic: 
+                  // hired = hired
+                  // offer = offer + hired
+                  // interview = interview + offer
+                  // screening = screening + interview
+                  // applied = applied + screening
+                  
+                  // Calculate raw values first
+                  let raw = {
+                      hired: data.hired || 0,
+                      offer: data.offer || 0,
+                      interview: data.interview || 0,
+                      screening: data.screening || 0,
+                      applied: data.applied || 0
+                  };
+                  
+                  // Calculate cumulative values
+                  let cumulative = {
+                      hired: raw.hired,
+                      offer: raw.offer + raw.hired,
+                      interview: raw.interview + (raw.offer + raw.hired),
+                      screening: raw.screening + (raw.interview + raw.offer + raw.hired),
+                      applied: raw.applied + (raw.screening + raw.interview + raw.offer + raw.hired)
+                  };
+
                   var segments = [
-                    { key:'applied',  label:'投递',    val:data.applied,  color:'#60a5fa' },
-                    { key:'screening',label:'初筛',    val:data.screening,color:'#38bdf8' },
-                    { key:'interview',label:'面试',    val:data.interview,color:'#a78bfa' },
-                    { key:'offer',    label:'Offer',   val:data.offer,    color:'#f59e0b' },
-                    { key:'hired',    label:'入职',    val:data.hired,    color:'#22c55e' }
+                    { key:'applied',  label:'投递',    val:cumulative.applied,  color:'#60a5fa' },
+                    { key:'screening',label:'初筛',    val:cumulative.screening,color:'#38bdf8' },
+                    { key:'interview',label:'面试',    val:cumulative.interview,color:'#a78bfa' },
+                    { key:'offer',    label:'Offer',   val:cumulative.offer,    color:'#f59e0b' },
+                    { key:'hired',    label:'入职',    val:cumulative.hired,    color:'#22c55e' }
                   ];
+                  
+                  // Update total based on cumulative applied count
+                  total = cumulative.applied;
+                  
                   var bar = document.getElementById('funnel2-bar');
                   if (bar){
+                    // Recalculate widths based on new total
                     var widths = segments.map(s=>Math.max(3, Math.round(s.val/total*100)));
                     var idxOffer = segments.findIndex(s=>s.key==='offer');
                     var idxHired = segments.findIndex(s=>s.key==='hired');
@@ -275,7 +377,6 @@
                       <span class="px-2 py-1 rounded bg-amber-50 text-amber-600 inline-flex items-center justify-center w-full text-center">Offer占比 ${c3}%</span>
                       <span class="px-2 py-1 rounded bg-emerald-50 text-emerald-600 inline-flex items-center justify-center w-full text-center">入职占比 ${c4}%</span>`;
                   }
-                  // 数值通过横条段内文本与悬浮提示展示；移除旧卡片数值更新
                   var legend = document.getElementById('funnel2-legend');
                   if (legend){
                     legend.innerHTML = segments.map(s=>`<span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full" style="background:${s.color}"></span>${s.label}</span>`).join('');

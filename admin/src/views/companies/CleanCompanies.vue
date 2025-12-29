@@ -106,6 +106,18 @@
               </VBtn>
 
               <VBtn
+            icon
+            size="small"
+            variant="text"
+            color="primary"
+            class="me-1"
+            @click="router.push(`/companies/${item.id}/resumes`)"
+          >
+            <VIcon icon="mdi-file-document-outline" size="20" />
+            <VTooltip activator="parent" location="top">简历列表</VTooltip>
+          </VBtn>
+
+              <VBtn
                 icon
                 size="small"
                 variant="text"

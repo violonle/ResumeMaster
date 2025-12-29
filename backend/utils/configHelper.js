@@ -11,7 +11,7 @@ class ConfigHelper {
       mchId: process.env.WECHAT_MCH_ID || 'default_wechat_mch_id',
       apiKey: process.env.WECHAT_API_KEY || 'default_wechat_api_key',
       appSecret: process.env.WECHAT_APP_SECRET || 'default_wechat_app_secret',
-      notifyUrl: process.env.WECHAT_NOTIFY_URL || 'http://localhost:3000/api/payment/wechat-notify'
+      notifyUrl: process.env.WECHAT_NOTIFY_URL || '/api/payment/wechat-notify'
     };
   }
 
@@ -22,8 +22,8 @@ class ConfigHelper {
       privateKey: process.env.ALIPAY_PRIVATE_KEY || 'default_alipay_private_key',
       publicKey: process.env.ALIPAY_PUBLIC_KEY || 'default_alipay_public_key',
       serverUrl: process.env.ALIPAY_SERVER_URL || 'https://openapi.alipay.com/gateway.do',
-      notifyUrl: process.env.ALIPAY_NOTIFY_URL || 'http://localhost:3000/api/payment/alipay-notify',
-      returnUrl: process.env.ALIPAY_RETURN_URL || 'http://localhost:3000/payment/success',
+      notifyUrl: process.env.ALIPAY_NOTIFY_URL || '/api/payment/alipay-notify',
+      returnUrl: process.env.ALIPAY_RETURN_URL || '/payment/success',
       sandbox: process.env.ALIPAY_SANDBOX === 'true'
     };
   }

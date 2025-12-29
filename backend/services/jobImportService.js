@@ -1,552 +1,662 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 const logger = require('../utils/logger');
+const pw = require('playwright');
 
 class JobImportService {
+  constructor() {
+    this.browser = null;
+  }
+
   async parseUrl(url) {
     try {
-      // 1. Fetch the page
-      const makeHeaders = (host) => ({
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-        'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
-        'Cache-Control': 'no-cache',
-        'Upgrade-Insecure-Requests': '1',
-        'Sec-Fetch-Dest': 'document',
-        'Sec-Fetch-Mode': 'navigate',
-        'Sec-Fetch-Site': 'none',
-        'Sec-Fetch-User': '?1',
-        'sec-ch-ua': '"Chromium";v="120", "Not?A_Brand";v="24", "Google Chrome";v="120"',
-        'sec-ch-ua-platform': '"macOS"',
-        'sec-ch-ua-mobile': '?0',
-        'Referer': `https://${host || 'www.zhipin.com'}/`,
-        'Pragma': 'no-cache'
-      });
+      const u = new URL(url);
+      const host = u.hostname;
+      let data = null;
 
-      const response = await axios.get(url, {
-        headers: makeHeaders(new URL(url).hostname),
-        timeout: 8000,
-        maxRedirects: 5,
-        validateStatus: (s) => s >= 200 && s < 400
-      });
+      logger.info(`Starting job import for URL: ${url}`);
 
-      let html = response.data;
-      const $ = cheerio.load(html);
-
-      // 2. Parse data
-      const data = {
-        title: '',
-        description: '',
-        location: '',
-        salary: '',
-        requirements: '',
-        experience: ''
-      };
-
-      try {
-        const u = new URL(url);
-        const h = u.hostname || '';
-        const path = u.pathname || '';
-        if (h.includes('zhipin.com')) {
-          let d = {};
-          const nextData = $('script#__NEXT_DATA__').html();
-          if (nextData) {
-            try {
-              const jd = JSON.parse(nextData);
-              const p = jd && jd.props && jd.props.pageProps ? jd.props.pageProps : null;
-              const j = p && p.detailData ? p.detailData : null;
-              if (j) {
-                d.title = j.jobName || j.title || '';
-                d.salary = j.salaryDesc || j.salary || '';
-                const city = (j.city && j.city.name) || '';
-                const area = (j.area && j.area.name) || '';
-                const addr = (j.address || '').trim();
-                d.location = [city, area, addr].filter(Boolean).join(' ');
-                const desc1 = (j.jobDesc || '').trim();
-                const req1 = (j.jobRequire || '').trim();
-                if (desc1) d.description = desc1;
-                if (req1) d.requirements = req1;
-              }
-            } catch (_) {}
-          }
-          // Boss security fallback: if page is a security wait page, try mobile site
-          const pageTitle = $('title').text().trim();
-          const isSecurity = pageTitle.includes('请稍候') || /securityCheck|正在加载中/.test(html);
-          if (isSecurity) {
-            try {
-              const mobileUrl = `https://m.zhipin.com${u.pathname}${u.search || ''}`;
-              const mResp = await axios.get(mobileUrl, { headers: makeHeaders('m.zhipin.com'), timeout: 8000, maxRedirects: 5, validateStatus: (s)=>s>=200&&s<400 });
-              const mHtml = mResp.data;
-              const m$ = cheerio.load(mHtml);
-              const mt = m$('h1,.job-title,.name').first().text().trim();
-              const ms = m$('.salary,.job-salary,.info-primary .salary').first().text().trim();
-              const ml = m$('.job-address,.address,.location,.info-primary p').first().text().trim();
-              const mDesc = m$('.detail-content,.job-detail,.job-sec-text,.text,.job-description').text().trim();
-              if (mt) d.title = d.title || mt;
-              if (ms) d.salary = d.salary || ms;
-              if (ml) d.location = d.location || ml.replace(/\s+/g,' ');
-              if (mDesc) {
-                // Attempt split by typical headers
-                const descMatch = mDesc.match(/(职位描述|岗位职责|工作职责)[:：]([\s\S]*?)(岗位要求|职位要求|任职要求|$)/);
-                const reqMatch = mDesc.match(/(岗位要求|职位要求|任职要求)[:：]([\s\S]*?)(工作地址|$)/);
-                if (descMatch && descMatch[2]) d.description = d.description || descMatch[2].trim();
-                if (reqMatch && reqMatch[2]) d.requirements = d.requirements || reqMatch[2].trim();
-                if (!descMatch && !reqMatch) {
-                  d.description = d.description || mDesc;
-                }
-              }
-            } catch (e) {
-              logger.warn('Mobile zhipin fallback failed', { message: e.message });
-            }
-            if ((!d.title && !d.description) || d.title === '请稍候') {
-              const hHtml = await tryHeadless(url);
-              if (hHtml) {
-                const h$ = cheerio.load(hHtml);
-                const ht = h$('h1,.job-name,.name').first().text().trim();
-                const hs = h$('.salary,.job-banner .salary,.info-primary .salary').first().text().trim();
-                const hl = (h$('.job-area .text,.job-address .text,.location,.info-primary p').first().text().trim()||'').replace(/\s+/g,' ');
-                let hc = h$('.job-sec .text,.job-detail,.detail-content,.content,.job-sec-text').text().trim();
-                if (ht) d.title = d.title || ht;
-                if (hs) d.salary = d.salary || hs;
-                if (hl) d.location = d.location || hl;
-                if (hc) d.description = d.description || hc;
-              }
-            }
-          }
-
-          if (!d.title) {
-            d.title = $('.job-name,.name,h1').first().text().trim();
-          }
-          if (!d.salary) {
-            d.salary = $('.salary,.job-banner .salary,.info-primary .salary').first().text().trim();
-          }
-          if (!d.location) {
-            const locText = $('.job-area .text,.job-sec .text:contains("工作地址"),.job-address .text,.location,.info-primary p').first().text().trim();
-            if (locText) d.location = locText.replace(/\s+/g,' ');
-          }
-          if (!d.description || !d.requirements) {
-            const secs = $('.job-sec');
-            let descBlock = '';
-            let reqBlock = '';
-            secs.each((i, el) => {
-              const t1 = $(el).find('h3,.title').first().text().trim();
-              const txt = $(el).find('.text,.job-sec-text').text().trim();
-              if (!txt) return;
-              if (t1.includes('职位描述') || t1.includes('岗位职责') || t1.includes('工作职责')) {
-                if (txt.length > descBlock.length) descBlock = txt;
-              } else if (t1.includes('任职要求') || t1.includes('职位要求') || t1.includes('岗位要求')) {
-                if (txt.length > reqBlock.length) reqBlock = txt;
-              }
-            });
-            if (!d.description) d.description = descBlock;
-            if (!d.requirements) d.requirements = reqBlock;
-          }
-
-          if (path.includes('/gongsi/')) {
-            if (!d.title) d.title = $('.job-name,.name,h1,.title').first().text().trim();
-            if (!d.location) {
-              let addrText = '';
-              const cand = $('*').filter((i, el) => $(el).text().includes('工作地址'));
-              if (cand.length) {
-                const t = $(cand[0]).text();
-                addrText = t.replace(/.*工作地址[:：]\s*/, '').trim();
-              }
-              if (addrText) d.location = addrText;
-            }
-            if (!d.description || !d.requirements) {
-              let descBlock = d.description || '';
-              let reqBlock = d.requirements || '';
-              $('.job-sec,.job-detail,.content,.detail-content,.job-detail-box').each((i, el) => {
-                const ht = $(el).find('h3,.title').first().text().trim();
-                const tx = $(el).find('.text,.job-sec-text,.content,.detail-content').text().trim();
-                if (!tx) return;
-                if (!descBlock && (ht.includes('职位描述') || ht.includes('岗位职责') || ht.includes('工作职责'))) descBlock = tx;
-                if (!reqBlock && (ht.includes('岗位要求') || ht.includes('任职要求') || ht.includes('职位要求'))) reqBlock = tx;
-              });
-              if (!descBlock || !reqBlock || !d.location) {
-                const bt = $('body').text();
-                if (!descBlock) {
-                  const m = bt.match(/职位描述[:：]([\s\S]*?)(岗位要求|职位要求|任职要求|工作地址|$)/);
-                  if (m) descBlock = m[1].trim();
-                }
-                if (!reqBlock) {
-                  const m2 = bt.match(/(岗位要求|职位要求|任职要求)[:：]([\s\S]*?)(工作地址|$)/);
-                  if (m2) reqBlock = m2[2].trim();
-                }
-                if (!d.location) {
-                  const m3 = bt.match(/工作地址[:：]\s*([\s\S]*?)(点击查看地图|查看更多信息|$)/);
-                  if (m3) d.location = m3[1].trim();
-                }
-              }
-              if (!d.description && descBlock) d.description = descBlock;
-              if (!d.requirements && reqBlock) d.requirements = reqBlock;
-            }
-          }
-
-          if (d.title || d.description || d.location || d.salary || d.requirements) {
-            if (d.title) data.title = d.title;
-            if (d.description) data.description = d.description;
-            if (d.requirements) data.requirements = d.requirements;
-            if (d.location) data.location = d.location;
-            if (d.salary) data.salary = d.salary;
-          }
-        }
-        // Lagou adapter
-        if (h.includes('lagou.com')) {
-          let d = {};
-          const pageTitle = $('title').text().trim();
-          const isGate = pageTitle.includes('访问验证') || /滑动验证|访问验证/.test(html);
-          // Try mobile with job id
-          const idMatch = path.match(/wn\/jobs\/(\d+)/);
-          if (isGate && idMatch) {
-            try {
-              const id = idMatch[1];
-              const mUrl = `https://m.lagou.com/wn/jobs/${id}.html`;
-              const mResp = await axios.get(mUrl, { headers: makeHeaders('m.lagou.com'), timeout: 8000, maxRedirects: 5, validateStatus: s=>s>=200&&s<400 });
-              const mHtml = mResp.data;
-              const m$ = cheerio.load(mHtml);
-              d.title = (m$('h1,.job-name,.position-title').first().text().trim()) || '';
-              d.salary = m$('.salary,.job-salary,.compensation').first().text().trim() || '';
-              d.location = (m$('.address,.job-address,.workaddress').first().text().trim() || '').replace(/\s+/g,' ');
-              let content = m$('.job-detail,.detail-content,.content,.position-description,.job-description,.text').text().trim();
-              if (content) {
-                const descMatch = content.match(/(职位描述|岗位职责|工作职责)[:：]([\s\S]*?)(岗位要求|职位要求|任职要求|$)/);
-                const reqMatch = content.match(/(岗位要求|职位要求|任职要求)[:：]([\s\S]*?)(工作地址|$)/);
-                if (descMatch && descMatch[2]) d.description = descMatch[2].trim();
-                if (reqMatch && reqMatch[2]) d.requirements = reqMatch[2].trim();
-                if (!d.description) d.description = content;
-              }
-              const needHeadless = (!d.title && !d.description) || /访问验证|滑动验证/.test(mHtml);
-              if (needHeadless) {
-                const hHtml = await tryHeadless(mUrl, true);
-                if (hHtml) {
-                  const h$ = cheerio.load(hHtml);
-                  const ht = h$('h1,.position-title,.job-name').first().text().trim();
-                  const hs = h$('.salary,.job-salary,.compensation').first().text().trim();
-                  const hl = (h$('.address,.job-address,.workaddress').first().text().trim()||'').replace(/\s+/g,' ');
-                  let hc = h$('.job-detail,.detail-content,.content,.position-description,.job-description,.text').text().trim();
-                  if (ht) d.title = d.title || ht;
-                  if (hs) d.salary = d.salary || hs;
-                  if (hl) d.location = d.location || hl;
-                  if (hc) d.description = d.description || hc;
-                }
-              }
-            } catch (e) {
-              logger.warn('Lagou mobile fallback failed', { message: e.message });
-              try {
-                const id = idMatch[1];
-                const mUrl = `https://m.lagou.com/wn/jobs/${id}.html`;
-                const hHtml = await tryHeadless(mUrl, true);
-                if (hHtml) {
-                  const h$ = cheerio.load(hHtml);
-                  const ht = h$('h1,.position-title,.job-name').first().text().trim();
-                  const hs = h$('.salary,.job-salary,.compensation').first().text().trim();
-                  const hl = (h$('.address,.job-address,.workaddress').first().text().trim()||'').replace(/\s+/g,' ');
-                  let hc = h$('.job-detail,.detail-content,.content,.position-description,.job-description,.text').text().trim();
-                  if (ht) d.title = d.title || ht;
-                  if (hs) d.salary = d.salary || hs;
-                  if (hl) d.location = d.location || hl;
-                  if (hc) d.description = d.description || hc;
-                }
-              } catch (_) {}
-            }
-          }
-          if ((!d.title || d.title.includes('访问验证')) && idMatch) {
-            const hHtml = await tryHeadless(url);
-            if (hHtml) {
-              const h$ = cheerio.load(hHtml);
-              d.title = d.title || h$('h1,.position-title,.job-name').first().text().trim();
-              d.salary = d.salary || h$('.salary,.job-salary,.compensation').first().text().trim();
-              d.location = d.location || (h$('.address,.job-address,.workaddress').first().text().trim()||'').replace(/\s+/g,' ');
-              let hc = h$('.job-detail,.detail-content,.content,.position-description,.job-description,.text').text().trim();
-              if (hc) d.description = d.description || hc;
-            }
-          }
-          // If still empty, attempt direct DOM
-          if (!d.title) d.title = $('h1,.position-title,.job-name').first().text().trim();
-          if (!d.salary) d.salary = $('.salary,.job-salary,.compensation').first().text().trim();
-          if (!d.location) d.location = ($('.address,.job-address,.workaddress').first().text().trim()||'').replace(/\s+/g,' ');
-          if (!d.description || !d.requirements) {
-            let txt = $('.job-detail,.detail-content,.content,.position-description,.job-description,.text').text().trim();
-            if (!txt) txt = $('body').text().trim();
-            if (txt) {
-              const descMatch = txt.match(/(职位描述|岗位职责|工作职责)[:：]([\s\S]*?)(岗位要求|职位要求|任职要求|$)/);
-              const reqMatch = txt.match(/(岗位要求|职位要求|任职要求)[:：]([\s\S]*?)(工作地址|$)/);
-              if (descMatch && descMatch[2]) d.description = d.description || descMatch[2].trim();
-              if (reqMatch && reqMatch[2]) d.requirements = d.requirements || reqMatch[2].trim();
-              if (!d.description) d.description = txt.slice(0, 1200);
-            }
-          }
-          if (d.title || d.description || d.location || d.salary || d.requirements) {
-            if (d.title) data.title = d.title;
-            if (d.description) data.description = d.description;
-            if (d.requirements) data.requirements = d.requirements;
-            if (d.location) data.location = d.location;
-            if (d.salary) data.salary = d.salary;
-          }
-        }
-        // Boss listing fallback: find a detail link and follow
-        if (h.includes('zhipin.com') && /\/web\/geek\/jobs/.test(path)) {
-          try {
-            let links = [];
-            $('a').each((i, el) => {
-              const href = String($(el).attr('href')||'');
-              if (/\/job_detail\//.test(href) || /\/gongsi\/job\//.test(href)) { links.push(href); }
-            });
-            links = Array.from(new Set(links)).slice(0, 5);
-            if (links.length === 0) {
-              try {
-                const pw = require('playwright');
-                const browser = await pw.chromium.launch({ headless: true });
-                const context = await browser.newContext({ userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36' });
-                const page = await context.newPage();
-                await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 20000 });
-                try { await page.waitForSelector('a[href*="/job_detail/"], a[href*="/gongsi/job/"]', { timeout: 10000 }); } catch (_) {}
-                links = await page.evaluate(() => Array.from(document.querySelectorAll('a[href*="/job_detail/"], a[href*="/gongsi/job/"]')).map(a => a.href));
-                await browser.close();
-              } catch (e) {
-                logger.warn('Boss listing headless link extraction failed', { message: e.message });
-              }
-            }
-            for (const href of links) {
-              try {
-                const full = href.startsWith('http') ? href : `https://www.zhipin.com${href}`;
-                const r2 = await axios.get(full, { headers: makeHeaders('www.zhipin.com'), timeout: 10000, maxRedirects:5, validateStatus:s=>s>=200&&s<400 });
-                const h2 = r2.data;
-                const $2 = cheerio.load(h2);
-                const jTitle = ($2('.job-name,.name,h1,.title').first().text().trim()) || ($2('meta[property="og:title"]').attr('content')||'');
-                const jSalary = $2('.salary,.job-banner .salary,.info-primary .salary').first().text().trim();
-                const jLoc = ($2('.job-area .text,.job-address .text,.location,.info-primary p').first().text().trim()||'').replace(/\s+/g,' ');
-                let jDesc = $2('.job-sec .text,.job-detail,.detail-content,.content,.job-sec-text').text().trim();
-                if (!jDesc) jDesc = $2('body').text().trim();
-                if (jTitle && jDesc) { data.title = jTitle; data.salary = jSalary; data.location = jLoc; data.description = jDesc; break; }
-              } catch (e) { continue }
-            }
-          } catch (e) {
-            logger.warn('Boss listing fallback failed', { message: e.message });
-          }
-        }
-      } catch (_) {}
-
-      const jsonLdScripts = $('script[type="application/ld+json"]').toArray();
-      let jsonLd = null;
-      for (const s of jsonLdScripts) {
-        const t = $(s).html();
-        if (!t) continue;
-        try {
-          const j = JSON.parse(t.trim());
-          if (Array.isArray(j)) {
-            for (const item of j) {
-              if (item && (item['@type'] === 'JobPosting' || (Array.isArray(item['@type']) && item['@type'].includes('JobPosting')))) { jsonLd = item; break; }
-            }
-          } else if (j && (j['@type'] === 'JobPosting' || (Array.isArray(j['@type']) && j['@type'].includes('JobPosting')))) {
-            jsonLd = j;
-          }
-          if (jsonLd) break;
-        } catch (_) {}
-      }
-      if (jsonLd) {
-        data.title = jsonLd.title || jsonLd.name || data.title;
-        data.description = (jsonLd.description || '').toString().trim() || data.description;
-        if (jsonLd.jobLocation) {
-          const jl = Array.isArray(jsonLd.jobLocation) ? jsonLd.jobLocation[0] : jsonLd.jobLocation;
-          const addr = jl && jl.address ? jl.address : null;
-          const locParts = [];
-          if (addr && addr.addressRegion) locParts.push(addr.addressRegion);
-          if (addr && addr.addressLocality) locParts.push(addr.addressLocality);
-          if (addr && addr.streetAddress) locParts.push(addr.streetAddress);
-          if (!data.location && locParts.length) data.location = locParts.join(' ');
-        }
-        if (jsonLd.baseSalary) {
-          const bs = jsonLd.baseSalary;
-          if (typeof bs === 'string') data.salary = bs;
-          else if (bs && bs.value) {
-            const v = bs.value;
-            const min = v.minValue || v.value || '';
-            const max = v.maxValue || '';
-            const unit = v.unitText || '';
-            const cur = bs.currency || '';
-            const parts = [];
-            if (min) parts.push(min);
-            if (max) parts.push(max);
-            const range = parts.join('-');
-            const tail = [cur, unit].filter(Boolean).join('/');
-            data.salary = [range, tail].filter(Boolean).join(' ');
-          }
-        }
+      // Strategy Pattern for different platforms
+      if (host.includes('zhipin.com')) {
+        data = await this.parseBoss(url, u);
+      } else if (host.includes('lagou.com')) {
+        data = await this.parseLagou(url, u);
+      } else if (host.includes('liepin.com')) {
+        data = await this.parseLiepin(url, u);
+      } else if (host.includes('51job.com')) {
+        data = await this.parse51Job(url, u);
+      } else if (host.includes('zhaopin.com')) {
+        data = await this.parseZhaopin(url, u);
       }
 
-      // Title extraction
-      // Priority: h1 -> og:title -> title tag
-      data.title = $('h1').first().text().trim();
-      if (!data.title) {
-        data.title = $('meta[property="og:title"]').attr('content') || $('meta[name="title"]').attr('content');
-      }
-      if (!data.title) {
-        data.title = $('title').text().split('-')[0].trim();
-      }
-
-      // Location extraction
-      // Common selectors for location
-      const locationSelectors = ['.job-location', '.work_addr', '.job_addr', '[itemprop="addressLocality"]', '.info-area', '.address', '.workaddress', '.job-address', '.summary-plane__city'];
-      for (const sel of locationSelectors) {
-        const text = $(sel).text().trim();
-        if (text) {
-          data.location = text.replace(/\s+/g, ' ');
-          break;
-        }
-      }
-      
-      // Salary extraction
-      const salarySelectors = ['.job-salary', '.salary', '.offer-salary', '.summary-plane__salary', '.job-pay', '.compensation'];
-      for (const sel of salarySelectors) {
-        const text = $(sel).text().trim();
-        if (text) {
-          data.salary = text;
-          break;
-        }
-      }
-
-      // Description & Requirements extraction
-      // Try to find the main content area
-      const contentSelectors = [
-        '.job-detail', '.job_detail', '.job-description', '.description', 
-        '[itemprop="description"]', '.job_bt', '.post-description',
-        '.position-description', '.content', '.detail-content', '.duty', '.requirement', '.text', '.article', '.jd', '.job-sec', '.job-sec-text'
-      ];
-      
-      let fullContent = '';
-      let bestLen = 0;
-      for (const sel of contentSelectors) {
-        if ($(sel).length) {
-          $(sel).find('script, style').remove();
-          let contentHtml = $(sel).html() || '';
-          contentHtml = contentHtml.replace(/<br\s*\/?>(?=)/gi, '\n').replace(/<\/p>/gi, '\n');
-          const txt = cheerio.load(contentHtml).text().split('\n').map(s=>s.trim()).filter(Boolean).join('\n');
-          if (txt.length > bestLen) { bestLen = txt.length; fullContent = txt; }
-        }
-      }
-
-      if (!fullContent) {
-        const metaDesc = $('meta[name="description"]').attr('content') || '';
-        const bodyTxt = $('body').text();
-        fullContent = [metaDesc, bodyTxt].join('\n');
-      }
-
-      // Clean up whitespace
-      fullContent = fullContent.split('\n').map(line => line.trim()).filter(line => line).join('\n');
-
-      // Attempt to split into Description and Requirements
-      const reqKeywords = ['任职要求', '任职资格', '职位要求', '岗位要求', 'Requirements', 'Qualifications', '必备条件', '加分项'];
-      const descKeywords = ['职位描述', '岗位职责', '工作职责', 'Responsibilities', 'Job Description', '岗位介绍'];
-
-      let splitIndex = -1;
-      for (const kw of reqKeywords) {
-        const idx = fullContent.indexOf(kw);
-        if (idx !== -1) {
-          splitIndex = idx;
-          break;
-        }
-      }
-
-      if (splitIndex !== -1) {
-        // Split found
-        let descPart = fullContent.substring(0, splitIndex);
-        let reqPart = fullContent.substring(splitIndex);
-
-        // Remove the keywords themselves if they are headers
-        // (Simple cleanup)
-        
-        data.description = descPart.trim();
-        data.requirements = reqPart.trim();
-      } else {
-        data.description = fullContent.substring(0, 1000); // Limit length if no split found
-      }
-      
-      // Experience extraction (Regex from full content or specific selectors)
-      const expRegex = /(\d+[-到]\d+年经验|\d+\+?年以上经验|至少\d+年|经验不限|应届生)/;
-      const expMatch = fullContent.match(expRegex);
-      if (expMatch) {
-        data.experience = expMatch[1];
-      } else {
-        // Try specific selectors
-        const expSelectors = ['.job-exp', '.experience', '.summary-plane__exp'];
-        for (const sel of expSelectors) {
-            const text = $(sel).text().trim();
-            if (text) {
-                data.experience = text;
-                break;
-            }
-        }
-      }
-
-      if (!data.requirements && fullContent.length > 0) {
-        const pos = descKeywords.reduce((p, kw) => (p === -1 ? fullContent.indexOf(kw) : p), -1);
-        if (pos !== -1) {
-          const after = fullContent.substring(pos + 4);
-          data.requirements = after.substring(0, 1000);
-        }
-      }
-
-      if (!data.salary) {
-        const s1 = fullContent.match(/(\d+\.?\d*)\s*[kK]\s*[-~至]\s*(\d+\.?\d*)\s*[kK]/);
-        const s2 = fullContent.match(/(\d+)\s*[-~至]\s*(\d+)\s*(元|人民币|RMB|CNY)\s*\/?\s*(月|年)?/);
-        if (s1) {
-          data.salary = `${s1[1]}k-${s1[2]}k`;
-        } else if (s2) {
-          const unit = s2[5] || '';
-          data.salary = `${s2[1]}-${s2[2]}${unit ? '/' + unit : ''}`;
-        }
+      // If specific parser failed or not matched, try generic
+      if (!data || !data.title) {
+        logger.info('Using generic parser fallback');
+        data = await this.parseGeneric(url, data);
       }
 
       return data;
-
     } catch (error) {
       logger.error(`Error parsing URL ${url}: ${error.message}`);
       throw new Error(`无法解析该网页: ${error.message}`);
     }
   }
+
+  // --- Common Helpers ---
+
+  makeHeaders(host, isMobile = false) {
+    return {
+      'User-Agent': isMobile 
+        ? 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1'
+        : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+      'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+      'Cache-Control': 'no-cache',
+      'Upgrade-Insecure-Requests': '1',
+      'Referer': `https://${host || 'www.google.com'}/`,
+    };
+  }
+
+  async fetchHtml(url, headers) {
+    try {
+      const response = await axios.get(url, {
+        headers: headers || this.makeHeaders(new URL(url).hostname),
+        timeout: 10000,
+        maxRedirects: 5,
+        validateStatus: (s) => s >= 200 && s < 400
+      });
+      return response.data;
+    } catch (e) {
+      logger.warn(`Fetch failed for ${url}: ${e.message}`);
+      return null;
+    }
+  }
+
+  async tryHeadless(url, isMobile = false) {
+    let browser = null;
+    try {
+      browser = await pw.chromium.launch({ 
+          headless: true,
+          args: [
+            '--disable-blink-features=AutomationControlled',
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-infobars',
+            '--window-position=0,0',
+            '--ignore-certifcate-errors',
+            '--ignore-certifcate-errors-spki-list',
+            '--user-agent=' + (isMobile 
+                ? 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1'
+                : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36')
+          ]
+      });
+
+      let context;
+      if (isMobile) {
+        const device = pw.devices['iPhone 12'];
+        context = await browser.newContext({
+          ...device,
+          locale: 'zh-CN',
+          timezoneId: 'Asia/Shanghai'
+        });
+      } else {
+        context = await browser.newContext({
+          locale: 'zh-CN',
+          timezoneId: 'Asia/Shanghai',
+          viewport: { width: 1440, height: 900 }
+        });
+      }
+      
+      // Enhanced Anti-detection
+      await context.addInitScript(() => {
+        Object.defineProperty(navigator, 'webdriver', { get: () => false });
+        // Mock plugins
+        Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] });
+        // Mock languages
+        Object.defineProperty(navigator, 'languages', { get: () => ['zh-CN', 'zh', 'en'] });
+        // Mock chrome object
+        window.chrome = { runtime: {} };
+      });
+
+      const page = await context.newPage();
+      
+      // Random mouse movements to simulate human behavior
+      try {
+          await page.mouse.move(Math.floor(Math.random() * 500), Math.floor(Math.random() * 500));
+      } catch(e) {}
+
+      try {
+        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 25000 });
+        
+        // Wait for some common elements or next data
+        await Promise.race([
+          page.waitForSelector('h1', { timeout: 5000 }).catch(()=>{}),
+          page.waitForSelector('.job-title', { timeout: 5000 }).catch(()=>{}),
+          page.waitForSelector('#__NEXT_DATA__', { timeout: 5000 }).catch(()=>{}),
+          page.waitForTimeout(3000)
+        ]);
+      } catch (e) {
+        logger.warn(`Headless navigation partial timeout: ${e.message}`);
+      }
+
+      const content = await page.content();
+      await browser.close();
+      return content;
+    } catch (e) {
+      logger.warn('Headless render failed', { message: e.message });
+      if (browser) await browser.close();
+      return null;
+    }
+  }
+
+  extractFromCheerio($, selectors) {
+    let result = '';
+    for (const sel of selectors) {
+      const el = $(sel);
+      if (el.length) {
+        // Clean up text
+        let text = el.text().trim();
+        // Remove excessive whitespace
+        text = text.replace(/\s+/g, ' ');
+        if (text) {
+          result = text;
+          break;
+        }
+      }
+    }
+    return result;
+  }
+
+  extractContentFromCheerio($, selectors) {
+    let content = '';
+    let maxLen = 0;
+    
+    for (const sel of selectors) {
+      const el = $(sel);
+      if (el.length) {
+        // Clone to avoid modifying original DOM if needed, but here we just read
+        // Remove scripts/styles
+        el.find('script, style, iframe, noscript').remove();
+        
+        // Replace <br> and <p> with newlines for better formatting
+        let html = el.html() || '';
+        html = html.replace(/<br\s*\/?>/gi, '\n').replace(/<\/p>/gi, '\n\n');
+        
+        const text = cheerio.load(html).text();
+        const cleanText = text.split('\n').map(l => l.trim()).filter(Boolean).join('\n');
+        
+        if (cleanText.length > maxLen) {
+          maxLen = cleanText.length;
+          content = cleanText;
+        }
+      }
+    }
+    return content;
+  }
+
+  // --- Platform Parsers ---
+
+  // 1. Boss Zhipin
+  async parseBoss(url, uObj) {
+    let d = {};
+    const host = uObj.hostname;
+
+    // Handle List Pages (e.g. /web/geek/jobs?...)
+    if (url.includes('/web/geek/jobs') || url.includes('query=')) {
+        logger.info('Detected Boss Zhipin List Page, attempting to extract first job via API interception...');
+        return this.parseBossListViaNetwork(url);
+    }
+    
+    // Handle Detail Pages (e.g. /job_detail/...)
+    // Prefer Headless immediately for detail pages as they often have strong anti-bot
+    logger.info('Detected Boss Zhipin Detail Page, using Headless mode...');
+    
+    let html = await this.tryHeadless(url);
+    if (!html) {
+         // Fallback to mobile if headless failed (rare)
+         const mUrl = url.replace('www.zhipin.com', 'm.zhipin.com');
+         html = await this.fetchHtml(mUrl, this.makeHeaders('m.zhipin.com', true));
+    }
+
+    if (!html) return d;
+    const $ = cheerio.load(html);
+
+    // 1. Try to extract from _jobInfo global variable (Common in PC pages)
+    try {
+        const scriptContent = $('script').filter((i, el) => $(el).html().includes('_jobInfo')).html();
+        if (scriptContent) {
+             const match = scriptContent.match(/var _jobInfo = ({[\s\S]*?});/);
+             if (match && match[1]) {
+                 // Relaxed JSON parsing because keys might not be quoted
+                 const jsonStr = match[1].replace(/(\w+):/g, '"$1":').replace(/'/g, '"');
+                 try {
+                     const jobInfo = JSON.parse(jsonStr);
+                     d.title = jobInfo.job_name;
+                     d.salary = jobInfo.job_salary;
+                 } catch (e) {
+                     // Regex extraction fallback if JSON parse fails
+                     d.title = scriptContent.match(/job_name:\s*'([^']+)'/)?.[1];
+                     d.salary = scriptContent.match(/job_salary:\s*'([^']+)'/)?.[1];
+                 }
+             }
+        }
+    } catch (e) {
+        logger.warn('Failed to extract _jobInfo', e);
+    }
+
+    // 2. Try extracting from __NEXT_DATA__ (Mobile/Next.js pages)
+    if (!d.title) {
+        try {
+          const nextData = $('script#__NEXT_DATA__').html();
+          if (nextData) {
+            const jd = JSON.parse(nextData);
+            const job = jd?.props?.pageProps?.detailData?.jobInfo 
+                     || jd?.props?.pageProps?.jobInfo 
+                     || jd?.props?.pageProps?.detailData; // PC structure varies
+            if (job) {
+              d.title = job.jobName || job.title || job.positionName;
+              d.salary = job.salaryDesc || job.salary;
+              d.location = [job.cityName, job.areaName, job.businessName].filter(Boolean).join(' ');
+              d.description = job.jobDesc || job.description || job.postDescription;
+              d.requirements = job.jobRequire; // Sometimes separate
+              d.experience = job.experienceName || job.workingExp;
+              d.education = job.degreeName || job.educationalRequirements;
+            }
+          }
+        } catch (_) {}
+    }
+
+    // 3. Precise DOM fallback (The most reliable for static PC pages)
+    if (!d.title) d.title = this.extractFromCheerio($, ['.job-banner .name h1', '.job-name', 'h1']);
+    if (!d.salary) d.salary = this.extractFromCheerio($, ['.job-banner .salary', '.salary']);
+    
+    // Banner info: Location, Experience, Education
+    // Structure: <p><a class="text-city">City</a> <span class="text-experiece">Exp</span> <span class="text-degree">Edu</span></p>
+    if (!d.location) d.location = this.extractFromCheerio($, ['.job-banner .text-city', '.location-address']);
+    if (!d.experience) d.experience = this.extractFromCheerio($, ['.job-banner .text-experiece', '.job-banner p span:nth-child(2)']);
+    if (!d.education) d.education = this.extractFromCheerio($, ['.job-banner .text-degree', '.job-banner p span:last-child']);
+    
+    // Description: specifically target the first .job-sec-text (Job Desc), avoid Company Desc
+    if (!d.description) {
+        // Find the section that contains "职位描述" or "岗位职责"
+        const descSection = $('.job-sec-text').first();
+        if (descSection.length) {
+            let html = descSection.html();
+            html = html.replace(/<br\s*\/?>/gi, '\n').replace(/<\/p>/gi, '\n\n');
+            d.description = cheerio.load(html).text();
+        } else {
+             d.description = this.extractContentFromCheerio($, ['.job-detail-section', '.text']);
+        }
+    }
+
+    return d;
+  }
+
+  // Specialized method to handle Boss Zhipin List Pages via Network Interception
+  async parseBossListViaNetwork(url) {
+      let d = {};
+      let browser = null;
+      try {
+          browser = await pw.chromium.launch({ headless: true });
+          const context = await browser.newContext({
+              userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36',
+              viewport: { width: 1440, height: 900 }
+          });
+          
+          await context.addInitScript(() => {
+              Object.defineProperty(navigator, 'webdriver', { get: () => false });
+          });
+
+          const page = await context.newPage();
+          
+          // Promise to wait for the job list
+          const jobListPromise = new Promise((resolve) => {
+              page.on('response', async response => {
+                  const rUrl = response.url();
+                  if (rUrl.includes('joblist.json') || rUrl.includes('search/joblist')) {
+                      try {
+                          const json = await response.json();
+                          if (json.zpData && json.zpData.jobList && json.zpData.jobList.length > 0) {
+                              resolve(json.zpData.jobList[0]);
+                          }
+                      } catch (e) {
+                          // ignore json parse errors
+                      }
+                  }
+              });
+              // Timeout fallback
+              setTimeout(() => resolve(null), 15000);
+          });
+
+          try {
+            await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 20000 });
+          } catch(e) {
+             logger.warn('Boss list navigation partial fail/timeout', e.message);
+          }
+
+          const jobData = await jobListPromise;
+
+          if (jobData) {
+              logger.info('Successfully intercepted job data from list API');
+              d.title = jobData.jobName;
+              d.salary = jobData.salaryDesc;
+              d.location = [jobData.cityName, jobData.areaDistrict, jobData.businessDistrict].filter(Boolean).join(' ');
+              d.experience = jobData.jobExperience;
+              d.education = jobData.jobDegree;
+              // Description is usually missing in list API, but we have benefits and skills
+              const skills = (jobData.skills || []).join('、');
+              const welfare = (jobData.welfareList || []).join('、');
+              d.description = `【职位技能】\n${skills}\n\n【福利待遇】\n${welfare}\n\n(注：由于反爬虫限制，完整职位描述请参考原链接，以上为自动提取的关键信息)`;
+              
+              // Optional: Try to fetch detail page for full description if we have ID
+              // But risk getting blocked. For now, returning partial reliable data is better than "Blank Page".
+          }
+
+      } catch (e) {
+          logger.error('Error in parseBossListViaNetwork:', e);
+      } finally {
+          if (browser) await browser.close();
+      }
+      return d;
+  }
+
+  // 2. Lagou
+  async parseLagou(url, uObj) {
+    let d = {};
+    
+    // Prefer Headless for Lagou New Site (/wn/)
+    let html = await this.tryHeadless(url);
+    
+    // Fallback to mobile if headless failed or blocked
+    if (!html || html.includes('访问验证') || html.length < 500) {
+        // Try mobile URL logic
+        let targetUrl = url;
+        // Convert /wn/jobs/123.html to mobile if possible
+        const idMatch = url.match(/jobs\/(\d+)\.html/);
+        if (idMatch) {
+          targetUrl = `https://m.lagou.com/jobs/${idMatch[1]}.html`;
+        }
+        if (targetUrl !== url) {
+             html = await this.fetchHtml(targetUrl, this.makeHeaders('m.lagou.com', true));
+             if (!html || html.includes('访问验证')) {
+                 html = await this.tryHeadless(targetUrl, true);
+             }
+        }
+    }
+
+    if (!html) return d;
+    const $ = cheerio.load(html);
+    
+    // Check for WAF/Captcha
+    if ($('title').text().includes('访问验证') || $('#waf_nc_h5_block').length > 0) {
+        logger.warn('Lagou WAF detected');
+        throw new Error('拉勾网触发了安全验证(WAF)，请稍后重试或尝试手动填写');
+    }
+
+    // 1. Try extracting from __NEXT_DATA__ (Lagou /wn/ uses this)
+    try {
+        const nextData = $('script#__NEXT_DATA__').html();
+        if (nextData) {
+            const json = JSON.parse(nextData);
+            const posInfo = json?.props?.pageProps?.positionInfo;
+            if (posInfo) {
+                d.title = posInfo.positionName;
+                d.salary = posInfo.salary;
+                d.location = [posInfo.city, posInfo.district].filter(Boolean).join(' ');
+                d.description = posInfo.positionDetail;
+                d.experience = posInfo.workYear;
+                d.education = posInfo.education;
+                
+                // Labels/Tags
+                if (posInfo.positionLabels && Array.isArray(posInfo.positionLabels)) {
+                     d.requirements = `【职位标签】\n${posInfo.positionLabels.join('、')}\n\n` + d.description;
+                }
+            }
+        }
+    } catch (e) {
+        logger.warn('Lagou NEXT_DATA parse failed', e);
+    }
+
+    // 2. DOM Fallback
+    if (!d.title) d.title = this.extractFromCheerio($, ['.position-head-wrap-position-name', '.position-title', '.job-name', 'h1']);
+    if (!d.salary) d.salary = this.extractFromCheerio($, ['.salary', '.job-salary']);
+    if (!d.location) d.location = this.extractFromCheerio($, ['.work-address', '.workaddress', '.job-address']);
+    
+    if (!d.description) d.description = this.extractContentFromCheerio($, ['.job-detail', '.position-desc', '.job-description', '.content']);
+    
+    // Fallback experience/education from text
+    if (!d.experience) {
+        const text = $('.job-item.workingExp').text() || $('.job-banner').text();
+        const expMatch = text.match(/(\d+-\d+年|经验不限|应届生|\d+年以内)/);
+        if (expMatch) d.experience = expMatch[0];
+    }
+    if (!d.education) {
+        const text = $('.job-item.education').text() || $('.job-banner').text();
+         const eduMatch = text.match(/(本科|大专|硕士|博士|不限)/);
+         if (eduMatch) d.education = eduMatch[0];
+    }
+
+    return d;
+  }
+
+  // 3. Liepin (New)
+  async parseLiepin(url, uObj) {
+    let d = {};
+    // Liepin structure: .job-title-content, .job-item-title, .job-main-title
+    
+    // Prefer Headless for Liepin as it often renders dynamically or has anti-bot
+    let html = await this.tryHeadless(url);
+    if (!html) {
+        html = await this.fetchHtml(url, this.makeHeaders(uObj.hostname));
+    }
+    if (!html) return d;
+
+    const $ = cheerio.load(html);
+
+    // 1. Try extracting from __NEXT_DATA__ (New Liepin architecture)
+    try {
+        const nextData = $('script#__NEXT_DATA__').html();
+        if (nextData) {
+            const json = JSON.parse(nextData);
+            const jobInfo = json?.props?.pageProps?.job?.jobInfo || json?.props?.pageProps?.data?.jobInfo;
+            if (jobInfo) {
+                d.title = jobInfo.title;
+                d.salary = jobInfo.salary;
+                d.location = [jobInfo.city, jobInfo.dqName].filter(Boolean).join(' ');
+                d.description = jobInfo.desc || jobInfo.jobDesc;
+                d.experience = jobInfo.workYear || jobInfo.requireWorkYears;
+                d.education = jobInfo.degree || jobInfo.requireEduLevel;
+                
+                // Labels/Welfare
+                if (jobInfo.labels && Array.isArray(jobInfo.labels)) {
+                     d.requirements = `【职位标签】\n${jobInfo.labels.join('、')}\n\n`;
+                }
+            }
+        }
+    } catch (e) {
+        // ignore
+    }
+
+    // 2. DOM Fallback
+    if (!d.title) d.title = this.extractFromCheerio($, ['.job-apply-content .name-box .name', '.job-title-content', '.name-box .name', 'h1', '.title-info h1']);
+    if (!d.salary) d.salary = this.extractFromCheerio($, ['.job-apply-content .salary', '.job-item-title', '.salary', '.job-title-content .salary']);
+    if (!d.location) d.location = this.extractFromCheerio($, ['.job-apply-content .job-properties span:first-child', '.job-address', '.job-item-title + span', '.sub-title-box a']);
+    
+    if (!d.description) {
+         d.description = this.extractContentFromCheerio($, ['section.job-intro-container', '.job-item-content', '.job-description', '.job-main-content', '.content-area']);
+    }
+
+    // Experience/Education often in .job-properties or .job-qualifications
+    if (!d.experience) {
+        const text = $('.job-properties').text() || $('.job-qualifications').text();
+        const match = text.match(/(\d+-\d+年|经验不限|应届生|\d+年以内)/);
+        if (match) d.experience = match[0];
+    }
+    if (!d.education) {
+        const text = $('.job-properties').text() || $('.job-qualifications').text();
+        const match = text.match(/(本科|大专|硕士|博士|不限)/);
+        if (match) d.education = match[0];
+    }
+
+    return d;
+  }
+
+  // 4. 51Job (New)
+  async parse51Job(url, uObj) {
+    let d = {};
+    // 51Job has old and new versions.
+    // Old: .cn h1, .cn strong
+    // New: .tHeader .in .cn h1
+    
+    // 51job often requires GBK handling if using axios directly, but modern pages are UTF-8 or mixed.
+    // Try Headless first as 51job has complex redirect/loading
+    let html = await this.tryHeadless(url);
+    if (!html) {
+        html = await this.fetchHtml(url, this.makeHeaders(uObj.hostname));
+    }
+    
+    if (!html) return d;
+
+    const $ = cheerio.load(html);
+
+    // 1. Try JSON-LD or Embedded Scripts (Common in modern 51job)
+    try {
+        const scripts = $('script').filter((i, el) => $(el).html().includes('window.__SEARCH_RESULT__') || $(el).html().includes('job_detail_header')).html();
+        if (scripts) {
+             // Try to extract vars
+             const titleMatch = scripts.match(/jobName\s*:\s*['"](.*?)['"]/);
+             if (titleMatch) d.title = titleMatch[1];
+        }
+    } catch (_) {}
+
+    // 2. DOM Selectors (New 2024/2025 layout)
+    if (!d.title) d.title = this.extractFromCheerio($, ['.tHeader .in .cn h1', '.j_title', 'h1[title]']);
+    if (!d.salary) d.salary = this.extractFromCheerio($, ['.tHeader .in .cn strong', '.j_salary', '.salary']);
+    
+    // Location, Experience, Education are often in p.msg or similar
+    if (!d.location) {
+        // <p class="msg ltype" title="长沙-长沙县&nbsp;&nbsp;|&nbsp;&nbsp;10年以上经验&nbsp;&nbsp;|&nbsp;&nbsp;本科">
+        const msg = $('.tHeader .in .cn .msg').attr('title') || $('.tHeader .in .cn .msg').text();
+        if (msg) {
+            const parts = msg.split('|').map(s => s.trim());
+            if (parts[0]) d.location = parts[0].replace(/&nbsp;/g, '');
+            if (parts.find(s => s.includes('经验'))) d.experience = parts.find(s => s.includes('经验'));
+            if (parts.find(s => s.includes('科') || s.includes('专') || s.includes('硕') || s.includes('博'))) d.education = parts.find(s => s.includes('科') || s.includes('专') || s.includes('硕') || s.includes('博'));
+        }
+    }
+
+    if (!d.description) {
+        d.description = this.extractContentFromCheerio($, ['.job_msg', '.bmsg.job_msg', '.j_info', '.tBorderTop_box:has(h2:contains("职位信息")) .bmsg']);
+    }
+
+    // Fallback for location if still empty
+    if (!d.location) d.location = this.extractFromCheerio($, ['.bmsg .fp', '.lname']);
+
+    return d;
+  }
+
+  // 5. Zhaopin (New)
+  async parseZhaopin(url, uObj) {
+    let d = {};
+    // Zhaopin is React/Vue heavy and uses different structures for different job types (e.g. campus vs social)
+    
+    // Try Headless first as Zhaopin is very dynamic
+    let html = await this.tryHeadless(url);
+    if (!html) {
+        // Fallback to fetch if headless fails
+        html = await this.fetchHtml(url, this.makeHeaders(uObj.hostname));
+    }
+    
+    if (!html) return d;
+
+    const $ = cheerio.load(html);
+
+    // 1. Try __INITIAL_STATE__ (Common in React SSR)
+    try {
+        const scriptContent = $('script').filter((i, el) => $(el).html().includes('__INITIAL_STATE__')).html();
+        if (scriptContent) {
+            const match = scriptContent.match(/__INITIAL_STATE__=(.*?);/);
+            if (match && match[1]) {
+                const state = JSON.parse(match[1]);
+                const jobInfo = state?.jobDetail?.jobDetail || state?.jobInfo?.jobDetail; // Path varies
+                if (jobInfo) {
+                    d.title = jobInfo.name || jobInfo.jobName;
+                    d.salary = jobInfo.salaryCount || jobInfo.salary;
+                    d.location = jobInfo.cityDistrict || jobInfo.city;
+                    d.description = jobInfo.jobDesc || jobInfo.description;
+                    d.experience = jobInfo.workingExp || jobInfo.workExperience;
+                    d.education = jobInfo.education;
+                }
+            }
+        }
+    } catch (e) {
+        logger.warn('Zhaopin INITIAL_STATE parse failed', e);
+    }
+
+    // 2. DOM Fallback
+    if (!d.title) d.title = this.extractFromCheerio($, ['.summary-plane__title', '.job-summary .name', 'h1', '.inner-left h1']);
+    if (!d.salary) d.salary = this.extractFromCheerio($, ['.summary-plane__salary', '.job-summary .salary', '.salary strong']);
+    
+    // Location often in a list
+    if (!d.location) d.location = this.extractFromCheerio($, ['.job-address__content-text', '.summary-plane__city', '.promulgator-info__address', '.job-summary .city']);
+
+    if (!d.description) d.description = this.extractContentFromCheerio($, ['.describtion__detail-content', '.job-detail-content', '.pos-ul']);
+    
+    // Experience & Education from tags/lists
+    if (!d.experience) {
+        const items = $('.summary-plane__info li').map((i, el) => $(el).text()).get();
+        d.experience = items.find(t => t.includes('年') && !t.includes('本科') && !t.includes('硕士')) || '';
+    }
+    if (!d.education) {
+        const items = $('.summary-plane__info li').map((i, el) => $(el).text()).get();
+        d.education = items.find(t => t.includes('本科') || t.includes('硕士') || t.includes('大专') || t.includes('学历')) || '';
+    }
+
+    return d;
+  }
+
+  // --- Generic Parser ---
+  async parseGeneric(url, partialData = {}) {
+    let d = { ...partialData };
+    
+    // Only fetch if we haven't already tried headless (which returns full html)
+    // But since we don't pass HTML between methods here, we might refetch. 
+    // Optimization: The specific parsers return what they found. If title is missing, we fetch again here.
+    
+    let html = await this.fetchHtml(url);
+    if (!html) return d;
+
+    const $ = cheerio.load(html);
+
+    // 1. JSON-LD (Standard Schema.org)
+    const scripts = $('script[type="application/ld+json"]');
+    scripts.each((i, el) => {
+      try {
+        const json = JSON.parse($(el).html());
+        const obj = Array.isArray(json) ? json.find(o => o['@type'] === 'JobPosting') : (json['@type'] === 'JobPosting' ? json : null);
+        if (obj) {
+          d.title = d.title || obj.title;
+          d.description = d.description || obj.description;
+          d.salary = d.salary || (obj.baseSalary?.value?.value || obj.baseSalary?.value);
+          
+          if (!d.location && obj.jobLocation?.address) {
+            const a = obj.jobLocation.address;
+            d.location = [a.addressLocality, a.addressRegion].filter(Boolean).join(' ');
+          }
+        }
+      } catch (_) {}
+    });
+
+    // 2. Open Graph & Meta tags
+    if (!d.title) d.title = $('meta[property="og:title"]').attr('content') || $('title').text();
+    if (!d.description) d.description = $('meta[property="og:description"]').attr('content') || $('meta[name="description"]').attr('content');
+
+    // 3. Common Selectors fallback
+    if (!d.title) d.title = this.extractFromCheerio($, ['h1', '.job-title', '.title']);
+    if (!d.description) d.description = this.extractContentFromCheerio($, ['.job-description', '.description', 'article', 'main']);
+
+    return d;
+  }
 }
 
 module.exports = new JobImportService();
-      const tryHeadless = async (targetUrl, emulateMobile = false) => {
-        try {
-          const pw = require('playwright');
-          const browser = await pw.chromium.launch({ headless: true });
-          let context;
-          if (emulateMobile) {
-            const device = pw.devices['iPhone 12'];
-            context = await browser.newContext({
-              ...device,
-              locale: 'zh-CN',
-              userAgent: device.userAgent
-            });
-          } else {
-            context = await browser.newContext({
-              locale: 'zh-CN',
-              userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36',
-              viewport: { width: 1366, height: 900 }
-            });
-          }
-          await context.addInitScript(() => {
-            Object.defineProperty(navigator, 'webdriver', { get: () => false });
-          });
-          await context.setExtraHTTPHeaders({
-            'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8'
-          });
-          const page = await context.newPage();
-          await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
-          try { await page.waitForLoadState('networkidle', { timeout: 10000 }); } catch (_) {}
-          try { await page.waitForTimeout(1200); } catch (_) {}
-          try {
-            await page.evaluate(() => { window.scrollTo(0, document.body.scrollHeight); });
-            await page.waitForTimeout(800);
-          } catch (_) {}
-          const content = await page.content();
-          await browser.close();
-          return content;
-        } catch (e) {
-          logger.warn('Headless render failed', { message: e.message });
-          return '';
-        }
-      };

@@ -9,6 +9,7 @@
     <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/sidebar.css">
     <script src="/js/user-auth.js"></script>
+    <script src="/js/resume-data.js?v=3"></script>
     <script src="/js/header-profile.js"></script>
     <script src="/js/sidebar.js"></script>
     <style>
@@ -45,8 +46,8 @@
         </div>
     </header>
 
-    <main class="main-content pt-20" id="main-content">
-        <div class="p-6">
+    <main class="main-content pt-20 p-6" id="main-content">
+        <div>
         <!-- 页面标题和操作 -->
         <div class="px-4 py-6 sm:px-0">
             <div class="flex justify-between items-center mb-6">
@@ -56,7 +57,7 @@
                 </div>
                 <div class="flex space-x-3">
                     <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors" onclick="uploadResume()">
-                        <i class="fas fa-upload mr-2"></i>上传简历
+                        <i class="fas fa-upload mr-2"></i>导入简历文件
                     </button>
                     <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors" onclick="batchAnalysis()">
                         <i class="fas fa-chart-line mr-2"></i>批量分析
@@ -79,7 +80,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">搜索简历</label>
-                        <input type="text" placeholder="输入姓名、技能或关键词" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <input type="text" placeholder="输入姓名或关键词" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">工作经验</label>
@@ -89,16 +90,6 @@
                             <option value="1-3">1-3年</option>
                             <option value="3-5">3-5年</option>
                             <option value="5+">5年以上</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">技能标签</label>
-                        <select class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="">全部技能</option>
-                            <option value="java">Java</option>
-                            <option value="python">Python</option>
-                            <option value="javascript">JavaScript</option>
-                            <option value="react">React</option>
                         </select>
                     </div>
                     <div>
@@ -153,12 +144,6 @@
                                         <span><i class="fas fa-graduation-cap mr-1"></i>本科</span>
                                         <span><i class="fas fa-clock mr-1"></i>2024-01-15 上传</span>
                                     </div>
-                                    <div class="mt-2 flex flex-wrap gap-1">
-                                        <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">React</span>
-                                        <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">Vue.js</span>
-                                        <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">JavaScript</span>
-                                        <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">TypeScript</span>
-                                    </div>
                                 </div>
                             </div>
                             <div class="flex items-center space-x-2">
@@ -175,6 +160,9 @@
                                     </button>
                                     <button class="text-yellow-600 hover:text-yellow-800 text-sm" onclick="favoriteResume(1)">
                                         <i class="fas fa-star mr-1"></i>收藏
+                                    </button>
+                                    <button class="text-red-600 hover:text-red-800 text-sm" onclick="deleteResume(1)">
+                                        <i class="fas fa-trash mr-1"></i>删除
                                     </button>
                                 </div>
                             </div>
@@ -203,12 +191,6 @@
                                         <span><i class="fas fa-graduation-cap mr-1"></i>硕士</span>
                                         <span><i class="fas fa-clock mr-1"></i>2024-01-14 上传</span>
                                     </div>
-                                    <div class="mt-2 flex flex-wrap gap-1">
-                                        <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">Java</span>
-                                        <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">Spring Boot</span>
-                                        <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">MySQL</span>
-                                        <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">Redis</span>
-                                    </div>
                                 </div>
                             </div>
                             <div class="flex items-center space-x-2">
@@ -225,6 +207,9 @@
                                     </button>
                                     <button class="text-yellow-600 hover:text-yellow-800 text-sm" onclick="favoriteResume(2)">
                                         <i class="fas fa-star mr-1"></i>收藏
+                                    </button>
+                                    <button class="text-red-600 hover:text-red-800 text-sm" onclick="deleteResume(2)">
+                                        <i class="fas fa-trash mr-1"></i>删除
                                     </button>
                                 </div>
                             </div>
@@ -319,9 +304,9 @@
             // 这里可以实现实际的筛选逻辑
         }
 
-        // 上传简历
+        // 导入简历文件
         function uploadResume() {
-            ui.showNotification('上传简历功能开发中...', 'info');
+            ui.showNotification('导入简历文件功能开发中...', 'info');
         }
 
         // 批量分析
@@ -343,6 +328,140 @@
         function favoriteResume(id) {
             ui.showNotification(`收藏简历 ID: ${id}`, 'success');
         }
+
+        // 删除简历
+        async function deleteResume(resumeId) {
+            // 显示确认对话框
+            if (confirm(`确定要删除这份简历吗？此操作不可恢复。`)) {
+                try {
+                    // 调用删除API
+                    const success = await window.resumeDataManager.deleteResume(resumeId);
+                    if (success) {
+                        ui.showNotification('简历删除成功', 'success');
+                        // 刷新简历列表数据
+                        await refreshResumeList();
+                    } else {
+                        ui.showNotification('简历不存在或已被删除', 'warning');
+                    }
+                } catch (error) {
+                    console.error('删除简历失败:', error);
+                    ui.showNotification(`删除失败: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        // 刷新简历列表
+        async function refreshResumeList() {
+            try {
+                // 显示加载状态
+                const resumeList = document.getElementById('resume-list');
+                const totalCount = document.getElementById('total-count');
+                
+                // 清空当前列表
+                resumeList.innerHTML = '<div class="p-6 text-center text-gray-500">正在加载简历数据...</div>';
+                
+                // 获取最新简历数据
+                const resumes = await window.resumeDataManager.getTalentPoolResumes();
+                
+                // 重新渲染简历列表
+                renderResumeList(resumes);
+                
+                // 更新总数
+                if (totalCount) {
+                    totalCount.textContent = resumes.length;
+                }
+            } catch (error) {
+                console.error('刷新简历列表失败:', error);
+                ui.showNotification('刷新失败: 无法获取最新简历数据', 'error');
+            }
+        }
+
+        // 渲染简历列表
+        function renderResumeList(resumes) {
+            const resumeList = document.getElementById('resume-list');
+            
+            if (!resumes || resumes.length === 0) {
+                resumeList.innerHTML = '<div class="p-6 text-center text-gray-500">暂无简历数据</div>';
+                return;
+            }
+            
+            // 生成简历列表HTML
+            const resumesHTML = resumes.map(resume => {
+                // 获取分析结果
+                const hasAnalysis = resume.status === 'analyzed';
+                const analysisScore = hasAnalysis ? '85' : '--';
+                const analysisStatus = hasAnalysis ? 
+                    '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">已分析</span>' : 
+                    '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">待分析</span>';
+                
+                return `
+                    <div class="p-6 hover:bg-gray-50 transition-colors">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-4">
+                                <div class="flex-shrink-0">
+                                    <div class="w-12 h-12 ${hasAnalysis ? 'bg-blue-100' : 'bg-orange-100'} rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-file-alt ${hasAnalysis ? 'text-blue-600' : 'text-orange-600'} text-xl"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center space-x-2">
+                                        <h4 class="text-lg font-medium text-gray-900">${resume.file_name}</h4>
+                                        ${analysisStatus}
+                                    </div>
+                                    <div class="mt-1 flex items-center space-x-4 text-sm text-gray-500">
+                                        <span><i class="fas fa-calendar mr-1"></i>${new Date(resume.upload_date).toLocaleDateString()}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <div class="text-right">
+                                    <div class="text-lg font-semibold ${hasAnalysis ? 'text-blue-600' : 'text-gray-400'}">${analysisScore}分</div>
+                                    <div class="text-xs text-gray-500">${hasAnalysis ? '匹配度' : '未分析'}</div>
+                                </div>
+                                <div class="flex flex-col space-y-1">
+                                    <button class="text-blue-600 hover:text-blue-800 text-sm" onclick="viewResume(${resume.id})">
+                                        <i class="fas fa-eye mr-1"></i>查看
+                                    </button>
+                                    <button class="text-blue-600 hover:text-blue-800 text-sm" onclick="analyzeResume(${resume.id})">
+                                        <i class="fas fa-chart-line mr-1"></i>分析
+                                    </button>
+                                    <button class="text-yellow-600 hover:text-yellow-800 text-sm" onclick="favoriteResume(${resume.id})">
+                                        <i class="fas fa-star mr-1"></i>收藏
+                                    </button>
+                                    <button class="text-red-600 hover:text-red-800 text-sm" onclick="deleteResume(${resume.id})">
+                                        <i class="fas fa-trash mr-1"></i>删除
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            // 更新DOM
+            resumeList.innerHTML = resumesHTML;
+        }
+
+        // 页面加载时初始化简历列表
+        document.addEventListener('DOMContentLoaded', async function() {
+            // 原有初始化代码...
+            
+            // 加载真实的简历数据
+            if (typeof window.resumeDataManager !== 'undefined') {
+                try {
+                    const resumes = await window.resumeDataManager.getTalentPoolResumes();
+                    renderResumeList(resumes);
+                    
+                    // 更新总数
+                    const totalCount = document.getElementById('total-count');
+                    if (totalCount) {
+                        totalCount.textContent = resumes.length;
+                    }
+                } catch (error) {
+                    console.error('初始化加载简历数据失败:', error);
+                }
+            }
+        });
     </script>
 </body>
 </html>

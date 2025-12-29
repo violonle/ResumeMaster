@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>工作台 - 争湃·简历大师</title>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <script src="../js/tailwindcss.js"></script>
     <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -48,8 +49,8 @@
     </header>
 
     <!-- 主要内容 -->
-    <main class="main-content pt-20 transition-all duration-300" id="main-content">
-        <div class="p-6 max-w-7xl mx-auto space-y-6">
+    <main class="main-content pt-20 p-6 transition-all duration-300" id="main-content">
+        <div class="max-w-7xl mx-auto space-y-6">
             
             <!-- 欢迎栏 -->
             <div class="flex flex-col md:flex-row md:items-center justify-between bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
@@ -77,7 +78,7 @@
             <!-- 数据概览卡片 -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <!-- 卡片 1: 候选人 -->
-                <div id="stat-candidates" class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover-lift cursor-pointer" onclick="window.location.href='resume-management.html'">
+                <div id="stat-candidates" class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover-lift cursor-pointer" onclick="window.location.href='librarypool.html'">
                     <div class="flex justify-between items-start">
                         <div>
                             <p class="text-sm font-medium text-gray-500">总候选人</p>
@@ -201,7 +202,7 @@
                         <i class="fas fa-bolt text-blue-500 mr-2"></i>常用功能
                     </h2>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <a href="resume-upload-pc.html" class="flex flex-col items-center justify-center p-4 rounded-lg bg-gray-50 hover:bg-blue-50 hover:text-blue-600 transition-colors group">
+                        <a href="javascript:void(0)" onclick="openLibraryUploadModal()" class="flex flex-col items-center justify-center p-4 rounded-lg bg-gray-50 hover:bg-blue-50 hover:text-blue-600 transition-colors group">
                             <i class="fas fa-cloud-upload-alt text-2xl mb-2 text-gray-400 group-hover:text-blue-500"></i>
                             <span class="text-sm font-medium">导入简历</span>
                         </a>
@@ -386,7 +387,9 @@
     <script src="../js/header-profile.js"></script>
   <script src="/js/sidebar.js"></script>
     <script src="../js/resume-data.js"></script>
-        <script src="../js/dashboard.js"></script>
+    <script src="../js/resume-upload-handler.js"></script>
+    <script src="../js/resume-upload-modal.js"></script>
+    <script src="../js/dashboard.js"></script>
         <script>
             // Initialize Sidebar
             document.addEventListener('DOMContentLoaded', () => {

@@ -268,10 +268,17 @@
         const sort = dom.parsing.libraryFilterSort.value;
 
         try {
-            // Use searchResumes from resume-data.js which handles text search
-            let allResults = await window.resumeDataManager.searchResumes(query);
+            let allResults = await window.resumeDataManager.getTalentPoolResumes();
             
-            // Manual filter for position (if not covered by search)
+            if (query) {
+                const lowerQuery = query.toLowerCase();
+                allResults = allResults.filter(r => {
+                    const name = (r.name || '').toLowerCase();
+                    const position = (r.position || r.jobTitle || '').toLowerCase();
+                    return name.includes(lowerQuery) || position.includes(lowerQuery);
+                });
+            }
+            
             if (posFilter) {
                 allResults = allResults.filter(r => {
                     const pos = (r.position || r.jobTitle || '').toLowerCase();
@@ -280,7 +287,6 @@
                 });
             }
             
-            // Manual Sort
             if (sort === 'time-desc') {
                 allResults.sort((a, b) => {
                     const da = new Date(a.created_at || a.upload_date || 0);
@@ -289,9 +295,7 @@
                 });
             }
 
-            // Manual Pagination
             libraryState.total = allResults.length;
-            // Reset page if out of bounds
             const maxPage = Math.ceil(libraryState.total / libraryState.pageSize) || 1;
             if (libraryState.page > maxPage) libraryState.page = 1;
 
@@ -376,25 +380,74 @@
     }
 
     async function confirmParsingSelection() {
-        // 1. Process Uploaded Files (Mock Upload)
-        const uploadedItems = libraryState.tempUploadedFiles.map(file => ({
-            id: 'temp_' + Date.now() + Math.random().toString(36).substr(2, 9),
-            name: file.name,
-            file: file,
-            source: 'upload',
-            status: 'pending',
-            created_at: new Date().toISOString()
-        }));
+        // 1. Process Uploaded Files using ResumeUploadHandler
+        const uploadedItems = [];
+        
+        if (libraryState.tempUploadedFiles.length > 0) {
+            const uploadHandler = new ResumeUploadHandler({
+                uploadEndpoint: '/library/upload',
+                apiRequest: async (endpoint, method, data) => {
+                    const response = await fetch(endpoint, {
+                        method: method,
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        },
+                        body: JSON.stringify(data)
+                    });
+                    return await response.json();
+                },
+                onSuccess: (result, file) => {
+                    uploadedItems.push({
+                        id: result.data.id,
+                        name: file.name,
+                        source: 'upload',
+                        status: 'pending',
+                        created_at: new Date().toISOString()
+                    });
+                },
+                onError: (error, file) => {
+                    console.error('Upload failed:', error);
+                    ui.showNotification(`上传 ${file.name} 失败: ${error.message}`, 'error');
+                },
+                onProgress: (current, total, file) => {
+                    console.log(`正在上传 (${current + 1}/${total}): ${file.name}`);
+                }
+            });
+
+            try {
+                await uploadHandler.uploadFiles(libraryState.tempUploadedFiles);
+            } catch (error) {
+                console.error('Upload process failed:', error);
+            }
+        }
 
         // 2. Process Library Selections
-        // We need to fetch full details or just use IDs. For now, we use what we have in `items` or fetch.
-        // Since `items` only has current page, we might need to fetch by ID if not in `items`.
-        // But for simplicity, we assume we just pass IDs and let the main view handle it or we keep a cache.
-        // Better: Fetch selected resumes details if needed, or just store IDs and names.
-        
-        // Find selected items from current page cache (incomplete if paginated selection)
-        // Ideally we should have a `selectedItems` map. 
-        // For this demo, we'll just use the IDs and fetch details later or mock it.
+        const libraryItems = [];
+        for (const id of libraryState.selectedIds) {
+            try {
+                const response = await fetch(`/api/resumes/${id}`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                
+                const result = await response.json();
+                if (!result.success) {
+                    throw new Error(result.error?.message || '获取简历失败');
+                }
+                
+                libraryItems.push({
+                    id: result.data.id,
+                    name: result.data.name || result.data.fileName,
+                    source: 'library',
+                    status: 'pending',
+                    created_at: result.data.createdAt
+                });
+            } catch (error) {
+                console.error('Fetch resume failed:', error);
+            }
+        }
         
         // Add to Main Parsing List
         const newItems = [
@@ -481,15 +534,30 @@
                 if (item.status === 'completed') continue;
                 
                 // Update item status visually
-                // Mock Analysis Delay
-                await new Promise(r => setTimeout(r, 1500));
+                item.status = 'analyzing';
                 
-                // Mock Result
-                item.status = 'completed';
-                item.analysisResult = mockAnalysisResult(item);
-                
-                // Save result (if using ResumeDataManager, we would call API)
-                // window.resumeDataManager.saveAnalysis(item.id, item.analysisResult);
+                try {
+                    // Call actual API for analysis
+                    const response = await fetch(`/api/aiAnalysis/analyze/${item.resumeId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    const result = await response.json();
+                    if (!result.success) {
+                        throw new Error(result.error?.message || '分析失败');
+                    }
+                    
+                    item.status = 'completed';
+                    item.analysisResult = result.data;
+                } catch (error) {
+                    console.error('分析失败:', error);
+                    item.status = 'error';
+                    item.analysisError = error.message;
+                }
             }
             
             ui.showNotification('解析完成', 'success');
@@ -602,16 +670,36 @@
         renderComparisonList();
     }
 
-    function handleComparisonFiles(fileList) {
-        // Mock processing for comparison
-        Array.from(fileList).forEach(file => {
-             state.comparison.selectedResumes.push({
-                 id: 'comp_' + Date.now() + Math.random(),
-                 name: file.name,
-                 file: file,
-                 score: Math.floor(Math.random() * 20) + 70 // Mock score
-             });
-        });
+    async function handleComparisonFiles(fileList) {
+        for (const file of fileList) {
+            try {
+                const formData = new FormData();
+                formData.append('resume', file);
+                
+                const response = await fetch('/api/ai/upload', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: formData
+                });
+                
+                const result = await response.json();
+                if (!result.success) {
+                    throw new Error(result.error?.message || '上传失败');
+                }
+                
+                state.comparison.selectedResumes.push({
+                    id: result.data.id,
+                    name: file.name,
+                    file: file,
+                    resumeId: result.data.id
+                });
+            } catch (error) {
+                console.error('Upload failed:', error);
+                ui.showNotification(`上传 ${file.name} 失败: ${error.message}`, 'error');
+            }
+        }
         renderComparisonList();
     }
 
@@ -666,42 +754,41 @@
         dom.comparison.compareBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>正在对比...';
         dom.comparison.compareBtn.disabled = true;
 
-        await new Promise(r => setTimeout(r, 2000));
-
-        // Mock Comparison Result
-        const comparisonResult = {
-            resumes: state.comparison.selectedResumes.map(r => ({
-                id: r.id,
-                name: r.name,
-                overall: Math.floor(Math.random() * 15) + 80,
-                scores: {
-                    job_match: Math.floor(Math.random() * 20) + 70,
-                    skill_match: Math.floor(Math.random() * 20) + 70,
-                    experience_match: Math.floor(Math.random() * 20) + 70,
-                    culture_fit: Math.floor(Math.random() * 20) + 70,
-                    potential: Math.floor(Math.random() * 20) + 70
+        try {
+            const resumeIds = state.comparison.selectedResumes.map(r => r.resumeId);
+            
+            const response = await fetch('/api/ai/compare-resumes', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
                 },
-                details: {
-                    strengths: ['技能匹配度高', '经验丰富'],
-                    weaknesses: ['学历稍弱'],
-                    suggestions: ['建议进行技术面试']
-                }
-            })),
-            dimensions: ['job_match', 'skill_match', 'experience_match', 'culture_fit', 'potential']
-        };
+                body: JSON.stringify({ resumeIds })
+            });
+            
+            const result = await response.json();
+            if (!result.success) {
+                throw new Error(result.error?.message || '对比失败');
+            }
+            
+            const comparisonResult = result.data;
 
-        dom.comparison.resultsSection.classList.remove('hidden');
-        dom.comparison.resultsSection.scrollIntoView({ behavior: 'smooth' });
-        
-        if (window.renderCandidateGrid) window.renderCandidateGrid(comparisonResult);
-        if (window.initComparisonRadar) window.initComparisonRadar(comparisonResult);
-        if (window.renderSummary) window.renderSummary(comparisonResult);
-        if (window.updateComparisonTable) window.updateComparisonTable(comparisonResult);
-        
-        setupExportButtons();
-
-        dom.comparison.compareBtn.innerHTML = '<i class="fas fa-search mr-2"></i>开始对比分析';
-        dom.comparison.compareBtn.disabled = false;
+            dom.comparison.resultsSection.classList.remove('hidden');
+            dom.comparison.resultsSection.scrollIntoView({ behavior: 'smooth' });
+            
+            if (window.renderCandidateGrid) window.renderCandidateGrid(comparisonResult);
+            if (window.initComparisonRadar) window.initComparisonRadar(comparisonResult);
+            if (window.renderSummary) window.renderSummary(comparisonResult);
+            if (window.updateComparisonTable) window.updateComparisonTable(comparisonResult);
+            
+            setupExportButtons();
+        } catch (error) {
+            console.error('对比失败:', error);
+            ui.showNotification('对比过程中发生错误: ' + error.message, 'error');
+        } finally {
+            dom.comparison.compareBtn.innerHTML = '<i class="fas fa-search mr-2"></i>开始对比分析';
+            dom.comparison.compareBtn.disabled = false;
+        }
     }
 
     // ==========================================================================
@@ -734,36 +821,6 @@
         };
     }
 
-    function mockAnalysisResult(item) {
-        return {
-            personalInfo: {
-                name: item.name.split('.')[0] || '候选人',
-                email: 'candidate@example.com',
-                phone: '13800000000',
-                location: '北京',
-                yearsOfExperience: 5
-            },
-            education: [{ school: '某知名大学', degree: '本科' }],
-            experience: [{ company: '某知名企业', position: '高级工程师' }],
-            scores: {
-                overall: 85,
-                dimensions: {
-                    '专业技能': 90,
-                    '工作经验': 85,
-                    '教育背景': 80,
-                    '综合素质': 88,
-                    '稳定性': 82
-                }
-            },
-            evaluation: {
-                strengths: ['技术栈全面', '沟通能力强', '有带队经验'],
-                weaknesses: ['英语口语一般'],
-                advice: ['适合作为技术骨干培养', '建议考察系统设计能力']
-            },
-            summary: '该候选人整体素质优秀，技术基础扎实，具有较好的团队协作能力。建议录用。'
-        };
-    }
-    
     // Add missing render functions if they are not global
     window.initComparisonRadar = function(result) {
         const ctx = document.getElementById('comparisonRadarChart');

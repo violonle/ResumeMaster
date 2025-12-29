@@ -43,14 +43,44 @@ const routes = [
       {
         path: 'companies',
         name: 'companies',
-        component: () => import('@/views/companies/CleanCompanies.vue'),
+        component: () => import('@/views/companies/Index.vue'),
         meta: { title: '企业管理', breadcrumb: '企业管理', permission: 'companies.view' }
+      },
+      {
+        path: 'companies/:id/jobs',
+        name: 'company-jobs',
+        component: () => import('@/views/companies/CompanyJobs.vue'),
+        meta: { title: '企业职位', breadcrumb: '企业职位', permission: 'companies.view' }
+      },
+      {
+        path: 'jobs/:id',
+        name: 'job-detail',
+        component: () => import('@/views/jobs/Detail.vue'),
+        meta: { title: '职位详情', breadcrumb: '职位详情', permission: 'companies.view' }
       },
       {
         path: 'companies/:id',
         name: 'company-detail',
         component: () => import('@/views/companies/Detail.vue'),
         meta: { title: '企业详情', breadcrumb: '企业详情', permission: 'companies.view' }
+      },
+      {
+        path: 'companies/:id/resumes',
+        name: 'company-resumes',
+        component: () => import('@/views/resumes/CompanyResumes.vue'),
+        meta: { title: '企业简历', breadcrumb: '企业简历', permission: 'resumes.view' }
+      },
+      {
+        path: 'resumes',
+        name: 'resumes',
+        component: () => import('@/views/resumes/Index.vue'),
+        meta: { title: '简历管理', breadcrumb: '简历管理', permission: 'resumes.view' }
+      },
+      {
+        path: 'resumes/:id',
+        name: 'resume-detail',
+        component: () => import('@/views/resumes/Detail.vue'),
+        meta: { title: '简历详情', breadcrumb: '简历详情', permission: 'resumes.view' }
       },
       {
         path: 'subscriptions',
@@ -121,8 +151,12 @@ router.beforeEach(async (to, from, next) => {
   if (!userStore.user && localStorage.getItem('admin-token')) {
     await userStore.initializeAuth()
   }
+  if (to.name === 'login' && userStore.isLoggedIn) {
+    next({ name: 'dashboard' })
+    return
+  }
   if (to.meta.requiresAuth && !userStore.isLoggedIn) {
-    next('/login')
+    next({ name: 'login' })
     return
   }
   const needPerm = to.meta && to.meta.permission

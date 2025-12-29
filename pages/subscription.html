@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>订阅与财务 - 争湃·简历大师</title>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <script src="../js/tailwindcss.js"></script>
     <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="/js/user-auth.js"></script>
@@ -150,15 +151,15 @@
                         <div class="grid grid-cols-1 gap-5 sm:grid-cols-3 mb-8">
                             <div class="bg-gray-50 overflow-hidden rounded-lg p-4">
                                 <dt class="text-sm font-medium text-gray-500 truncate">累计消费</dt>
-                                <dd class="mt-1 text-2xl font-semibold text-gray-900">¥1,298.00</dd>
+                                <dd class="mt-1 text-2xl font-semibold text-gray-900" id="financial-cumulative">loading...</dd>
                             </div>
                             <div class="bg-gray-50 overflow-hidden rounded-lg p-4">
                                 <dt class="text-sm font-medium text-gray-500 truncate">本月消费</dt>
-                                <dd class="mt-1 text-2xl font-semibold text-gray-900">¥299.00</dd>
+                                <dd class="mt-1 text-2xl font-semibold text-gray-900" id="financial-monthly">loading...</dd>
                             </div>
                             <div class="bg-gray-50 overflow-hidden rounded-lg p-4">
                                 <dt class="text-sm font-medium text-gray-500 truncate">待支付订单</dt>
-                                <dd class="mt-1 text-2xl font-semibold text-gray-900">0</dd>
+                                <dd class="mt-1 text-2xl font-semibold text-gray-900" id="financial-pending">loading...</dd>
                             </div>
                         </div>
 
@@ -190,24 +191,8 @@
                                             操作</th>
                                     </tr>
                                 </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
-                                    <tr>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                            ORD-20231201-001</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">专业版月卡</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
-                                            ¥299.00</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><i
-                                                class="fab fa-weixin text-blue-500 mr-1"></i>微信</td>
-                                        <td class="px-6 py-4 whitespace-nowrap"><span
-                                                class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">已支付</span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2023-12-01
-                                            10:00</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <a href="#" class="text-blue-600 hover:text-blue-900">详情</a>
-                                        </td>
-                                    </tr>
+                                <tbody class="bg-white divide-y divide-gray-200" id="order-list-body">
+                                    <!-- Dynamic content -->
                                 </tbody>
                             </table>
                         </div>
@@ -227,11 +212,11 @@
                         <div class="grid grid-cols-1 gap-5 sm:grid-cols-3 mb-8">
                             <div class="bg-gray-50 overflow-hidden rounded-lg p-4">
                                 <dt class="text-sm font-medium text-gray-500 truncate">可开票金额</dt>
-                                <dd class="mt-1 text-2xl font-semibold text-gray-900">¥299.00</dd>
+                                <dd class="mt-1 text-2xl font-semibold text-gray-900" id="invoice-available">loading...</dd>
                             </div>
                             <div class="bg-gray-50 overflow-hidden rounded-lg p-4">
                                 <dt class="text-sm font-medium text-gray-500 truncate">已开票金额</dt>
-                                <dd class="mt-1 text-2xl font-semibold text-gray-900">¥999.00</dd>
+                                <dd class="mt-1 text-2xl font-semibold text-gray-900" id="invoice-issued">loading...</dd>
                             </div>
                         </div>
 
@@ -260,22 +245,8 @@
                                             操作</th>
                                     </tr>
                                 </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
-                                    <tr>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                            INV-20231101-001</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
-                                            ¥999.00</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">增值税电子普通发票</td>
-                                        <td class="px-6 py-4 whitespace-nowrap"><span
-                                                class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">已开具</span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2023-11-01
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">下载</a>
-                                        </td>
-                                    </tr>
+                                <tbody class="bg-white divide-y divide-gray-200" id="invoice-list-body">
+                                    <!-- Dynamic content -->
                                 </tbody>
                             </table>
                         </div>
@@ -297,6 +268,7 @@
 
             // Init subscription status
             initSubscriptionStatus();
+            loadFinancialData();
 
             // Upgrade Buttons Logic
             const btnPremium = document.getElementById('btn-upgrade-premium-card');
@@ -433,6 +405,176 @@
                     enterpriseBtn.textContent = '当前版本';
                     enterpriseBtn.className = 'w-full bg-gray-100 text-gray-600 py-2 rounded-md font-medium cursor-not-allowed';
                     enterpriseBtn.disabled = true;
+                }
+            }
+
+            async function loadFinancialData() {
+                try {
+                    const user = userAuthInstance.getCurrentUser();
+                    if (!user) {
+                        // Retry once if user not loaded
+                        await userAuthInstance.checkAuth();
+                    }
+                    const currentUser = userAuthInstance.getCurrentUser();
+                    const userId = currentUser ? currentUser.id : null;
+
+                    if (!userId) return;
+
+                    const token = userAuthInstance.getToken();
+                    const headers = token ? { 'Authorization': 'Bearer ' + token } : {};
+                    
+                    // 1. Fetch Orders/History
+                    const ordersRes = await fetch(`/api/payment/user-orders/${userId}`, { headers });
+                    const ordersResult = await ordersRes.json();
+                    const orders = (ordersResult.success && ordersResult.data && ordersResult.data.orders) ? ordersResult.data.orders : [];
+
+                    // Calculate Financial Stats
+                    let cumulative = 0;
+                    let monthly = 0;
+                    let pendingCount = 0;
+                    const now = new Date();
+                    const currentMonth = now.getMonth();
+                    const currentYear = now.getFullYear();
+
+                    const orderBody = document.getElementById('order-list-body');
+                    if (orderBody) orderBody.innerHTML = '';
+
+                    if (orders.length === 0) {
+                        if (orderBody) orderBody.innerHTML = '<tr><td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">暂无订单记录</td></tr>';
+                    }
+
+                    orders.forEach(order => {
+                        const amount = parseFloat(order.amount || 0);
+                        const date = new Date(order.createdAt || order.created_at);
+                        
+                        // Cumulative
+                        if (order.status === 'paid') {
+                            cumulative += amount;
+                            // Monthly
+                            if (date.getMonth() === currentMonth && date.getFullYear() === currentYear) {
+                                monthly += amount;
+                            }
+                        }
+                        
+                        // Pending
+                        if (order.status === 'pending') {
+                            pendingCount++;
+                        }
+
+                        // Render Row
+                        if (orderBody) {
+                            const statusColors = {
+                                'paid': 'bg-green-100 text-green-800',
+                                'pending': 'bg-yellow-100 text-yellow-800',
+                                'failed': 'bg-red-100 text-red-800',
+                                'expired': 'bg-gray-100 text-gray-800',
+                                'refunded': 'bg-gray-100 text-gray-500'
+                            };
+                            const statusText = {
+                                'paid': '已支付',
+                                'pending': '待支付',
+                                'failed': '失败',
+                                'expired': '已过期',
+                                'refunded': '已退款'
+                            };
+
+                            const planName = (order.planType || order.plan) === 'enterprise' ? '企业版' : ((order.planType || order.plan) === 'premium' ? '专业版' : '基础版');
+                            const provider = order.paymentMethod || order.provider;
+
+                            const row = `
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${order.orderNo || order.out_trade_no || order.id}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${planName}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">¥${amount.toFixed(2)}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        ${provider === 'wechat' ? '<i class="fab fa-weixin text-green-500 mr-1"></i>微信' : '<i class="fab fa-alipay text-blue-500 mr-1"></i>支付宝'}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColors[order.status] || 'bg-gray-100 text-gray-800'}">
+                                            ${statusText[order.status] || order.status}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${date.toLocaleString()}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <a href="#" class="text-blue-600 hover:text-blue-900">详情</a>
+                                    </td>
+                                </tr>
+                            `;
+                            orderBody.innerHTML += row;
+                        }
+                    });
+
+                    // Update Financial Stats UI
+                    const elCum = document.getElementById('financial-cumulative');
+                    const elMon = document.getElementById('financial-monthly');
+                    const elPen = document.getElementById('financial-pending');
+                    if (elCum) elCum.textContent = `¥${cumulative.toFixed(2)}`;
+                    if (elMon) elMon.textContent = `¥${monthly.toFixed(2)}`;
+                    if (elPen) elPen.textContent = pendingCount;
+
+                    // 2. Fetch Invoices
+                    // Try fetching summary first
+                    let invoiceStats = { invoiceable: 0, issued: 0 };
+                    try {
+                        const invStatsRes = await fetch('/api/invoice/stats/summary', { headers });
+                        const invStatsResult = await invStatsRes.json();
+                        if (invStatsResult.success && invStatsResult.data) {
+                            invoiceStats = invStatsResult.data;
+                        }
+                    } catch(e) { console.warn('Invoice stats fetch failed', e); }
+
+                    // Fetch List
+                    const invListRes = await fetch('/api/invoice/list', { headers });
+                    const invListResult = await invListRes.json();
+                    const invoices = (invListResult.success && invListResult.data && invListResult.data.invoices) ? invListResult.data.invoices : [];
+
+                    // Calculate invoiceable from orders if API didn't return it
+                    const elInvAvail = document.getElementById('invoice-available');
+                    const elInvIssued = document.getElementById('invoice-issued');
+                    
+                    let calcIssued = 0;
+                    invoices.forEach(inv => {
+                        if (inv.status === 'issued') calcIssued += parseFloat(inv.totalAmount || inv.amount || 0);
+                    });
+                    
+                    // Use totalAmount from stats if available, otherwise calculated
+                    if (elInvIssued) elInvIssued.textContent = `¥${(invoiceStats.totalAmount || calcIssued).toFixed(2)}`;
+                    
+                    // Invoiceable is complicated to calc without backend, show '--' or assume rest of paid orders
+                    // For now, let's just use what we have or 0
+                    if (elInvAvail) elInvAvail.textContent = `¥${(cumulative - calcIssued).toFixed(2)}`; 
+
+                    const invoiceBody = document.getElementById('invoice-list-body');
+                    if (invoiceBody) invoiceBody.innerHTML = '';
+
+                    if (invoices.length === 0) {
+                        if (invoiceBody) invoiceBody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">暂无开票记录</td></tr>';
+                    }
+
+                    invoices.forEach(inv => {
+                        const amount = parseFloat(inv.totalAmount || inv.amount || 0);
+                        const date = new Date(inv.createdAt || inv.created_at || inv.issuedAt);
+                        const row = `
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${inv.invoiceNo || inv.invoice_no || '处理中'}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">¥${amount.toFixed(2)}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${inv.type === 'vat_special' ? '增值税专用发票' : '增值税普通发票'}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${inv.status === 'issued' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                                        ${inv.status === 'issued' ? '已开具' : '处理中'}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${date.toLocaleDateString()}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">下载</a>
+                                </td>
+                            </tr>
+                        `;
+                        if (invoiceBody) invoiceBody.innerHTML += row;
+                    });
+
+                } catch (error) {
+                    console.error('Failed to load financial data:', error);
                 }
             }
         });

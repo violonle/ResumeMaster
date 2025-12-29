@@ -71,8 +71,8 @@
         </div>
     </header>
 
-    <main class="main-content pt-20" id="main-content">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-4 flex justify-end space-x-4">
+    <main class="main-content pt-20 p-6" id="main-content">
+        <div class="max-w-7xl mx-auto mb-4 flex justify-end space-x-4">
              <button class="text-gray-500 hover:text-gray-700 bg-white p-2 rounded shadow-sm" id="refresh-btn" title="刷新">
                 <i class="fas fa-sync-alt"></i>
             </button>
@@ -83,7 +83,7 @@
 
     <!-- 批量操作栏 -->
     <div id="batch-actions-bar" class="hidden bg-white border-b border-gray-200 shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+        <div class="max-w-7xl mx-auto py-3">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-4">
                     <span id="selected-count" class="text-sm font-medium text-gray-700">已选择 0 项</span>
@@ -99,12 +99,6 @@
                             class="batch-action-btn px-3 py-1 text-sm bg-green-100 text-green-700 rounded hover:bg-green-200"
                         >
                             <i class="fas fa-tags mr-1"></i>修改分类
-                        </button>
-                        <button 
-                            data-batch-action="tag"
-                            class="batch-action-btn px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded hover:bg-purple-200"
-                        >
-                            <i class="fas fa-plus mr-1"></i>添加标签
                         </button>
                         <button 
                             data-batch-action="duplicate"
@@ -138,7 +132,7 @@
         </div>
     </div>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="max-w-7xl mx-auto py-8">
         <!-- 数据导入导出区域 -->
         <div class="glass-card rounded-xl p-6 mb-8">
             <h2 class="text-lg font-semibold text-gray-900 mb-4">数据导入导出</h2>
@@ -331,7 +325,7 @@
             return (resumes||[]).map(r=>({
                 id: r.id,
                 title: r.file_name || '未命名简历',
-                category: (Array.isArray(r.tags)&&r.tags[0]) || '简历',
+                category: '简历',
                 status: r.status || 'active',
                 date: (r.upload_date||'').split('T')[0] || '',
                 price: 0

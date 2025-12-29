@@ -8,6 +8,7 @@ import Components from 'unplugin-vue-components/vite'
 import layouts from 'vite-plugin-vue-layouts'
 
 export default defineConfig({
+  base: '/admin/',
   plugins: [
     vue({
       template: { transformAssetUrls: true },
@@ -49,6 +50,10 @@ export default defineConfig({
       '/uploads': {
         target: 'http://localhost:3000',
         changeOrigin: true
+      },
+      '/public': {
+        target: 'http://localhost:3000',
+        changeOrigin: true
       }
     }
   },
@@ -63,10 +68,18 @@ export default defineConfig({
       '/uploads': {
         target: 'http://localhost:3000',
         changeOrigin: true
+      },
+      '/public': {
+        target: 'http://localhost:3000',
+        changeOrigin: true
       }
     }
   },
   build: {
     chunkSizeWarningLimit: 5000,
+    commonjsOptions: {
+      include: [/node_modules/],
+      transformMixedEsModules: true,
+    },
   },
 })

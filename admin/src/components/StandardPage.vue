@@ -74,7 +74,7 @@ defineEmits(['back'])
 .standard-page { width: 100% }
 .standard-page .page-head { margin-bottom: 24px; align-items: flex-end }
 .standard-page .page-title { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; margin: 0; line-height: 1.2; color: rgb(var(--v-theme-on-background)); }
-.standard-page .page-sub { font-size: 14px; color: rgb(var(--v-theme-on-surface-variant)); margin-top: 8px; line-height: 1.5; }
+.standard-page .page-sub { font-size: 14px; color: #000000; margin-top: 8px; line-height: 1.5; }
 .standard-page .page-body { width: 100% }
 
 :deep(.clean-table .v-table__wrapper thead) {

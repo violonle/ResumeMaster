@@ -26,8 +26,8 @@
     </div>
   </header>
 
-  <main class="main-content pt-20" id="main-content">
-    <div class="p-6" id="report-root">
+  <main class="main-content pt-20 p-6" id="main-content">
+    <div id="report-root">
       <div class="mb-8">
         <div class="flex items-center justify-between">
           <div>
@@ -77,12 +77,10 @@
 
   <script>
     function toStarsLabel(stars){ return '★'.repeat(stars) + '☆'.repeat(5 - stars); }
-    function loadAnalysis(){
-      try{
-        var store = localStorage.getItem('last_analysis_result');
-        if (store) return JSON.parse(store);
-      }catch(_){ }
-      return null;
+    function getResumeIdFromUrl(){ var params = new URLSearchParams(window.location.search); return params.get('resumeId'); }
+    function loadAnalysisFromAPI(resumeId){
+      if (!resumeId) return Promise.resolve(null);
+      return fetch('/api/analysis/latest/' + resumeId, { credentials:'include' }).then(function(res){ return res.json(); }).then(function(data){ return data.success ? data.data : null; }).catch(function(){ return null; });
     }
     function renderBasic(info, edu, work, salary){
       var el = document.getElementById('basic-info');
@@ -108,44 +106,85 @@
       var ctx = document.getElementById('analysisRadarChart').getContext('2d');
       var data = [
         (scores && scores.job_fit)||0,
-        (scores && scores.skill_fit)||0,
         (scores && scores.experience_fit)||0,
         (scores && scores.learning_ability)||0,
         (scores && scores.teamwork)||0
       ];
-      new Chart(ctx, { type:'radar', data:{ labels:['岗位匹配度','技能匹配度','经验匹配度','学习能力','团队协作'], datasets:[{ label:'能力评估', data, backgroundColor:'transparent', borderColor:'rgba(37,99,235,1)', pointBackgroundColor:'#fff', pointBorderColor:'rgba(37,99,235,1)', pointRadius:2, pointHoverRadius:4, borderWidth:2, fill:false }] }, options:{ responsive:true, maintainAspectRatio:false, scales:{ r:{ suggestedMin:0, suggestedMax:100, angleLines:{ color:'rgba(0,0,0,0.08)' }, grid:{ color:'rgba(0,0,0,0.08)' }, ticks:{ stepSize:20, showLabelBackdrop:false } } }, plugins:{ legend:{ position:'top', labels:{ usePointStyle:true, boxWidth:8, padding:12 } } }, elements:{ line:{ tension:0.15 } } });
+      new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels: ['岗位匹配度', '经验匹配度', '学习能力', '团队协作'],
+          datasets: [{
+            label: '能力评估',
+            data: data,
+            backgroundColor: 'transparent',
+            borderColor: 'rgba(37,99,235,1)',
+            pointBackgroundColor: '#fff',
+            pointBorderColor: 'rgba(37,99,235,1)',
+            pointRadius: 2,
+            pointHoverRadius: 4,
+            borderWidth: 2,
+            fill: false
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            r: {
+              suggestedMin: 0,
+              suggestedMax: 100,
+              angleLines: { color: 'rgba(0,0,0,0.08)' },
+              grid: { color: 'rgba(0,0,0,0.08)' },
+              ticks: { stepSize: 20, showLabelBackdrop: false }
+            }
+          },
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: { usePointStyle: true, boxWidth: 8, padding: 12 }
+            }
+          },
+          elements: { line: { tension: 0.15 } }
+        }
+      });
     }
     function downloadPNG(){ html2canvas(document.getElementById('report-root')).then(function(canvas){ var link=document.createElement('a'); link.download='分析报告.png'; link.href=canvas.toDataURL('image/png'); link.click(); }); }
     function downloadPDF(){ var jsPDF = window.jspdf && window.jspdf.jsPDF ? window.jspdf.jsPDF : null; if(!jsPDF) return; var doc = new jsPDF('p','mm','a4'); var node = document.getElementById('report-root'); html2canvas(node,{scale:2}).then(function(canvas){ var img = canvas.toDataURL('image/png'); var pageWidth = 210, pageHeight = 297; var imgWidth = pageWidth - 20; var imgHeight = canvas.height * imgWidth / canvas.width; doc.addImage(img,'PNG',10,10,imgWidth,Math.min(imgHeight,pageHeight-20)); doc.save('分析报告.pdf'); }); }
     document.addEventListener('DOMContentLoaded',function(){
-      var data = loadAnalysis();
-      var analysis = data && (data.analysis || data);
-      var basic = (analysis && analysis.basic_info) || (analysis && analysis.parsedData && analysis.parsedData.personalInfo) || {};
-      var edu = (analysis && analysis.education_background) || (analysis && analysis.parsedData && analysis.parsedData.education) || [];
-      var work = (analysis && analysis.work_experience) || (analysis && analysis.parsedData && analysis.parsedData.workExperience) || [];
-      var salary = (analysis && analysis.expected_salary) || '';
-      var strengths = (analysis && analysis.evaluation_report && analysis.evaluation_report.core_strengths) || (analysis && analysis.strengths) || [];
-      var weaknesses = (analysis && analysis.evaluation_report && analysis.evaluation_report.potential_issues) || (analysis && analysis.weaknesses) || [];
-      var advices = (analysis && analysis.evaluation_report && analysis.evaluation_report.career_advice) || (analysis && analysis.suggestions) || [];
-      var stars = (analysis && analysis.scores_star) || {};
-      var perc = (analysis && analysis.scores_percent) || {};
-      var overall = (analysis && analysis.overall_score) || 0;
-      document.getElementById('overall-score').textContent = '综合评分 ' + overall;
-      renderBasic(basic, edu, work, salary);
-      renderLists(document.getElementById('strengths'), strengths);
-      renderLists(document.getElementById('weaknesses'), weaknesses);
-      renderLists(document.getElementById('advices'), advices);
-      document.getElementById('summary').textContent = (analysis && analysis.summary) || '';
-      var scoreForRadar = Object.keys(perc).length ? perc : {
-        job_fit: ((stars && stars.job_fit)||0)*20,
-        skill_fit: ((stars && stars.skill_fit)||0)*20,
-        experience_fit: ((stars && stars.experience_fit)||0)*20,
-        learning_ability: ((stars && stars.learning_ability)||0)*20,
-        teamwork: ((stars && stars.teamwork)||0)*20
-      };
-      renderRadar(scoreForRadar);
-      document.getElementById('download-png').addEventListener('click', downloadPNG);
-      document.getElementById('download-pdf').addEventListener('click', downloadPDF);
+      var resumeId = getResumeIdFromUrl();
+      loadAnalysisFromAPI(resumeId).then(function(data){
+        if (!data) {
+          document.getElementById('report-root').innerHTML = '<div class="text-center py-12"><p class="text-gray-500">暂无分析结果</p></div>';
+          return;
+        }
+        var analysis = data;
+        var basic = (analysis && analysis.detailed_analysis && analysis.detailed_analysis.basic_info) || (analysis && analysis.detailed_analysis && analysis.detailed_analysis.parsedData && analysis.detailed_analysis.parsedData.personalInfo) || {};
+        var edu = (analysis && analysis.detailed_analysis && analysis.detailed_analysis.education_background) || (analysis && analysis.detailed_analysis && analysis.detailed_analysis.parsedData && analysis.detailed_analysis.parsedData.education) || [];
+        var work = (analysis && analysis.detailed_analysis && analysis.detailed_analysis.work_experience) || (analysis && analysis.detailed_analysis && analysis.detailed_analysis.parsedData && analysis.detailed_analysis.parsedData.workExperience) || [];
+        var salary = (analysis && analysis.detailed_analysis && analysis.detailed_analysis.expected_salary) || '';
+        var strengths = (analysis && analysis.detailed_analysis && analysis.detailed_analysis.evaluation_report && analysis.detailed_analysis.evaluation_report.core_strengths) || (analysis && analysis.strengths) || [];
+        var weaknesses = (analysis && analysis.detailed_analysis && analysis.detailed_analysis.evaluation_report && analysis.detailed_analysis.evaluation_report.potential_issues) || (analysis && analysis.weaknesses) || [];
+        var advices = (analysis && analysis.detailed_analysis && analysis.detailed_analysis.evaluation_report && analysis.detailed_analysis.evaluation_report.career_advice) || (analysis && analysis.suggestions) || [];
+        var stars = (analysis && analysis.detailed_analysis && analysis.detailed_analysis.scores_star) || {};
+        var perc = (analysis && analysis.detailed_analysis && analysis.detailed_analysis.scores_percent) || {};
+        var overall = analysis.overall_score || 0;
+        document.getElementById('overall-score').textContent = '综合评分 ' + overall;
+        renderBasic(basic, edu, work, salary);
+        renderLists(document.getElementById('strengths'), strengths);
+        renderLists(document.getElementById('weaknesses'), weaknesses);
+        renderLists(document.getElementById('advices'), advices);
+        document.getElementById('summary').textContent = (analysis && analysis.detailed_analysis && analysis.detailed_analysis.summary) || '';
+        var scoreForRadar = Object.keys(perc).length ? perc : {
+          job_fit: ((stars && stars.job_fit)||0)*20,
+          experience_fit: ((stars && stars.experience_fit)||0)*20,
+          learning_ability: ((stars && stars.learning_ability)||0)*20,
+          teamwork: ((stars && stars.teamwork)||0)*20
+        };
+        renderRadar(scoreForRadar);
+        document.getElementById('download-png').addEventListener('click', downloadPNG);
+        document.getElementById('download-pdf').addEventListener('click', downloadPDF);
+      });
     });
   </script>
   <script>

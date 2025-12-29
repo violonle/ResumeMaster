@@ -1,7 +1,7 @@
 module.exports = {
   currency: 'CNY',
   demo: process.env.PAYMENTS_DEMO === 'false' ? false : true,
-  frontendBaseUrl: process.env.FRONTEND_BASE_URL || 'http://127.0.0.1:8081',
+  frontendBaseUrl: process.env.FRONTEND_BASE_URL || '',
   plans: {
     premium: {
       name: '高级版',

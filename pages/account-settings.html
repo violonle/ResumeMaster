@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>账号设置 - 争湃·简历大师</title>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <script src="../js/tailwindcss.js"></script>
     <script src="../js/ui-components.js"></script>
     <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -29,8 +30,8 @@
             </div>
         </div>
     </header>
-    <main id="main" class="main-content pt-20">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main id="main" class="main-content pt-20 p-6">
+        <div class="max-w-7xl mx-auto py-8">
             <div class="flex flex-col md:flex-row gap-6">
                 <!-- Settings Sidebar -->
                 <aside class="w-full md:w-64 flex-shrink-0">
@@ -370,6 +371,16 @@
                 setText('[data-personal-company]', user?.company_name || '—');
                 setText('[data-personal-name-inline]', user?.name || user?.username || '—');
                 setText('[data-personal-position-inline]', user?.position || '—');
+                
+                // Load Avatar
+                const avatarIcon = document.getElementById('avatar-icon');
+                if (user && user.avatar && avatarIcon) {
+                    const parent = avatarIcon.parentElement;
+                    // Check if image already exists to avoid flickering
+                    if (!parent.querySelector('img')) {
+                        parent.innerHTML = `<img src="${user.avatar}" class="w-full h-full object-cover" alt="Avatar">`;
+                    }
+                }
                 
             } catch (e) { } 
         }

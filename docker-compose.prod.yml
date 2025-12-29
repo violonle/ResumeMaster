@@ -1,0 +1,33 @@
+services:
+  # 数据库服务
+  db:
+    image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-superresumemaster}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-letuyang}
+    volumes:
+      - ./mysql_data:/var/lib/mysql
+    networks:
+      - srm-network
+
+  # 后端 + 前端服务
+  app:
+    # 替换为你的 Docker Hub 用户名或私有仓库地址
+    image: ${DOCKER_IMAGE:-super-resume-master:latest}
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./uploads:/app/backend/uploads
+    depends_on:
+      - db
+    networks:
+      - srm-network
+
+networks:
+  srm-network:
+    driver: bridge

@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AI 助手对话 - 争湃·简历大师</title>
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
   <script src="../js/tailwindcss.js"></script>
   <script src="../js/marked.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -152,7 +153,7 @@
         <div class="log custom-scroll" id="chat-log"></div>
         <div class="suggests" id="suggests"></div>
         <div class="composer">
-          <button id="upload-btn" class="btn btn-icon" title="上传简历"><i class="fas fa-paperclip"></i></button>
+          <button id="upload-btn" class="btn btn-icon" title="导入简历文件"><i class="fas fa-paperclip"></i></button>
           <input type="file" id="file-input" hidden accept=".pdf,.doc,.docx,.txt" />
           <input id="chat-input" class="input" placeholder="请输入问题，例如：为Java岗位生成JD要点" />
           <button id="chat-send" class="btn btn-primary">发送</button>
@@ -229,11 +230,7 @@
         const token = getUserToken();
         const headers = { 'Authorization': 'Bearer ' + token };
         
-        // Detect API URL for upload
-        let uploadUrl = '/api/ai/upload';
-        if (window.location.port === '8083' || window.location.protocol === 'file:') {
-           uploadUrl = 'http://localhost:3001/api/ai/upload';
-        }
+        const uploadUrl = '/api/ai/upload';
 
         try {
             // 1. Upload File
@@ -248,14 +245,10 @@
                 throw new Error(uploadData.error?.message || '上传失败');
             }
             
-            const resumeId = uploadData.data.id; // Assuming structure based on resumeController/aiAnalysis
+            const resumeId = uploadData.data.id;
             append('assistant', `上传成功，正在解析内容...`);
             
-            // 2. Parse File
-            let parseUrl = '/api/assistant/parse-file';
-            if (window.location.port === '8083' || window.location.protocol === 'file:') {
-                parseUrl = 'http://localhost:3001/api/assistant/parse-file';
-            }
+            const parseUrl = '/api/assistant/parse-file';
             
             const parseRes = await fetch(parseUrl, {
                 method: 'POST',
@@ -307,12 +300,7 @@
       const headers={ 'Content-Type':'application/json' }; 
       if(token){ headers['Authorization'] = 'Bearer '+token } 
       
-      // 自动检测API地址
-      let apiUrl = '/api/assistant/chat';
-      // 如果是独立前端服务(如8083端口)或本地文件打开，则指向后端默认端口3001
-      if (window.location.port === '8083' || window.location.protocol === 'file:') {
-           apiUrl = 'http://localhost:3001/api/assistant/chat';
-      }
+      const apiUrl = '/api/assistant/chat';
 
       try {
         const response = await fetch(apiUrl, { 

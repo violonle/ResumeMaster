@@ -216,62 +216,178 @@ const DEFAULT_TEMPLATES = {
 
 注意：保持原有核心要求不变，主要是提升表达的专业度和吸引力。`
   },
-  quick_analysis_keywords: {
-    name: '快速提取关键词',
-    category: 'quick_analysis',
-    variables: ['text'],
-    content: `请从以下文本中提取最关键的10-15个关键词，用于标签化管理。
+  recruitment_forecast: {
+    name: '招聘趋势预测',
+    category: 'analysis',
+    variables: ['dataJson'],
+    content: `你是一位资深的人力资源数据分析师。请基于以下提供的招聘活动数据，进行深度的趋势预测和分析。
 
-文本：
+数据内容（JSON）：
 """
-{{text}}
-"""
-
-返回格式：逗号分隔的字符串（例如：Java, Spring Boot, 微服务, 团队管理）。不要包含其他内容。`
-  },
-  quick_analysis_summary: {
-    name: '快速生成摘要',
-    category: 'quick_analysis',
-    variables: ['text'],
-    content: `请用精炼的语言（100字以内）总结以下文本的核心内容。
-
-文本：
-"""
-{{text}}
+{{dataJson}}
 """
 
-直接输出摘要内容。`
-  },
-  quick_analysis_sentiment: {
-    name: '快速情感分析',
-    category: 'quick_analysis',
-    variables: ['text'],
-    content: `请分析以下文本的情感倾向。
-
-文本：
-"""
-{{text}}
-"""
-
-返回格式：JSON
+请输出严格的JSON格式报告，包含以下结构：
 {
-  "sentiment": "Positive/Neutral/Negative",
-  "score": 0.8,
-  "explanation": "简要理由"
-}`
+  "trend_analysis": "对招聘趋势的详细文字描述（约200字）",
+  "pipeline_health": "对招聘漏斗健康度的评估",
+  "potential_bottlenecks": ["瓶颈点1", "瓶颈点2"],
+  "suggestions": ["改进建议1", "改进建议2"]
+}
+
+要求：
+1. 分析要基于数据事实。
+2. 预测要具有前瞻性和可操作性。
+3. 必须返回合法的JSON格式。`
   },
-  quick_analysis_skills: {
-    name: '快速提取技能',
+  quick_analysis_basic: {
+    name: '快速分析-基础信息',
     category: 'quick_analysis',
     variables: ['text'],
-    content: `请从以下简历文本中全面提取技能标签（包括硬技能、软技能、工具、语言等）。
+    content: `你是一位专业的简历审核员。请快速分析以下简历文本中的“基础信息”部分，提取关键点并给出简要评价。
 
-文本：
+简历文本：
 """
 {{text}}
 """
 
-返回格式：逗号分隔的字符串。`
+请简明扼要地列出：
+1. 核心基本信息提取（姓名、学历、工作年限、期望城市）。
+2. 基础信息的完整度评价。
+3. 亮点或缺失项提示。
+
+直接输出文本，保持排版清晰。`
+  },
+  quick_analysis_skill: {
+    name: '快速分析-技能评估',
+    category: 'quick_analysis',
+    variables: ['text'],
+    content: `你是一位技术面试官。请分析以下简历文本中的“技能专长”部分，评估其技术深度和广度。
+
+简历文本：
+"""
+{{text}}
+"""
+
+请提供：
+1. 核心技术栈清单。
+2. 技术专家等级初判（初级/中级/高级/专家）。
+3. 关键技能点评价。
+
+直接输出文本。`
+  },
+  quick_analysis_experience: {
+    name: '快速分析-工作经历',
+    category: 'quick_analysis',
+    variables: ['text'],
+    content: `你是一位猎头专家。请分析以下简历文本中的“工作经历”部分，评估候选人的职业稳定性和成长路径。
+
+简历文本：
+"""
+{{text}}
+"""
+
+请提供：
+1. 职业生涯亮点总结。
+2. 稳定性评估。
+3. 核心能力跃迁点分析。
+
+直接输出文本。`
+  },
+  quick_analysis_project: {
+    name: '快速分析-项目经验',
+    category: 'quick_analysis',
+    variables: ['text'],
+    content: `你是一位项目管理专家。请分析以下简历文本中的“项目经验”部分，评估其解决复杂问题的能力。
+
+简历文本：
+"""
+{{text}}
+"""
+
+请提供：
+1. 项目规模与复杂度评估。
+2. 核心贡献与产出分析。
+3. 展现的工程化能力评价。
+
+直接输出文本。`
+  },
+  quick_analysis_education: {
+    name: '快速分析-教育背景',
+    category: 'quick_analysis',
+    variables: ['text'],
+    content: `你是一位教育背景评估专家。请分析以下简历文本中的“教育背景”部分。
+
+简历文本：
+"""
+{{text}}
+"""
+
+请提供：
+1. 学校层次与专业相关性评价。
+2. 学术表现或校园活动亮点。
+3. 综合教育背景初评。
+
+直接输出文本。`
+  },
+  chat: {
+    name: '通用AI助手',
+    category: 'chat',
+    variables: ['message'],
+    content: `你是一个智能简历助手，名字叫“超级简历大师”。你的目标是帮助用户优化简历、准备面试、规划职业生涯。
+
+用户说：{{message}}
+
+请以专业、亲切、实用的语气回答。`
+  },
+  resume_evaluation: {
+    name: '简历评估分析',
+    category: 'analysis',
+    variables: ['resumeText', 'targetJobSection'],
+    content: `请分析以下简历内容并提供详细评估：
+
+**简历内容：**
+{{resumeText}}
+
+{{targetJobSection}}
+
+**分析要求：**
+1. 整体评分（1-100分）
+2. 各维度评分：基础匹配度、经验相关度、技能匹配度、学习能力、发展潜力、团队合作
+3. 3-5个主要优势
+4. 2-3个需要改进的方面
+5. 具体的优化建议
+6. 如果有目标职位，请针对该职位进行分析
+
+**请以JSON格式返回结果，格式如下：**
+{
+  "overall_score": 85,
+  "dimensions": {
+    "basic_match": 90,
+    "experience_relevance": 85,
+    "skill_match": 80,
+    "learning_ability": 88,
+    "development_potential": 85,
+    "teamwork": 87
+  },
+  "strengths": ["技能匹配度高", "项目经验丰富"],
+  "weaknesses": ["需要加强某些技术栈"],
+  "suggestions": [
+    {
+      "type": "skill",
+      "priority": "high",
+      "title": "技能提升建议",
+      "description": "具体建议内容",
+      "actionItems": ["具体行动项1", "具体行动项2"]
+    }
+  ],
+  "detailed_analysis": {
+    "skill_analysis": "技能分析详情",
+    "experience_analysis": "经验分析详情",
+    "education_analysis": "教育背景分析",
+    "project_analysis": "项目分析"
+  }
+}`
   }
 };
 
@@ -385,6 +501,19 @@ class PromptService {
    */
   prepareJobDescriptionVar(jd) {
       return jd ? `目标岗位（JD）：\n${jd}\n` : '';
+  }
+
+  /**
+   * Process variable for Target Job specifically to match old AIAnalysisService logic
+   */
+  prepareTargetJobSection(targetJob) {
+      if (!targetJob) return '';
+      return `
+**目标职位：**
+- 职位：${targetJob.title || '未指定'}
+- 要求：${targetJob.requirements || '未提供'}
+- 薪资：${targetJob.salary || '未提供'}
+- 地点：${targetJob.location || '未提供'}`;
   }
 }
 

@@ -1,3 +1,7 @@
+/**
+ * 分析结果路由
+ * 处理简历分析结果的查询和管理
+ */
 const express = require('express');
 const { getAllAnalysisResults, getAnalysisResultsByResume, createAnalysisResult, getLatestAnalysisResult } = require('../controllers/analysisController');
 const { authenticate } = require('../middleware/auth');

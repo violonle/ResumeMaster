@@ -539,34 +539,71 @@ class BatchOperations {
     }
 
     async importData(data) {
-        // 模拟数据导入
-        for (let i = 0; i < data.length; i++) {
-            await this.simulateAsyncOperation(100);
-            const progress = ((i + 1) / data.length) * 100;
-            this.updateProgress(progress);
+        try {
+            const response = await fetch('/api/resumes/batch-import', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({ resumes: data })
+            });
+            
+            const result = await response.json();
+            if (!result.success) {
+                throw new Error(result.error?.message || '导入失败');
+            }
+            
+            this.addItemsToUI(result.data);
+        } catch (error) {
+            console.error('Import failed:', error);
+            throw error;
         }
-        
-        // 添加到UI
-        this.addItemsToUI(data);
-    }
+    },
 
     addItemsToUI(items) {
-        // 这里应该实现将新项目添加到UI的逻辑
         console.log('添加项目到UI:', items);
-    }
+    },
 
-    getItemData(itemId) {
-        return null;
-    }
+    async getItemData(itemId) {
+        try {
+            const response = await fetch(`/api/resumes/${itemId}`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            
+            const result = await response.json();
+            if (!result.success) {
+                throw new Error(result.error?.message || '获取数据失败');
+            }
+            
+            return result.data;
+        } catch (error) {
+            console.error('Get item failed:', error);
+            return null;
+        }
+    },
 
-    getAllItems() {
-        // 模拟获取所有项目
-        return ['1', '2', '3', '4', '5', '6', '7', '8'];
-    }
-
-    simulateAsyncOperation(delay) {
-        return new Promise(resolve => setTimeout(resolve, delay));
-    }
+    async getAllItems() {
+        try {
+            const response = await fetch('/api/resumes', {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            
+            const result = await response.json();
+            if (!result.success) {
+                throw new Error(result.error?.message || '获取数据失败');
+            }
+            
+            return result.data || [];
+        } catch (error) {
+            console.error('Get all items failed:', error);
+            return [];
+        }
+    },
 
     showProgress(message, progress) {
         const progressBar = document.getElementById('progress-bar');
@@ -577,21 +614,21 @@ class BatchOperations {
             progressText.textContent = message;
             progressBar.parentElement.classList.remove('hidden');
         }
-    }
+    },
 
     updateProgress(progress) {
         const progressBar = document.getElementById('progress-bar');
         if (progressBar) {
             progressBar.style.width = `${progress}%`;
         }
-    }
+    },
 
     hideProgress() {
         const progressContainer = document.getElementById('progress-container');
         if (progressContainer) {
             progressContainer.classList.add('hidden');
         }
-    }
+    },
 
     showNotification(message, type = 'info') {
         if (window.uiComponents) {
@@ -599,7 +636,7 @@ class BatchOperations {
         } else {
             console.log(`[${type.toUpperCase()}] ${message}`);
         }
-    }
+    },
 
     escapeXML(str) {
         return String(str).replace(/&/g, '&amp;')

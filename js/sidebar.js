@@ -10,15 +10,24 @@
     { href: 'dashboard.html', icon: 'fas fa-home', label: '工作台', key: 'dashboard' },
     { href: 'librarypool.html', icon: 'fas fa-folder-open', label: '人才库', key: 'librarypool' },
     { href: 'job-management.html', icon: 'fas fa-briefcase', label: '职位管理', key: 'job' },
-    { href: 'recruitment-flow.html', icon: 'fas fa-project-diagram', label: '招聘流程管理', key: 'recruitment-flow' },
+    { href: 'recruitment-flow.html', icon: 'fas fa-project-diagram', label: '招聘流程', key: 'recruitment-flow' },
     { href: 'resume-tools.html', icon: 'fas fa-tools', label: '简历解析与对比', key: 'resume-tools' },
     { href: 'data-analysis.html', icon: 'fas fa-chart-bar', label: '招聘数据分析', key: 'analysis' }
   ];
 
   const DEFAULT_QA = [
     { icon: 'fas fa-plus', label: '发布职位', onClick: () => location.href = 'job-posting.html' },
-    { icon: 'fas fa-tools', label: '简历解析与对比', onClick: () => location.href = 'resume-tools.html' },
-    { icon: 'fas fa-chart-bar', label: '招聘数据分析', onClick: () => location.href = 'data-analysis.html' },
+    { icon: 'fas fa-envelope', label: '邮箱导入', onClick: () => {
+      if (location.pathname.includes('librarypool.html')) {
+        if (typeof openLibraryEmailImportModal === 'function') {
+          openLibraryEmailImportModal();
+        }
+      } else {
+        sessionStorage.setItem('openEmailImportOnLoad', 'true');
+        location.href = 'librarypool.html';
+      }
+    }},
+    { icon: 'fas fa-file-alt', label: '简历解析', onClick: () => location.href = 'resume-upload-pc.html' },
   ];
 
   function baseName(url) {
@@ -188,10 +197,11 @@
 
     async updateSubscriptionCard(){
       try{
+        const titleEl = this.sidebar.querySelector('#sidebar-sub-title');
         const statusEl = this.sidebar.querySelector('#sidebar-sub-status');
         const progressEl = this.sidebar.querySelector('#sidebar-sub-progress');
         const renewEl = this.sidebar.querySelector('#sidebar-sub-renew');
-        if (!statusEl || !progressEl || !renewEl) return;
+        if (!titleEl || !statusEl || !progressEl || !renewEl) return;
         const lsToken = (function(){ try{ return (JSON.parse(localStorage.getItem('userInfo')||'{}').token)||null }catch(_){ return null } })();
         const uaToken = (typeof userAuthInstance !== 'undefined' && typeof userAuthInstance.getToken === 'function') ? (userAuthInstance.getToken()||null) : null;
         const token = uaToken || lsToken;
@@ -202,18 +212,20 @@
         ]);
         const data = cur && cur.data ? cur.data : { hasSubscription:false };
         if (!data.hasSubscription){
+          titleEl.textContent = '订阅专业版';
           statusEl.textContent = '未订阅';
-          statusEl.className = 'text-xs text-yellow-700 bg-yellow-100 px-2 py-1 rounded-full';
+          statusEl.className = 'text-xs text-gray-600 bg-gray-100 px-2 py-0.5 rounded-full font-medium';
           progressEl.style.width = '0%';
-          renewEl.innerHTML = '<a href="/pages/subscription.html" class="text-blue-600 hover:underline">即刻订阅，解锁更多功能</a>';
+          renewEl.innerHTML = '<div class="mt-3"><p class="text-sm text-gray-600 mb-3 text-center">让您的工作轻松，效率加倍</p><a href="/pages/subscription.html" class="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-4 rounded-lg transition-colors">立即订阅</a></div>';
           return;
         }
         const expired = !!data.isExpired;
+        const planName = data.planType && data.planType.includes('pro') ? '专业版订阅' : (data.planType && data.planType.includes('basic') ? '基础版订阅' : '订阅');
+        titleEl.textContent = planName;
         statusEl.textContent = expired ? '已过期' : '活跃';
-        statusEl.className = expired ? 'text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-full' : 'text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full';
+        statusEl.className = expired ? 'text-xs text-gray-600 bg-gray-100 px-2 py-0.5 rounded-full font-medium' : 'text-xs text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full font-medium';
         const days = typeof data.daysRemaining === 'number' ? Math.max(0, data.daysRemaining) : 0;
         renewEl.textContent = `距离下次续费还有 ${days} 天`;
-        // 进度：优先使用 usage.total/limits.total 百分比；无限制则按天进度（已使用周期天数）
         let pct = 0;
         const u = usage && usage.data ? usage.data : null;
         if (u && u.limits && typeof u.limits.total === 'number' && u.limits.total > 0){

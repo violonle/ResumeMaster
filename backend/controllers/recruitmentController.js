@@ -31,6 +31,13 @@ exports.updateStatus = async (req, res) => {
     if (!rj || !(await ensureOwnership(req, rj))){
       return res.status(404).json({ success:false, error:{ code:'NOT_FOUND', message:'候选记录不存在' } })
     }
+    
+    // 权限检查：如果是免费用户，仅允许基础状态流转 (screening, rejected)
+    // 但根据需求"免费版也允许进行这项操作"，我们放宽限制，允许所有操作
+    // if (req.subscription && req.subscription.plan === 'free' && ['offer', 'hired'].includes(status)) {
+    //   return res.status(403).json({ success:false, error:{ code:'PRO_REQUIRED', message:'该状态需要专业版' } })
+    // }
+
     const rn = safeJson(rj.recruiter_notes)
     if (notes) rn.notes = notes
     await rj.update({ status, recruiter_notes: JSON.stringify(rn) })

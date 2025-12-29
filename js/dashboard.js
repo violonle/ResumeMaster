@@ -78,6 +78,9 @@ class DashboardController {
         try {
             const stats = await this.resumeData.getDashboardStats();
             
+            // 添加调试信息
+            console.log('仪表盘统计数据:', stats);
+            
             this.updateStatCard('stat-candidates', stats.total_candidates, `今日新增 ${stats.new_candidates_today}`);
             this.updateStatCard('stat-jobs', stats.active_jobs, '招聘进行中');
             this.updateStatCard('stat-interviews', stats.interviews_scheduled, '待面试');
@@ -113,10 +116,16 @@ class DashboardController {
         parent.appendChild(funnelContainer);
 
         try {
-            // 获取真实漏斗数据
             const pipeline = await this.resumeData.getRecruitmentPipeline();
             
-            // 处理数据
+            const statusMap = {
+                '投递': 'applied',
+                '初筛': 'screening',
+                '面试': 'interview',
+                'Offer': 'offer',
+                '入职': 'hired'
+            };
+            
             const stages = {
                 'applied': { count: 0, label: '投递', color: 'bg-blue-100', text: 'text-blue-700', width: '100%' },
                 'screening': { count: 0, label: '初筛', color: 'bg-blue-200', text: 'text-blue-800', width: '85%' },
@@ -125,9 +134,10 @@ class DashboardController {
                 'hired': { count: 0, label: '入职', color: 'bg-indigo-500', text: 'text-white', width: '40%' }
             };
 
-            pipeline.forEach(item => {
-                if (stages.hasOwnProperty(item.status)) {
-                    stages[item.status].count++;
+            Object.keys(pipeline).forEach(chineseStatus => {
+                const englishStatus = statusMap[chineseStatus];
+                if (englishStatus && stages[englishStatus]) {
+                    stages[englishStatus].count += pipeline[chineseStatus].length;
                 }
             });
             
@@ -197,33 +207,6 @@ class DashboardController {
                         }
                         detailedTasks.push(detail);
                     });
-                } else {
-                    // Fallback for mock data (count only)
-                    for(let i=0; i < Math.min(t.count, 3); i++) {
-                        let detail = {
-                             title: t.title,
-                             desc: '待处理',
-                             time: '今天',
-                             link: t.link,
-                             priority: t.priority,
-                             type: t.type
-                        };
-                        
-                        if (t.type === 'review') {
-                            detail.desc = ['Java工程师 - 张三', '产品经理 - 李四', '前端开发 - 王五'][i] || '新候选人';
-                            detail.action = '去筛选';
-                        } else if (t.type === 'interview') {
-                            detail.desc = ['10:00 - 张三 (视频面试)', '14:30 - 李四 (现场面试)'][i] || '待定时间';
-                            detail.action = '查看详情';
-                        } else if (t.type === 'offer') {
-                            detail.desc = '王五 - 高级工程师';
-                            detail.action = '审批';
-                        } else {
-                            detail.desc = '系统自动任务';
-                            detail.action = '查看';
-                        }
-                        detailedTasks.push(detail);
-                    }
                 }
             });
 
@@ -378,8 +361,58 @@ class DashboardController {
     }
 
     async loadRecentActivities() {
-        // 简单模拟或从API获取最近活动
-        // 这里暂时留空或简单的静态展示，后续可从UserActivity获取
+        const container = document.getElementById('recent-activities-list');
+        if (!container) return;
+
+        try {
+            const response = await fetch('/api/company/recent-activity', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch recent activities');
+            }
+
+            const result = await response.json();
+            const activities = result.data || [];
+
+            if (activities.length === 0) {
+                container.innerHTML = '<div class="text-sm text-gray-500 text-center py-4">暂无最近活动</div>';
+                return;
+            }
+
+            const renderItem = (activity) => {
+                const time = new Date(activity.time).toLocaleString('zh-CN', {
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                const iconClass = activity.icon || 'fa-circle';
+                const iconColor = activity.type === 'analysis' ? 'text-blue-500' : 'text-green-500';
+
+                return `
+                    <div class="flex items-center p-3 bg-white border border-gray-100 rounded-lg hover:shadow-sm transition-all">
+                        <div class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center mr-3">
+                            <i class="fas ${iconClass} ${iconColor} text-xs"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm text-gray-800 truncate">${activity.title}</p>
+                            <p class="text-xs text-gray-400 mt-0.5">${time}</p>
+                        </div>
+                    </div>
+                `;
+            };
+
+            container.innerHTML = `<div class="space-y-2">${activities.map(renderItem).join('')}</div>`;
+        } catch (error) {
+            console.error('Failed to load recent activities:', error);
+            container.innerHTML = '<div class="text-sm text-gray-500 text-center py-4">加载失败，请刷新重试</div>';
+        }
     }
 
     initAIAssistant() {

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>简历解析 - 争湃·简历大师</title>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <script src="../js/tailwindcss.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -14,6 +15,7 @@
     <script src="../js/ai-analyzer.js"></script>
     <script src="../js/resume-data.js?v=3"></script>
     <script src="../js/ui-components.js"></script>
+    <script src="../js/resume-upload-handler.js"></script>
     <link rel="stylesheet" href="/css/design-system.css">
     <link rel="stylesheet" href="/css/sidebar.css">
 </head>
@@ -35,8 +37,7 @@
                             
                             const bases = [
                                 (window.resumeDataManager && window.resumeDataManager.apiBaseUrl) ? window.resumeDataManager.apiBaseUrl : (window.userAuthInstance && window.userAuthInstance.apiBaseUrl ? window.userAuthInstance.apiBaseUrl : '/api'),
-                                'http://localhost:3001/api',
-                                'http://localhost:3000/api'
+                                '/api'
                             ];
 
                             let baseUrl = bases[0];
@@ -153,7 +154,7 @@
                             <!-- 搜索框 -->
                             <div class="flex-1">
                                 <div class="relative">
-                                    <input type="text" id="library-search-input" placeholder="搜索简历名称、姓名或关键词..." 
+                                    <input type="text" id="library-search-input" placeholder="搜索简历名称或姓名..." 
                                            class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                                     <div class="absolute left-3 top-1/2 transform -translate-y-1/2">
                                         <i class="fas fa-search text-gray-400"></i>
@@ -386,7 +387,7 @@
         </div>
     </div>
 
-    <!-- 上传简历模态框 -->
+    <!-- 导入简历文件模态框 -->
     <div id="upload-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-xl max-w-[1100px] w-full max-h-[80vh] overflow-hidden flex flex-col">
             <!-- 模态框头部 -->
@@ -611,7 +612,7 @@
                     });
                 }
                 
-                // 上传简历按钮
+                // 导入简历文件按钮
                 const uploadResumeBtn = document.getElementById('upload-resume-btn');
                 if (uploadResumeBtn) {
                     uploadResumeBtn.addEventListener('click', function() {
@@ -791,60 +792,55 @@
 
             async confirmUpload() {
                 if (!this.uploadedFiles.length) { ui.showNotification('请先选择要上传的文件', 'warning'); return }
-                let token = null;
-                try {
-                    token = (JSON.parse(localStorage.getItem('userInfo')||'{}').token)||null;
-                } catch (_){
-                    token = null;
-                }
-                const headers = token ? { Authorization: 'Bearer '+token } : {};
                 
-                const bases = [
-                    (window.resumeDataManager && window.resumeDataManager.apiBaseUrl) ? window.resumeDataManager.apiBaseUrl : (window.userAuthInstance && window.userAuthInstance.apiBaseUrl ? window.userAuthInstance.apiBaseUrl : '/api'),
-                    'http://localhost:3001/api',
-                    'http://localhost:3000/api'
-                ];
+                const newResumeIds = [];
+                const tempResumes = [];
                 
-                try{
-                    const newResumeIds = [];
-                    const tempResumes = []; // Store temp objects to persist across reloads
-
-                    for (const fileData of this.uploadedFiles) {
-                        const fd = new FormData();
-                        fd.append('file', fileData.file);
-                        let json = null;
-                        let ok = false;
+                const uploadHandler = new ResumeUploadHandler({
+                    uploadEndpoint: '/library/upload',
+                    apiRequest: async (endpoint, method, data) => {
+                        let token = null;
+                        try {
+                            token = (JSON.parse(localStorage.getItem('userInfo')||'{}').token)||null;
+                        } catch (_){
+                            token = null;
+                        }
+                        const headers = token ? { 
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer '+token 
+                        } : { 'Content-Type': 'application/json' };
+                        
+                        const bases = [
+                            (window.resumeDataManager && window.resumeDataManager.apiBaseUrl) ? window.resumeDataManager.apiBaseUrl : (window.userAuthInstance && window.userAuthInstance.apiBaseUrl ? window.userAuthInstance.apiBaseUrl : '/api'),
+                            '/api'
+                        ];
+                        
                         for (const b of bases) {
                             try {
-                                const res = await fetch(`${b}/ai/upload`, { method:'POST', headers, body: fd });
-                                json = await res.json();
-                                if (res.ok && json && json.success) { ok = true; baseUrl = b; break; }
+                                const res = await fetch(`${b}${endpoint}`, { method, headers, body: JSON.stringify(data) });
+                                const json = await res.json();
+                                if (res.ok && json && json.success) { return json; }
                             } catch (_){ continue }
                         }
-                        if (!ok) throw new Error(((json && json.error && json.error.message) ? json.error.message : '上传失败'));
-                        
-                        // 收集新上传的简历ID
-                        if (json.data && (json.data.resumeId || json.data.id)) {
-                            const newId = json.data.resumeId || json.data.id;
+                        throw new Error('上传失败');
+                    },
+                    onSuccess: (result, file) => {
+                        if (result.data && (result.data.resumeId || result.data.id)) {
+                            const newId = result.data.resumeId || result.data.id;
                             newResumeIds.push(newId);
                             
-                            // Manually add to allResumes to ensure immediate availability
                             if (!this.allResumes) this.allResumes = [];
-                            
-                            // Check if already exists
                             const exists = this.allResumes.some(r => r.id === newId);
                             if (!exists) {
-                                // Prioritize the name from database response (which might have been fixed for encoding)
-                                const fileName = json.data.file_name || (json.file && json.file.originalName ? json.file.originalName : (fileData.file ? fileData.file.name : 'Unknown'));
+                                const fileName = result.data.file_name || (result.file && result.file.originalName ? result.file.originalName : file.name);
                                 const extMatch = fileName.match(/\.(pdf|docx|doc|txt)$/i);
                                 const fileType = extMatch ? ('.' + extMatch[1].toLowerCase()) : '.pdf';
                                 const name = fileName.replace(/\.[^/.]+$/, '');
                                 
-                                // Construct a temporary resume object
                                 const newResume = {
                                     id: newId,
                                     name: name,
-                                    position: '待解析', // Default
+                                    position: '待解析',
                                     positionType: 'other',
                                     fileName: fileName,
                                     fileType: fileType,
@@ -855,43 +851,47 @@
                                     education: '—',
                                     salary: '—'
                                 };
-                                this.allResumes.unshift(newResume); // Add to beginning
-                                tempResumes.push(newResume); // Keep a copy
+                                this.allResumes.unshift(newResume);
+                                tempResumes.push(newResume);
                             }
                         }
+                    },
+                    onError: (error, file) => {
+                        console.error('Upload failed:', error);
+                        ui.showNotification(`上传 ${file.name} 失败: ${error.message}`, 'error');
+                    },
+                    onProgress: (current, total, file) => {
+                        console.log(`正在上传 (${current + 1}/${total}): ${file.name}`);
                     }
+                });
+
+                try {
+                    await uploadHandler.uploadFiles(this.uploadedFiles.map(f => f.file));
                     ui.showNotification('文件上传成功', 'success');
                     
-                    // 自动选中新上传的简历
                     if (newResumeIds.length > 0) {
                         newResumeIds.forEach(id => this.selectedResumes.add(id));
                         this.updateSelectionCount();
                     }
                     
-                    // Reload list
                     await this.prepareRealResumes();
                     
-                    // Re-apply manual addition if server missed it (fix for race condition)
-                     if (newResumeIds.length > 0) {
-                        // Restore any temp resumes that are missing from the fresh list
+                    if (newResumeIds.length > 0) {
                         tempResumes.forEach(tempR => {
                              const exists = this.allResumes.some(r => r.id === tempR.id);
                              if (!exists) {
                                  this.allResumes.unshift(tempR);
                              }
                         });
-
-                        // Re-add selection
                         newResumeIds.forEach(id => this.selectedResumes.add(id));
                         this.updateSelectionCount();
                     }
                     
                     this.loadResumeList();
                     this.renderSelectedResumeList();
-                }catch(e){
+                } catch (e) {
                     ui.showNotification('上传失败: '+(e.message||'未知错误'), 'error');
                 } finally {
-                    // 关闭模态并清理
                     if (this.uploadModal) {
                         this.uploadModal.classList.add('hidden');
                         this.uploadModal.classList.remove('flex');
@@ -1000,44 +1000,12 @@
                         const tags = Array.isArray(r.tags)? r.tags: [];
                     var score = (latestMap[r.id] && typeof latestMap[r.id].score==='number') ? latestMap[r.id].score : 0;
                         const posType = this.inferPositionType(tags);
-                        return { id:r.id, name, position: tags[0]||'未知职位', positionType: posType, fileName, fileType, uploadTime: new Date(r.upload_date||Date.now()), score, skills: tags, experience: '—', education: '—', salary: '—' }
+                        return { id:r.id, name, position: tags[0]||'未知职位', positionType: posType, fileName, fileType, uploadTime: new Date(r.upload_date||Date.now()), score, experience: '—', education: '—', salary: '—' }
                     }).sort(function(a,b){ return b.uploadTime - a.uploadTime; })
                 }catch(e){ this.allResumes = [] }
             }
             inferPositionType(tags){
-                const t=(tags||[]).join(' ').toLowerCase();
-                if(/(前端|javascript|react|vue)/.test(t)) return 'frontend';
-                if(/(后端|java|python|spring|mysql|node)/.test(t)) return 'backend';
-                if(/(android|ios|移动|flutter|react native)/.test(t)) return 'mobile';
                 return 'fullstack';
-            }
-            
-            generateRandomSkills(posType) {
-                const skillMap = {
-                    'frontend': ['JavaScript', 'React', 'Vue', 'HTML', 'CSS', 'TypeScript', 'Webpack'],
-                    'backend': ['Java', 'Python', 'Spring', 'MySQL', 'Redis', 'Docker', 'Kubernetes'],
-                    'fullstack': ['JavaScript', 'Node.js', 'React', 'Python', 'MongoDB', 'AWS'],
-                    'mobile': ['Swift', 'Kotlin', 'React Native', 'Flutter', 'iOS', 'Android'],
-                    'ui': ['Sketch', 'Figma', 'Photoshop', 'Principle', '交互设计', '用户研究'],
-                    'pm': ['产品设计', '需求分析', '数据分析', 'Axure', '项目管理'],
-                    'test': ['自动化测试', 'Selenium', 'JMeter', '性能测试', '接口测试'],
-                    'data': ['Python', 'SQL', 'Tableau', 'Power BI', '机器学习', 'R'],
-                    'ops': ['内容运营', '数据分析', '用户增长', 'SEM', 'SEO'],
-                    'other': ['沟通协调', '团队管理', '项目管理', 'Office']
-                };
-                
-                const skills = skillMap[posType] || skillMap['other'];
-                const selectedSkills = [];
-                const count = Math.floor(Math.random() * 4) + 3; // 3-6个技能
-                
-                for (let i = 0; i < count; i++) {
-                    const skill = skills[Math.floor(Math.random() * skills.length)];
-                    if (!selectedSkills.includes(skill)) {
-                        selectedSkills.push(skill);
-                    }
-                }
-                
-                return selectedSkills;
             }
             
             // 初始化简历库模态框事件
@@ -1181,8 +1149,7 @@
                         const keyword = this.searchKeyword.toLowerCase();
                         if (!resume.name.toLowerCase().includes(keyword) && 
                             !resume.position.toLowerCase().includes(keyword) &&
-                            !resume.fileName.toLowerCase().includes(keyword) &&
-                            !Array.prototype.some.call(resume.skills || [], function(skill){ return String(skill).toLowerCase().includes(keyword); })) {
+                            !resume.fileName.toLowerCase().includes(keyword)) {
                             return false;
                         }
                     }
@@ -1264,12 +1231,6 @@
                 const scoreColor = this.getScoreColor(resume.score);
                 
                 var isChecked = this.selectedResumes.has(resume.id) ? 'checked' : '';
-                var skillsHtml = '';
-                var arr = (resume.skills || []).slice(0, 3);
-                for (var i = 0; i < arr.length; i++) {
-                    skillsHtml += '<span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">' + arr[i] + '</span>';
-                }
-                var moreSkillsHtml = (resume.skills && resume.skills.length > 3) ? ('<span class="text-xs text-gray-400">+' + (resume.skills.length - 3) + '</span>') : '';
                 
                 div.innerHTML = 
                     '<div class="flex items-center space-x-4">' +
@@ -1294,12 +1255,6 @@
                                     '<span class="text-gray-400">|</span>' +
                                     '<span class="text-xs text-gray-500 truncate" title="' + resume.fileName + '">' + resume.fileName + '</span>' +
                                 '</div>' +
-                            '</div>' +
-                        '</div>' +
-                        '<div class="flex-shrink-0 w-40">' +
-                            '<div class="flex flex-wrap gap-1">' +
-                                skillsHtml +
-                                moreSkillsHtml +
                             '</div>' +
                         '</div>' +
                         '<div class="flex-shrink-0 w-20 text-center">' +
@@ -1595,7 +1550,6 @@
                     this.singleChart = echarts.init(radarEl);
                     var radarData = [
                         scores.job_match || 0,
-                        scores.skill_match || 0,
                         scores.experience_match || 0,
                         scores.learning_ability || 0,
                         scores.teamwork || 0
@@ -1605,7 +1559,6 @@
                         radar: {
                             indicator: [
                                 { name: '岗位匹配度', max: 5 },
-                                { name: '技能匹配度', max: 5 },
                                 { name: '经验匹配度', max: 5 },
                                 { name: '学习能力', max: 5 },
                                 { name: '团队协作', max: 5 }
@@ -1774,7 +1727,6 @@
                         seriesData.push({
                             value: [
                                 scores.job_match ? (scores.job_match[label] || 0) : 0,
-                                scores.skill_match ? (scores.skill_match[label] || 0) : 0,
                                 scores.experience_match ? (scores.experience_match[label] || 0) : 0,
                                 scores.learning_ability ? (scores.learning_ability[label] || 0) : 0,
                                 scores.teamwork ? (scores.teamwork[label] || 0) : 0
@@ -1789,7 +1741,6 @@
                         radar: {
                             indicator: [
                                 { name: '岗位匹配度', max: 5 },
-                                { name: '技能匹配度', max: 5 },
                                 { name: '经验匹配度', max: 5 },
                                 { name: '学习能力', max: 5 },
                                 { name: '团队协作', max: 5 }
@@ -2059,8 +2010,7 @@
 
                     const bases = [
                         (window.resumeDataManager && window.resumeDataManager.apiBaseUrl) ? window.resumeDataManager.apiBaseUrl : (window.userAuthInstance && window.userAuthInstance.apiBaseUrl ? window.userAuthInstance.apiBaseUrl : '/api'),
-                        'http://localhost:3001/api',
-                        'http://localhost:3000/api'
+                        '/api'
                     ];
 
                     try {
@@ -2164,8 +2114,7 @@
 
                     const bases2 = [
                         (window.resumeDataManager && window.resumeDataManager.apiBaseUrl) ? window.resumeDataManager.apiBaseUrl : (window.userAuthInstance && window.userAuthInstance.apiBaseUrl ? window.userAuthInstance.apiBaseUrl : '/api'),
-                        'http://localhost:3001/api',
-                        'http://localhost:3000/api'
+                        '/api'
                     ];
 
                     let res = null;
@@ -2222,16 +2171,6 @@
                              html += `<div><span class="text-gray-500">学历：</span>${result.basic_info.education || '-'}</div>`;
                              html += `<div><span class="text-gray-500">工作年限：</span>${result.basic_info.years_of_experience || '-'}</div>`;
                              html += '</div></div>';
-                        }
-                        
-                        // Skills
-                        if (result.skills && result.skills.length) {
-                            html += '<div><h3 class="text-lg font-semibold mb-3 border-l-4 border-blue-500 pl-3">技能专长</h3>';
-                            html += '<div class="flex flex-wrap gap-2">';
-                            result.skills.forEach(skill => {
-                                html += `<span class="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm">${skill}</span>`;
-                            });
-                            html += '</div></div>';
                         }
                         
                         // Work Experience
@@ -2689,8 +2628,7 @@
                         const keyword = this.librarySearchKeyword.toLowerCase();
                         if (!resume.name.toLowerCase().includes(keyword) && 
                             !resume.position.toLowerCase().includes(keyword) &&
-                            !resume.fileName.toLowerCase().includes(keyword) &&
-                            !Array.prototype.some.call(resume.skills || [], function(skill){ return String(skill).toLowerCase().includes(keyword); })) {
+                            !resume.fileName.toLowerCase().includes(keyword)) {
                             return false;
                         }
                     }
@@ -2811,10 +2749,6 @@
                 const scoreColor = this.getScoreColor(resume.score);
                 
                 var checkedAttr = this.librarySelectedResumes.has(resume.id) ? 'checked' : '';
-                var skillsArr = (resume.skills || []).slice(0,3);
-                var skillsHtml = '';
-                for (var i=0;i<skillsArr.length;i++){ skillsHtml += '<span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">'+skillsArr[i]+'</span>'; }
-                var skillsMore = (resume.skills && resume.skills.length>3) ? ('<span class="text-xs text-gray-400">+'+(resume.skills.length-3)+'</span>') : '';
                 var upText = this.formatDate(resume.uploadTime);
                 div.innerHTML = '<div class="flex items-center space-x-4">\
                         <div class="flex items-center space-x-2 flex-shrink-0">\
@@ -2838,7 +2772,7 @@
                             </div>\
                         </div>\
                         <div class="flex-shrink-0 w-40">\
-                            <div class="flex flex-wrap gap-1">'+skillsHtml+skillsMore+'\
+                            <div class="flex flex-wrap gap-1">\
                             </div>\
                         </div>\
                         <div class="flex-shrink-0 w-20 text-center">\

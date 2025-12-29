@@ -10,7 +10,10 @@ const path = require('path');
 const fs = require('fs');
 
 const aiController = require('../controllers/aiController');
+const aiAnalysisController = require('../controllers/aiAnalysisController');
 const multer = require('multer');
+const ResumeWebScraper = require('../services/resumeWebScraper');
+const OptimizedResumeParseService = require('../services/optimizedResumeParseService');
 
 const router = express.Router();
 
@@ -111,23 +114,64 @@ router.post('/import-link', authenticate, Permission.requireSubscription, Permis
       // ignore
     }
 
+    // 使用网页抓取服务获取简历数据
+    const scraper = new ResumeWebScraper();
+    const scrapeResult = await scraper.scrapeResume(url);
+
+    if (!scrapeResult.success) {
+      return res.status(400).json({ 
+        success: false, 
+        error: { message: '抓取简历失败: ' + scrapeResult.error } 
+      });
+    }
+
+    // 将抓取的数据转换为文本格式
+    const resumeText = scraper.convertScrapedDataToText(scrapeResult.data);
+
+    // 使用统一的解析服务解析简历
+    const parseService = new OptimizedResumeParseService();
+    const parsedData = await parseService.parseResumeContent(resumeText, 'txt');
+
     // 创建简历记录
-    const resume = await Resume.create({
+    const resumeData = {
       user_id: req.user.id,
       file_name: fileName,
-      file_size: 0, // 链接导入暂时无法获取大小
+      file_size: 0,
       file_type: 'link',
-      file_path: url, // 存储URL
+      file_path: url,
       status: 'uploaded',
-      upload_date: new Date()
-    });
+      upload_date: new Date(),
+      parsed_data: parsedData,
+      raw_text: resumeText,
+      source: 'link_import'
+    };
+
+    // 从解析数据中提取各个字段
+    if (parsedData) {
+      resumeData.name = parsedData.name || null;
+      resumeData.phone = parsedData.phone || null;
+      resumeData.email = parsedData.email || null;
+      resumeData.location = parsedData.location || parsedData.city || parsedData.expectCity || null;
+      resumeData.job_title = parsedData.job_title || null;
+      resumeData.experience_years = parsedData.experience_years || null;
+      resumeData.highest_education = parsedData.highest_education || null;
+      resumeData.job_status = parsedData.job_status || null;
+      resumeData.expected_salary = parsedData.expected_salary || null;
+      resumeData.work_experience = parsedData.work_experience || null;
+      resumeData.education = parsedData.education || null;
+      resumeData.skills = parsedData.skills || null;
+      resumeData.summary = parsedData.summary || null;
+      resumeData.projects = parsedData.projects || null;
+    }
+
+    const resume = await Resume.create(resumeData);
 
     // 记录用户活动
     try {
       await UserActivity.create({
         user_id: req.user.id,
         action: 'resume_import_link',
-        details: { resumeId: resume.id, url: url },
+        details: { resumeId: resume.id, url: url, platform: scrapeResult.platform },
         ip_address: req.ip,
         user_agent: req.get('User-Agent')
       });
@@ -143,7 +187,9 @@ router.post('/import-link', authenticate, Permission.requireSubscription, Permis
         id: resume.id,
         file_name: resume.file_name,
         upload_date: resume.upload_date,
-        file_type: 'link'
+        file_type: 'link',
+        platform: scrapeResult.platform,
+        parsed: parsedData
       }
     });
   } catch (error) {
@@ -159,86 +205,7 @@ router.post('/import-link', authenticate, Permission.requireSubscription, Permis
 });
 
 // 文件上传解析
-router.post('/upload', authenticate, Permission.requireSubscription, Permission.checkApiLimit('resumeUpload'), Permission.rateLimit(300, 60*60*1000), upload.single('file'), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        error: { message: '未接收到文件' }
-      });
-    }
-
-    // 尝试修复文件名编码 (解决乱码问题)
-    let originalName = req.file.originalname;
-    try {
-      // 如果包含乱码字符或全是不可打印字符，尝试 latin1 -> utf8 转换
-      // 这里简单尝试转换，如果转换后的名字看起来更合理（比如是有效的UTF8字符串），则使用
-      // 对于中文乱码，通常表现为 ISO-8859-1 (latin1) 解码了 UTF-8 字节
-      const decodedName = Buffer.from(originalName, 'latin1').toString('utf8');
-      // 简单的启发式检查：如果转换后的字符串包含中文字符，而原始字符串不包含（或包含乱码），则采用转换后的
-      // 或者直接采用转换后的，因为现代浏览器通常发送 UTF-8，而某些中间件可能误读为 latin1
-      if (decodedName.length < originalName.length || /[\u4e00-\u9fa5]/.test(decodedName)) {
-         originalName = decodedName;
-      }
-    } catch (e) {
-      // ignore conversion errors
-    }
-
-    const fileType = path.extname(originalName).toLowerCase().substring(1) || 'txt';
-    const relativePath = '/uploads/resumes/' + req.file.filename;
-
-    // 创建简历记录
-    const resume = await Resume.create({
-      user_id: req.user.id,
-      file_name: originalName,
-      file_size: req.file.size,
-      file_type: fileType,
-      file_path: relativePath,
-      status: 'uploaded',
-      upload_date: new Date()
-    });
-
-    // 记录用户活动
-    try {
-      await UserActivity.create({
-        user_id: req.user.id,
-        action: 'resume_upload',
-        details: { resumeId: resume.id, fileName: resume.file_name },
-        ip_address: req.ip,
-        user_agent: req.get('User-Agent')
-      });
-    } catch (err) {
-      console.error('Failed to log user activity:', err);
-      // Don't block response
-    }
-
-    res.json({
-      success: true,
-      message: '文件上传成功',
-      data: {
-        resumeId: resume.id,
-        id: resume.id,
-        file_name: resume.file_name,
-        upload_date: resume.upload_date
-      },
-      file: {
-        originalName: req.file.originalname,
-        size: req.file.size,
-        mimetype: req.file.mimetype,
-        path: relativePath
-      }
-    });
-  } catch (error) {
-    console.error('Upload error:', error);
-    res.status(500).json({
-      success: false,
-      error: {
-        code: 'UPLOAD_FAILED',
-        message: '上传失败: ' + error.message
-      }
-    });
-  }
-});
+router.post('/upload', authenticate, Permission.requireSubscription, Permission.checkApiLimit('resumeUpload'), Permission.rateLimit(300, 60*60*1000), aiAnalysisController.upload.single('file'), aiAnalysisController.uploadAndParseDocument);
 
 // 网址读取并分析
 router.post('/read-url', authenticate, Permission.requireSubscription, Permission.checkApiLimit('aiAnalysis'), Permission.rateLimit(200, 60*60*1000), aiController.readResumeFromUrl.bind(aiController));

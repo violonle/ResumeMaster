@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>招聘流程管理 - 争湃·简历大师</title>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <script src="../js/tailwindcss.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../css/design-system.css">
@@ -43,52 +44,40 @@
     </header>
 
     <!-- Main Content Wrapper -->
-    <main id="main-content" class="main-content h-full flex flex-col pt-20">
+    <main id="main-content" class="main-content h-full flex flex-col pt-20 p-6">
         
         <!-- Controls Section (Styled like Dashboard) -->
-        <section class="px-6 pt-6 pb-4">
-             <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+        <section class="pt-6 pb-4">
+             <div class="bg-white rounded-lg shadow p-4 mb-6">
                 <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
                     <!-- Left: Job Selector -->
                     <div class="flex items-center gap-4 flex-wrap">
+                        <div id="process-stats" class="hidden lg:block bg-blue-50 px-4 py-2 rounded-lg text-blue-700 border border-blue-100">
+                            <!-- Stats populated by JS -->
+                        </div>
                         <span class="text-gray-600 font-medium">筛选职位:</span>
                         <select id="jobSelect" class="border-gray-300 rounded-lg shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500 min-w-[200px] max-w-[300px] py-2">
                             <!-- Options populated by JS -->
                         </select>
                         <!-- Moved Search here -->
-                        <div class="relative ml-4">
-                            <input type="text" placeholder="搜索候选人..." class="pl-8 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 w-64">
-                            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        <div class="relative flex-1 group">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <i class="fas fa-search text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
+                            </div>
+                            <input type="text" id="search-box" placeholder="搜索候选人姓名、职位..." 
+                                   class="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all text-sm shadow-sm">
                         </div>
                     </div>
 
                     <!-- Right: Actions & Stats -->
                     <div class="flex items-center gap-4 flex-wrap">
-                        <div id="process-stats" class="hidden lg:block bg-blue-50 px-4 py-2 rounded-lg text-blue-700 border border-blue-100">
-                            <!-- Stats populated by JS -->
-                        </div>
-                        <div class="flex gap-2">
-                             <div class="flex gap-2 mr-2 border-r pr-2 border-gray-200">
-                                <button class="text-gray-600 hover:text-blue-600 font-medium px-2 py-1 rounded hover:bg-gray-50"><i class="fas fa-filter mr-1"></i>筛选</button>
-                                <button class="text-gray-600 hover:text-blue-600 font-medium px-2 py-1 rounded hover:bg-gray-50"><i class="fas fa-sort-amount-down mr-1"></i>排序</button>
-                             </div>
-                            <a href="job-posting.html" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-lg font-medium text-sm text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors shadow-lg shadow-blue-500/30">
-                                <i class="fas fa-plus mr-2"></i>发布职位
-                            </a>
-                            <a href="resume-tools.html" class="inline-flex items-center px-4 py-2 bg-white border border-gray-200 rounded-lg font-medium text-sm text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
-                                <i class="fas fa-file-import mr-2"></i>导入简历
-                            </a>
-                            <a href="data-analysis.html" class="inline-flex items-center p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
-                                <i class="fas fa-chart-pie text-lg"></i>
-                            </a>
-                        </div>
                     </div>
                 </div>
             </div>
         </section>
 
         <!-- Kanban Board Area -->
-        <section class="flex-1 hide-x-scrollbar px-6 pb-6 relative">
+        <section class="flex-1 hide-x-scrollbar pb-6 relative">
             <div id="kanban-board" class="flex gap-4 h-full min-w-max pb-4">
                 <!-- Columns populated by JS -->
             </div>
@@ -107,29 +96,29 @@
                     <form id="interviewForm" class="space-y-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">面试类型</label>
-                            <select class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                                <option>视频面试</option>
-                                <option>现场面试</option>
-                                <option>电话面试</option>
+                            <select name="type" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                <option value="video">视频面试</option>
+                                <option value="offline">现场面试</option>
+                                <option value="phone">电话面试</option>
                             </select>
                         </div>
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">日期</label>
-                                <input type="date" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" required>
+                                <input type="date" name="date" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" required>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">时间</label>
-                                <input type="time" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" required>
+                                <input type="time" name="time" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" required>
                             </div>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">面试官</label>
-                            <input type="text" placeholder="输入面试官姓名" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <input type="text" name="interviewer" placeholder="输入面试官姓名" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">备注/链接</label>
-                            <textarea rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"></textarea>
+                            <textarea name="notes" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"></textarea>
                         </div>
                         <div class="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
                             <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:col-start-2 sm:text-sm">
@@ -161,29 +150,29 @@
                                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                         <span class="text-gray-500 sm:text-sm">¥</span>
                                     </div>
-                                    <input type="number" class="focus:ring-blue-500 focus:border-blue-500 block w-full pl-7 sm:text-sm border-gray-300 rounded-md" placeholder="20000">
+                                    <input type="number" name="salary" class="focus:ring-blue-500 focus:border-blue-500 block w-full pl-7 sm:text-sm border-gray-300 rounded-md" placeholder="20000">
                                 </div>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">年终奖 (月数)</label>
-                                <input type="number" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="14">
+                                <input type="number" name="bonus" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="14">
                             </div>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">入职日期</label>
-                            <input type="date" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" required>
+                            <input type="date" name="startDate" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" required>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">试用期 (月)</label>
-                            <select class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                                <option>3个月</option>
-                                <option>6个月</option>
-                                <option>无</option>
+                            <select name="probation" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                <option value="3">3个月</option>
+                                <option value="6">6个月</option>
+                                <option value="0">无</option>
                             </select>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">附加说明</label>
-                            <textarea rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"></textarea>
+                            <textarea name="content" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"></textarea>
                         </div>
                         <div class="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
                             <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:col-start-2 sm:text-sm">
@@ -201,6 +190,7 @@
 
     <!-- Shared Utils -->
     <script src="../js/user-auth.js"></script>
+    <script src="../js/resume-data.js"></script>
     <script src="../js/ui-components.js"></script>
     <script src="/js/sidebar.js"></script>
     <script src="../js/recruitment-flow-controller.js"></script>
@@ -214,6 +204,11 @@
             // Initialize header profile
             if (typeof HeaderProfile !== 'undefined') {
                 HeaderProfile.init('#header-right-section');
+            }
+            
+            // Initialize recruitment flow controller
+            if (typeof recruitmentFlowController !== 'undefined') {
+                recruitmentFlowController.init();
             }
         });
     </script>

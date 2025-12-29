@@ -166,6 +166,18 @@
         @update:items-per-page="handleItemsPerPageChange"
         hover
       >
+        <!-- 联系人列 -->
+        <template #item.contact_account_id="{ item }">
+          <div class="text-body-2">{{ item.Contact?.real_name || item.Contact?.username || item.contact_account_id || '-' }}</div>
+        </template>
+
+        <!-- 地区列 -->
+        <template #item.region="{ item }">
+          <div class="text-body-2">
+            {{ [item.province, item.city, item.district].filter(Boolean).join(' / ') || '-' }}
+          </div>
+        </template>
+
         <!-- 认证状态列 -->
         <template #item.is_verified="{ item }">
           <VChip
@@ -192,16 +204,16 @@
 
         <!-- 创建时间列 -->
         <template #item.created_at="{ item }">
-          <div class="text-body-2">{{ formatDate(item.created_at) }}</div>
+          <div class="text-caption">{{ formatDate(item.created_at, 'yyyy-MM-dd') }}</div>
         </template>
 
         <!-- 操作列 -->
         <template #item.actions="{ item }">
-          <div class="d-flex justify-end">
+          <div class="d-flex justify-end align-center">
             <VBtn
-              icon
-              size="small"
               variant="text"
+              size="small"
+              icon
               color="info"
               class="me-1"
               @click="viewCompany(item)"
@@ -211,22 +223,9 @@
             </VBtn>
             
             <VBtn
-              v-if="!item.is_verified"
-              icon
-              size="small"
               variant="text"
-              color="success"
-              class="me-1"
-              @click="openVerifyDialog(item)"
-            >
-              <VIcon icon="mdi-check-decagram-outline" size="20" />
-              <VTooltip activator="parent" location="top">认证审核</VTooltip>
-            </VBtn>
-            
-            <VBtn
-              icon
               size="small"
-              variant="text"
+              icon
               color="primary"
               class="me-1"
               @click="editCompany(item)"
@@ -234,17 +233,64 @@
               <VIcon icon="mdi-pencil-outline" size="20" />
               <VTooltip activator="parent" location="top">编辑企业</VTooltip>
             </VBtn>
-            
+
             <VBtn
-              icon
-              size="small"
               variant="text"
-              color="error"
-              @click="confirmDelete(item)"
+              size="small"
+              icon
+              color="success"
+              class="me-1"
+              @click="viewCompanyResumes(item)"
             >
-              <VIcon icon="mdi-trash-can-outline" size="20" />
-              <VTooltip activator="parent" location="top">删除企业</VTooltip>
+              <VIcon icon="mdi-file-document-outline" size="20" />
+              <VTooltip activator="parent" location="top">企业简历</VTooltip>
             </VBtn>
+
+            <VBtn
+              variant="text"
+              size="small"
+              icon
+              color="warning"
+              class="me-1"
+              @click="viewCompanyJobs(item)"
+            >
+              <VIcon icon="mdi-briefcase-outline" size="20" />
+              <VTooltip activator="parent" location="top">职位管理</VTooltip>
+            </VBtn>
+
+            <VMenu location="bottom end" open-on-hover>
+              <template v-slot:activator="{ props }">
+                <VBtn
+                  variant="text"
+                  size="small"
+                  icon
+                  color="grey-darken-1"
+                  v-bind="props"
+                >
+                  <VIcon icon="mdi-dots-vertical" size="20" />
+                  <VTooltip activator="parent" location="top">更多操作</VTooltip>
+                </VBtn>
+              </template>
+              <VList density="compact">
+                <VListItem
+                  prepend-icon="mdi-check-decagram-outline"
+                  title="认证审核"
+                  @click="openVerifyDialog(item)"
+                />
+                <VListItem
+                  prepend-icon="mdi-card-account-details-outline"
+                  title="订阅信息"
+                  @click="viewSubscription(item)"
+                />
+                <VDivider class="my-1" />
+                <VListItem
+                  prepend-icon="mdi-trash-can-outline"
+                  title="删除企业"
+                  color="error"
+                  @click="confirmDelete(item)"
+                />
+              </VList>
+            </VMenu>
           </div>
         </template>
 
@@ -503,16 +549,14 @@ const accountItems = ref([])
 
 // 表格配置
 const headers = [
-  { title: 'ID', key: 'id', width: '80px' },
-  { title: '企业名称', key: 'name' },
-  { title: '联系人账号', key: 'contact_account_id' },
-  { title: '省份', key: 'province' },
-  { title: '地市', key: 'city' },
-  { title: '县市区', key: 'district' },
-  { title: '认证', key: 'is_verified', width: '100px' },
-  { title: '状态', key: 'status', width: '100px' },
-  { title: '创建时间', key: 'created_at', width: '180px' },
-  { title: '操作', key: 'actions', width: '200px', sortable: false },
+  { title: 'ID', key: 'id', width: '60px' },
+  { title: '企业名称', key: 'name', minWidth: '150px' },
+  { title: '联系人', key: 'contact_account_id', width: '90px' },
+  { title: '地区', key: 'region', width: '150px' },
+  { title: '认证', key: 'is_verified', width: '70px' },
+  { title: '状态', key: 'status', width: '70px' },
+  { title: '创建时间', key: 'created_at', width: '110px' },
+  { title: '操作', key: 'actions', width: '220px', sortable: false, align: 'end' },
 ]
 
 const verifiedOptions = [
@@ -538,9 +582,9 @@ const currentPage = computed({
 })
 
 // 方法
-const formatDate = (date) => {
+const formatDate = (date, pattern = 'yyyy-MM-dd HH:mm') => {
   if (!date) return '-'
-  return format(new Date(date), 'yyyy-MM-dd HH:mm', { locale: zhCN })
+  return format(new Date(date), pattern, { locale: zhCN })
 }
 
 const getStatusColor = (status) => {
@@ -580,6 +624,19 @@ const handleItemsPerPageChange = (itemsPerPage) => {
 
 const viewCompany = (company) => {
   router.push(`/companies/${company.id}`)
+}
+
+const viewCompanyResumes = (company) => {
+  router.push({ name: 'company-resumes', params: { id: company.id } })
+}
+
+const viewCompanyJobs = (company) => {
+  router.push({ name: 'company-jobs', params: { id: company.id } })
+}
+
+const viewSubscription = (company) => {
+  // 假设订阅信息页面路由为 subscription-detail，或者根据业务逻辑跳转
+  router.push({ name: 'subscriptions', query: { company_id: company.id } })
 }
 
 const openVerifyDialog = (company) => { verifyTarget.value = company; showVerifyDialog.value = true }

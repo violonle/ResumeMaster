@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>登录 - 争湃·简历大师</title>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <script src="../js/tailwindcss.js"></script>
     <script src="../js/ui-components.js"></script>
     <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -12,9 +13,9 @@
         body{ background:#f5f7fa; }
         .auth-shell{ display:grid; grid-template-columns: 420px 1fr; width:100%; max-width:1000px; background:#fff; border:1px solid #e5e7eb; border-radius:12px; overflow:hidden; box-shadow:0 12px 32px rgba(17,24,39,.08) }
         .brand-pane{ padding:32px; background:#f9fafb; border-right:1px solid #e5e7eb }
-        .brand-logo-img{ width:160px; height:auto; border-radius:12px; margin-bottom:12px }
+        .brand-logo-img{ width:96px; height:auto; border-radius:12px; margin-bottom:0 }
         .brand-logo{ width:48px; height:48px; border-radius:12px; background:#111827; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700 }
-        .brand-pane .brand-title{ margin-top:12px; font-size:20px; font-weight:700; color:#0f172a }
+        .brand-pane .brand-title{ margin-top:0; font-size:28px; font-weight:700; color:#0f172a }
         .brand-desc{ margin-top:4px; color:#64748b; font-size:12px }
         .feature-list{ margin-top:24px; color:#334155; font-size:13px }
         .feature-item{ display:flex; align-items:center; gap:8px; padding:8px 0 }
@@ -37,9 +38,13 @@
     <main class="min-h-screen flex items-center justify-center p-8" id="main-content">
         <div class="auth-shell">
           <div class="brand-pane">
-            <img src="/uploads/avatars/user_6_1765374552691.png" alt="争湃·简历大师" class="brand-logo-img">
-            <div class="brand-title">争湃·简历大师</div>
-            <div class="brand-desc">AI驱动，精准识才</div>
+            <div class="flex items-end mb-8">
+              <img src="/public/logo.png" alt="争湃·简历大师" class="brand-logo-img mr-4">
+              <div class="flex flex-col">
+                <div class="brand-title leading-tight">争湃·简历大师</div>
+                <div class="brand-desc leading-none mt-4">AI驱动，精准识才</div>
+              </div>
+            </div>
             <div class="feature-list">
               <div class="feature-item"><span>• 智能解析与结构化</span></div>
               <div class="feature-item"><span>• 多维对比与评估</span></div>

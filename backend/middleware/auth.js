@@ -32,7 +32,9 @@ const authenticate = async (req, res, next) => {
     }
 
     const decoded = verifyToken(token);
-    const user = await User.findByPk(decoded.id);
+    const user = await User.findByPk(decoded.id, {
+      attributes: ['id', 'username', 'email', 'role', 'company_id']
+    });
     
     if (!user) {
       return res.status(401).json({

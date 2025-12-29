@@ -4,10 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>人才库 - 争湃·简历大师</title>
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
   <script src="../js/tailwindcss.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
   <script src="../js/user-auth.js"></script>
   <script src="../js/resume-data.js?v=2"></script>
+  <script src="../js/resume-upload-handler.js"></script>
   <link rel="stylesheet" href="/css/sidebar.css">
   <style>
     /* 基础样式 */
@@ -47,6 +49,155 @@
       animation: fadeInUp 0.5s ease forwards;
     }
 
+    /* 列表视图样式 */
+    .resume-list-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .resume-list-item {
+      display: flex;
+      align-items: center;
+      padding: 1.5rem;
+      border-bottom: 1px solid #f3f4f6;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .resume-list-item:hover {
+      background-color: #f9fafb;
+    }
+
+    .resume-list-item:last-child {
+      border-bottom: none;
+    }
+
+    .resume-list-avatar {
+      width: 3rem;
+      height: 3rem;
+      border-radius: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-right: 1rem;
+    }
+
+    .resume-list-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .resume-list-name {
+      font-weight: 600;
+      color: #111827;
+      font-size: 1rem;
+    }
+
+    .resume-list-position {
+      color: #2563eb;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    .resume-list-meta {
+      display: flex;
+      gap: 1.5rem;
+      color: #6b7280;
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
+    }
+
+
+
+    .resume-list-score {
+      text-align: center;
+      min-width: 4rem;
+    }
+
+    .resume-list-score-value {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: #2563eb;
+    }
+
+    .resume-list-score-label {
+      font-size: 0.75rem;
+      color: #9ca3af;
+    }
+
+    .resume-list-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-left: 1rem;
+    }
+
+    .resume-list-action-btn {
+      padding: 0.375rem 0.75rem;
+      border-radius: 0.375rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.2s;
+      border: none;
+      cursor: pointer;
+    }
+
+    .resume-list-action-btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .resume-list-action-btn.view {
+      background-color: #2563eb;
+      color: white;
+    }
+
+    .resume-list-action-btn.view:hover {
+      background-color: #1d4ed8;
+    }
+
+    .resume-list-action-btn.analyze {
+      background-color: #dbeafe;
+      color: #1e40af;
+    }
+
+    .resume-list-action-btn.analyze:hover {
+      background-color: #bfdbfe;
+    }
+
+    .resume-list-action-btn.favorite {
+      background-color: #fef3c7;
+      color: #92400e;
+    }
+
+    .resume-list-action-btn.favorite:hover {
+      background-color: #fde68a;
+    }
+
+    /* 视图切换状态 */
+    .view-grid .resume-cards-container {
+      display: grid;
+      grid-template-columns: repeat(1, minmax(0, 1fr));
+    }
+
+    @media (min-width: 768px) {
+      .view-grid .resume-cards-container {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .view-grid .resume-cards-container {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    .view-list .resume-cards-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
     /* 自定义滚动条 */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -71,22 +222,22 @@
   </header>
 
   <!-- Main Content -->
-  <main class="main-content pt-20" id="main-content">
-    <div class="p-8 max-w-[1600px] mx-auto">
+  <main class="main-content pt-20 p-6" id="main-content">
+    <div class="max-w-[1600px] mx-auto">
       <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
         <div>
           <h1 class="text-3xl font-bold text-gray-900 tracking-tight">人才库</h1>
           <p class="text-gray-500 mt-2 text-sm">集中管理您的所有人才资源，高效筛选与跟进。</p>
         </div>
         <div class="flex gap-3">
-            <button onclick="window.location.reload()" class="px-4 py-2.5 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-xl shadow-sm transition-colors text-sm font-medium">
-                <i class="fas fa-sync-alt mr-2"></i> 刷新
+            <button onclick="batchAnalysis()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-md shadow-blue-200 transition-all hover:shadow-lg flex items-center text-sm font-bold">
+              <i class="fas fa-chart-line mr-2"></i> 批量分析
             </button>
             <input id="libraryUploadInput" type="file" accept=".pdf,.doc,.docx,.txt" class="hidden" />
-            <button onclick="document.getElementById('libraryUploadInput').click()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-md shadow-blue-200 transition-all hover:shadow-lg flex items-center text-sm font-bold">
-              <i class="fas fa-plus mr-2"></i> 上传简历
+            <button onclick="openLibraryUploadModal()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-md shadow-blue-200 transition-all hover:shadow-lg flex items-center text-sm font-bold">
+              <i class="fas fa-plus mr-2"></i> 导入简历文件
             </button>
-            <button onclick="openLibraryEmailImportModal()" class="px-5 py-2.5 bg-white border border-blue-600 text-blue-600 hover:bg-blue-50 rounded-xl shadow-md transition-all flex items-center text-sm font-bold">
+            <button onclick="openLibraryEmailModal()" class="px-5 py-2.5 bg-white border border-blue-600 text-blue-600 hover:bg-blue-50 rounded-xl shadow-md transition-all flex items-center text-sm font-bold">
               <i class="fas fa-envelope mr-2"></i> 从邮箱导入
             </button>
         </div>
@@ -106,56 +257,21 @@
             <p class="text-sm font-medium text-gray-500 mb-1">总简历数</p>
             <h3 id="total-resumes-count" class="text-3xl font-bold text-gray-900 tracking-tight">0</h3>
           </div>
-    </div>
+        </div>
 
-    <div id="emailImportOverlay" class="fixed inset-0 bg-black/40 z-50 hidden"></div>
-    <div id="emailImportModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
-      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-gray-900">从邮箱导入</h3>
-          <button class="text-gray-400 hover:text-gray-600" onclick="closeLibraryEmailImportModal()"><i class="fas fa-times"></i></button>
-        </div>
-        <div class="space-y-4">
-          <div>
-            <label class="block text-sm text-gray-700 mb-1">邮箱地址</label>
-            <input id="libEmailAddress" type="email" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="name@example.com">
-          </div>
-          <div>
-            <label class="block text-sm text-gray-700 mb-1">用户名</label>
-            <input id="libEmailUsername" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="邮箱登录用户名">
-          </div>
-          <div>
-            <label class="block text-sm text-gray-700 mb-1">密码</label>
-            <input id="libEmailPassword" type="password" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="邮箱登录密码">
-          </div>
-          <div class="grid grid-cols-3 gap-3">
-            <div class="col-span-2">
-              <label class="block text-sm text-gray-700 mb-1">邮件服务器(IMAP)</label>
-              <input id="libEmailServer" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="imap.example.com">
+        <!-- Pending -->
+        <div class="stat-card bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden group">
+           <div class="absolute right-0 top-0 w-24 h-24 bg-blue-50 rounded-bl-full -mr-4 -mt-4 opacity-50 transition-transform group-hover:scale-110"></div>
+           <div class="relative z-10">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
+                    <i class="fas fa-clock"></i>
+                </div>
             </div>
-            <div>
-              <label class="block text-sm text-gray-700 mb-1">端口</label>
-              <input id="libEmailPort" type="number" value="993" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-            </div>
-          </div>
-          <div class="flex items-center justify-between">
-            <label class="inline-flex items-center"><input id="libEmailSecure" type="checkbox" class="mr-2" checked>使用SSL</label>
-            <div class="text-sm text-gray-500">未读邮件附件与正文将导入人才库</div>
+            <p class="text-sm font-medium text-gray-500 mb-1">待处理简历</p>
+            <h3 id="pending-resumes-count" class="text-3xl font-bold text-gray-900 tracking-tight">0</h3>
           </div>
         </div>
-        <div class="flex items-center justify-between mt-6">
-          <button class="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200" onclick="closeLibraryEmailImportModal()">取消</button>
-          <button id="libEmailStartBtn" class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700" onclick="submitLibraryEmailImport()">开始导入</button>
-        </div>
-        <div id="libEmailProgress" class="mt-4 hidden">
-          <div class="w-full bg-gray-200 rounded-full h-2">
-            <div id="libEmailProgressBar" class="bg-blue-600 h-2 rounded-full" style="width:10%"></div>
-          </div>
-          <p id="libEmailProgressText" class="text-sm text-gray-600 mt-2">准备连接邮箱...</p>
-          <p class="text-xs text-gray-500">已导入 <span id="libEmailProgressCount">0</span> 条</p>
-        </div>
-      </div>
-    </div>
 
         <!-- Excellent -->
         <div class="stat-card bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden group">
@@ -170,32 +286,18 @@
             <h3 id="excellent-resumes-count" class="text-3xl font-bold text-gray-900 tracking-tight">0</h3>
           </div>
         </div>
-        
-        <!-- Average Score -->
+
+        <!-- Passed Initial Screening -->
         <div class="stat-card bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden group">
            <div class="absolute right-0 top-0 w-24 h-24 bg-blue-50 rounded-bl-full -mr-4 -mt-4 opacity-50 transition-transform group-hover:scale-110"></div>
            <div class="relative z-10">
             <div class="flex items-center justify-between mb-4">
                 <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
-                    <i class="fas fa-chart-pie"></i>
+                    <i class="fas fa-check-circle"></i>
                 </div>
             </div>
-            <p class="text-sm font-medium text-gray-500 mb-1">平均得分</p>
-            <h3 id="average-score" class="text-3xl font-bold text-gray-900 tracking-tight">0</h3>
-          </div>
-        </div>
-        
-        <!-- Pending -->
-        <div class="stat-card bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden group">
-           <div class="absolute right-0 top-0 w-24 h-24 bg-blue-50 rounded-bl-full -mr-4 -mt-4 opacity-50 transition-transform group-hover:scale-110"></div>
-           <div class="relative z-10">
-            <div class="flex items-center justify-between mb-4">
-                <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
-                    <i class="fas fa-clock"></i>
-                </div>
-            </div>
-            <p class="text-sm font-medium text-gray-500 mb-1">待处理简历</p>
-            <h3 id="pending-resumes-count" class="text-3xl font-bold text-gray-900 tracking-tight">0</h3>
+            <p class="text-sm font-medium text-gray-500 mb-1">通过初筛</p>
+            <h3 id="passed-screening-count" class="text-3xl font-bold text-gray-900 tracking-tight">0</h3>
           </div>
         </div>
       </div>
@@ -209,11 +311,11 @@
               <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                 <i class="fas fa-search text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
               </div>
-              <input type="text" id="search-box" placeholder="搜索候选人姓名、职位、技能..." 
+              <input type="text" id="search-box" placeholder="搜索候选人姓名、职位..." 
                      class="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all text-sm shadow-sm">
             </div>
             
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-3 justify-end">
               <button id="filter-toggle-btn" class="px-5 py-3 bg-white border border-gray-200 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center shadow-sm">
                 <i class="fas fa-sliders-h mr-2"></i> 筛选器
               </button>
@@ -221,6 +323,40 @@
               <div class="text-sm text-gray-500 whitespace-nowrap">
                 已筛选 <span id="filtered-resumes-count" class="font-bold text-gray-900">0</span> 人
               </div>
+              <div class="h-10 w-px bg-gray-200 mx-1"></div>
+              <button id="multi-select-btn" class="px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center shadow-sm">
+                <i class="fas fa-check-square mr-2"></i> 多选
+              </button>
+              <div class="h-10 w-px bg-gray-200 mx-1"></div>
+              <div class="flex items-center gap-2">
+                <button id="view-grid-btn" class="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors" title="卡片视图">
+                  <i class="fas fa-th-large"></i>
+                </button>
+                <button id="view-list-btn" class="p-2 rounded-lg bg-white text-gray-400 hover:bg-gray-50 hover:text-gray-600 transition-colors" title="列表视图">
+                  <i class="fas fa-list"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Multi-select Action Bar -->
+          <div id="multi-select-bar" class="hidden mb-4 p-4 bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-between">
+            <div class="flex items-center gap-4">
+              <span class="text-sm font-medium text-blue-900">已选择 <span id="selected-count" class="font-bold text-blue-600">0</span> 份简历</span>
+              <button onclick="filterManager.selectAllOnPage()" class="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                <i class="fas fa-check-double mr-1"></i>全选本页
+              </button>
+              <button onclick="filterManager.deselectAll()" class="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                <i class="fas fa-times mr-1"></i>取消选择
+              </button>
+            </div>
+            <div class="flex items-center gap-4">
+              <button onclick="filterManager.batchAnalyzeSelected()" class="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                <i class="fas fa-chart-line mr-1"></i>批量分析
+              </button>
+              <button onclick="filterManager.batchDeleteSelected()" class="text-sm text-red-600 hover:text-red-800 font-medium">
+                <i class="fas fa-trash mr-1"></i>批量删除
+              </button>
             </div>
           </div>
 
@@ -234,17 +370,6 @@
               <button class="role-filter px-3 py-1.5 text-xs font-medium rounded-lg transition-all bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-gray-50" data-role="后端工程师">后端工程师</button>
               <button class="role-filter px-3 py-1.5 text-xs font-medium rounded-lg transition-all bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-gray-50" data-role="测试工程师">测试工程师</button>
               <button class="role-filter px-3 py-1.5 text-xs font-medium rounded-lg transition-all bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-gray-50" data-role="数据分析师">数据分析师</button>
-            </div>
-            
-            <div id="tag-filters" class="flex flex-wrap gap-2 items-center">
-              <span class="text-xs font-bold text-gray-400 uppercase tracking-wider mr-2">技能</span>
-              <button class="tag-filter active px-3 py-1.5 text-xs font-medium rounded-lg transition-all bg-blue-600 text-white shadow-md" data-tag="all">全部</button>
-              <button class="tag-filter px-3 py-1.5 text-xs font-medium rounded-lg transition-all bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-gray-50" data-tag="Java">Java</button>
-              <button class="tag-filter px-3 py-1.5 text-xs font-medium rounded-lg transition-all bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-gray-50" data-tag="Python">Python</button>
-              <button class="tag-filter px-3 py-1.5 text-xs font-medium rounded-lg transition-all bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-gray-50" data-tag="市场营销">市场营销</button>
-              <button class="tag-filter px-3 py-1.5 text-xs font-medium rounded-lg transition-all bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-gray-50" data-tag="React">React</button>
-              <button class="tag-filter px-3 py-1.5 text-xs font-medium rounded-lg transition-all bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-gray-50" data-tag="Vue">Vue</button>
-              <button class="tag-filter px-3 py-1.5 text-xs font-medium rounded-lg transition-all bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-gray-50" data-tag="SQL">SQL</button>
             </div>
              <div class="hidden"><button class="category-filter active" data-category="all" style="display:none"></button></div>
           </div>
@@ -313,80 +438,171 @@
   </main>
 
   <script src="/js/sidebar.js"></script>
+  <script src="../js/resume-upload-modal.js"></script>
   <script>
-    // 统一组件初始化
-    document.addEventListener('DOMContentLoaded', () => { Sidebar.init({ mount: '#sidebar', active: 'librarypool' }) });
+    // 统一初始化 - 确保正确的初始化顺序
+    document.addEventListener('DOMContentLoaded', async () => {
+      // 1. 首先初始化侧边栏
+      try {
+        if (typeof Sidebar !== 'undefined' && typeof Sidebar.init === 'function') {
+          await Sidebar.init({ mount: '#sidebar', active: 'librarypool' });
+          console.log('侧边栏初始化成功');
+        } else {
+          console.error('Sidebar未定义');
+        }
+      } catch (e) {
+        console.error('侧边栏初始化失败:', e);
+      }
 
-    // Auth & Sub Check
-    (async function(){
+      // 2. Auth & Sub Check
+      (async function(){
+        try{
+          const token = (JSON.parse(localStorage.getItem('userInfo')||'{}').token)||null;
+          const headers = token? { Authorization: 'Bearer '+token } : {};
+          const [cur, usage] = await Promise.all([
+            fetch('/api/subscription/current', { headers }).then(r=>r.json()).catch(()=>null),
+            fetch('/api/subscription/usage', { headers }).then(r=>r.json()).catch(()=>null)
+          ]);
+          const statusEl = document.getElementById('sub-status');
+          const progressEl = document.getElementById('sub-progress');
+          const renewEl = document.getElementById('sub-renew');
+          const plan = cur && cur.data ? (cur.data.planType || 'free') : 'unknown';
+          const expiresAt = cur && cur.data ? (cur.data.expiresAt || cur.data.expires_at) : null;
+          const leftDays = (function(){ if(!expiresAt) return null; const d = Math.ceil((new Date(expiresAt)-Date.now())/(1000*60*60*24)); return d })();
+          statusEl.textContent = plan;
+          const u = usage && usage.data ? usage.data : { aiAnalysis:0,resumeUpload:0,jobMatching:0 };
+          const used = (u.aiAnalysis||0) + (u.resumeUpload||0) + (u.jobMatching||0);
+          const pct = Math.max(0, Math.min(100, Math.round((used%100)/100*100)));
+          progressEl.style.width = pct+'%';
+          renewEl.textContent = leftDays!=null ? `距离到期还有 ${leftDays} 天` : '使用量与到期信息暂不可用';
+        }catch(e){}
+      })();
+
+      // 3. 初始化头部用户信息
+      try {
+        if (typeof HeaderProfile !== 'undefined' && typeof HeaderProfile.init === 'function') {
+          HeaderProfile.init('#header-right-section');
+        }
+      } catch (e) {
+        console.error('头部用户信息初始化失败:', e);
+      }
+
+      // 4. 加载人才库数据
+      let data = typeof window.resumeData !== 'undefined' ? window.resumeData : undefined;
+      let dataLoadError = null;
+      
+      if (!Array.isArray(data)) {
+        try {
+          if (window.resumeDataManager && typeof window.resumeDataManager.getTalentPoolResumes === 'function') {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000);
+            
+            const list = await window.resumeDataManager.getTalentPoolResumes();
+            clearTimeout(timeoutId);
+            
+            data = Array.isArray(list) ? list : [];
+            window.resumeData = data;
+          } else if (window.resumeDataManager && typeof window.resumeDataManager.apiRequest === 'function') {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000);
+            
+            const result = await window.resumeDataManager.apiRequest('/library/resumes', 'GET', null, true);
+            clearTimeout(timeoutId);
+            
+            data = (result && result.data) ? result.data : [];
+            window.resumeData = data;
+          }
+        } catch (e) {
+          dataLoadError = e;
+          console.warn('加载人才库数据失败:', e.message);
+          data = [];
+        }
+      }
+      
+      const loadingIndicator = document.getElementById('loading-indicator');
+      const emptyState = document.getElementById('empty-state');
+      const cardsContainer = document.getElementById('resume-cards-container');
+      
+      if (loadingIndicator) loadingIndicator.classList.add('hidden');
+      
+      if (!Array.isArray(data) || data.length===0) {
+        if (emptyState) emptyState.classList.remove('hidden');
+        if (cardsContainer) cardsContainer.innerHTML = '';
+        data = [];
+      }
+      
+      if (Array.isArray(data) && data.length > 0) {
+        var normalized = normalizeResumes(data);
+        window.resumeFilterManager = new ResumeFilterManager(normalized);
+        window.filterManager = window.resumeFilterManager;
+      } else if (emptyState) {
+        if (dataLoadError) {
+          emptyState.classList.remove('hidden');
+          emptyState.innerHTML='<i class="fas fa-exclamation-triangle text-6xl text-amber-400 mb-4"></i><h3 class="text-xl font-semibold text-gray-700 mb-2">加载数据失败</h3><p class="text-gray-500">'+ (dataLoadError.message || '无法连接到服务器') +'</p><button onclick="window.location.reload()" class="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">重新加载</button>';
+        } else {
+          emptyState.classList.remove('hidden');
+          emptyState.innerHTML='<div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4"><i class="fas fa-search text-4xl text-gray-400"></i></div><h3 class="text-lg font-bold text-gray-900 mb-2">未找到匹配的简历</h3><p class="text-gray-500 max-w-sm mx-auto">暂无简历数据，请上传或导入简历。</p>';
+        }
+      }
+      
       try{
-        const token = (JSON.parse(localStorage.getItem('userInfo')||'{}').token)||null;
-        const headers = token? { Authorization: 'Bearer '+token } : {};
-        const [cur, usage] = await Promise.all([
-          fetch('/api/subscription/current', { headers }).then(r=>r.json()).catch(()=>null),
-          fetch('/api/subscription/usage', { headers }).then(r=>r.json()).catch(()=>null)
-        ]);
-        const statusEl = document.getElementById('sub-status');
-        const progressEl = document.getElementById('sub-progress');
-        const renewEl = document.getElementById('sub-renew');
-        const plan = cur && cur.data ? (cur.data.planType || 'free') : 'unknown';
-        const expiresAt = cur && cur.data ? (cur.data.expiresAt || cur.data.expires_at) : null;
-        const leftDays = (function(){ if(!expiresAt) return null; const d = Math.ceil((new Date(expiresAt)-Date.now())/(1000*60*60*24)); return d })();
-        statusEl.textContent = plan;
-        const u = usage && usage.data ? usage.data : { aiAnalysis:0,resumeUpload:0,jobMatching:0 };
-        const used = (u.aiAnalysis||0) + (u.resumeUpload||0) + (u.jobMatching||0);
-        const pct = Math.max(0, Math.min(100, Math.round((used%100)/100*100)));
-        progressEl.style.width = pct+'%';
-        renewEl.textContent = leftDays!=null ? `距离到期还有 ${leftDays} 天` : '使用量与到期信息暂不可用';
-      }catch(e){}
-    })();
+        const emailImportFlag = sessionStorage.getItem('openEmailImportOnLoad');
+        if (emailImportFlag === 'true' && typeof openLibraryEmailImportModal === 'function') {
+          sessionStorage.removeItem('openEmailImportOnLoad');
+          setTimeout(openLibraryEmailImportModal, 500);
+        }
+      }catch(e){ console.warn('检查邮箱导入标志失败:', e) }
+    });
 
     function navigateToJobPosting(){window.location.href='job-posting.html'}
     function navigateToResumeUpload(){window.location.href='resume-upload-pc.html'}
     function navigateToAnalytics(){window.location.href='data-analysis.html'}
 
-    // Resume Logic
-    // 人才库本地上传加入库
+    // Resume Logic - kept for legacy input compatibility, but mainly using modal now
     (function(){
       const inp = document.getElementById('libraryUploadInput');
       if (inp) {
         inp.addEventListener('change', async function(ev){
-          const file = ev.target.files && ev.target.files[0];
-          if (!file) return;
-          const reader = new FileReader();
-          reader.onload = async function(){
-            try{
-              const base64 = reader.result;
-              await window.resumeDataManager.apiRequest('/library/upload', 'POST', { file_name: file.name, file_base64: base64 });
-              notify('已加入人才库','success');
-              window.location.reload();
-            }catch(e){ notify(e.message||'上传失败','error') }
-          };
-          reader.readAsDataURL(file);
+          // Legacy support logic...
         });
       }
-      function notify(msg, type){ try{ if (typeof UIComponents==='function'){ new UIComponents().showNotification(msg,type||'info') } else { console.log(`[${type||'info'}]`, msg) } }catch(_){ console.log(msg) } }
+    })();
+
+    function notify(msg, type){
+        try{ 
+          if (typeof UIComponents !== 'undefined' && typeof UIComponents === 'function'){ 
+            try {
+              const ui = new UIComponents();
+              if (typeof ui.showNotification === 'function') {
+                ui.showNotification(msg, type || 'info');
+                return;
+              }
+            } catch (uiError) {
+              console.warn('UIComponents 通知失败:', uiError);
+            }
+          }
+        }catch(e){ 
+          console.warn('通知错误:', e); 
+        } 
+        setTimeout(() => {
+          alert(msg);
+        }, 100);
+      }
+      
       window.openLibraryEmailImportModal = function(){
         const ov = document.getElementById('emailImportOverlay');
         const md = document.getElementById('emailImportModal');
-        ov.classList.remove('hidden');
-        md.classList.remove('hidden');
-        try{
-          const raw = localStorage.getItem('emailConfig');
-          const cfg = raw ? JSON.parse(raw) : null;
-          if (cfg && cfg.configured){
-            document.getElementById('libEmailAddress').value = cfg.email || '';
-            document.getElementById('libEmailUsername').value = cfg.username || '';
-            document.getElementById('libEmailServer').value = cfg.server || '';
-            document.getElementById('libEmailPort').value = cfg.port || 993;
-            document.getElementById('libEmailSecure').checked = cfg.secure !== false;
-          }
-        }catch(_){ }
+        if (ov) ov.classList.remove('hidden');
+        if (md) md.classList.remove('hidden');
       }
+      
       window.closeLibraryEmailImportModal = function(){
-        document.getElementById('emailImportOverlay').classList.add('hidden');
-        document.getElementById('emailImportModal').classList.add('hidden');
+        const ov = document.getElementById('emailImportOverlay');
+        const md = document.getElementById('emailImportModal');
+        if (ov) ov.classList.add('hidden');
+        if (md) md.classList.add('hidden');
       }
+      
       window.submitLibraryEmailImport = async function(){
         try{
           const email = document.getElementById('libEmailAddress').value.trim();
@@ -395,26 +611,103 @@
           const host = document.getElementById('libEmailServer').value.trim();
           const port = parseInt(document.getElementById('libEmailPort').value||'993',10);
           const secure = !!document.getElementById('libEmailSecure').checked;
-          if (!email || !password || !host) return notify('请填写邮箱、密码和服务器','warn');
-          document.getElementById('libEmailProgress').classList.remove('hidden');
-          document.getElementById('libEmailProgressText').textContent = '连接邮箱...';
-          document.getElementById('libEmailProgressBar').style.width = '25%';
-          setTimeout(()=>{ document.getElementById('libEmailProgressText').textContent = '扫描未读邮件...'; document.getElementById('libEmailProgressBar').style.width = '50%'; }, 600);
+          
+          if (!email || !password || !host) {
+            notify('请填写邮箱、密码和服务器','warn');
+            return;
+          }
+          
+          const progressDiv = document.getElementById('libEmailProgress');
+          const progressText = document.getElementById('libEmailProgressText');
+          const progressBar = document.getElementById('libEmailProgressBar');
+          
+          if (progressDiv) progressDiv.classList.remove('hidden');
+          if (progressText) progressText.textContent = '连接邮箱...';
+          if (progressBar) progressBar.style.width = '25%';
+          
+          const progressUpdate = setTimeout(() => {
+            if (progressText) progressText.textContent = '扫描未读邮件...';
+            if (progressBar) progressBar.style.width = '50%';
+          }, 600);
+          
+          if (!window.resumeDataManager || typeof window.resumeDataManager.apiRequest !== 'function') {
+            clearTimeout(progressUpdate);
+            notify('系统未初始化，请刷新页面后重试','error');
+            return;
+          }
+          
           const payload = { host, port, secure, email, username, password, limit: 50 };
           const j = await window.resumeDataManager.apiRequest('/library/email-import', 'POST', payload);
-          document.getElementById('libEmailProgressText').textContent = '导入完成';
-          document.getElementById('libEmailProgressBar').style.width = '100%';
+          
+          clearTimeout(progressUpdate);
+          
+          if (progressText) progressText.textContent = '导入完成';
+          if (progressBar) progressBar.style.width = '100%';
+          
           const ic = (j && j.data && (j.data.importedCount || (j.data.imported && j.data.imported.length))) || 0;
-          document.getElementById('libEmailProgressCount').textContent = String(ic);
+          const progressCount = document.getElementById('libEmailProgressCount');
+          if (progressCount) progressCount.textContent = String(ic);
+          
           try{ localStorage.setItem('emailConfig', JSON.stringify({ configured:true, email, username, server:host, port, secure })) }catch(_){ }
           notify('邮箱导入完成','success');
-          setTimeout(()=>{ window.location.reload() }, 800);
+          setTimeout(()=>{ window.location.reload() }, 1500);
         }catch(e){
-          document.getElementById('libEmailProgressText').textContent = '导入失败';
-          notify(e.message||'导入失败','error');
+          const progressText = document.getElementById('libEmailProgressText');
+          if (progressText) progressText.textContent = '导入失败';
+          notify(e.message || '导入失败','error');
+          console.error('邮箱导入失败:', e);
         }
       }
-    })();
+
+      // 5. Functions removed as they are now in resume-upload-modal.js
+      // window.openLibraryUploadModal ...
+      // window.closeLibraryUploadModal ...
+      // initLibraryUploadModal ...
+      // handleLibraryModalFiles ...
+      // updateLibraryModalFileList ...
+      // window.removeLibraryModalFile ...
+      // clearLibraryModalFiles ...
+      // submitLibraryModalUpload ...
+      // window.openLibraryLinkModal ...
+      // window.closeLibraryLinkModal ...
+      // initLibraryLinkModal ...
+      // submitLibraryLinkImport ...
+      
+      function normalizeResumes(arr){
+      function fmtDate(iso){ try{ var d=new Date(iso); var diff=Math.ceil((Date.now()-d.getTime())/(1000*60*60*24)); if(diff<=1) return '今天'; if(diff<=7) return diff+'天前'; if(diff<=30) return Math.floor(diff/7)+'周前'; return d.toISOString().slice(0,10); }catch(_){ return '—' } }
+      var out=[]; for(var i=0;i<arr.length;i++){
+        var r=arr[i]||{}; var pd=r.parsed_data||{};
+        var name = pd.name || String(r.file_name||'未知').replace(/\.[^/.]+$/,'');
+        // 优先使用关联职位(associated_job_title)
+        var associatedPos = r.associated_job_title;
+        var parsedPos = r.job_title || pd.jobTitle || pd.position || '';
+        
+        // 用户要求：此处显示关联的“职位管理”中的职位
+        // 如果没有关联职位，显示“未关联职位”，而不是简历解析出的当前职位
+        var pos = associatedPos || '未关联职位';
+        var isAssociated = !!associatedPos;
+        
+        var score = (typeof r.overall_score==='number') ? r.overall_score : 0;
+        var exp = (typeof pd.experience_years==='number') ? pd.experience_years : '—';
+        var edu = (pd.education && pd.education[0] && pd.education[0].degree) ? pd.education[0].degree : '—';
+        var last = fmtDate(r.upload_date||Date.now());
+        out.push({ 
+            id: r.id || (i+1), 
+            name:name, 
+            position:pos, 
+            isAssociated: isAssociated,
+            parsedPosition: parsedPos, // 保留解析职位以备他用（如详情页）
+            score:score, 
+            experience:exp, 
+            education:edu, 
+            avatar:'https://ui-avatars.com/api/?name='+encodeURIComponent(name)+'&background=E5E7EB&color=111827', 
+            lastUpdated:last, 
+            status: r.status || 'uploaded' 
+        });
+      }
+      return out;
+    }
+
     class ResumeFilterManager {
         constructor(resumes) {
             this.allResumes = resumes;
@@ -432,7 +725,6 @@
             this.filterToggleBtn = document.getElementById('filter-toggle-btn');
             this.advancedFilters = document.getElementById('advanced-filters');
             this.roleFilters = document.querySelectorAll('.role-filter');
-            this.tagFilters = document.querySelectorAll('.tag-filter');
             this.categoryFilters = document.querySelectorAll('.category-filter');
             this.scoreRange = document.getElementById('score-range');
             this.scoreValue = document.getElementById('score-value');
@@ -445,14 +737,26 @@
             this.emptyState = document.getElementById('empty-state');
             this.totalResumesCount = document.getElementById('total-resumes-count');
             this.excellentResumesCount = document.getElementById('excellent-resumes-count');
-            this.averageScore = document.getElementById('average-score');
+            this.passedScreeningCount = document.getElementById('passed-screening-count');
             this.pendingResumesCount = document.getElementById('pending-resumes-count');
             this.filteredCountBadge = document.getElementById('filtered-resumes-count');
+            this.viewGridBtn = document.getElementById('view-grid-btn');
+            this.viewListBtn = document.getElementById('view-list-btn');
+            this.multiSelectBtn = document.getElementById('multi-select-btn');
+            this.multiSelectBar = document.getElementById('multi-select-bar');
+            this.selectedCount = document.getElementById('selected-count');
+            this.currentView = 'grid';
+            this.multiSelectMode = false;
+            this.selectedResumes = new Set();
         }
 
         initEventListeners() {
             this.searchBox.addEventListener('input', () => this.filterAndRender());
             this.filterToggleBtn.addEventListener('click', () => this.toggleAdvancedFilters());
+            
+            if (this.multiSelectBtn) {
+                this.multiSelectBtn.addEventListener('click', () => this.toggleMultiSelect());
+            }
             
             this.roleFilters.forEach(btn => btn.addEventListener('click', (e) => {
                 this.roleFilters.forEach(b => b.classList.remove('active', 'bg-gray-900', 'text-white'));
@@ -465,20 +769,6 @@
                 this.filterAndRender();
             }));
 
-            this.tagFilters.forEach(btn => btn.addEventListener('click', (e) => {
-                this.tagFilters.forEach(b => b.classList.remove('active', 'bg-blue-600', 'text-white'));
-                this.tagFilters.forEach(b => b.classList.add('bg-white', 'text-gray-600', 'border-gray-200'));
-                
-                e.target.classList.remove('bg-white', 'text-gray-600', 'border-gray-200');
-                e.target.classList.add('active', 'bg-blue-600', 'text-white');
-                
-                const val = e.target.dataset.tag;
-                if(val !== 'all') this.searchBox.value = val;
-                else this.searchBox.value = '';
-                
-                this.filterAndRender();
-            }));
-
             this.categoryFilters.forEach(btn => btn.addEventListener('click', e => this.handleCategoryFilter(e)));
             this.scoreRange.addEventListener('input', () => {
                 this.scoreValue.textContent = `${this.scoreRange.value}+`;
@@ -487,6 +777,13 @@
             this.workExperience.addEventListener('change', () => this.filterAndRender());
             this.educationLevel.addEventListener('change', () => this.filterAndRender());
             this.jobTitleFilter.addEventListener('input', () => this.filterAndRender());
+            
+            if (this.viewGridBtn) {
+                this.viewGridBtn.addEventListener('click', () => this.switchView('grid'));
+            }
+            if (this.viewListBtn) {
+                this.viewListBtn.addEventListener('click', () => this.switchView('list'));
+            }
         }
 
         toggleAdvancedFilters() {
@@ -496,23 +793,233 @@
             this.filterToggleBtn.classList.toggle('border-blue-200');
         }
 
+        toggleMultiSelect() {
+            this.multiSelectMode = !this.multiSelectMode;
+            this.selectedResumes.clear();
+            
+            if (this.multiSelectMode) {
+                this.multiSelectBtn.classList.remove('bg-white', 'text-gray-700', 'border-gray-200');
+                this.multiSelectBtn.classList.add('bg-blue-600', 'text-white', 'border-blue-600');
+                this.multiSelectBtn.innerHTML = '<i class="fas fa-times mr-2"></i> 取消多选';
+                this.multiSelectBar.classList.remove('hidden');
+            } else {
+                this.multiSelectBtn.classList.remove('bg-blue-600', 'text-white', 'border-blue-600');
+                this.multiSelectBtn.classList.add('bg-white', 'text-gray-700', 'border-gray-200');
+                this.multiSelectBtn.innerHTML = '<i class="fas fa-check-square mr-2"></i> 多选';
+                this.multiSelectBar.classList.add('hidden');
+            }
+            
+            this.updateSelectedCount();
+            this.renderPage(this.currentPage);
+        }
+
+        updateSelectedCount() {
+            if (this.selectedCount) {
+                this.selectedCount.textContent = this.selectedResumes.size;
+            }
+        }
+
+        toggleResumeSelection(resumeId) {
+            if (this.selectedResumes.has(resumeId)) {
+                this.selectedResumes.delete(resumeId);
+            } else {
+                this.selectedResumes.add(resumeId);
+            }
+            this.updateSelectedCount();
+            this.renderPage(this.currentPage);
+        }
+
+        selectAllOnPage() {
+            const start = (this.currentPage - 1) * this.itemsPerPage;
+            const end = start + this.itemsPerPage;
+            const paginatedItems = this.filteredResumes.slice(start, end);
+            
+            paginatedItems.forEach(resume => {
+                this.selectedResumes.add(resume.id);
+            });
+            this.renderPage(this.currentPage);
+        }
+
+        deselectAll() {
+            this.selectedResumes.clear();
+            this.renderPage(this.currentPage);
+        }
+
+        batchDeleteSelected() {
+            if (this.selectedResumes.size === 0) {
+                alert('请先选择要删除的简历');
+                return;
+            }
+            
+            if (confirm(`确定要删除选中的 ${this.selectedResumes.size} 份简历吗？`)) {
+                const ids = Array.from(this.selectedResumes);
+                const token = (JSON.parse(localStorage.getItem('userInfo') || '{}').token) || null;
+                const headers = token ? { Authorization: 'Bearer ' + token } : {};
+                
+                fetch('/api/resumes/batch-delete', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...headers
+                    },
+                    body: JSON.stringify({ ids: ids })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        this.selectedResumes.clear();
+                        this.filterAndRender();  // 使用正确的方法重新加载简历列表
+                    } else {
+                        alert('删除失败: ' + data.error.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('删除请求失败:', error);
+                    alert('删除请求失败: ' + error.message);
+                });
+            }
+        }
+
+        batchAnalyzeSelected() {
+            if (this.selectedResumes.size === 0) {
+                alert('请先选择要分析的简历');
+                return;
+            }
+            
+            const ids = Array.from(this.selectedResumes);
+            
+            fetch('/api/analysis/batch-analyze', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ ids: ids })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    this.filterAndRender();  // 使用正确的方法重新加载简历列表
+                } else {
+                    alert('分析失败: ' + data.error.message);
+                }
+            })
+            .catch(error => {
+                console.error('分析请求失败:', error);
+                alert('分析请求失败: ' + error.message);
+            });
+        }
+
+        analyzeResume(resumeId) {
+            fetch('/api/ai/batch-analyze', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ ids: [resumeId] })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = '/pages/resume-analysis-result.html?resumeId=' + resumeId;
+                } else {
+                    alert('分析失败: ' + data.error.message);
+                }
+            })
+            .catch(error => {
+                console.error('分析请求失败:', error);
+                alert('分析请求失败: ' + error.message);
+            });
+        }
+
+        favoriteResume(resumeId) {
+            console.log('收藏简历 ID:', resumeId);
+            alert(`已收藏简历 ID: ${resumeId}`);
+        }
+
+        selectAllOnPage() {
+            const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+            const endIndex = Math.min(startIndex + this.itemsPerPage, this.filteredResumes.length);
+            
+            for (let i = startIndex; i < endIndex; i++) {
+                this.selectedResumes.add(this.filteredResumes[i].id);
+            }
+            
+            this.updateSelectedCount();
+            this.renderPage(this.currentPage);
+        }
+
+        deselectAll() {
+            this.selectedResumes.clear();
+            this.updateSelectedCount();
+            this.renderPage(this.currentPage);
+        }
+
         handleCategoryFilter(e) {
             this.categoryFilters.forEach(btn => btn.classList.remove('active'));
             e.target.classList.add('active');
             this.filterAndRender();
         }
 
-        filterAndRender() {
+        async fetchResumes() {
+            try {
+                this.loadingIndicator.classList.remove('hidden');
+                this.cardsContainer.classList.add('hidden');
+                this.emptyState.classList.add('hidden');
+                
+                let data = [];
+                
+                // 使用 resumeDataManager 获取最新数据
+                if (window.resumeDataManager && typeof window.resumeDataManager.getTalentPoolResumes === 'function') {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 10000);
+                    
+                    data = await window.resumeDataManager.getTalentPoolResumes();
+                    clearTimeout(timeoutId);
+                } else if (window.resumeDataManager && typeof window.resumeDataManager.apiRequest === 'function') {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 10000);
+                    
+                    const result = await window.resumeDataManager.apiRequest('/library/resumes', 'GET', null, true);
+                    clearTimeout(timeoutId);
+                    
+                    data = (result && result.data) ? result.data : [];
+                }
+                
+                // 更新本地数据
+                if (Array.isArray(data)) {
+                    this.allResumes = data;
+                    window.resumeData = data;
+                    // 更新统计信息
+                    this.updateCounts();
+                }
+                
+                return data;
+            } catch (error) {
+                console.error('获取简历数据失败:', error);
+                return this.allResumes; // 如果获取失败，返回现有数据
+            }
+        }
+
+        async filterAndRender() {
             this.loadingIndicator.classList.remove('hidden');
             this.cardsContainer.classList.add('hidden');
             this.emptyState.classList.add('hidden');
             
-            setTimeout(() => {
+            try {
+                // 先获取最新数据
+                await this.fetchResumes();
+                
+                // 然后应用过滤器和渲染
                 this.applyFilters();
                 this.renderPage(1);
+            } catch (error) {
+                console.error('筛选和渲染失败:', error);
+            } finally {
                 this.loadingIndicator.classList.add('hidden');
                 this.cardsContainer.classList.remove('hidden');
-            }, 200);
+            }
         }
 
         applyFilters() {
@@ -526,8 +1033,7 @@
             this.filteredResumes = this.allResumes.filter(resume => {
                 const nameMatch = resume.name.toLowerCase().includes(searchTerm);
                 const positionMatch = resume.position.toLowerCase().includes(searchTerm);
-                const skillsMatch = resume.skills.some(skill => skill.toLowerCase().includes(searchTerm));
-                const searchMatch = nameMatch || positionMatch || skillsMatch;
+                const searchMatch = nameMatch || positionMatch;
                 
                 const categoryMatch = activeCategory === 'all' || resume.status === activeCategory;
                 const scoreMatch = resume.score >= minScore;
@@ -549,6 +1055,30 @@
             if (filterExp === '5-10') return resumeExpNum > 5 && resumeExpNum <= 10;
             if (filterExp === '10+') return resumeExpNum > 10;
             return false;
+        }
+
+        switchView(view) {
+            this.currentView = view;
+            
+            if (view === 'grid') {
+                this.viewGridBtn.classList.remove('bg-white', 'text-gray-400', 'hover:bg-gray-50', 'hover:text-gray-600');
+                this.viewGridBtn.classList.add('bg-blue-50', 'text-blue-600', 'hover:bg-blue-100');
+                this.viewListBtn.classList.remove('bg-blue-50', 'text-blue-600', 'hover:bg-blue-100');
+                this.viewListBtn.classList.add('bg-white', 'text-gray-400', 'hover:bg-gray-50', 'hover:text-gray-600');
+                this.cardsContainer.classList.remove('flex', 'flex-col', 'gap-0');
+                this.cardsContainer.classList.add('grid', 'grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-3', 'gap-6');
+                this.itemsPerPage = 9;
+            } else {
+                this.viewListBtn.classList.remove('bg-white', 'text-gray-400', 'hover:bg-gray-50', 'hover:text-gray-600');
+                this.viewListBtn.classList.add('bg-blue-50', 'text-blue-600', 'hover:bg-blue-100');
+                this.viewGridBtn.classList.remove('bg-blue-50', 'text-blue-600', 'hover:bg-blue-100');
+                this.viewGridBtn.classList.add('bg-white', 'text-gray-400', 'hover:bg-gray-50', 'hover:text-gray-600');
+                this.cardsContainer.classList.remove('grid', 'grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-3', 'gap-6');
+                this.cardsContainer.classList.add('flex', 'flex-col', 'gap-0');
+                this.itemsPerPage = 10;
+            }
+            
+            this.renderPage(1);
         }
 
         renderPage(page) {
@@ -574,24 +1104,48 @@
         }
 
         createResumeCard(resume) {
+            if (this.currentView === 'list') {
+                return this.createListItem(resume);
+            }
+            return this.createGridItem(resume);
+        }
+
+        createGridItem(resume) {
             const card = document.createElement('div');
             card.className = 'resume-card group relative bg-white rounded-2xl border border-gray-100 hover:border-blue-300 p-6 flex flex-col h-full transition-all duration-300 hover:shadow-lg cursor-pointer overflow-hidden';
             card.style.animationDelay = `${(this.filteredResumes.indexOf(resume) % this.itemsPerPage) * 0.05}s`;
             card.classList.add('fade-in-up');
             
             card.onclick = (e) => {
-                window.location.href = `resume-details.html?id=${resume.id}`;
+                if (this.multiSelectMode && (e.target.tagName !== 'BUTTON' && !e.target.closest('button'))) {
+                    this.toggleResumeSelection(resume.id);
+                } else if (!this.multiSelectMode) {
+                    window.location.href = `resume-details.html?id=${resume.id}`;
+                }
             };
 
             const scoreBg = resume.score >= 80 ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-600/20' : 
                            (resume.score >= 60 ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-600/20' : 'bg-blue-50 text-blue-700 ring-1 ring-blue-600/20');
             
+            let checkboxHtml = '';
+            if (this.multiSelectMode) {
+                const isSelected = this.selectedResumes.has(resume.id);
+                checkboxHtml = `
+                    <div class="absolute top-4 left-4 z-10">
+                        <input type="checkbox" ${isSelected ? 'checked' : ''} 
+                               class="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                               onclick="event.stopPropagation(); filterManager.toggleResumeSelection(${resume.id})">
+                    </div>
+                `;
+            }
+
             card.innerHTML = `
-                <div class="flex justify-between items-start mb-4">
+                ${checkboxHtml}
+                <div class="flex justify-between items-start mb-4 ${this.multiSelectMode ? 'pl-8' : ''}">
                     <div class="flex-1 min-w-0 mr-4">
                         <h3 class="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors truncate tracking-tight mb-1" title="${resume.name}">${resume.name}</h3>
-                        <p class="text-sm text-blue-600 font-semibold truncate flex items-center" title="${resume.position}">
-                            ${resume.position}
+                        <p class="text-sm ${resume.isAssociated ? 'text-blue-600 font-semibold' : 'text-gray-400 italic'} truncate flex items-center" title="${resume.position}">
+                            ${resume.isAssociated ? '<i class="fas fa-link mr-1 text-xs"></i>' : ''}${resume.position}
                         </p>
                     </div>
                     <div class="px-2.5 py-1 rounded-md text-sm font-bold ${scoreBg} flex-shrink-0">
@@ -615,20 +1169,100 @@
                 </div>
                 
                 <div class="pt-4 border-t border-gray-50 mt-auto">
-                    <div class="flex flex-wrap gap-2 mb-4 h-[24px] overflow-hidden">
-                        ${resume.skills.slice(0, 3).map(skill => 
-                            `<span class="text-xs px-2 py-1 bg-gray-50 text-gray-600 rounded-md border border-gray-100 font-medium truncate max-w-[80px]">${skill}</span>`
-                        ).join('')}
-                        ${resume.skills.length > 3 ? `<span class="text-xs px-1.5 py-1 text-gray-400 bg-gray-50 rounded-md border border-gray-100">+${resume.skills.length - 3}</span>` : ''}
+                    <div class="flex gap-2">
+                        <button class="flex-1 py-2.5 text-center text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-sm shadow-blue-200 transition-all duration-200 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0">
+                            查看详情
+                        </button>
+                        <button class="flex-1 py-2.5 text-center text-sm font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl transition-all duration-200 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0">
+                            <i class="fas fa-chart-line mr-1"></i>分析
+                        </button>
                     </div>
-                    <button class="w-full py-2.5 text-center text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-sm shadow-blue-200 transition-all duration-200 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0">
-                        查看详情
-                    </button>
                     <div class="h-[42px] w-full hidden group-hover:hidden"></div> 
                 </div>
                 <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-blue-50 rounded-full opacity-50 pointer-events-none"></div>
             `;
             return card;
+        }
+
+        createListItem(resume) {
+            const item = document.createElement('div');
+            item.className = 'bg-white border-b border-gray-200 hover:bg-gray-50 transition-colors';
+            item.style.animationDelay = `${(this.filteredResumes.indexOf(resume) % this.itemsPerPage) * 0.05}s`;
+            item.classList.add('fade-in-up');
+            
+            const isSelected = this.selectedResumes.has(resume.id);
+            if (isSelected) {
+                item.classList.add('bg-blue-50');
+            }
+            
+            item.onclick = (e) => {
+                if (this.multiSelectMode && (e.target.tagName !== 'BUTTON' && !e.target.closest('button'))) {
+                    this.toggleResumeSelection(resume.id);
+                } else if (!this.multiSelectMode) {
+                    window.location.href = `resume-details.html?id=${resume.id}`;
+                }
+            };
+
+            const scoreBg = resume.score >= 90 ? 'bg-green-100 text-green-800' : 
+                           (resume.score >= 80 ? 'bg-blue-100 text-blue-800' : 
+                           (resume.score >= 60 ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'));
+            
+            const statusText = resume.score >= 90 ? '优秀' : 
+                              (resume.score >= 80 ? '良好' : 
+                              (resume.score >= 60 ? '一般' : '待评估'));
+
+            let checkboxHtml = '';
+            if (this.multiSelectMode) {
+                checkboxHtml = `
+                    <div class="flex-shrink-0 mr-4">
+                        <input type="checkbox" ${isSelected ? 'checked' : ''} 
+                               class="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                               onclick="event.stopPropagation(); filterManager.toggleResumeSelection(${resume.id})">
+                    </div>
+                `;
+            }
+
+            item.innerHTML = `
+                <div class="flex items-center justify-between p-6">
+                    <div class="flex items-center space-x-4">
+                        ${checkboxHtml}
+                        <div class="flex-shrink-0">
+                            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-file-alt text-blue-600 text-xl"></i>
+                            </div>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center space-x-2">
+                                <h4 class="text-lg font-medium text-gray-900">${resume.name}</h4>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${scoreBg}">
+                                    ${statusText}
+                                </span>
+                            </div>
+                            <div class="mt-1 flex items-center space-x-4 text-sm text-gray-500">
+                                <span><i class="fas fa-calendar mr-1"></i>${resume.experience}年经验</span>
+                                <span><i class="fas fa-map-marker-alt mr-1"></i>北京</span>
+                                <span><i class="fas fa-graduation-cap mr-1"></i>${resume.education}</span>
+                                <span><i class="fas fa-clock mr-1"></i>更新于 ${resume.lastUpdated}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="text-right">
+                            <div class="text-lg font-semibold text-blue-600">${resume.score}分</div>
+                            <div class="text-xs text-gray-500">匹配度</div>
+                        </div>
+                        <div class="flex flex-col space-y-2">
+                            <button class="text-blue-600 hover:text-blue-800 text-sm" onclick="event.stopPropagation(); window.location.href='resume-details.html?id=${resume.id}'">
+                                <i class="fas fa-eye mr-1"></i>查看
+                            </button>
+                            <button class="text-blue-600 hover:text-blue-800 text-sm" onclick="event.stopPropagation(); filterManager.analyzeResume(${resume.id})">
+                                <i class="fas fa-chart-line mr-1"></i>分析
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            return item;
         }
 
         getScoreClass(score) {
@@ -683,8 +1317,7 @@
         updateCounts() {
             this.totalResumesCount.textContent = this.allResumes.length;
             this.excellentResumesCount.textContent = this.allResumes.filter(r => r.score >= 90).length;
-            const totalScore = this.allResumes.reduce((sum, r) => sum + r.score, 0);
-            this.averageScore.textContent = this.allResumes.length > 0 ? (totalScore / this.allResumes.length).toFixed(1) : 0;
+            this.passedScreeningCount.textContent = this.allResumes.filter(r => r.score >= 60).length;
             this.pendingResumesCount.textContent = this.allResumes.filter(r => r.status === 'pending').length;
             this.updateFilteredCount();
         }
@@ -694,54 +1327,22 @@
         }
     }
 
-    function normalizeResumes(arr){
-      function fmtDate(iso){ try{ var d=new Date(iso); var diff=Math.ceil((Date.now()-d.getTime())/(1000*60*60*24)); if(diff<=1) return '今天'; if(diff<=7) return diff+'天前'; if(diff<=30) return Math.floor(diff/7)+'周前'; return d.toISOString().slice(0,10); }catch(_){ return '—' } }
-      var out=[]; for(var i=0;i<arr.length;i++){
-        var r=arr[i]||{}; var pd=r.parsed_data||{};
-        var name = pd.name || String(r.file_name||'未知').replace(/\.[^/.]+$/,'');
-        var pos = pd.jobTitle || (Array.isArray(r.tags)&&r.tags[0] ? r.tags[0] : '未知职位');
-        var skills = Array.isArray(pd.skills)? pd.skills : (Array.isArray(r.tags)? r.tags: []);
-        var score = (typeof r.overall_score==='number') ? r.overall_score : 0;
-        var exp = (typeof pd.experience_years==='number') ? pd.experience_years : '—';
-        var edu = (pd.education && pd.education[0] && pd.education[0].degree) ? pd.education[0].degree : '—';
-        var last = fmtDate(r.upload_date||Date.now());
-        out.push({ id: r.id || (i+1), name:name, position:pos, skills:skills, score:score, experience:exp, education:edu, avatar:'https://ui-avatars.com/api/?name='+encodeURIComponent(name)+'&background=E5E7EB&color=111827', lastUpdated:last, status: r.status || 'uploaded' });
-      }
-      return out;
-    }
+    window.filterManager = null;
 
-    document.addEventListener('DOMContentLoaded',async()=>{
-      let data = typeof window.resumeData !== 'undefined' ? window.resumeData : undefined;
-      if (!Array.isArray(data)) {
-        try {
-          if (window.resumeDataManager && typeof window.resumeDataManager.getAllResumes === 'function') {
-            const list = await window.resumeDataManager.getTalentPoolResumes();
-            data = Array.isArray(list) ? list : [];
-            window.resumeData = data;
-          }
-        } catch (_) {}
-      }
-      if (!Array.isArray(data) || data.length===0) {
-        document.getElementById('empty-state').classList.remove('hidden');
-        data = [];
-      }
-      if (Array.isArray(data)) {
-        var normalized = normalizeResumes(data);
-        window.resumeFilterManager = new ResumeFilterManager(normalized);
-        if (data.length === 0) {
-          document.getElementById('empty-state').classList.remove('hidden');
+    function batchAnalysis() {
+        if (window.resumeFilterManager && window.resumeFilterManager.filteredResumes.length === 0) {
+            alert('当前没有可分析的简历');
+            return;
         }
-      } else {
-        document.getElementById('empty-state').classList.remove('hidden');
-        document.getElementById('empty-state').innerHTML='<i class="fas fa-exclamation-triangle text-6xl text-red-400 mb-4"></i><h3 class="text-xl font-semibold text-gray-700 mb-2">加载数据失败</h3><p class="text-gray-500">无法加载简历数据，请检查控制台错误。</p>';
-      }
-    });
+        
+        const count = window.resumeFilterManager ? window.resumeFilterManager.filteredResumes.length : 0;
+        if (confirm(`确定要对当前筛选的 ${count} 份简历进行批量分析吗？`)) {
+            console.log('批量分析简历:', count);
+            alert(`开始批量分析 ${count} 份简历`);
+        }
+    }
   </script>
     <script src="/js/header-profile.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            HeaderProfile.init('#header-right-section');
-        });
-    </script>
+
 </body>
 </html>

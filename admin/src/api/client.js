@@ -40,7 +40,7 @@ apiClient.interceptors.response.use(
     console.error('[api:error]', status, url, msg)
     if (status === 401 || status === 403) {
       localStorage.removeItem('admin-token')
-      window.location.href = '/login'
+      window.location.href = '/admin/login'
     }
     return Promise.reject(error)
   }

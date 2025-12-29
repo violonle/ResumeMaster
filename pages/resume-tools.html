@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>简历解析与对比 - 争湃·简历大师</title>
+    <title>简历智能解析与对比 - 争湃·简历大师</title>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <script src="../js/tailwindcss.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -16,6 +17,7 @@
     <script src="../js/ui-components.js"></script>
     <script src="../js/resume-data.js?v=3"></script>
     <script src="/js/sidebar.js"></script>
+    <script src="../js/resume-upload-handler.js"></script>
     
     <!-- Parsing Specific -->
     <script src="../js/ai-analyzer.js"></script>
@@ -25,35 +27,113 @@
     <script src="../js/chart-utils.js"></script>
     <script src="../js/resume-comparison.js"></script>
 
-    <!-- Main Controller -->
-    <script src="../js/resume-tools-controller.js"></script>
-    
     <link rel="stylesheet" href="/css/design-system.css">
     <link rel="stylesheet" href="/css/sidebar.css">
     <link rel="stylesheet" href="../css/responsive.css">
 
     <style>
-        .view-section {
-            display: none;
+        .sidebar-left {
+            width: 360px;
+            display: flex;
+            flex-direction: column;
+            position: sticky;
+            top: 64px; /* Matches header height */
+            height: calc(100vh - 64px);
         }
-        .view-section.active {
-            display: block;
-            animation: fadeIn 0.3s ease-in-out;
+        .main-content-area {
+            flex: 1;
+            background: #f9fafb;
+            min-height: calc(100vh - 64px);
+            padding: 40px 20px;
+            overflow-y: auto;
         }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        .main-content {
+            padding: 64px 0 0 0 !important; /* Overriding sidebar.css to allow full-width split layout */
         }
-        .nav-tab {
-            cursor: pointer;
+        .tab-btn {
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #6b7280;
             border-bottom: 2px solid transparent;
-            transition: all 0.3s;
+            transition: all 0.2s;
+            flex: 1;
+            text-align: center;
         }
-        .nav-tab.active {
-            border-bottom-color: #2563eb; /* blue-600 */
+        .tab-btn.active {
             color: #2563eb;
-            font-weight: 600;
-            background-color: #eff6ff; /* blue-50 */
+            border-bottom-color: #2563eb;
+            background: #eff6ff;
+        }
+        .candidate-item.selected {
+            border-color: #2563eb !important;
+            background-color: #eff6ff !important;
+        }
+        .analysis-type-btn {
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .analysis-type-btn.active {
+            background: #2563eb;
+            color: #fff;
+        }
+        .analysis-type-btn:not(.active) {
+            background: #fff;
+            color: #4b5563;
+            border: 1px solid #e5e7eb;
+        }
+        .score-card {
+            background: #fff;
+            border: 1px solid #f3f4f6;
+            border-radius: 12px;
+            padding: 16px;
+            transition: all 0.2s;
+        }
+        .score-card:hover {
+            border-color: #2563eb;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.05);
+        }
+        .checkbox-custom {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #e5e7eb;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .checkbox-custom.checked {
+            background: #2563eb;
+            border-color: #2563eb;
+        }
+        .radar-container {
+            background: #fff;
+            border: 1px solid #f3f4f6;
+            border-radius: 16px;
+            padding: 24px;
+            height: 360px;
+        }
+        .report-section {
+            background: #fff;
+            border: 1px solid #f3f4f6;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 16px;
+        }
+        .progress-bar-bg {
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: #2563eb;
+            transition: width 0.3s ease;
         }
     </style>
 </head>
@@ -62,388 +142,181 @@
     <div id="sidebar-overlay" class="sidebar-overlay"></div>
 
     <!-- Header -->
-    <header class="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20">
-        <div class="flex items-center justify-between p-4">
+    <header class="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20 h-16">
+        <div class="flex items-center justify-between px-6 h-full">
             <div class="flex items-center space-x-4">
                 <button class="menu-button p-2 rounded-lg hover:bg-gray-100" id="sidebar-toggle">
                     <i class="fas fa-bars text-gray-900"></i>
                 </button>
-                <h1 class="brand-title text-lg font-bold text-gray-900">简历解析与对比</h1>
+                <h1 class="text-xl font-bold text-gray-900">简历智能解析与对比</h1>
             </div>
-            <div class="flex items-center space-x-4" id="header-right-section">
-                <!-- User Profile rendered by HeaderProfile -->
-            </div>
+            <div class="flex items-center space-x-4" id="header-right-section"></div>
         </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="main-content pt-20 p-6 transition-all duration-300" id="main-content">
-            
-            <!-- Tab Navigation -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 sticky top-20 z-10">
-                <div class="flex border-b border-gray-200">
-                    <div class="flex-1 text-center py-4 nav-tab active rounded-tl-2xl" data-target="parsing-view" onclick="switchView('parsing-view')">
-                        <i class="fas fa-chart-line mr-2"></i>简历解析
-                    </div>
-                    <div class="flex-1 text-center py-4 nav-tab rounded-tr-2xl" data-target="comparison-view" onclick="switchView('comparison-view')">
-                        <i class="fas fa-balance-scale mr-2"></i>简历对比
-                    </div>
-                </div>
-            </div>
-
-            <!-- Parsing View -->
-            <div id="parsing-view" class="view-section active">
-                <div class="text-center mb-12">
-                    <h1 class="text-4xl font-bold text-gray-900 mb-4">AI简历智能解析</h1>
-                    <p class="text-xl text-gray-600 mb-8">选择简历进行解析，获得专业的AI分析报告和优化建议</p>
-                    <div class="flex justify-center space-x-8 text-sm text-gray-500">
-                        <div class="flex items-center space-x-2"><i class="fas fa-check-circle text-green-500"></i><span>支持多种格式</span></div>
-                        <div class="flex items-center space-x-2"><i class="fas fa-check-circle text-green-500"></i><span>AI智能分析</span></div>
-                        <div class="flex items-center space-x-2"><i class="fas fa-check-circle text-green-500"></i><span>专业优化建议</span></div>
-                        <div class="flex items-center space-x-2"><i class="fas fa-check-circle text-green-500"></i><span>安全隐私保护</span></div>
-                    </div>
+    <div class="main-content flex" id="main-content">
+        <!-- Sidebar Left (Candidate Selection) -->
+        <div class="sidebar-left overflow-hidden bg-gray-50/50 p-4 pr-2">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col h-full overflow-hidden">
+                <div class="flex border-b border-gray-100 bg-gray-50/30">
+                    <button class="tab-btn active" data-tab="library">从人才库选择</button>
+                    <button class="tab-btn" data-tab="upload">上传新简历</button>
                 </div>
 
-                <div class="w-full space-y-6">
-                    <!-- 最新导入简历 -->
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200">
-                        <div class="flex items-center justify-between p-6 border-b border-gray-200">
-                            <h2 class="text-2xl font-semibold text-gray-900">已选择简历</h2>
-                            <div class="flex items-center space-x-4">
-                                <button id="upload-resume-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center">
-                                    <i class="fas fa-upload mr-2"></i>选择解析的简历
-                                </button>
-                                <span class="text-sm text-gray-500" id="selected-resume-count">已选择 0 份简历</span>
-                            </div>
-                        </div>
-                        
-                        <!-- 简历列表区域 -->
-                        <div class="flex-1 flex flex-col min-h-0">
-                            <div class="overflow-y-auto px-6 py-4" style="max-height: 500px;">
-                                <div class="space-y-2" id="selected-resume-list"></div>
-                            </div>
-                        </div>
-                        
-                        <!-- 底部操作区域 -->
-                        <div class="flex-shrink-0 border-t border-gray-200 p-6 bg-white">
-                            <div class="text-center">
-                                <div class="flex items-center justify-center space-x-4">
-                                    <button id="add-to-analysis-list-btn" class="bg-white border-2 border-blue-600 text-blue-600 py-4 px-8 rounded-xl font-medium hover:bg-blue-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-lg inline-flex items-center" disabled>
-                                        <i class="fas fa-plus mr-2"></i>加入分析清单 (<span id="analysis-list-count">0</span>)
-                                    </button>
-                                    <button id="analyze-btn" type="button" class="bg-blue-600 text-white py-4 px-8 rounded-xl font-medium hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-lg inline-flex items-center" disabled>
-                                        <i class="fas fa-cog mr-2"></i>开始解析 (<span id="library-analyze-count">0</span>)
-                                    </button>
-                                </div>
-                                <p class="text-sm text-gray-500 mt-3">选择简历后点击“加入分析清单”，然后点击“开始分析”；或直接点击“开始解析”</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 文件列表 -->
-                    <div id="file-list-container" class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hidden">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-lg font-semibold text-gray-900">待分析文件</h3>
-                            <button class="text-sm text-gray-500 hover:text-gray-700">清空列表</button>
-                        </div>
-                        <div id="file-list" class="space-y-3"></div>
-                    </div>
-                    
-                    <!-- 分析结果预览 -->
-                    <div id="analysis-preview" class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hidden">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4">分析进度</h3>
-                        <div class="space-y-4">
-                            <div class="flex items-center justify-between">
-                                <span class="text-sm text-gray-600">解析文档结构</span>
-                                <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center"><i class="fas fa-check text-green-600 text-xs"></i></div>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <span class="text-sm text-gray-600">提取个人信息</span>
-                                <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center"><i class="fas fa-check text-green-600 text-xs"></i></div>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <span class="text-sm text-gray-600">AI智能分析</span>
-                                <div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center analysis-progress"><i class="fas fa-spinner fa-spin text-blue-600 text-xs"></i></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 单人分析结果 -->
-                    <div id="single-analysis-result" class="bg-white rounded-2xl shadow-lg p-6 hidden">
-                        <div class="flex items-center justify-between mb-6">
-                            <div>
-                                <h2 id="sar-name" class="text-2xl font-bold text-gray-900">候选人</h2>
-                                <p id="sar-sub" class="text-gray-600">毕业院校 / 最近公司与岗位 / 薪资要求</p>
-                            </div>
-                            <div class="flex items-center space-x-3">
-                                <div id="sar-score-badge" class="hidden px-4 py-2 bg-blue-100 text-blue-800 rounded-lg font-bold text-lg">综合评分 <span id="sar-score-val">0</span></div>
-                                <button id="sar-download-pdf" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"><i class="fas fa-file-pdf mr-2"></i>导出PDF</button>
-                            </div>
-                        </div>
-                        
-                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-                            <div class="bg-white rounded-2xl p-6 border shadow-sm">
-                                <h3 class="text-lg font-bold text-gray-900 mb-4">基本信息</h3>
-                                <div id="sar-basic" class="space-y-3 text-sm text-gray-700"></div>
-                            </div>
-                            <div class="bg-white rounded-2xl p-6 border shadow-sm lg:col-span-2">
-                                <h3 class="text-lg font-bold text-gray-900 mb-4">能力雷达图</h3>
-                                <div style="height:300px; width:100%"><div id="sar-radar" style="width:100%;height:100%"></div></div>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                            <div class="bg-white rounded-2xl p-6 border shadow-sm">
-                                <h4 class="font-semibold text-blue-800 mb-3 bg-blue-50 p-2 rounded text-center">核心优势</h4>
-                                <ul id="sar-strengths" class="list-disc list-inside space-y-2 text-sm text-gray-700 pl-2"></ul>
-                            </div>
-                            <div class="bg-white rounded-2xl p-6 border shadow-sm">
-                                <h4 class="font-semibold text-orange-800 mb-3 bg-orange-50 p-2 rounded text-center">潜在不足</h4>
-                                <ul id="sar-weaknesses" class="list-disc list-inside space-y-2 text-sm text-gray-700 pl-2"></ul>
-                            </div>
-                            <div class="bg-white rounded-2xl p-6 border shadow-sm">
-                                <h4 class="font-semibold text-green-800 mb-3 bg-green-50 p-2 rounded text-center">职业发展建议</h4>
-                                <ul id="sar-advices" class="list-disc list-inside space-y-2 text-sm text-gray-700 pl-2"></ul>
-                            </div>
-                        </div>
-                        
-                        <div class="bg-white rounded-2xl p-6 border shadow-sm">
-                            <h3 class="text-lg font-bold text-gray-900 mb-4">总结报告</h3>
-                            <p id="sar-summary" class="text-gray-700 leading-relaxed text-sm whitespace-pre-wrap"></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Comparison View -->
-            <div id="comparison-view" class="view-section">
-                <div class="text-center mb-8 fade-in-up">
-                    <h1 class="text-3xl font-bold text-gray-900 mb-4">简历对比分析</h1>
-                    <p class="text-lg text-gray-600 max-w-2xl mx-auto">选择多份简历进行对比分析，找出优势和差距，制定针对性的优化策略</p>
-                </div>
-                
-                <div class="mb-8">
-                    <!-- 已选择简历模块 -->
-                    <div class="bg-white rounded-2xl shadow-lg p-6 fade-in-up mb-6">
-                        <div class="flex items-center justify-between mb-6">
-                            <h2 class="text-xl font-semibold text-gray-900">已选择简历</h2>
-                            <span class="text-sm text-gray-500" id="selected-count">0份简历</span>
-                        </div>
-                        <div class="space-y-4" id="selected-resumes-container"></div>
-                        <div class="text-center py-8 text-gray-500" id="empty-state" style="display: block;">
-                            <i class="fas fa-file-alt text-4xl mb-4 text-gray-300"></i>
-                            <p class="text-lg font-medium mb-2">暂无已选择的简历</p>
-                            <p class="text-sm">请使用下方功能添加简历进行对比</p>
-                        </div>
-                    </div>
-                    
-                    <!-- 添加简历模块 -->
-                    <div class="bg-white rounded-2xl shadow-lg p-6 fade-in-up mb-6">
-                        <h2 class="text-xl font-semibold text-gray-900 mb-6">添加简历</h2>
-                        <div class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-blue-400 hover:bg-blue-50 transition-all cursor-pointer" id="upload-area">
-                            <div class="mb-4"><i class="fas fa-cloud-upload-alt text-4xl text-gray-400"></i></div>
-                            <h3 class="text-lg font-semibold text-gray-900 mb-2">拖拽文件到此处或点击上传</h3>
-                            <p class="text-sm text-gray-600 mb-4">支持 PDF、DOC、DOCX 格式，单个文件不超过 10MB</p>
-                            <button class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors" id="upload-btn">
-                                <i class="fas fa-plus mr-2"></i>选择文件
-                            </button>
-                            <input type="file" id="file-input" class="hidden" accept=".pdf,.doc,.docx" multiple>
-                        </div>
-                        <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <button class="flex items-center justify-center px-4 py-3 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors" id="import-from-library-btn">
-                                <i class="fas fa-database mr-2"></i>从人才库导入
-                            </button>
-                            <button class="flex items-center justify-center px-4 py-3 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors" id="clear-all-btn">
-                                <i class="fas fa-trash mr-2"></i>清空所有简历
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- 目标职位选择 -->
-                <div class="bg-white rounded-2xl shadow-lg p-6 fade-in-up mb-6">
-                    <h2 class="text-xl font-semibold text-gray-900 mb-4">目标职位 / JD</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm text-gray-600 mb-2">从职位列表选择</label>
-                            <select id="job-select" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                                <option value="">不选择职位</option>
+                <!-- Library Tab Content -->
+                <div id="library-content" class="flex-1 flex flex-col p-4 overflow-hidden">
+                    <!-- Job Selector in Sidebar -->
+                    <div class="mb-4">
+                        <label class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block">筛选职位</label>
+                        <div class="relative">
+                            <select id="sidebar-job-select" class="w-full pl-4 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none transition-all text-sm">
+                                <option value="all">全部岗位</option>
+                                <!-- Jobs will be loaded here -->
                             </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm text-gray-600 mb-2">或输入职位JD</label>
-                            <textarea id="job-jd-input" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm h-24" placeholder="粘贴职位描述（JD），用于更精准的匹配分析"></textarea>
+                            <div class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                                <i class="fas fa-chevron-down text-xs"></i>
+                            </div>
                         </div>
                     </div>
-                    <div class="mt-3 text-sm text-gray-600" id="selected-job-summary"></div>
+
+                    <div class="relative mb-4">
+                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input type="text" id="candidate-search" placeholder="搜索候选人姓名..." 
+                               class="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-white">
+                    </div>
+                    <div id="candidate-list" class="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                        <!-- Dynamic List -->
+                    </div>
                 </div>
 
-                <div class="text-center mb-8">
-                    <button id="compare-btn" class="btn-primary text-white px-8 py-4 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all bg-blue-600">
-                        <i class="fas fa-search text-white mr-2"></i>开始对比分析
+                <!-- Upload Tab Content -->
+                <div id="upload-content" class="hidden flex-1 flex flex-col p-4 overflow-hidden">
+                    <div id="drop-zone" class="border-2 border-dashed border-gray-100 rounded-xl p-6 text-center hover:border-blue-400 hover:bg-blue-50 transition-all cursor-pointer mb-4 bg-gray-50/50">
+                        <i class="fas fa-cloud-upload-alt text-2xl text-gray-400 mb-2"></i>
+                        <p class="text-sm text-gray-600 font-medium">点击上传简历</p>
+                        <p class="text-xs text-gray-400 mt-1">支持 PDF, DOC, DOCX</p>
+                        <input type="file" id="file-input" class="hidden" accept=".pdf,.doc,.docx,.txt" multiple>
+                    </div>
+                    <div id="file-list" class="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                        <!-- Uploaded files will appear here -->
+                    </div>
+                </div>
+
+                <div class="p-4 border-t border-gray-100 bg-gray-50/30">
+                    <button id="analyze-btn" disabled class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 disabled:opacity-50 disabled:shadow-none flex items-center justify-center">
+                        <i class="fas fa-arrow-right mr-2"></i> 开始解析
                     </button>
                 </div>
-                
-                <!-- 对比结果区域 -->
-                <div id="comparisonResults" class="hidden">
-                    <div class="flex items-center justify-between mb-6">
-                        <h2 class="text-2xl font-bold text-gray-900">简历对比结果</h2>
-                        <div class="flex items-center space-x-3">
-                            <button id="download-pdf" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"><i class="fas fa-file-pdf mr-2"></i>导出PDF</button>
-                            <button id="download-png" class="border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50"><i class="fas fa-image mr-2"></i>导出PNG</button>
-                        </div>
+            </div>
+        </div>
+
+        <!-- Main Content Area (Right) -->
+        <div class="main-content-area">
+            <div class="max-w-7xl mx-auto">
+                <div class="flex items-center justify-between mb-8">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">简历智能解析与对比</h2>
+                        <p class="text-gray-500 mt-1">选择候选人进行深度分析或多维度横向对比。</p>
                     </div>
-
-                    <div id="report-root" class="space-y-8">
-                        <div id="candidateGrid" class="grid grid-cols-1 lg:grid-cols-3 gap-6"></div>
-
-                        <div class="bg-white rounded-2xl shadow-lg p-6">
-                            <h2 class="text-2xl font-bold text-gray-900 mb-6">详细对比分析</h2>
-                            <div class="radar-container mb-8" style="height:360px">
-                                <canvas id="comparisonRadarChart"></canvas>
-                            </div>
-                            <div class="overflow-x-auto">
-                                <table id="comparisonDetailTable" class="w-full text-sm text-left border border-gray-200 rounded-lg">
-                                    <thead></thead>
-                                    <tbody></tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        <div class="bg-white rounded-2xl shadow-lg p-6">
-                            <h2 class="text-2xl font-bold text-gray-900 mb-4">综合评价与建议</h2>
-                            <p class="text-gray-700" id="compare-summary"></p>
-                        </div>
-                    </div>
-
-                    <div class="text-right space-x-3 mt-6">
-                        <button id="redo-compare" class="border border-gray-300 text-gray-700 px-6 py-3 rounded-xl font-semibold hover:bg-gray-50"><i class="fas fa-redo mr-2"></i>重新对比</button>
+                    <div class="flex bg-white p-1 rounded-lg border border-gray-200">
+                        <button class="tab-btn active px-4 py-2 text-sm" data-mode="single">单一深度解析</button>
+                        <button class="tab-btn px-4 py-2 text-sm" data-mode="multi">多人对比解析</button>
                     </div>
                 </div>
-            </div>
-            
-    </main>
 
-    <!-- Modals -->
-
-    <!-- Parsing: Upload Modal -->
-    <div id="upload-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-xl max-w-[1100px] w-full max-h-[80vh] overflow-hidden flex flex-col">
-            <div class="flex-shrink-0 flex items-center justify-between p-6 border-b border-gray-200">
-                <h2 class="text-2xl font-bold text-gray-900">选择解析的简历</h2>
-                <button id="close-upload-modal" class="text-gray-400 hover:text-gray-600 text-2xl"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="flex-1 overflow-y-auto p-8">
-                <div class="grid grid-cols-2 gap-8">
-                    <div class="p-6 border-2 border-dashed border-gray-200 rounded-xl">
-                        <div class="w-20 h-20 mx-auto bg-blue-100 rounded-full flex items-center justify-center mb-4"><i class="fas fa-cloud-upload-alt text-3xl text-blue-600"></i></div>
-                        <h3 class="text-xl font-semibold text-gray-900 mb-3 text-center">文件上传</h3>
-                        <div id="modal-drop-zone" class="drop-zone border-3 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-blue-400 hover:bg-blue-50 transition-all cursor-pointer">
-                            <div class="space-y-2">
-                                <h4 class="text-base font-medium text-gray-900">拖拽文件到这里</h4>
-                                <p class="text-sm text-gray-600">或点击选择文件</p>
-                                <p class="text-xs text-gray-500">支持 PDF、DOC、DOCX、TXT，≤10MB</p>
-                            </div>
-                        </div>
-                        <input type="file" id="modal-file-input" class="hidden" accept=".pdf,.doc,.docx,.txt" multiple>
-                        <div id="modal-file-list-container" class="hidden mt-4">
-                            <div class="flex items-center justify-between mb-2"><h3 class="text-sm font-semibold text-gray-900">已选择文件</h3><button id="modal-clear-files-btn" class="text-xs text-gray-500 hover:text-gray-700">清空列表</button></div>
-                            <div id="modal-file-list" class="space-y-2"></div>
-                        </div>
-                        <button id="modal-import-from-link-btn" class="mt-6 w-full p-4 border-2 border-dashed border-gray-200 rounded-xl hover:border-orange-300 hover:bg-orange-50 transition-all">
-                            <div class="flex items-center justify-center space-x-2 text-orange-600"><i class="fas fa-link"></i><span>链接导入</span></div>
-                        </button>
+                <!-- Empty State -->
+                <div id="empty-state" class="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-dashed border-gray-200 shadow-sm">
+                    <div class="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-6">
+                        <i class="fas fa-user-check text-4xl text-gray-300"></i>
                     </div>
-                    <div class="p-6 border rounded-xl">
-                        <div class="flex items-center justify-between mb-4"><h3 class="text-lg font-semibold text-gray-900">人才库</h3><div class="text-sm text-gray-600" id="library-selected-count">已选择 0 份</div></div>
-                        <div class="flex flex-col sm:flex-row gap-3 mb-4">
-                            <div class="flex-1"><div class="relative"><input id="library-search-input" type="text" placeholder="搜索姓名" class="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg"><div class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><i class="fas fa-search"></i></div></div></div>
-                            <div class="sm:w-40"><select id="library-position-filter" class="w-full px-3 py-2 border border-gray-300 rounded-lg"><option value="">全部职位</option><option value="frontend">前端开发</option><option value="backend">后端开发</option></select></div>
-                            <div class="sm:w-36"><select id="library-sort-filter" class="w-full px-3 py-2 border border-gray-300 rounded-lg"><option value="time-desc">最新上传</option></select></div>
-                        </div>
-                        <div class="text-sm text-gray-600 mb-2" id="library-filtered-count">共找到 0 份简历</div>
-                        <div id="library-resume-list" class="space-y-2" style="max-height:40vh; overflow:hidden"></div>
-                        <div class="flex items-center justify-between mt-4">
-                            <div class="text-xs text-gray-600">显示第 <span id="library-page-info-start">0</span>-<span id="library-page-info-end">0</span> 条</div>
-                            <div class="flex items-center space-x-2">
-                                <button id="library-first-page-btn" class="px-3 py-1 text-xs border" disabled>首页</button>
-                                <button id="library-prev-page-btn" class="px-3 py-1 text-xs border" disabled>上一页</button>
-                                <button id="library-next-page-btn" class="px-3 py-1 text-xs border">下一页</button>
-                                <button id="library-last-page-btn" class="px-3 py-1 text-xs border">尾页</button>
+                    <h3 class="text-lg font-bold text-gray-900 mb-2">请在左侧选择候选人进行分析</h3>
+                    <p class="text-gray-500 text-center max-w-sm">支持从现有库中选择多人进行对比，或上传新简历进行单份解析。</p>
+                </div>
+
+                <!-- Single Analysis Results -->
+                <div id="single-analysis-results" class="hidden space-y-5">
+                    <!-- Basic Info Card -->
+                    <div class="bg-white rounded-xl p-6 border border-gray-100 shadow-sm flex items-center justify-between">
+                        <div class="flex items-center space-x-6">
+                            <div class="w-16 h-16 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 text-2xl font-bold border border-blue-100">
+                                <i class="fas fa-user-tie"></i>
                             </div>
+                            <div>
+                                <h3 id="res-name" class="text-xl font-bold text-gray-900">候选人姓名</h3>
+                                <p id="res-info" class="text-sm text-gray-500 mt-1">多年经验 | 本科 | 面议</p>
+                                <div class="flex items-center mt-2.5 space-x-2">
+                                    <span class="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-bold rounded uppercase tracking-wider">Verified Profile</span>
+                                    <span class="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-bold rounded uppercase tracking-wider">AI Scored</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">Overall Match Score</div>
+                            <div class="flex items-baseline justify-end space-x-1">
+                                <span id="res-score" class="text-4xl font-black text-blue-600">0</span>
+                                <span class="text-gray-400 font-bold text-sm">/100</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Unified Analysis Card -->
+                    <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-6 md:p-8">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+                            <h4 class="text-lg font-bold text-gray-900 flex items-center">
+                                <i class="fas fa-chart-line mr-2 text-blue-600"></i>
+                                核心能力多维分析
+                            </h4>
+                            <div class="flex items-center space-x-6 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                                <span class="flex items-center"><i class="fas fa-circle text-blue-600/20 mr-1.5"></i> 维度分布</span>
+                                <span class="flex items-center"><i class="fas fa-star text-blue-600 mr-1.5"></i> 精确评分</span>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+                            <!-- Radar Chart -->
+                            <div class="lg:col-span-7">
+                                <div id="radar-container" class="h-[350px] md:h-[480px] relative">
+                                    <canvas id="radarChart"></canvas>
+                                </div>
+                            </div>
+
+                            <!-- Score Cards -->
+                            <div class="lg:col-span-5">
+                                <div id="score-cards" class="flex flex-col">
+                                    <!-- Dynamic Items -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI Analysis Report -->
+                    <div class="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
+                        <h4 class="text-base font-bold text-gray-900 mb-5 flex items-center">
+                            <i class="fas fa-file-invoice mr-2 text-blue-600"></i>
+                            AI 深度分析报告
+                        </h4>
+                        <div id="ai-report" class="prose prose-blue prose-sm max-w-none text-gray-600 leading-relaxed">
+                            <!-- Dynamic Content -->
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="flex-shrink-0 p-6 border-t border-gray-200 bg-white">
-                <div class="flex items-center justify-between">
-                    <p class="text-sm text-gray-500">一次最多可上传 5 个文件</p>
-                    <div class="flex space-x-3">
-                        <button id="cancel-upload-modal" class="px-6 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50">取消</button>
-                        <button id="confirm-upload-btn" class="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700" disabled>确定</button>
-                    </div>
+
+                <!-- Multi Analysis Results -->
+                <div id="multi-analysis-results" class="hidden">
+                    <!-- Content will be injected by JavaScript -->
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Parsing: Link Modal -->
-    <div id="link-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full">
-            <div class="p-6">
-                <div class="flex items-center justify-between mb-6"><h2 class="text-2xl font-bold text-gray-900">从链接导入</h2><button id="close-link-modal" class="text-gray-400"><i class="fas fa-times"></i></button></div>
-                <div class="space-y-4">
-                    <div><label class="block text-sm font-medium text-gray-700 mb-2">简历链接地址</label><input type="url" id="resume-link-input" class="w-full px-3 py-2 border rounded-lg"></div>
-                    <div class="flex space-x-3 pt-4"><button id="import-link-btn" class="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg">开始导入</button><button id="cancel-link-modal" class="px-4 py-3 border rounded-lg">取消</button></div>
-                </div>
-            </div>
-        </div>
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 bg-white/80 backdrop-blur-sm z-[100] hidden flex flex-col items-center justify-center">
+        <div class="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p class="text-blue-600 font-bold">AI 正在深度解析中，请稍候...</p>
+        <p class="text-gray-400 text-sm mt-2">预计需要 15-30 秒</p>
     </div>
 
-    <!-- Parsing: View Resume Modal -->
-    <div id="view-resume-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col">
-            <div class="p-6 border-b flex justify-between"><h2 class="text-xl font-bold" id="view-resume-title">简历详情</h2><button id="close-view-resume-modal"><i class="fas fa-times"></i></button></div>
-            <div class="p-6 overflow-y-auto flex-1" id="view-resume-content"></div>
-            <div class="p-6 border-t flex justify-end space-x-3"><a id="download-resume-btn" href="#" target="_blank" class="px-4 py-2 bg-blue-600 text-white rounded-lg">下载原件</a><button id="close-view-resume-btn" class="px-4 py-2 border rounded-lg">关闭</button></div>
-        </div>
-    </div>
-
-    <!-- Comparison: Library Modal -->
-    <div id="library-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-xl max-w-6xl w-full h-[85vh] flex flex-col">
-            <div class="flex-shrink-0 p-6 border-b border-gray-200">
-                <div class="flex items-center justify-between"><h2 class="text-2xl font-bold text-gray-900">从简历库导入</h2><button id="close-library-modal" class="text-gray-400 hover:text-gray-600 text-2xl"><i class="fas fa-times"></i></button></div>
-            </div>
-            <div class="flex-shrink-0 p-6 space-y-4 border-b border-gray-200">
-                <div class="flex flex-col sm:flex-row gap-4">
-                    <div class="flex-1"><div class="relative"><input type="text" id="resume-search-input" placeholder="搜索简历" class="w-full pl-10 pr-4 py-2.5 border rounded-lg"><div class="absolute left-3 top-1/2 -translate-y-1/2"><i class="fas fa-search text-gray-400"></i></div></div></div>
-                    <div class="sm:w-48"><select id="position-filter" class="w-full px-3 py-2.5 border rounded-lg"><option value="">全部职位</option><option value="frontend">前端开发</option><option value="backend">后端开发</option></select></div>
-                    <div class="sm:w-40"><select id="sort-filter" class="w-full px-3 py-2.5 border rounded-lg"><option value="time-desc">最新上传</option></select></div>
-                </div>
-                <div class="flex items-center justify-between text-sm text-gray-600"><span id="resume-count">共找到 0 份简历</span><span id="selected-count">已选择 0 份</span></div>
-            </div>
-            <div class="flex-1 flex flex-col min-h-0"><div class="flex-1 overflow-y-auto px-6"><div class="space-y-2" id="resume-list"></div></div>
-                <div class="flex-shrink-0 border-t border-gray-200 px-6 py-4 bg-gray-50">
-                    <div class="flex items-center justify-between">
-                        <div class="text-sm text-gray-600">显示第 <span id="page-info-start">0</span>-<span id="page-info-end">0</span> 条</div>
-                        <div class="flex items-center space-x-2">
-                            <button id="first-page-btn" class="px-3 py-2 text-sm border rounded-lg" disabled>首页</button>
-                            <button id="prev-page-btn" class="px-3 py-2 text-sm border rounded-lg" disabled>上一页</button>
-                            <button id="next-page-btn" class="px-3 py-2 text-sm border rounded-lg">下一页</button>
-                            <button id="last-page-btn" class="px-3 py-2 text-sm border rounded-lg">尾页</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="flex-shrink-0 border-t border-gray-200 p-6 bg-white">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-4"><button id="select-all-btn" class="text-blue-600">全选</button><button id="clear-selection-btn" class="text-gray-600">清空选择</button></div>
-                    <div class="flex space-x-3"><button id="cancel-library-modal" class="px-6 py-2.5 border rounded-lg">取消</button><button id="import-selected-btn" class="px-6 py-2.5 bg-blue-600 text-white rounded-lg" disabled>导入 (<span id="import-count">0</span>)</button></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
+    <!-- Main Controller for this page -->
+    <script src="../js/resume-tools-controller-v2.js"></script>
 </body>
 </html>

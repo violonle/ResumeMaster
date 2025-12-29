@@ -43,24 +43,14 @@ class PermissionMiddleware {
       }
 
       // 如果没有公司订阅，检查用户个人订阅状态 (兼容旧数据或个人用户)
-      if (!subscription && user.subscription_status === 'active') {
-        // 构造一个临时订阅对象
+      if (!subscription) {
+        // 构造一个默认的免费订阅对象，确保不报错
+        // 确保免费版用户始终拥有有效订阅状态，而不是过期状态
         subscription = {
           plan: user.role === 'premium' ? 'pro' : (user.role === 'enterprise' ? 'enterprise' : 'free'),
-          billing_cycle: 'monthly', // 默认
-          end_at: user.subscription_end_date,
-          start_at: user.created_at, // 估算
-          status: 'active',
-          quota: null // 使用默认配额
-        };
-      }
-
-      if (!subscription) {
-        subscription = {
-          plan: 'free',
           billing_cycle: 'monthly',
-          start_at: moment().startOf('month').toDate(),
-          end_at: moment().endOf('month').toDate(),
+          end_at: user.subscription_end_date ? new Date(user.subscription_end_date) : moment().add(10, 'years').toDate(), // 免费版给予超长有效期
+          start_at: user.created_at || new Date(),
           status: 'active',
           quota: null
         };
@@ -69,7 +59,9 @@ class PermissionMiddleware {
       const endDate = subscription.end_at || subscription.expiresAt; // 兼容字段
       const isExpired = endDate && moment(endDate).isBefore(moment());
 
-      if (isExpired) {
+      // 只有非免费版才强制检查过期，免费版永不过期（除非被封禁，那是另一回事）
+      if (isExpired && subscription.plan !== 'free') {
+        console.log('订阅已过期:', { plan: subscription.plan, end_at: endDate });
         return res.status(403).json({
           success: false,
           error: {
@@ -89,12 +81,13 @@ class PermissionMiddleware {
       req.subscription = subscription;
       next();
     } catch (error) {
-      console.error('检查订阅状态失败:', error);
+      console.error('检查订阅状态失败 - 详细错误:', error);
+      console.error('当前用户ID:', req.user?.id);
       res.status(500).json({
         success: false,
         error: {
           code: 'INTERNAL_ERROR',
-          message: '检查订阅状态失败'
+          message: '检查订阅状态失败: ' + (error.message || '未知错误')
         }
       });
     }

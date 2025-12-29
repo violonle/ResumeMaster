@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>简历对比 - 争湃·简历大师</title>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="../css/responsive.css">
     <script src="../js/tailwindcss.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
@@ -35,8 +36,8 @@
     <header class="fixed top-0 left-0 right-0 bg-white shadow-sm z-20 border-b border-gray-200"><div class="flex items-center justify-between p-4"><div class="flex items-center space-x-4"><button class="menu-button p-2 rounded-lg hover:bg-gray-100" id="sidebar-toggle"><i class="fas fa-bars text-gray-900"></i></button><h1 class="brand-title text-lg font-semibold text-gray-900">争湃·简历大师</h1></div><div class="flex items-center space-x-4"><button class="p-2 rounded-lg hover:bg-gray-100"><i class="fas fa-bell text-gray-900"></i></button><button class="p-2 rounded-lg hover:bg-gray-100"><i class="fas fa-user-circle text-gray-900"></i></button></div></div></header>
     
     <!-- 主要内容 -->
-    <main class="main-content pt-20" id="main-content">
-        <div class="p-6">
+    <main class="main-content pt-20 p-6" id="main-content">
+        <div>
         <!-- 页面标题 -->
         <div class="text-center mb-8 fade-in-up">
             <h1 class="text-3xl font-bold text-gray-900 mb-4">简历对比分析</h1>
@@ -189,7 +190,7 @@
                         <!-- 搜索框 -->
                         <div class="flex-1">
                             <div class="relative">
-                                <input type="text" id="resume-search-input" placeholder="搜索简历名称、姓名或关键词..." 
+                                <input type="text" id="resume-search-input" placeholder="搜索简历名称、姓名..." 
                                        class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                                 <div class="absolute left-3 top-1/2 transform -translate-y-1/2">
                                     <i class="fas fa-search text-gray-400"></i>
@@ -197,22 +198,6 @@
                             </div>
                         </div>
                         
-                        <!-- 职位筛选 -->
-                        <div class="sm:w-48">
-                            <select id="position-filter" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                <option value="">全部职位</option>
-                                <option value="frontend">前端开发</option>
-                                <option value="backend">后端开发</option>
-                                <option value="fullstack">全栈开发</option>
-                                <option value="mobile">移动开发</option>
-                                <option value="ui">设计师</option>
-                                <option value="pm">产品经理</option>
-                                <option value="test">测试工程师</option>
-                                <option value="data">数据分析</option>
-                                <option value="ops">运营专员</option>
-                                <option value="other">其他</option>
-                            </select>
-                        </div>
                         
                         <!-- 排序方式 -->
                         <div class="sm:w-40">
@@ -411,8 +396,7 @@
                 const mapped = (resumes || []).map(r => {
                     const fileName = r.file_name || '未知文件';
                     const name = fileName.replace(/\.[^/.]+$/, '');
-                    const position = (r.tags && r.tags.length) ? r.tags[0] : ((r.parsed_data && r.parsed_data.jobTitle) || '未知职位');
-                    const skills = (r.tags && r.tags.length) ? r.tags : ((r.parsed_data && r.parsed_data.skills) ? r.parsed_data.skills : []);
+                    const position = (r.parsed_data && r.parsed_data.jobTitle) || '未知职位';
                     const uploadDate = r.upload_date ? new Date(r.upload_date).toLocaleDateString('zh-CN') : new Date().toLocaleDateString('zh-CN');
                     const score = latestMap[r.id]?.score;
                     return {
@@ -422,7 +406,6 @@
                         position,
                         experience: (r.parsed_data && r.parsed_data.experience) ? r.parsed_data.experience : '未知',
                         score: typeof score === 'number' ? score : NaN,
-                        skills,
                         uploadDate
                     };
                 }).sort((a, b) => b.uploadDate.localeCompare(a.uploadDate));
@@ -471,11 +454,6 @@
                     <p class="text-sm text-gray-600 mb-2">综合评分：${scoreText}</p>
                     <p class="text-xs text-gray-500 mb-2">${resume.position}</p>
                     <p class="text-xs text-gray-500">上传时间：${resume.uploadDate}</p>
-                    <div class="mt-3 flex flex-wrap gap-1 justify-center">
-                        ${resume.skills.slice(0, 3).map(skill => 
-                            `<span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">${skill}</span>`
-                        ).join('')}
-                    </div>
                 </div>
             `;
             
@@ -740,14 +718,17 @@
                     const radar = a && (a.radar_scores || a.radarScores) || {};
                     const percent = {
                         job_match: (radar.job_match||0)*20,
-                        skill_match: (radar.skill_match||0)*20,
                         experience_match: (radar.experience_match||0)*20,
                         learning_ability: (radar.learning_ability||0)*20,
                         teamwork: (radar.teamwork||0)*20
                     };
                     const dims = a && a.dimensions ? a.dimensions : {};
-                    Object.keys(dims).forEach(k=>{ const v=dims[k]; percent[k]= typeof v==='number'? v : (v&&v.score ? v.score : percent[k]||0) });
-                    const weights = { job_match:0.25, skill_match:0.40, experience_match:0.25, learning_ability:0.05, teamwork:0.05 };
+                    Object.keys(dims).forEach(k=>{ 
+                        if (k.includes('技能') || k.includes('skill')) return;
+                        const v=dims[k]; 
+                        percent[k]= typeof v==='number'? v : (v&&v.score ? v.score : percent[k]||0) 
+                    });
+                    const weights = { job_match:0.40, experience_match:0.40, learning_ability:0.10, teamwork:0.10 };
                     let weighted = 0; let totalW = 0;
                     Object.keys(weights).forEach(k=>{ const v = percent[k]; if (typeof v==='number' && !isNaN(v)) { weighted += v * weights[k]; totalW += weights[k]; } });
                     const calcOverall = totalW>0 ? Math.round(weighted/totalW) : Math.round(Object.values(percent).filter(x=>typeof x==='number'&&!isNaN(x)).reduce((s,v)=>s+v,0)/Math.max(1,Object.values(percent).filter(x=>typeof x==='number'&&!isNaN(x)).length));
@@ -756,7 +737,7 @@
                 });
                 const dimSet = new Set();
                 resumes.forEach(r => Object.keys(r.scores).forEach(k => dimSet.add(k)));
-                const dimensions = Array.from(dimSet);
+                const dimensions = Array.from(dimSet).filter(d => !d.includes('技能') && !d.includes('skill'));
                 const result = { resumes, dimensions };
                 displayComparisonResults(result);
             }catch(e){ console.error(e); showToast('对比失败，请稍后重试') } finally { hideLoadingState() }
@@ -899,11 +880,6 @@
                         <div>
                             <h3 class="font-semibold text-gray-900">${resume.name}</h3>
                             <p class="text-sm text-gray-600">${resume.position} • ${resume.experience}</p>
-                            <div class="flex items-center space-x-2 mt-1">
-                                ${resume.skills.slice(0, 3).map(skill => 
-                                    `<span class="px-2 py-1 ${color.icon} ${color.text} text-xs rounded">${skill}</span>`
-                                ).join('')}
-                            </div>
                         </div>
                     </div>
                     <div class="text-right">
@@ -1007,7 +983,7 @@
             }
             
             if (comparisonResult && Array.isArray(comparisonResult.resumes) && comparisonResult.resumes.length) {
-                const dimensions = (comparisonResult.dimensions && comparisonResult.dimensions.length) ? comparisonResult.dimensions : ['basic_match','skills','experience','learning','teamwork'];
+                const dimensions = (comparisonResult.dimensions && comparisonResult.dimensions.length) ? comparisonResult.dimensions : ['basic_match','experience','learning','teamwork'];
                 comparisonChart = ChartUtils.createRadarChart(canvas, comparisonResult.resumes, dimensions);
             }
         }
@@ -1082,16 +1058,14 @@
             const nameMap = {
                 basic_match: '基础匹配度',
                 experience: '经验相关度',
-                skills: '技能匹配度',
                 learning: '学习能力',
                 potential: '发展潜力',
                 teamwork: '团队合作',
                 job_match: '岗位匹配度',
-                skill_match: '技能匹配度',
                 experience_match: '经验匹配度',
                 learning_ability: '学习能力'
             }
-            const dims = (comparisonResult.dimensions && comparisonResult.dimensions.length ? comparisonResult.dimensions : ['basic_match','experience','skills','learning','potential','teamwork']).map(d=>String(d))
+            const dims = (comparisonResult.dimensions && comparisonResult.dimensions.length ? comparisonResult.dimensions : ['basic_match','experience','learning','potential','teamwork']).map(d=>String(d)).filter(d => !d.toLowerCase().includes('skill'))
             dims.forEach(dim=>{
                 const tr = document.createElement('tr')
                 tr.className = 'comparison-row'
@@ -1175,8 +1149,8 @@
                 { bgIcon:'bg-orange-100', icon:'text-orange-600' }
             ];
             const dims = (function(){
-                const exist = (comparisonResult.dimensions||[]).map(String);
-                const picks = ['job_match','skill_match','experience_match','learning_ability','teamwork','job_fit','skill_fit','experience_fit','basic_match','skills','experience','learning'];
+                const exist = (comparisonResult.dimensions||[]).map(String).filter(d => !d.toLowerCase().includes('skill'));
+                const picks = ['job_match','experience_match','learning_ability','teamwork','job_fit','experience_fit','basic_match','experience','learning'];
                 const out = [];
                 for (const k of picks){ if (exist.includes(k)) { out.push(k); } if (out.length>=3) break; }
                 return out.length ? out : exist.slice(0,3);
@@ -1285,7 +1259,7 @@
             sel.innerHTML = '';
             const dims = comparisonResult.dimensions && comparisonResult.dimensions.length ? comparisonResult.dimensions : Object.keys(comparisonResult.resumes[0]?.scores||{});
             dims.forEach(d=>{ const opt=document.createElement('option'); opt.value=String(d); opt.textContent=ChartUtils.getDimensionLabel(String(d)); sel.appendChild(opt); });
-            const initialDim = String(dims[0]||'skills');
+            const initialDim = String(dims[0]||'basic_match');
             if (dimensionBarChart) { ChartUtils.destroyChart(dimensionBarChart); }
             dimensionBarChart = ChartUtils.createBarChart(canvas, comparisonResult.resumes, initialDim);
             sel.onchange = ()=>{
@@ -1520,21 +1494,6 @@
                  });
                  window.latestAnalysisMap = latestAnalysisMap;
 
-                 // 关键词到职位类型的简单推断
-                 const inferPositionType = (tags = []) => {
-                     const t = tags.join(' ').toLowerCase();
-                     if (/(前端|javascript|react|vue|html|css|typescript)/i.test(t)) return 'frontend';
-                     if (/(后端|java|python|node|spring|mysql|golang|c#)/i.test(t)) return 'backend';
-                     if (/(全栈)/i.test(t)) return 'fullstack';
-                     if (/(android|ios|移动|flutter|react native)/i.test(t)) return 'mobile';
-                     if (/(ui|ux|设计|figma|sketch|photoshop)/i.test(t)) return 'ui';
-                     if (/(数据|sql|机器学习|算法|ai|bi)/i.test(t)) return 'data';
-                     if (/(产品|项目管理|pm)/i.test(t)) return 'pm';
-                     if (/(测试|selenium|jmeter|接口测试|自动化)/i.test(t)) return 'test';
-                     if (/(运营|seo|sem|增长)/i.test(t)) return 'ops';
-                     return 'other';
-                 };
-
                  // 映射到页面展示所需结构
                  window.allResumes = (resumes || []).map(r => {
                      const fileName = r.file_name || '未知文件';
@@ -1542,21 +1501,17 @@
                      const fileType = extMatch ? `.${extMatch[1].toLowerCase()}` : '.pdf';
                      const baseName = fileName.replace(/\.[^/.]+$/, '');
                      const name = baseName;
-                     const position = (r.tags && r.tags.length > 0) ? r.tags[0] : '未知职位';
-                     const positionType = inferPositionType(r.tags || []);
+                     const position = (r.parsed_data && r.parsed_data.jobTitle) || '未知职位';
                      const uploadTime = r.upload_date ? new Date(r.upload_date) : new Date();
-                     const skills = Array.isArray(r.tags) ? r.tags : [];
                      const score = latestAnalysisMap[r.id]?.score ?? 'N/A';
                      return {
                          id: r.id,
                          name,
                          position,
-                         positionType,
                          fileName,
                          fileType,
                          uploadTime,
                          score,
-                         skills,
                          experience: '未知',
                          education: '未知',
                          salary: '面议'
@@ -1592,7 +1547,6 @@
              const closeBtn = document.getElementById('close-library-modal');
              const cancelBtn = document.getElementById('cancel-library-modal');
              const searchInput = document.getElementById('resume-search-input');
-             const positionFilter = document.getElementById('position-filter');
              const sortFilter = document.getElementById('sort-filter');
              const selectAllBtn = document.getElementById('select-all-btn');
              const clearSelectionBtn = document.getElementById('clear-selection-btn');
@@ -1695,7 +1649,6 @@
                          position: r.position,
                          experience: r.experience,
                          score: typeof r.score === 'number' ? r.score : '未评分',
-                         skills: Array.isArray(r.skills) && r.skills.length ? r.skills : ['未提取'],
                          uploadDate: (r.uploadTime instanceof Date) ? r.uploadTime.toLocaleDateString('zh-CN') : new Date().toLocaleDateString('zh-CN')
                      });
                  });
@@ -1755,9 +1708,8 @@
                  if (window.librarySearchKeyword) {
                      const keyword = window.librarySearchKeyword.toLowerCase();
                      if (!resume.name.toLowerCase().includes(keyword) && 
-                         !resume.position.toLowerCase().includes(keyword) &&
-                         !resume.fileName.toLowerCase().includes(keyword) &&
-                         !resume.skills.some(skill => skill.toLowerCase().includes(keyword))) {
+                        !resume.position.toLowerCase().includes(keyword) &&
+                        !resume.fileName.toLowerCase().includes(keyword)) {
                          return false;
                      }
                  }
@@ -1864,16 +1816,6 @@
                                  <span class="text-gray-400">|</span>
                                  <span class="text-xs text-gray-500 truncate" title="${resume.fileName}">${resume.fileName}</span>
                              </div>
-                         </div>
-                     </div>
-                     
-                     <!-- 技能标签 -->
-                     <div class="flex-shrink-0 w-40">
-                         <div class="flex flex-wrap gap-1">
-                             ${resume.skills.slice(0, 3).map(skill => 
-                                 `<span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">${skill}</span>`
-                             ).join('')}
-                             ${resume.skills.length > 3 ? `<span class="text-xs text-gray-400">+${resume.skills.length - 3}</span>` : ''}
                          </div>
                      </div>
                      

@@ -7,17 +7,20 @@ class UserAuth {
     constructor() {
         this.currentUser = null;
         this.token = null;
-        try {
-            const port = (window && window.location && window.location.port) ? window.location.port : '';
-            const protocol = (window && window.location && window.location.protocol) ? window.location.protocol : '';
-            if (protocol === 'file:' || port === '8083' || port === '8000') {
-                this.apiBaseUrl = 'http://localhost:3000/api';
-            } else {
-                this.apiBaseUrl = '/api';
-            }
-        } catch (_) {
+        // 自动检测环境
+        // 1. 如果在 localhost/127.0.0.1 且非 3000 端口，可能是开发环境前端，尝试连接 localhost:3000
+        // 2. 如果已经在 3000 端口，使用相对路径 /api
+        // 3. 生产环境下（域名访问），统一使用相对路径 /api
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const isBackendPort = window.location.port === '3000';
+        
+        if (isLocal && !isBackendPort) {
+            this.apiBaseUrl = 'http://localhost:3000/api';
+        } else {
             this.apiBaseUrl = '/api';
         }
+        
+        console.log('🚀 UserAuth initialized with apiBaseUrl:', this.apiBaseUrl);
         this.init();
     }
 
@@ -134,12 +137,7 @@ class UserAuth {
             return result;
         };
 
-        const bases = [
-            this.apiBaseUrl,
-            'http://localhost:3000/api',
-            (window.resumeDataManager && window.resumeDataManager.apiBaseUrl) ? window.resumeDataManager.apiBaseUrl : null,
-            '/api'
-        ].filter(Boolean);
+        const bases = [this.apiBaseUrl, '/api'].filter(Boolean);
         let lastError;
         for (const base of bases) {
             try {
@@ -380,7 +378,7 @@ class UserAuth {
         fd.append('avatar', fileOrBlob, 'avatar.png');
         const headers = {};
         if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
-        const bases = [this.apiBaseUrl, 'http://localhost:3000/api', '/api'];
+        const bases = [this.apiBaseUrl, '/api'];
         let lastError;
         for (const base of bases) {
             try {

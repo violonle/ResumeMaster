@@ -37,6 +37,13 @@ const smsService = require('./services/smsService');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// 日志中间件 - 移动到最上方以捕获所有请求
+app.use((req, res, next) => {
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] ${req.method} ${req.url}`);
+  next();
+});
+
 // 强制校验 JWT 密钥
 if (!process.env.JWT_SECRET) {
   logger.error('Missing JWT_SECRET in environment');
@@ -44,29 +51,15 @@ if (!process.env.JWT_SECRET) {
 }
 
 // 中间件
-if ((process.env.NODE_ENV || 'development') === 'production') {
-  const whitelist = (process.env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
-  app.use(cors({
-    origin: (origin, cb) => {
-      if (!origin) return cb(null, true);
-      if (whitelist.includes(origin)) return cb(null, true);
-      cb(new Error('Not allowed by CORS'));
-    },
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true,
-    optionsSuccessStatus: 204
-  }));
-} else {
-  const origins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : null;
-  app.use(cors({
-    origin: origins ? origins : true,
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true,
-    optionsSuccessStatus: 204
-  }));
-}
+// 极其宽松的 CORS 配置，确保部署阶段不被拦截
+app.use(cors({
+  origin: true, // 反映请求的 Origin，允许所有来源但支持 Credentials
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  credentials: true,
+  optionsSuccessStatus: 204
+}));
+
 // 统一开启预检请求处理
 app.options('*', cors());
 app.use(bodyParser.json({ limit: '10mb' }));
@@ -75,14 +68,34 @@ app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 // 静态文件服务
 const path = require('path');
 const ROOT_DIR = path.resolve(__dirname, '..');
-app.use('/uploads', express.static(path.join(ROOT_DIR, 'uploads')));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-app.use('/pages', express.static(path.join(ROOT_DIR, 'pages')));
-app.use('/components', express.static(path.join(ROOT_DIR, 'components')));
-app.use('/css', express.static(path.join(ROOT_DIR, 'css')));
-app.use('/js', express.static(path.join(ROOT_DIR, 'js')));
-app.use('/assets', express.static(path.join(ROOT_DIR, 'assets')));
-app.use('/images', express.static(path.join(ROOT_DIR, 'images')));
+// 后台管理系统静态文件
+const adminDistPath = path.join(ROOT_DIR, 'admin/dist');
+
+// 1. 处理后台管理系统的静态文件
+app.use('/admin', express.static(adminDistPath));
+
+// 2. 处理后台管理系统的 SPA 路由回退
+app.get('/admin/*', (req, res) => {
+  // 如果是带后缀的文件且静态文件中间件没处理，说明文件不存在，返回 404
+  if (path.extname(req.path)) {
+    return res.status(404).end();
+  }
+  // 否则返回 index.html 支持 SPA 路由
+  res.sendFile(path.join(adminDistPath, 'index.html'));
+});
+
+// 3. 其他静态资源
+ app.use('/uploads', express.static(path.join(ROOT_DIR, 'uploads')));
+ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+ app.use('/pages', express.static(path.join(ROOT_DIR, 'pages')));
+ app.use('/components', express.static(path.join(ROOT_DIR, 'components')));
+ app.use('/css', express.static(path.join(ROOT_DIR, 'css')));
+ app.use('/js', express.static(path.join(ROOT_DIR, 'js')));
+ app.use('/assets', express.static(path.join(ROOT_DIR, 'assets')));
+ app.use('/images', express.static(path.join(ROOT_DIR, 'images')));
+ app.use('/public', express.static(path.join(ROOT_DIR, 'public')));
+
+app.use(express.static(ROOT_DIR));
 
 // 日志中间件
 app.use((req, res, next) => {
@@ -91,6 +104,44 @@ app.use((req, res, next) => {
 });
 
 // 路由
+app.get('/api/health', async (req, res) => {
+  try {
+    const dbStatus = await sequelize.authenticate()
+      .then(() => 'connected')
+      .catch(err => `error: ${err.message}`);
+    
+    let userCount = 0;
+    let adminExists = false;
+    try {
+      userCount = await User.count();
+      const admin = await User.findOne({ where: { username: 'admin' } });
+      adminExists = !!admin;
+    } catch (e) {
+      userCount = `error: ${e.message}`;
+    }
+
+    res.json({
+      status: 'ok',
+      database: dbStatus,
+      dialect: sequelize.getDialect(),
+      userCount,
+      adminExists,
+      env: {
+        NODE_ENV: process.env.NODE_ENV,
+        DB_HOST: process.env.DB_HOST || 'not set',
+        PORT: process.env.PORT
+      },
+      // 临时辅助排查
+      debug: {
+        has_jwt_secret: !!process.env.JWT_SECRET,
+        cors_origin: true
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ status: 'error', message: err.message });
+  }
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/resumes', resumeRoutes);
 app.use('/api/analysis', analysisRoutes);
@@ -107,7 +158,21 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/recruitment', recruitmentRoutes);
 app.use('/api/library', libraryRoutes);
-app.use('/api/prompts', promptRoutes);
+app.use('/api/admin/prompts', promptRoutes);
+
+// 全局错误处理中间件
+app.use((err, req, res, next) => {
+  console.error('Unhandled Error:', err);
+  // 临时：在所有环境下都返回详细错误信息以便排查部署问题
+  res.status(err.status || 500).json({
+    success: false,
+    error: {
+      code: err.code || 'INTERNAL_SERVER_ERROR',
+      message: err.message || '服务器内部错误',
+      stack: err.stack
+    }
+  });
+});
 
 // 兼容路径：/api/user/stats 映射到认证模块的用户统计
 app.get('/api/user/stats', authenticate, authController.getUserStats);
@@ -133,33 +198,75 @@ async function ensureDefaultAdmin() {
     if (!process.env.JWT_SECRET || String(process.env.JWT_SECRET).trim() === '') {
       process.env.JWT_SECRET = 'dev-secret';
     }
-    const adminUser = await User.findOne({ where: { username: 'admin' } });
-    const ensureRole = async (userId) => {
-      let superRole = await Role.findOne({ where: { key: 'SUPER_ADMIN' } });
-      if (!superRole) {
-        superRole = await Role.create({ key: 'SUPER_ADMIN', name: '超级管理员', description: '系统最高权限', status: 'active' });
+
+    const Role = sequelize.models.Role;
+    const RolePermission = sequelize.models.RolePermission;
+    const UserRole = sequelize.models.UserRole || sequelize.modelManager.getModel('UserRole');
+
+    // 1. 确保所有角色存在
+    const rolesToEnsure = [
+      { key: 'SUPER_ADMIN', name: '超级管理员', description: '系统最高权限', permissions: ['*'] },
+      {
+        key: 'PLATFORM_ADMIN', name: '平台管理员', description: '平台管理权限', permissions: [
+          'dashboard.view', 'customers.view', 'customers.manage', 'companies.view', 'companies.manage',
+          'subscriptions.view', 'subscriptions.manage', 'ai_models.view', 'ai_models.manage',
+          'system.logs', 'finance.view', 'finance.manage', 'invoices.view', 'invoices.manage'
+        ]
       }
-      const UserRole = sequelize.modelManager.getModel('UserRole');
-      if (UserRole) { try { await UserRole.findOrCreate({ where: { user_id: userId, role_id: superRole.id }, defaults: { user_id: userId, role_id: superRole.id } }) } catch (_) { } }
-    };
+    ];
+
+    for (const r of rolesToEnsure) {
+      let role = await Role.findOne({ where: { key: r.key } });
+      if (!role) {
+        role = await Role.create({ key: r.key, name: r.name, description: r.description, status: 'active' });
+      }
+      if (r.permissions) {
+        await RolePermission.destroy({ where: { role_id: role.id } });
+        const rows = r.permissions.map(p => ({ role_id: role.id, permission_key: p }));
+        await RolePermission.bulkCreate(rows);
+      }
+    }
+
+    // 2. 确保管理员账号存在
+    const adminUser = await User.findOne({ where: { username: 'admin' } });
+    const superRole = await Role.findOne({ where: { key: 'SUPER_ADMIN' } });
+
     if (!adminUser) {
       const hash = await bcrypt.hash('admin123', 10);
-      const created = await User.create({ username: 'admin', role: 'admin', is_active: true, password_hash: hash, email: null, phone: null });
-      await ensureRole(created.id);
+      const created = await User.create({
+        username: 'admin',
+        role: 'admin',
+        is_active: true,
+        password_hash: hash,
+        email: 'admin@resumemaster.com'
+      });
+      if (UserRole && superRole) {
+        await UserRole.findOrCreate({
+          where: { user_id: created.id, role_id: superRole.id },
+          defaults: { user_id: created.id, role_id: superRole.id }
+        });
+      }
+      console.log('✅ Default admin user created.');
     } else {
-      const ph = String(adminUser.password_hash || '');
-      const invalid = !ph.startsWith('$2');
-      const updates = {};
-      if (invalid) { updates.password_hash = await bcrypt.hash('admin123', 10); }
-      if (adminUser.role !== 'admin') { updates.role = 'admin'; }
-      if (adminUser.is_active !== true) { updates.is_active = true; }
-      if (Object.keys(updates).length) { await adminUser.update(updates); }
-      await ensureRole(adminUser.id);
+      // 确保角色关联
+      if (UserRole && superRole) {
+        await UserRole.findOrCreate({
+          where: { user_id: adminUser.id, role_id: superRole.id },
+          defaults: { user_id: adminUser.id, role_id: superRole.id }
+        });
+      }
+      
+      // 修复无效密码 (非 bcrypt 格式)
+      if (!adminUser.password_hash.startsWith('$2')) {
+        const hash = await bcrypt.hash('admin123', 10);
+        await adminUser.update({ password_hash: hash });
+        console.log('✅ Default admin password reset.');
+      }
     }
-  } catch (_) { }
+  } catch (err) {
+    console.error('❌ ensureDefaultAdmin failed:', err.message);
+  }
 }
-
-ensureDefaultAdmin();
 
 async function ensureDemoResumes() {
   try {
@@ -180,8 +287,6 @@ async function ensureDemoResumes() {
   } catch (_) { }
 }
 
-ensureDemoResumes();
-
 // 测试路由
 const testRoutes = require('./routes/test');
 app.use('/api/test', testRoutes);
@@ -192,16 +297,6 @@ app.get('/', (req, res) => {
     message: 'SuperResumeMaster API',
     version: '1.0.0',
     timestamp: new Date().toISOString()
-  });
-});
-
-// 健康检查端点
-app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    environment: process.env.NODE_ENV || 'development'
   });
 });
 
@@ -270,18 +365,42 @@ app.use((req, res) => {
   });
 });
 
+const promptService = require('./services/promptService');
+
 // 启动服务器
 sequelize.sync({ force: false })
-  .then(() => {
+  .then(async () => {
     console.log('Database synchronized successfully.');
+    
+    // 初始化数据
+    try {
+      await ensureDefaultAdmin();
+      await ensureDemoResumes();
+      await promptService.ensureDefaultPrompts();
+      console.log('Initial data verification completed.');
+    } catch (e) {
+      console.error('Initial data setup failed:', e.message);
+    }
     // 确保 VerificationCode 表存在（如果不存在sequelize.sync会创建，但为了保险起见）
     // 检查并添加 company_id 到相关表
     (async () => {
       try {
         const tables = ['users', 'jobs', 'resumes', 'analysis_results', 'orders', 'invoices', 'recruitment_processes', 'user_activities'];
+        const dialect = sequelize.getDialect();
+        
         for (const table of tables) {
-          const [cols] = await sequelize.query(`PRAGMA table_info('${table}')`);
-          const hasCompanyId = Array.isArray(cols) && cols.some(c => (c.name || c.cid || '').toString() === 'company_id');
+          let cols;
+          if (dialect === 'sqlite') {
+            [cols] = await sequelize.query(`PRAGMA table_info('${table}')`);
+          } else {
+            [cols] = await sequelize.query(`SHOW COLUMNS FROM ${table}`);
+          }
+          
+          const hasCompanyId = Array.isArray(cols) && cols.some(c => {
+            const name = (c.name || c.cid || c.Field || '').toString().toLowerCase();
+            return name === 'company_id';
+          });
+          
           if (!hasCompanyId) {
             await sequelize.query(`ALTER TABLE ${table} ADD COLUMN company_id INTEGER DEFAULT NULL`);
             console.log(`Added column ${table}.company_id`);
@@ -292,10 +411,24 @@ sequelize.sync({ force: false })
     // 修复: 为旧数据库补充缺失的 subscription_plans.i18n_names 列
     (async () => {
       try {
-        const [cols] = await sequelize.query("PRAGMA table_info('subscription_plans')");
-        const hasI18n = Array.isArray(cols) && cols.some(c => (c.name || c.cid || '').toString() === 'i18n_names');
+        const dialect = sequelize.getDialect();
+        let cols;
+        if (dialect === 'sqlite') {
+          [cols] = await sequelize.query("PRAGMA table_info('subscription_plans')");
+        } else {
+          [cols] = await sequelize.query("SHOW COLUMNS FROM subscription_plans");
+        }
+        
+        const hasI18n = Array.isArray(cols) && cols.some(c => {
+          const name = (c.name || c.cid || c.Field || '').toString().toLowerCase();
+          return name === 'i18n_names';
+        });
+        
         if (!hasI18n) {
-          await sequelize.query("ALTER TABLE subscription_plans ADD COLUMN i18n_names TEXT DEFAULT '{}' ");
+          const addColSql = dialect === 'sqlite' 
+            ? "ALTER TABLE subscription_plans ADD COLUMN i18n_names TEXT DEFAULT '{}' "
+            : "ALTER TABLE subscription_plans ADD COLUMN i18n_names JSON";
+          await sequelize.query(addColSql);
           console.log('Added column subscription_plans.i18n_names');
         }
       } catch (e) { console.error('Ensure subscription_plans.i18n_names failed:', e.message) }
@@ -303,11 +436,25 @@ sequelize.sync({ force: false })
     // 为 resumes 表补充缺失的 source / is_talent_pool 列
     (async () => {
       try {
-        const [cols] = await sequelize.query("PRAGMA table_info('resumes')");
-        const hasSource = Array.isArray(cols) && cols.some(c => String(c.name||c.cid||'') === 'source');
-        const hasTalent = Array.isArray(cols) && cols.some(c => String(c.name||c.cid||'') === 'is_talent_pool');
+        const dialect = sequelize.getDialect();
+        let cols;
+        if (dialect === 'sqlite') {
+          [cols] = await sequelize.query("PRAGMA table_info('resumes')");
+        } else {
+          [cols] = await sequelize.query("SHOW COLUMNS FROM resumes");
+        }
+        
+        const hasSource = Array.isArray(cols) && cols.some(c => {
+          const name = (c.name || c.cid || c.Field || '').toString().toLowerCase();
+          return name === 'source';
+        });
+        const hasTalent = Array.isArray(cols) && cols.some(c => {
+          const name = (c.name || c.cid || c.Field || '').toString().toLowerCase();
+          return name === 'is_talent_pool';
+        });
+        
         if (!hasSource) {
-          await sequelize.query("ALTER TABLE resumes ADD COLUMN source TEXT DEFAULT 'manual'");
+          await sequelize.query("ALTER TABLE resumes ADD COLUMN source TEXT");
           console.log('Added column resumes.source');
         }
         if (!hasTalent) {
@@ -316,72 +463,7 @@ sequelize.sync({ force: false })
         }
       } catch (e) { console.error('Ensure resumes extra columns failed:', e.message) }
     })();
-    // 初始化默认管理员角色与权限
-    (async () => {
-      try {
-        const Role = sequelize.models.Role;
-        const RolePermission = sequelize.models.RolePermission;
-        const ensureRole = async (key, name, description, permissions) => {
-          let role = await Role.findOne({ where: { key } });
-          if (!role) {
-            role = await Role.create({ key, name, description, status: 'active' });
-          } else {
-            await role.update({ name, description, status: 'active' });
-          }
-          await RolePermission.destroy({ where: { role_id: role.id } });
-          if (Array.isArray(permissions) && permissions.length) {
-            const rows = permissions.map(p => ({ role_id: role.id, permission_key: p }));
-            await RolePermission.bulkCreate(rows);
-          }
-        };
-        const all = [
-          { key: 'SUPER_ADMIN', name: '超级管理员', description: '拥有所有权限', permissions: ['*'] },
-          {
-            key: 'PLATFORM_ADMIN', name: '平台管理员', description: '平台管理权限（不含底层敏感设置）', permissions: [
-              'dashboard.view',
-              'customers.view', 'customers.manage',
-              'companies.view', 'companies.manage',
-              'subscriptions.view', 'subscriptions.manage',
-              'ai_models.view', 'ai_models.manage',
-              'system.logs',
-              'finance.view', 'finance.manage',
-              'invoices.view', 'invoices.manage'
-            ]
-          },
-          {
-            key: 'CUSTOMER_ADMIN', name: '客户管理员', description: '管理账号、企业与订阅', permissions: [
-              'customers.view', 'customers.manage',
-              'companies.view', 'companies.manage',
-              'subscriptions.view', 'subscriptions.manage'
-            ]
-          },
-          {
-            key: 'AI_MODELS_ADMIN', name: '大模型管理员', description: '管理大模型提供商与密钥', permissions: [
-              'ai_models.view', 'ai_models.manage'
-            ]
-          }
-        ];
-        for (const r of all) { await ensureRole(r.key, r.name, r.description, r.permissions); }
-        console.log('Default admin roles ensured.');
-        if ((process.env.NODE_ENV || 'development') === 'development') {
-          const User = sequelize.models.User;
-          const UserRole = sequelize.models.UserRole;
-          const Role = sequelize.models.Role;
-          const bcrypt = require('bcryptjs');
-          let admin = await User.findOne({ where: { email: 'admin@resumemaster.com' } });
-          if (!admin) {
-            const hash = await bcrypt.hash('admin123', 10);
-            admin = await User.create({ username: 'admin', email: 'admin@resumemaster.com', password_hash: hash, role: 'admin', is_active: true });
-            const superRole = await Role.findOne({ where: { key: 'SUPER_ADMIN' } });
-            if (superRole) await UserRole.create({ user_id: admin.id, role_id: superRole.id });
-            console.log('Default admin user ensured.');
-          }
-        }
-      } catch (e) {
-        console.error('Seed default admin roles failed:', e.message);
-      }
-    })();
-  app.listen(PORT, () => {
+    app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
     // 面试提醒调度：每分钟检查一次
     setInterval(async ()=>{

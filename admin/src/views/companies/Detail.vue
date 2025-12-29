@@ -121,11 +121,11 @@
               </VCol>
               <VCol cols="6" class="text-center">
                 <div class="text-h4 text-success font-weight-bold mb-1">{{ companyStats?.totalResumes || 0 }}</div>
-                <div class="text-caption text-medium-emphasis">简历模板</div>
+                <div class="text-caption text-medium-emphasis">总简历数</div>
               </VCol>
               <VCol cols="6" class="text-center mt-4">
-                <div class="text-h4 text-info font-weight-bold mb-1">{{ companyStats?.totalUsage || 0 }}</div>
-                <div class="text-caption text-medium-emphasis">AI使用次数</div>
+                <div class="text-h4 text-info font-weight-bold mb-1">{{ companyStats?.totalJobs || 0 }}</div>
+                <div class="text-caption text-medium-emphasis">总职位数</div>
               </VCol>
               <VCol cols="6" class="text-center mt-4">
                 <div class="text-h4 text-warning font-weight-bold mb-1">{{ companyStats?.activeSubscriptions || 0 }}</div>
@@ -668,7 +668,7 @@ const company = computed(() => companyStore.currentCompany)
 const companyStats = ref({
   totalEmployees: 25,
   totalResumes: 50,
-  totalUsage: 128,
+  totalJobs: 12,
   activeSubscriptions: 1
 })
 

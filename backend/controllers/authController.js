@@ -187,11 +187,13 @@ const login = async (req, res) => {
     });
 
     if (!user) {
+      console.log('Login failed: User not found', JSON.stringify(whereConditions));
+      const isDev = process.env.NODE_ENV !== 'production';
       return res.status(401).json({
         success: false,
         error: {
           code: 'INVALID_CREDENTIALS',
-          message: '您还不是注册用户，请注册'
+          message: isDev ? `用户不存在: ${JSON.stringify(whereConditions)}` : '用户名或密码错误'
         }
       });
     }
@@ -200,11 +202,13 @@ const login = async (req, res) => {
     const isPasswordValid = await bcrypt.compare(password, user.password_hash);
 
     if (!isPasswordValid) {
+      console.log('Login failed: Invalid password for user', user.username);
+      const isDev = process.env.NODE_ENV !== 'production';
       return res.status(401).json({
         success: false,
         error: {
           code: 'INVALID_CREDENTIALS',
-          message: '密码错误，请重试'
+          message: isDev ? '密码错误' : '用户名或密码错误'
         }
       });
     }
@@ -229,11 +233,13 @@ const login = async (req, res) => {
       message: '登录成功'
     });
   } catch (error) {
+    console.error('Login Error Detailed:', error);
     res.status(500).json({
       success: false,
       error: {
         code: 'LOGIN_ERROR',
-        message: error.message
+        message: error.message,
+        stack: error.stack
       }
     });
   }

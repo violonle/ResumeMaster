@@ -162,6 +162,10 @@ const Resume = sequelize.define('Resume', {
     type: DataTypes.JSON,
     allowNull: true
   },
+  raw_text: {
+    type: DataTypes.TEXT('long'),
+    allowNull: true
+  },
   status: {
     type: DataTypes.ENUM('uploaded', 'parsing', 'analyzed', 'failed', 'archived'),
     defaultValue: 'uploaded'
@@ -195,6 +199,81 @@ const Resume = sequelize.define('Resume', {
   is_talent_pool: {
     type: DataTypes.BOOLEAN,
     defaultValue: false
+  },
+  name: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+    comment: '姓名'
+  },
+  phone: {
+    type: DataTypes.STRING(50),
+    allowNull: true,
+    comment: '电话'
+  },
+  email: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+    comment: '邮箱'
+  },
+  location: {
+    type: DataTypes.STRING(200),
+    allowNull: true,
+    comment: '城市/地址'
+  },
+  job_title: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+    comment: '职位'
+  },
+  experience_years: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    comment: '工作经验（年）'
+  },
+  highest_education: {
+    type: DataTypes.STRING(50),
+    allowNull: true,
+    comment: '最高学历'
+  },
+  job_status: {
+    type: DataTypes.STRING(50),
+    allowNull: true,
+    comment: '求职状态'
+  },
+  expected_salary: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+    comment: '期望薪资'
+  },
+  work_experience: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    comment: '工作经历'
+  },
+  education: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    comment: '教育经历'
+  },
+  skills: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    comment: '技能专长'
+  },
+  summary: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    comment: '个人优势'
+  },
+  projects: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    comment: '项目经历'
+  },
+  recruitment_status: {
+    type: DataTypes.ENUM('投递', '初筛', '面试', 'Offer', '入职', '放弃'),
+    defaultValue: '投递',
+    comment: '招聘流程状态'
   }
 }, {
   tableName: 'resumes',
@@ -213,6 +292,9 @@ const Resume = sequelize.define('Resume', {
     },
     {
       fields: ['user_id', 'status']
+    },
+    {
+      fields: ['recruitment_status']
     }
   ]
 });
@@ -951,8 +1033,16 @@ const Company = sequelize.define('Company', {
   province: { type: DataTypes.STRING(100), allowNull: true },
   city: { type: DataTypes.STRING(100), allowNull: true },
   district: { type: DataTypes.STRING(100), allowNull: true },
+  industry: { type: DataTypes.STRING(100), allowNull: true },
+  contact_name: { type: DataTypes.STRING(100), allowNull: true },
+  contact_phone: { type: DataTypes.STRING(50), allowNull: true },
+  size: { type: DataTypes.STRING(50), allowNull: true },
+  founding_year: { type: DataTypes.STRING(10), allowNull: true },
+  website: { type: DataTypes.STRING(200), allowNull: true },
+  description: { type: DataTypes.TEXT, allowNull: true },
   contact_account_id: { type: DataTypes.INTEGER, allowNull: true },
   is_verified: { type: DataTypes.BOOLEAN, defaultValue: false },
+  verification_status: { type: DataTypes.ENUM('none', 'pending', 'verified', 'rejected'), defaultValue: 'none' },
   verification_info: { type: DataTypes.JSON, allowNull: true, defaultValue: {} },
   code: { type: DataTypes.STRING(50), allowNull: true, unique: true },
   status: { type: DataTypes.ENUM('active', 'inactive'), defaultValue: 'active' }
@@ -961,6 +1051,23 @@ const Company = sequelize.define('Company', {
   timestamps: true,
   createdAt: 'created_at',
   updatedAt: 'updated_at'
+});
+
+const CompanyMember = sequelize.define('CompanyMember', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  company_id: { type: DataTypes.INTEGER, allowNull: false },
+  user_id: { type: DataTypes.INTEGER, allowNull: false },
+  role: { type: DataTypes.ENUM('admin', 'member', 'viewer'), defaultValue: 'member' },
+  status: { type: DataTypes.ENUM('active', 'invited', 'disabled'), defaultValue: 'active' },
+  joined_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
+}, {
+  tableName: 'company_members',
+  timestamps: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at',
+  indexes: [
+    { unique: true, fields: ['company_id', 'user_id'] }
+  ]
 });
 
 // 定义模型关系
@@ -999,6 +1106,8 @@ Job.hasMany(ResumeJob, { foreignKey: 'job_id', onDelete: 'CASCADE' });
 ResumeJob.belongsTo(Job, { foreignKey: 'job_id' });
 ResumeJob.belongsTo(User, { foreignKey: 'user_id' });
 
+Company.belongsTo(User, { foreignKey: 'contact_account_id', as: 'Contact' });
+
 // 多租户关联
 User.belongsTo(Company, { foreignKey: 'company_id', as: 'Company' });
 Company.hasMany(User, { foreignKey: 'company_id', as: 'Accounts' });
@@ -1024,6 +1133,12 @@ Company.hasMany(RecruitmentProcess, { foreignKey: 'company_id', as: 'Recruitment
 UserActivity.belongsTo(Company, { foreignKey: 'company_id', as: 'Company' });
 Company.hasMany(UserActivity, { foreignKey: 'company_id', as: 'UserActivities' });
 
+// Company Members Associations
+Company.hasMany(CompanyMember, { foreignKey: 'company_id', as: 'Members' });
+CompanyMember.belongsTo(Company, { foreignKey: 'company_id' });
+User.hasMany(CompanyMember, { foreignKey: 'user_id', as: 'CompanyMemberships' });
+CompanyMember.belongsTo(User, { foreignKey: 'user_id' });
+
 module.exports = {
   User,
   Resume,
@@ -1035,6 +1150,7 @@ module.exports = {
   UserActivity,
   SystemConfig,
   Company,
+  CompanyMember,
   // 新增模型开始
   // 订阅模型（公司维度）
   Subscription: (() => {

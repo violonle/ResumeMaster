@@ -6,7 +6,7 @@
     <!-- 统计卡片 -->
     <VRow class="mb-6">
       <VCol cols="12" md="3" sm="6">
-        <VCard class="h-100">
+        <VCard class="h-100" :loading="dashboardStore.loading">
           <VCardText class="d-flex align-center pa-6">
             <VAvatar
               rounded="lg"
@@ -15,18 +15,38 @@
               size="56"
               class="me-4"
             >
-              <VIcon icon="mdi-account-group" size="28" />
+              <VIcon icon="mdi-file-document-multiple" size="28" />
             </VAvatar>
             <div>
-              <div class="text-h4 font-weight-bold mb-1">{{ dashboardStore.stats.totalCustomers }}</div>
-              <div class="text-body-2 text-medium-emphasis font-weight-medium">总客户数</div>
+              <div class="text-h4 font-weight-bold mb-1">{{ dashboardStore.stats.totalResumes || 0 }}</div>
+              <div class="text-body-2 text-medium-emphasis font-weight-medium">总简历数</div>
             </div>
           </VCardText>
         </VCard>
       </VCol>
 
       <VCol cols="12" md="3" sm="6">
-        <VCard class="h-100">
+        <VCard class="h-100" :loading="dashboardStore.loading">
+          <VCardText class="d-flex align-center pa-6">
+            <VAvatar
+              rounded="lg"
+              color="info"
+              variant="tonal"
+              size="56"
+              class="me-4"
+            >
+              <VIcon icon="mdi-briefcase-variant" size="28" />
+            </VAvatar>
+            <div>
+              <div class="text-h4 font-weight-bold mb-1">{{ dashboardStore.stats.totalJobs || 0 }}</div>
+              <div class="text-body-2 text-medium-emphasis font-weight-medium">总职位数</div>
+            </div>
+          </VCardText>
+        </VCard>
+      </VCol>
+
+      <VCol cols="12" md="3" sm="6">
+        <VCard class="h-100" :loading="dashboardStore.loading">
           <VCardText class="d-flex align-center pa-6">
             <VAvatar
               rounded="lg"
@@ -38,7 +58,7 @@
               <VIcon icon="mdi-office-building" size="28" />
             </VAvatar>
             <div>
-              <div class="text-h4 font-weight-bold mb-1">{{ dashboardStore.stats.totalCompanies }}</div>
+              <div class="text-h4 font-weight-bold mb-1">{{ dashboardStore.stats.totalCompanies || 0 }}</div>
               <div class="text-body-2 text-medium-emphasis font-weight-medium">企业数量</div>
             </div>
           </VCardText>
@@ -46,7 +66,7 @@
       </VCol>
 
       <VCol cols="12" md="3" sm="6">
-        <VCard class="h-100">
+        <VCard class="h-100" :loading="dashboardStore.loading">
           <VCardText class="d-flex align-center pa-6">
             <VAvatar
               rounded="lg"
@@ -58,28 +78,8 @@
               <VIcon icon="mdi-credit-card" size="28" />
             </VAvatar>
             <div>
-              <div class="text-h4 font-weight-bold mb-1">{{ dashboardStore.stats.totalSubscriptions }}</div>
-              <div class="text-body-2 text-medium-emphasis font-weight-medium">订阅数量</div>
-            </div>
-          </VCardText>
-        </VCard>
-      </VCol>
-
-      <VCol cols="12" md="3" sm="6">
-        <VCard class="h-100">
-          <VCardText class="d-flex align-center pa-6">
-            <VAvatar
-              rounded="lg"
-              color="info"
-              variant="tonal"
-              size="56"
-              class="me-4"
-            >
-              <VIcon icon="mdi-robot" size="28" />
-            </VAvatar>
-            <div>
-              <div class="text-h4 font-weight-bold mb-1">{{ dashboardStore.stats.activeAIModels }}</div>
-              <div class="text-body-2 text-medium-emphasis font-weight-medium">AI模型数量</div>
+              <div class="text-h4 font-weight-bold mb-1">{{ dashboardStore.stats.activeSubscriptions || 0 }}</div>
+              <div class="text-body-2 text-medium-emphasis font-weight-medium">活跃订阅</div>
             </div>
           </VCardText>
         </VCard>
