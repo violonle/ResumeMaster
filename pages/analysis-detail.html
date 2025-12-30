@@ -132,12 +132,23 @@
 
                     <!-- AI Analysis Report -->
                     <div class="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
-                        <h4 class="text-base font-bold text-gray-900 mb-5 flex items-center">
-                            <i class="fas fa-file-invoice mr-2 text-blue-600"></i>
-                            AI 深度分析报告
-                        </h4>
-                        <div id="ai-report" class="prose prose-blue prose-sm max-w-none text-gray-600 leading-relaxed">
+                        <div class="flex items-center justify-between mb-5">
+                            <h4 class="text-base font-bold text-gray-900 flex items-center">
+                                <i class="fas fa-file-invoice mr-2 text-blue-600"></i>
+                                AI 深度分析报告
+                            </h4>
+                        </div>
+                        <div id="ai-report" class="prose prose-blue prose-sm max-w-none text-gray-600 leading-relaxed min-h-[300px]">
                             <!-- Dynamic Content -->
+                            <div class="flex flex-col items-center justify-center py-20 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+                                <i class="fas fa-robot text-5xl text-gray-300 mb-6"></i>
+                                <p class="text-gray-500 mb-8 text-center text-lg">当前暂无深度分析报告<br><span class="text-sm text-gray-400">点击下方按钮即可通过 AI 深度分析简历并补充生成完整报告</span></p>
+                <button id="supplement-btn" class="group relative px-12 py-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-2xl font-bold rounded-2xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 flex items-center shadow-2xl hover:shadow-blue-300 hover:-translate-y-1 transform active:scale-95 overflow-hidden">
+                    <div class="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                    <i class="fas fa-wand-magic-sparkles mr-4 text-3xl animate-pulse"></i>
+                    <span class="relative">补充分析报告</span>
+                </button>
+            </div>
                         </div>
                     </div>
                 </div>
@@ -179,8 +190,11 @@
                 resScore: document.getElementById('res-score'),
                 radarChart: document.getElementById('radarChart'),
                 scoreCards: document.getElementById('score-cards'),
-                aiReport: document.getElementById('ai-report')
+                aiReport: document.getElementById('ai-report'),
+                supplementBtn: document.getElementById('supplement-btn')
             };
+
+            let currentResumeId = null;
 
             async function fetchDetail() {
                 try {
@@ -216,8 +230,20 @@
 
                 // 1. 基础信息
                 const details = record.details || {};
+                const isMulti = record.type === 'multi';
                 const analysisData = record.type === 'single' ? (details.analysis || details) : details;
                 const info = analysisData.basic_info || analysisData.parsed_data?.basic_info || {};
+                
+                // 设置当前简历ID用于补充报告
+                currentResumeId = record.resume_id || record.Resume?.id;
+                
+                // 如果是对比分析，修改页面标题显示
+                if (isMulti) {
+                    const badge = document.createElement('span');
+                    badge.className = 'ml-3 px-2 py-0.5 bg-purple-50 text-purple-600 text-xs font-bold rounded uppercase tracking-wider';
+                    badge.textContent = '对比分析结果';
+                    dom.resName.parentElement.appendChild(badge);
+                }
                 
                 // 优先使用解析出的姓名，如果没有则使用文件名
                 const parsedName = info.name || info.candidate_name;
@@ -393,7 +419,35 @@
                     'evaluation_report': '深度评估报告'
                 };
 
-                if (typeof report === 'string') {
+                // 判断报告是否为空或占位符
+                const isEmpty = !report || report === '暂无报告' || (typeof report === 'object' && Object.keys(report).length === 0);
+                
+                if (isEmpty) {
+                    dom.aiReport.innerHTML = `
+                        <div class="flex flex-col items-center justify-center py-16 bg-gray-50/50 rounded-2xl border-2 border-dashed border-gray-200">
+                            <i class="fas fa-robot text-5xl text-gray-300 mb-6"></i>
+                            <p class="text-gray-500 mb-8 text-center">
+                                <span class="text-lg font-medium block mb-1">当前暂无深度分析报告</span>
+                                <span class="text-sm text-gray-400">点击下方按钮即可开启 AI 深度画像分析</span>
+                            </p>
+                            <button id="supplement-btn-inner" class="group relative px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-lg font-bold rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 flex items-center shadow-xl hover:shadow-blue-200 hover:-translate-y-0.5 transform active:scale-95 overflow-hidden">
+                                <div class="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                                <i class="fas fa-wand-magic-sparkles mr-3 text-xl animate-pulse"></i>
+                                <span class="relative">立即补充 AI 深度分析报告</span>
+                            </button>
+                        </div>
+                    `;
+                    
+                    // 重新绑定事件，因为 innerHTML 替换了 DOM
+                    const innerBtn = document.getElementById('supplement-btn-inner');
+                    if (innerBtn) {
+                        innerBtn.onclick = () => dom.supplementBtn.click();
+                    }
+                    dom.supplementBtn.classList.add('hidden'); // 隐藏原有的外部按钮
+                } else {
+                    dom.supplementBtn.classList.add('hidden');
+                    
+                    if (typeof report === 'string') {
                     // 简单的 Markdown 换行转换
                     dom.aiReport.innerHTML = report.split('\n').map(line => {
                         let content = line.trim();
@@ -427,12 +481,95 @@
                                     <span class="w-1 h-5 bg-blue-600 rounded-full mr-2"></span>${title}
                                 </h4>
                                 <div class="text-gray-600 leading-relaxed pl-3 border-l border-gray-100 ml-0.5">
-                                    ${typeof value === 'string' ? value.replace(/\n/g, '<br>') : JSON.stringify(value)}
+                                    ${Array.isArray(value) 
+                                        ? `<ul class="list-none space-y-2">
+                                            ${value.map(item => `<li class="flex items-start"><i class="fas fa-check-circle text-blue-400 mt-1 mr-2 text-sm"></i><span>${item}</span></li>`).join('')}
+                                           </ul>`
+                                        : (typeof value === 'string' ? value.replace(/\n/g, '<br>') : JSON.stringify(value))
+                                    }
                                 </div>
                             </div>`;
                     }
                     dom.aiReport.innerHTML = html || '<p class="text-gray-400 italic">暂无报告内容</p>';
                 }
+            }
+        }
+
+        // 补充分析按钮点击事件
+            if (dom.supplementBtn) {
+                dom.supplementBtn.addEventListener('click', async () => {
+                    if (!currentResumeId) {
+                        alert('无法获取简历ID，请刷新页面重试');
+                        return;
+                    }
+
+                    try {
+                        const innerBtn = document.getElementById('supplement-btn-inner');
+                        const originalContent = dom.supplementBtn.innerHTML;
+                        const originalInnerContent = innerBtn ? innerBtn.innerHTML : '';
+                        
+                        dom.supplementBtn.disabled = true;
+                        if (innerBtn) {
+                            innerBtn.disabled = true;
+                            innerBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2 text-xl"></i>正在唤醒 AI...';
+                        }
+                        dom.supplementBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>生成中...';
+                        
+                        const token = userAuthInstance.getToken();
+                        const apiUrl = `/api/ai/supplement-analysis/${currentResumeId}`;
+                        console.log(`[SupplementAnalysis] Calling API: ${apiUrl}`);
+                        
+                        const response = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        
+                        console.log(`[SupplementAnalysis] API Response status: ${response.status}`);
+                        const result = await response.json();
+                        console.log(`[SupplementAnalysis] API Response body:`, result);
+                        
+                        if (result.success) {
+                        // 显示提交成功状态
+                        dom.aiReport.innerHTML = `
+                            <div class="flex flex-col items-center justify-center py-20 bg-blue-50/50 rounded-xl border-2 border-dashed border-blue-200">
+                                <div class="relative">
+                                    <div class="animate-ping absolute inset-0 rounded-full bg-blue-400 opacity-20"></div>
+                                    <div class="animate-spin rounded-full h-16 w-16 border-4 border-blue-600 border-t-transparent mb-6"></div>
+                                </div>
+                                <p class="text-blue-600 font-bold text-xl mb-2">AI 正在深度分析中...</p>
+                                <p class="text-blue-400 text-sm text-center">正在为您生成犀利、专业的深度报告<br>完成后页面将自动刷新</p>
+                            </div>
+                        `;
+                        
+                        // 轮询或简单等待后刷新
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 5000); 
+                    } else {
+                        const errorMsg = typeof result.error === 'object' ? JSON.stringify(result.error) : (result.error || '未知错误');
+                        alert('补充分析失败: ' + errorMsg);
+                        dom.supplementBtn.disabled = false;
+                        dom.supplementBtn.innerHTML = originalContent;
+                        if (innerBtn) {
+                            innerBtn.disabled = false;
+                            innerBtn.innerHTML = originalInnerContent;
+                        }
+                    }
+                    } catch (error) {
+                        console.error('Supplement analysis error:', error);
+                        alert('网络请求失败，请稍后重试');
+                        dom.supplementBtn.disabled = false;
+                        dom.supplementBtn.innerHTML = originalContent;
+                        const innerBtn = document.getElementById('supplement-btn-inner');
+                        if (innerBtn) {
+                            innerBtn.disabled = false;
+                            innerBtn.innerHTML = '立即补充 AI 深度分析报告';
+                        }
+                    }
+                });
             }
 
             function showError(msg) {

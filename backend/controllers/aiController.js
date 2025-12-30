@@ -2,7 +2,7 @@ const DomesticAIService = require('../services/domesticAIService');
 const axios = require('axios');
 const cheerio = require('cheerio');
 const { extractTextFromFile, buildFallbackTextFromParsed } = require('../services/textExtractor');
-const { Resume, AnalysisResult, DeepAnalysisRecord, Job } = require('../models');
+const { AnalysisResult, Resume, Job, User, DeepAnalysisRecord } = require('../models');
 const logger = require('../utils/logger');
 const promptService = require('../services/promptService');
 const { UserActivity } = require('../models');
@@ -53,8 +53,13 @@ class AIController {
           order: [['id', 'DESC']]
         });
 
-        if (existingDeepRecord) {
-           console.log(`[AI Controller] Found existing DeepAnalysisRecord for resumeId: ${resumeId}, skipping AI call.`);
+        // 核心修复：只有当存在记录、总分大于 0 且维度分不全为 0 时，才跳过 AI 调用
+        // 这样如果之前因为某种原因解析出了 0 分或空维度，再次点击分析时会重新触发 AI
+        const hasDimensions = existingDeepRecord && existingDeepRecord.dimensions && 
+                             Object.values(existingDeepRecord.dimensions).some(v => v > 0);
+                             
+        if (existingDeepRecord && existingDeepRecord.overall_score > 0 && hasDimensions) {
+           console.log(`[AI Controller] Found valid DeepAnalysisRecord for resumeId: ${resumeId}, skipping AI call.`);
            return res.json({
              success: true,
              status: 'analyzed',
@@ -158,22 +163,55 @@ class AIController {
         if (result.success) {
           // 保存分析结果
           let analysisData = aiService.parseJSONResponse(result.data);
-          console.log(`[AI Controller] AI Service response for resumeId ${resumeId}:`, 
-            typeof result.data === 'string' ? result.data.substring(0, 300) + '...' : 'Object');
           
           if (!analysisData) {
-              logger.error('解析 AI 结果失败', { 
-                  resumeId: resumeId, 
-                  content: typeof result.data === 'string' ? result.data.substring(0, 200) + '...' : 'Non-string result'
-              });
-              // 如果解析失败，尝试从文本中正则表达式提取分数
+              console.warn(`[AI Controller] JSON parsing failed for resume ${resumeId}. Raw data snippet: ${typeof result.data === 'string' ? result.data.substring(0, 200) : 'not a string'}`);
+              // 尝试更激进的 JSON 提取
               if (typeof result.data === 'string') {
-                  const scoreMatch = result.data.match(/(?:overall_score|score|得分|匹配度)\s*[:：]\s*(\d+)/i);
+                  try {
+                      // 查找最外层的 {}
+                      const firstBrace = result.data.indexOf('{');
+                      const lastBrace = result.data.lastIndexOf('}');
+                      if (firstBrace !== -1 && lastBrace !== -1) {
+                          analysisData = JSON.parse(result.data.substring(firstBrace, lastBrace + 1));
+                      }
+                  } catch (e) {
+                      console.error(`[AI Controller] Aggressive JSON parsing also failed: ${e.message}`);
+                  }
+              }
+          }
+
+          if (!analysisData) {
+              console.warn(`[AI Controller] Falling back to regex extraction for resume ${resumeId}`);
+              if (typeof result.data === 'string') {
+                  const scoreMatch = result.data.match(/(?:overall_score|score|得分|匹配度|总分)\s*[:：]\s*(\d+)/i);
                   analysisData = { overall_score: scoreMatch ? parseInt(scoreMatch[1]) : 0 };
+                  
+                  // 尝试提取简短总结
+                  const summaryMatch = result.data.match(/(?:总结|评价|分析|summary)\s*[:：]\s*([^。\n!！]+)/i);
+                  if (summaryMatch) analysisData.summary = summaryMatch[1].trim();
+                  
+                  // 尝试从文本中寻找可能的维度分数 (如果 JSON 解析完全失败)
+                  const dimPatterns = {
+                      skills: /(?:技能|专业|技术|skills)\s*[:：]\s*(\d+)/i,
+                      experience: /(?:经验|履历|背景|experience)\s*[:：]\s*(\d+)/i,
+                      education: /(?:学历|教育|学校|education)\s*[:：]\s*(\d+)/i,
+                      stability: /(?:稳定|跳槽|离职|stability)\s*[:：]\s*(\d+)/i,
+                      potential: /(?:潜力|发展|成长|potential)\s*[:：]\s*(\d+)/i,
+                      teamwork: /(?:协作|团队|沟通|teamwork)\s*[:：]\s*(\d+)/i
+                  };
+                  
+                  analysisData.scores_percent = {};
+                  for (const [key, pattern] of Object.entries(dimPatterns)) {
+                      const match = result.data.match(pattern);
+                      if (match) analysisData.scores_percent[key] = parseInt(match[1]);
+                  }
               } else {
                   analysisData = { overall_score: 0 };
               }
           }
+
+          console.log(`[AI Controller] Final analysisData for resume ${resumeId}:`, JSON.stringify(analysisData).substring(0, 500));
         
         // 计算分数和提取关键信息用于存储
         let overallScore = (analysisData && typeof analysisData === 'object') 
@@ -189,15 +227,41 @@ class AIController {
         const report = (analysisData && analysisData.evaluation_report) || (analysisData && analysisData.report) || (analysisData && analysisData.analysis_report) || {};
         // 提取维度分数，并确保是数字
         const radar = {};
-        const rawRadar = (analysisData && analysisData.scores_percent) || (analysisData && analysisData.radar_scores) || (analysisData && analysisData.radarScores) || (analysisData && analysisData.score_detail) || (analysisData && analysisData.dimensions) || {};
+        const rawRadar = (analysisData && analysisData.scores_percent) || (analysisData && analysisData.radar_scores) || (analysisData && analysisData.radarScores) || (analysisData && analysisData.score_detail) || (analysisData && analysisData.dimensions) || analysisData || {};
         
         const dimensionKeys = ['skills', 'experience', 'education', 'stability', 'potential', 'teamwork'];
+        const dimensionMappings = {
+            skills: ['skills', 'skill_match', 'professional', '专业技能', '技能评分', '技能匹配'],
+            experience: ['experience', 'experience_match', 'background', '工作经验', '经验契合', '经验评分'],
+            education: ['education', 'education_background', 'academic', '学历背景', '教育背景', '学历评分'],
+            stability: ['stability', 'work_stability', 'tenure', '稳定性', '离职风险', '职业稳定性'],
+            potential: ['potential', 'growth_potential', 'development', '发展潜力', '潜力评分', '成长性'],
+            teamwork: ['teamwork', 'collaboration', 'social', '团队协作', '协作能力', '团队精神']
+        };
+
         dimensionKeys.forEach(key => {
-            let val = rawRadar[key];
-            if (val === undefined || val === null) {
-                // 尝试从 analysisData 顶层查找
-                val = analysisData[key];
+            let val = 0;
+            const possibleKeys = dimensionMappings[key];
+            
+            for (const pKey of possibleKeys) {
+                // 1. 尝试从 rawRadar 中查找（区分大小写）
+                if (rawRadar[pKey] !== undefined) {
+                    val = rawRadar[pKey];
+                    break;
+                }
+                // 2. 尝试不区分大小写查找
+                const foundKey = Object.keys(rawRadar).find(k => k.toLowerCase() === pKey.toLowerCase());
+                if (foundKey) {
+                    val = rawRadar[foundKey];
+                    break;
+                }
             }
+            
+            // 如果是对象格式 { score: 80 } 或 { value: 80 }
+            if (typeof val === 'object' && val !== null) {
+                val = val.score || val.value || val.rating || 0;
+            }
+            
             radar[key] = parseInt(val) || 0;
         });
 
@@ -227,16 +291,21 @@ class AIController {
           analysis_date: new Date()
         });
         
-        // 同时保存到 DeepAnalysisRecord
-        await DeepAnalysisRecord.create({
-          user_id: user.id,
-          company_id: user.company_id || null,
-          resume_id: resumeId,
-          type: 'single',
-          overall_score: overallScore,
-          dimensions: radar,
-          details: analysisData
-        });
+        // 仅在深度解析场景下保存到 DeepAnalysisRecord
+        if (!options || options.scene === 'deep_analysis' || options.scene === 'analysis') {
+            console.log(`[AI Controller] Saving to DeepAnalysisRecord for scene: ${options?.scene || 'default'}`);
+            await DeepAnalysisRecord.create({
+              user_id: user.id,
+              company_id: user.company_id || null,
+              resume_id: resumeId,
+              type: 'single',
+              overall_score: overallScore,
+              dimensions: radar,
+              details: analysisData
+            });
+        } else {
+            console.log(`[AI Controller] Skipping DeepAnalysisRecord for scene: ${options?.scene}`);
+        }
         
         console.log(`[AI Controller] Analysis record created for resumeId: ${resumeId}`);
         
@@ -268,25 +337,24 @@ class AIController {
         return res.status(404).json({ success: false, error: '简历不存在' });
       }
 
+      // 直接使用数据库中的状态
       let currentStatus = resume.status;
-      // 检查是否有分析结果记录，如果有，状态强制修正为 analyzed
-      const resultCount = await AnalysisResult.count({ where: { resume_id: resumeId } });
-      if (resultCount > 0) {
-        currentStatus = 'analyzed';
-      } else if (currentStatus === 'analyzed') {
-        // 如果状态是 analyzed 但没结果记录，说明出错了或还在写
-        currentStatus = 'parsing';
-      }
-
+      
+      // 如果状态是 analyzed，但其实没有结果，可能需要修正（可选，但目前反过来才是问题）
+      // 我们优先信任 Resume 表中的 status 字段，因为它是由后台任务明确更新的
+      
       res.json({
         success: true,
         data: {
           status: currentStatus,
-          resumeId: resume.id
+          progress: currentStatus === 'analyzed' ? 100 : (currentStatus === 'parsing' ? 50 : 0)
         }
       });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
     }
   }
 
@@ -297,96 +365,48 @@ class AIController {
       
       console.log('getAnalysisResult called for resumeId:', resumeId);
       
-      // 获取最新的分析结果
-      const result = await AnalysisResult.findOne({
+      // 1. 仅从 DeepAnalysisRecord 获取结果（深度解析结果）
+      // 排除掉 AnalysisResult（初筛结果），确保深度解析的独立性
+      let result = await DeepAnalysisRecord.findOne({
         where: { resume_id: resumeId },
         order: [['id', 'DESC']]
       });
 
-      console.log('Found analysis result:', result ? 'Yes' : 'No');
-      if (result) {
-        console.log('Analysis result data keys:', Object.keys(result.toJSON()));
-        console.log('Detailed analysis type:', typeof result.detailed_analysis);
-        console.log('Detailed analysis full:', JSON.stringify(result.detailed_analysis, null, 2));
-        console.log('Dimensions (radar scores):', result.dimensions);
-        console.log('Strengths:', result.strengths);
-        console.log('Weaknesses:', result.weaknesses);
-        console.log('Suggestions:', result.suggestions);
-      }
-
       if (!result) {
-        return res.status(404).json({ success: false, error: '分析结果不存在' });
+        return res.json({
+          success: true,
+          data: null
+        });
       }
 
-      // Log the response we're sending
-      // Return the analysis data in a consistent format that matches the AI service response
-                // --- Diagnostic Logs ---
-                console.log(`[AI Controller] Fetching results for resumeId: ${resumeId}`);
-                
-                // 确保 dimensions 是对象
-                let dimensions = result.dimensions || {};
-                if (typeof dimensions === 'string') {
-                    try { dimensions = JSON.parse(dimensions); } catch (e) { dimensions = {}; }
-                }
-
-                // 确保 strengths, weaknesses, suggestions 是数组
-                let strengths = result.strengths || [];
-                if (typeof strengths === 'string') {
-                    try { strengths = JSON.parse(strengths); } catch (e) { strengths = []; }
-                }
-                let weaknesses = result.weaknesses || [];
-                if (typeof weaknesses === 'string') {
-                    try { weaknesses = JSON.parse(weaknesses); } catch (e) { weaknesses = []; }
-                }
-                let suggestions = result.suggestions || [];
-                if (typeof suggestions === 'string') {
-                    try { suggestions = JSON.parse(suggestions); } catch (e) { suggestions = []; }
-                }
-
-                // 获取原始解析数据
-                let rawAnalysisData = result.detailed_analysis || {};
-                if (typeof rawAnalysisData === 'string') {
-                    try { rawAnalysisData = JSON.parse(rawAnalysisData); } catch (e) { rawAnalysisData = {}; }
-                }
-
-                // 构建平铺的响应数据，确保前端能直接访问
-                const responseData = {
-                    // 核心数据
-                    success: true, // 增加冗余的 success 标记
-                    overall_score: result.overall_score || 0,
-                    scores_percent: dimensions,
-                    evaluation_report: {
-                        summary: result.summary || result.hiring_advice || rawAnalysisData.evaluation_report?.summary || rawAnalysisData.summary || '',
-                        strengths: (strengths && strengths.length > 0) ? strengths : (rawAnalysisData.evaluation_report?.strengths || rawAnalysisData.strengths || []),
-                        weaknesses: (weaknesses && weaknesses.length > 0) ? weaknesses : (rawAnalysisData.evaluation_report?.weaknesses || rawAnalysisData.weaknesses || []),
-                        suggestions: (suggestions && suggestions.length > 0) ? suggestions : (rawAnalysisData.evaluation_report?.suggestions || rawAnalysisData.suggestions || []),
-                        hiring_advice: result.hiring_advice || rawAnalysisData.evaluation_report?.hiring_advice || rawAnalysisData.hiring_advice || ''
-                    },
-                    
-                    // 补充原始解析数据
-                    basic_info: rawAnalysisData.basic_info || rawAnalysisData.basicInfo || rawAnalysisData.personalInfo || {},
-                    parsed_data: rawAnalysisData,
-        
-        // 元数据
-        service: result.ai_provider,
-        model: result.ai_model,
-        responseTime: result.processing_time,
-        createdAt: result.analysis_date
-      };
+      // 统一映射逻辑（与 analysisController.getLatestAnalysisResult 保持一致）
+      const details = result.details || result.detailed_analysis || {};
+      const basicInfo = details.basic_info || details.personalInfo || details.parsed_data?.basic_info || {};
       
-      console.log(`[AI Controller] Sending analysis results for resumeId: ${resumeId}`, {
-        score: responseData.overall_score,
-        hasReport: !!responseData.evaluation_report.summary,
-        dimensionsCount: Object.keys(responseData.scores_percent).length
-      });
+      const mappedData = {
+        ...details,
+        ...result.toJSON(),
+        personalInfo: basicInfo,
+        basic_info: basicInfo,
+        dimensions: result.dimensions || details.radar || details.dimensions || details.scores_percent || {},
+        detailed_analysis: details,
+        scores: details.scores || { 
+          overall: result.overall_score,
+          dimensions: result.dimensions || details.radar || details.dimensions || details.scores_percent || {}
+        },
+        report: details.evaluation_report || details.analysis_report || details.report || details.evaluation || '暂无详细报告内容'
+      };
 
       res.json({
         success: true,
-        data: responseData
+        data: mappedData
       });
     } catch (error) {
       console.error('getAnalysisResult error:', error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
     }
   }
 
@@ -441,6 +461,122 @@ class AIController {
         success: false,
         error: '职位匹配失败'
       });
+    }
+  }
+
+  // 补充分析报告
+  async supplementAnalysis(req, res) {
+        try {
+            const { resumeId } = req.params;
+            const userId = req.user.id;
+            
+            console.log(`[SupplementAnalysis] Request received for resumeId: ${resumeId}, userId: ${userId}`);
+            logger.info('收到补充分析请求', { resumeId, userId });
+
+      if (!resumeId) {
+        return res.status(400).json({ success: false, error: '简历ID不能为空' });
+      }
+
+      const resume = await Resume.findByPk(resumeId);
+      if (!resume) {
+        return res.status(404).json({ success: false, error: '简历不存在' });
+      }
+
+      // 提取文本
+      let text = await extractTextFromFile(resume.file_path);
+      if (!text) text = buildFallbackTextFromParsed(resume.parsed_data || {});
+      
+      if (!text) {
+        return res.status(400).json({ success: false, error: '无法提取简历内容，请检查文件是否正确' });
+      }
+
+      // 异步处理补充报告
+      res.json({
+        success: true,
+        message: '补充分析请求已提交，正在生成中...'
+      });
+
+      // 执行后台分析
+      this.processSupplementBackground(resumeId, text, userId).catch(err => {
+        logger.error('补充分析任务失败', { resumeId, error: err.message });
+      });
+
+    } catch (error) {
+      logger.error('补充分析请求失败', { message: error.message, stack: error.stack });
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+
+  // 后台补充分析任务
+  async processSupplementBackground(resumeId, text, userId) {
+    try {
+      logger.info('Starting supplement analysis', { resumeId });
+      
+      // 调用 AI 服务，使用新提示词
+      const result = await aiService.analyzeResume(text, '', { id: userId }, 'supplement_report');
+
+      if (result.success) {
+        let analysisData = result.data;
+        if (!analysisData) throw new Error('解析补充分析结果失败');
+
+        // 获取最新的深度分析记录
+        const record = await DeepAnalysisRecord.findOne({
+          where: { resume_id: resumeId },
+          order: [['id', 'DESC']]
+        });
+
+        if (record) {
+          const currentDetails = record.details || {};
+          
+          // 构建结构化的报告对象
+          const evaluationReport = {
+            summary: analysisData.summary || '',
+            strengths: analysisData.strengths || [],
+            weaknesses: analysisData.weaknesses || [],
+            suggestions: analysisData.suggestions || [],
+            hiring_advice: analysisData.hiring_advice || ''
+          };
+
+          // 更新详情中的报告部分
+          const updatedDetails = {
+            ...currentDetails,
+            evaluation_report: evaluationReport, // 存储结构化对象，以便前端分板块渲染
+            ...evaluationReport // 同时也将这些字段平铺到 details 中
+          };
+
+          await record.update({
+            details: updatedDetails
+          });
+          
+          logger.info('Supplement analysis completed and record updated', { resumeId });
+        } else {
+          // 如果记录不存在，创建一个新的
+          const evaluationReport = {
+            summary: analysisData.summary || '',
+            strengths: analysisData.strengths || [],
+            weaknesses: analysisData.weaknesses || [],
+            suggestions: analysisData.suggestions || [],
+            hiring_advice: analysisData.hiring_advice || ''
+          };
+
+          await DeepAnalysisRecord.create({
+            user_id: userId,
+            resume_id: resumeId,
+            type: 'single',
+            overall_score: analysisData.overall_score || 0,
+            dimensions: analysisData.scores_percent || {},
+            details: {
+              ...analysisData,
+              evaluation_report: evaluationReport
+            }
+          });
+          logger.info('Supplement analysis completed and new record created', { resumeId });
+        }
+      } else {
+        throw new Error(result.error || 'AI 服务返回失败');
+      }
+    } catch (error) {
+      logger.error('Background supplement analysis failed', { resumeId, error: error.message, stack: error.stack });
     }
   }
 
@@ -546,6 +682,35 @@ class AIController {
       for (const resume of resumes) {
         logger.info(`Processing resume ID: ${resume.id}, File: ${resume.file_name}`);
         
+        // 1. 检查是否已经存在深度解析记录
+        const existingDeepRecord = await DeepAnalysisRecord.findOne({
+          where: { 
+            resume_id: resume.id,
+            user_id: userId
+          },
+          order: [['id', 'DESC']]
+        });
+
+        // 核心修复：只有当存在记录、总分大于 0 且维度分不全为 0 时，才跳过 AI 调用
+        const hasDimensions = existingDeepRecord && existingDeepRecord.dimensions && 
+                             Object.values(existingDeepRecord.dimensions).some(v => v > 0);
+                             
+        if (existingDeepRecord && existingDeepRecord.overall_score > 0 && hasDimensions) {
+          logger.info(`[Batch Analysis] Found valid DeepAnalysisRecord for resumeId: ${resume.id}, skipping AI call.`);
+          results.push({
+            id: resume.id,
+            success: true,
+            status: 'analyzed',
+            data: {
+              analysis: existingDeepRecord.details || {},
+              overall_score: existingDeepRecord.overall_score,
+              dimensions: existingDeepRecord.dimensions,
+              createdAt: existingDeepRecord.analysis_date
+            }
+          });
+          continue;
+        }
+
         let content = resume.parsed_data?.content || '';
         if (!content) {
             try {
@@ -601,6 +766,22 @@ class AIController {
                         if (scoreMatch) {
                             analysisData = { overall_score: parseInt(scoreMatch[1]) };
                             logger.info(`Extracted score via regex for resume ${resume.id}: ${analysisData.overall_score}`);
+                            
+                            // 尝试提取维度分数 (Regex fallback)
+                            const dimPatterns = {
+                                skills: /(?:技能|专业|技术|skills)\s*[:：]\s*(\d+)/i,
+                                experience: /(?:经验|履历|背景|experience)\s*[:：]\s*(\d+)/i,
+                                education: /(?:学历|教育|学校|education)\s*[:：]\s*(\d+)/i,
+                                stability: /(?:稳定|跳槽|离职|stability)\s*[:：]\s*(\d+)/i,
+                                potential: /(?:潜力|发展|成长|potential)\s*[:：]\s*(\d+)/i,
+                                teamwork: /(?:协作|团队|沟通|teamwork)\s*[:：]\s*(\d+)/i
+                            };
+                            
+                            analysisData.scores_percent = {};
+                            for (const [key, pattern] of Object.entries(dimPatterns)) {
+                                const match = aiResult.data.match(pattern);
+                                if (match) analysisData.scores_percent[key] = parseInt(match[1]);
+                            }
                         }
                     }
                 }
@@ -618,8 +799,54 @@ class AIController {
 
                 logger.info(`Final score for resume ${resume.id}: ${overallScore}`);
 
-                const report = (analysisData && analysisData.evaluation_report) || (analysisData && analysisData.report) || {};
-                const radar = (analysisData && analysisData.radar_scores) || (analysisData && analysisData.radarScores) || (analysisData && analysisData.score_detail) || (analysisData && analysisData.dimensions) || {};
+                const report = (analysisData && analysisData.evaluation_report) || (analysisData && analysisData.report) || (analysisData && analysisData.analysis_report) || {};
+                const rawRadar = (analysisData && analysisData.scores_percent) || (analysisData && analysisData.radar_scores) || (analysisData && analysisData.radarScores) || (analysisData && analysisData.score_detail) || (analysisData && analysisData.dimensions) || analysisData || {};
+
+                const radar = {};
+                const dimensionKeys = ['skills', 'experience', 'education', 'stability', 'potential', 'teamwork'];
+                const dimensionMappings = {
+                    skills: ['skills', 'skill_match', 'professional', '专业技能', '技能评分', '技能匹配'],
+                    experience: ['experience', 'experience_match', 'background', '工作经验', '经验契合', '经验评分'],
+                    education: ['education', 'education_background', 'academic', '学历背景', '教育背景', '学历评分'],
+                    stability: ['stability', 'work_stability', 'tenure', '稳定性', '离职风险', '职业稳定性'],
+                    potential: ['potential', 'growth_potential', 'development', '发展潜力', '潜力评分', '成长性'],
+                    teamwork: ['teamwork', 'collaboration', 'social', '团队协作', '协作能力', '团队精神']
+                };
+
+                dimensionKeys.forEach(key => {
+                    let val = 0;
+                    const possibleKeys = dimensionMappings[key];
+                    for (const pKey of possibleKeys) {
+                        if (rawRadar[pKey] !== undefined) {
+                            val = rawRadar[pKey];
+                            break;
+                        }
+                        const foundKey = Object.keys(rawRadar).find(k => k.toLowerCase() === pKey.toLowerCase());
+                        if (foundKey) {
+                            val = rawRadar[foundKey];
+                            break;
+                        }
+                    }
+                    if (typeof val === 'object' && val !== null) {
+                        val = val.score || val.value || val.rating || 0;
+                    }
+                    radar[key] = parseInt(val) || 0;
+                });
+
+                // 核心修复：如果所有维度都是 0，尝试从 analysisData 的根级别直接寻找可能的维度字段
+                const totalRadarScore = Object.values(radar).reduce((a, b) => a + b, 0);
+                if (totalRadarScore === 0) {
+                    logger.info(`[Batch Analysis] Radar scores are all 0, attempting root-level extraction for resume ${resume.id}`);
+                    dimensionKeys.forEach(key => {
+                        const possibleKeys = dimensionMappings[key];
+                        for (const pKey of possibleKeys) {
+                            if (analysisData[pKey] !== undefined && typeof analysisData[pKey] !== 'object') {
+                                radar[key] = parseInt(analysisData[pKey]) || 0;
+                                if (radar[key] > 0) break;
+                            }
+                        }
+                    });
+                }
 
                 // 创建记录
                 await AnalysisResult.create({
@@ -628,14 +855,30 @@ class AIController {
                     company_id: req.user.company_id || null,
                     overall_score: overallScore,
                     dimensions: radar,
-                    suggestions: report.career_advice || report.suggestions || [],
-                    strengths: report.core_strengths || report.strengths || [],
-                    weaknesses: report.potential_issues || report.weaknesses || [],
+                    summary: report.summary || analysisData.summary || report.hiring_advice || '',
+                    suggestions: report.career_advice || report.suggestions || analysisData.suggestions || [],
+                    strengths: report.core_strengths || report.strengths || analysisData.strengths || [],
+                    weaknesses: report.potential_issues || report.weaknesses || analysisData.weaknesses || [],
+                    hiring_advice: report.hiring_advice || analysisData.hiring_advice || '',
                     detailed_analysis: analysisData,
                     ai_provider: aiResult.service,
                     ai_model: aiResult.model,
-                    processing_time: aiResult.responseTime
+                    processing_time: aiResult.responseTime,
+                    analysis_date: new Date()
                 });
+
+                // 仅在深度解析场景下保存到 DeepAnalysisRecord，确保数据一致性
+                if (!options || options.scene === 'deep_analysis' || options.scene === 'analysis') {
+                    await DeepAnalysisRecord.create({
+                        user_id: userId,
+                        company_id: req.user.company_id || null,
+                        resume_id: resume.id,
+                        type: 'batch',
+                        overall_score: overallScore,
+                        dimensions: radar,
+                        details: analysisData
+                    });
+                }
 
                 // 更新简历状态和分数
                 await resume.update({ 
@@ -862,6 +1105,22 @@ class AIController {
             // 尝试通过名字匹配 resumeId
             const matchedResume = resumeList.find(r => r.name.includes(candidate.name) || candidate.name.includes(r.name));
             if (matchedResume) {
+              // 构建完整的对比报告内容，作为每个人的 evaluation_report
+              let fullComparisonReport = `### 简历对比分析报告\n\n`;
+              fullComparisonReport += `#### 总体评价\n${result.data.comparison_summary || '暂无总体评价'}\n\n`;
+              fullComparisonReport += `#### 核心建议\n${result.data.recommendation || '暂无核心建议'}\n\n`;
+              fullComparisonReport += `#### 候选人对比详情\n`;
+              
+              // 添加对比表格或列表
+              result.data.candidates.forEach(c => {
+                const isCurrent = c.name === candidate.name;
+                fullComparisonReport += `**${c.name}** ${isCurrent ? '(当前候选人)' : ''}: 总分 ${c.overall_score}\n`;
+                if (c.evaluation) {
+                  fullComparisonReport += `- 评价: ${c.evaluation}\n`;
+                }
+                fullComparisonReport += `\n`;
+              });
+
               await DeepAnalysisRecord.create({
                 user_id: userId,
                 company_id: req.user.company_id || null,
@@ -871,8 +1130,14 @@ class AIController {
                 dimensions: candidate.scores_percent || {},
                 details: {
                   ...candidate,
-                  comparison_summary: result.data.comparison_summary,
-                  recommendation: result.data.recommendation
+                  // 将完整的对比报告存入 evaluation_report，确保详情页能显示
+                  evaluation_report: fullComparisonReport,
+                  comparison_data: result.data, // 保留原始完整数据备用
+                  basic_info: {
+                    name: candidate.name,
+                    experience: candidate.experience || '未提及',
+                    education: candidate.education || '未提及'
+                  }
                 }
               });
               

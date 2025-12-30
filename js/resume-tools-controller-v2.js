@@ -433,6 +433,27 @@
         // Find the selected job object if any
         const selectedJob = state.jobs.find(j => j.id == state.selectedJobId) || null;
         
+        // 1. 优先检查是否已经存在深度解析结果 (不再仅依赖初筛分数)
+        if (state.selectedResumes.length > 0 && target.id) {
+            updateLoadingProgress('正在检索历史分析记录...', 15);
+            const existingResult = await window.aiAnalyzer.checkExistingAnalysis(target.id);
+            
+            // 核心修复：只有当存在有效结果（总分大于0且有维度分数）时才跳过 AI 调用
+            const normalized = normalizeResult(existingResult);
+            const hasDimensions = normalized && normalized.dimensions && 
+                                 Object.values(normalized.dimensions).some(v => v > 0);
+            
+            if (normalized && normalized.overallScore > 0 && hasDimensions) {
+                console.log('[SingleAnalysis] Found existing valid result with dimensions, skipping AI call');
+                updateLoadingProgress('发现历史记录，正在渲染...', 100);
+                state.analysisResult = existingResult;
+                renderSingleResults(existingResult);
+                return;
+            } else if (existingResult) {
+                console.log('[SingleAnalysis] Existing result found but it is incomplete (no dimensions or 0 score), re-analyzing...');
+            }
+        }
+
         updateLoadingProgress('正在读取简历内容...', 30);
         
         if (state.selectedResumes.length > 0) {
@@ -726,31 +747,44 @@
         ];
 
         dimensions.forEach(dim => {
-            // 如果分值是 0-100，转换为 0-5
-            const scoreValue = scores[dim.key] || 0;
-            const starCount = scoreValue > 5 ? (scoreValue / 20).toFixed(1) : parseFloat(scoreValue).toFixed(1);
-            const fullStars = Math.floor(starCount);
+            // 统一为 100 分制 (Unified to 100-point scale)
+            let scoreValue = scores[dim.key] || 0;
+            // 如果原始分值就是 0-5 (例如某些 AI 模型返回)，转换为 0-100
+            if (scoreValue > 0 && scoreValue <= 5) {
+                scoreValue = scoreValue * 20;
+            }
+            
+            const displayScore = Math.round(scoreValue);
+            const progressWidth = Math.min(100, Math.max(0, displayScore));
             
             const item = document.createElement('div');
-            item.className = 'flex items-center justify-between py-2.5 border-b border-gray-50 last:border-0 group transition-all';
+            item.className = 'flex items-center justify-between py-3 border-b border-gray-50 last:border-0 group transition-all';
             item.innerHTML = `
-                <div class="flex items-center space-x-3">
-                    <div class="w-8 h-8 rounded-lg bg-blue-50/50 text-blue-500 flex items-center justify-center text-xs group-hover:bg-blue-100/50 transition-colors">
+                <div class="flex items-center space-x-3 flex-1">
+                    <div class="w-9 h-9 rounded-lg bg-blue-50/50 text-blue-500 flex items-center justify-center text-xs group-hover:bg-blue-100/50 transition-colors">
                         <i class="fas ${dim.icon}"></i>
                     </div>
-                    <div>
-                        <div class="text-sm font-semibold text-gray-700 group-hover:text-blue-600 transition-colors">${dim.label}</div>
-                        <div class="flex text-blue-400 text-[9px] mt-0.5 space-x-0.5">
-                            ${Array(5).fill(0).map((_, i) => `<i class="${i < fullStars ? 'fas' : 'far'} fa-star"></i>`).join('')}
+                    <div class="flex-1 pr-4">
+                        <div class="flex justify-between items-center mb-1.5">
+                            <div class="text-sm font-semibold text-gray-700 group-hover:text-blue-600 transition-colors">${dim.label}</div>
+                            <div class="flex items-baseline space-x-0.5">
+                                <span class="text-sm font-black text-blue-600">${displayScore}</span>
+                                <span class="text-[10px] text-gray-400 font-bold">/ 100</span>
+                            </div>
+                        </div>
+                        <div class="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                            <div class="h-full bg-blue-600 rounded-full transition-all duration-1000" style="width: 0%"></div>
                         </div>
                     </div>
                 </div>
-                <div class="flex items-baseline space-x-1">
-                    <span class="text-sm font-black text-blue-600">${starCount}</span>
-                    <span class="text-[10px] text-gray-400 font-bold">/ 5.0</span>
-                </div>
             `;
             dom.scoreCards.appendChild(item);
+            
+            // 延迟触发动画
+            setTimeout(() => {
+                const bar = item.querySelector('.bg-blue-600');
+                if (bar) bar.style.width = `${progressWidth}%`;
+            }, 100);
         });
     }
 

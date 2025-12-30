@@ -1,4 +1,4 @@
-const { AnalysisResult, Resume } = require('../models');
+const { AnalysisResult, Resume, DeepAnalysisRecord } = require('../models');
 const AIAnalysisService = require('../services/aiAnalysisService');
 const promptService = require('../services/promptService');
 const textExtractor = require('../services/textExtractor');
@@ -122,7 +122,8 @@ const getLatestAnalysisResult = async (req, res) => {
   try {
     const { resumeId } = req.params;
 
-    const result = await AnalysisResult.findOne({
+    // 优先从 DeepAnalysisRecord 获取最新的深度解析记录
+    const result = await DeepAnalysisRecord.findOne({
       where: { resume_id: resumeId },
       order: [['analysis_date', 'DESC']]
     });
@@ -134,9 +135,33 @@ const getLatestAnalysisResult = async (req, res) => {
       });
     }
 
+    // 将 DeepAnalysisRecord 结构映射为前端期望的格式（兼容旧的 AnalysisResult 结构和新版 V2 结构）
+    const details = result.details || {};
+    
+    // 兼容性处理：提取基础信息
+    const basicInfo = details.basic_info || details.personalInfo || details.parsed_data?.basic_info || {};
+    
+    const mappedResult = {
+      ...details, // 展开详情内容
+      ...result.toJSON(), // 覆盖基础字段
+      // 兼容性字段
+      personalInfo: basicInfo,
+      basic_info: basicInfo,
+      // 确保维度得分存在
+      dimensions: result.dimensions || details.radar || details.dimensions || details.scores_percent || {},
+      detailed_analysis: details,
+      // 兼容 legacy 前端 (resume-tools-controller.js) 预期的 scores 结构
+      scores: details.scores || { 
+        overall: result.overall_score,
+        dimensions: result.dimensions || details.radar || details.dimensions || details.scores_percent || {}
+      },
+      // 兼容 V2 版本的 report 字段
+      report: details.evaluation_report || details.analysis_report || details.report || details.evaluation || '暂无详细报告内容'
+    };
+
     res.json({
       success: true,
-      data: result
+      data: mappedResult
     });
   } catch (error) {
     res.status(500).json({

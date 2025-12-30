@@ -15,7 +15,7 @@ services:
   # 后端 + 前端服务
   app:
     # 替换为你的 Docker Hub 用户名或私有仓库地址
-    image: ${DOCKER_IMAGE:-super-resume-master:latest}
+    image: letuyang/super-resume-master:latest
     restart: always
     env_file:
       - .env

@@ -17,6 +17,12 @@ const OptimizedResumeParseService = require('../services/optimizedResumeParseSer
 
 const router = express.Router();
 
+// 调试日志：捕获进入此路由器的所有请求
+router.use((req, res, next) => {
+  console.log(`[AIAnalysisRouter] ${req.method} ${req.url}`);
+  next();
+});
+
 // Ensure upload directory exists
 const uploadDir = path.join(process.cwd(), 'uploads', 'resumes');
 try {
@@ -62,6 +68,9 @@ router.get('/status/:resumeId', authenticate, aiController.getAnalysisStatus.bin
 
 // 获取分析任务结果
 router.get('/result/:resumeId', authenticate, aiController.getAnalysisResult.bind(aiController));
+
+// 补充分析报告
+router.post('/supplement-analysis/:resumeId', authenticate, Permission.requireSubscription, Permission.checkApiLimit('aiAnalysis'), Permission.rateLimit(200, 60*60*1000), aiController.supplementAnalysis.bind(aiController));
 
 // 职位匹配
 router.post('/match-jobs', authenticate, Permission.requireSubscription, Permission.checkApiLimit('jobMatching'), Permission.rateLimit(200, 60*60*1000), aiController.matchJobs.bind(aiController));

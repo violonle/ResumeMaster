@@ -531,6 +531,21 @@
         try {
             // Process each item
             for (let item of state.parsing.selectedResumes) {
+                // 1. 优先检查后端是否已有结果
+                if (item.resumeId) {
+                    try {
+                        const existingResult = await window.resumeDataManager.getLatestAnalysis(item.resumeId);
+                        if (existingResult) {
+                            console.log('[Parsing] Found existing result for', item.resumeId);
+                            item.status = 'completed';
+                            item.analysisResult = existingResult;
+                            continue;
+                        }
+                    } catch (err) {
+                        console.warn('Check existing analysis failed for', item.resumeId, err);
+                    }
+                }
+
                 if (item.status === 'completed') continue;
                 
                 // Update item status visually

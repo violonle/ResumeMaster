@@ -46,16 +46,21 @@ JSON结构如下：
   },
 
   // 2. 深度解析中的单个简历深度解析
-  resume_deep_analysis: {    name: '简历深度解析',
+  resume_deep_analysis: {
+    name: '简历深度解析',
     category: 'analysis',
     variables: ['resumeText', 'targetJobSection'],
-    content: `你是一位拥有20年经验的资深人力资源总监和职业规划专家。请对以下简历进行【极其严格】的深度解析和评估。
+    content: `你是一位拥有20年经验的资深人力资源总监和人才评估专家。请对以下简历进行【极其严格】的深度能力解析与评估。
 
 ### 核心任务：
-1. 提取基本信息。
-2. 进行六维能力评分（0-100分）。
-3. 计算综合评分（0-100分）。
-4. 生成深度分析报告。
+1. **人才画像提取**：深度分析候选人的技术栈、项目经验及综合素质。
+2. **能力评估**：进行六维能力评分（0-100分），要求评分极其严谨。
+3. **深度评估报告**：生成一份犀利、客观、直击本质的分析报告。
+
+### 注意事项（极其重要）：
+- **严禁提供简历编写或格式优化建议**（如“建议增加量化数据”、“建议调整排版”等）。
+- **聚焦于“人”的分析**：报告应基于简历内容，分析候选人的专业技能深度、项目实战价值、学习潜力、稳定性及人岗匹配度。
+- 所有的“改进建议”必须针对候选人的【能力短板】（如“需加强分布式架构的实战积累”）而非【简历写法】。
 
 ### 简历内容：
 """
@@ -76,7 +81,7 @@ JSON结构如下：
   - teamwork (团队协作): 考察管理经验、跨部门协作描述、项目角色。
 
 ### 输出要求：
-必须输出严格的JSON格式（不要包含Markdown代码块标记，不要包含任何前缀或后缀文字），包含以下结构。严禁返回提示词中的示例数据，必须根据简历内容实时生成。
+必须输出严格的JSON格式（不要包含Markdown代码块标记，不要包含任何前缀或后缀文字），包含以下结构：
 
 {
   "basic_info": {
@@ -104,10 +109,10 @@ JSON结构如下：
   },
   "evaluation_report": {
     "summary": "针对该候选人的深度画像总结（不少于150字），要求犀利、专业，直击痛点",
-    "strengths": ["具体优势1", "具体优势2", "具体优势3"],
-    "weaknesses": ["具体劣势1", "具体劣势2", "具体劣势3"],
-    "suggestions": ["具有实操性的改进建议1", "具有实操性的改进建议2"],
-    "hiring_advice": "给HR的面试建议或录用建议"
+    "strengths": ["核心专业优势1", "核心专业优势2", "核心专业优势3"],
+    "weaknesses": ["识别出的能力短板1", "识别出的能力短板2", "识别出的能力短板3"],
+    "suggestions": ["针对能力短板的提升建议1", "针对能力短板的提升建议2"],
+    "hiring_advice": "给HR的面试考察重点或录用建议"
   },
   "education_background": [
     { "school": "学校名", "degree": "学位", "major": "专业", "period": "时间段" }
@@ -123,8 +128,7 @@ JSON结构如下：
 要求：
 1. 评分要严谨，不要给高分。
 2. 评价报告必须原创，严禁套话。
-3. 必须包含 weaknesses 字段，指出候选人的不足。
-4. 必须包含 hiring_advice 字段。`
+3. 严禁出现关于“简历怎么写”的任何建议。`
   },
 
   // 3. 简历对比解析
@@ -219,6 +223,69 @@ JSON结构如下：
 1. 分析要基于数据事实。
 2. 预测要具有前瞻性和可操作性。
 3. 必须返回合法的JSON格式。`
+  },
+
+  // 5. 补充深度分析报告
+  resume_supplement_report: {
+    name: '补充深度分析报告',
+    category: 'analysis',
+    variables: ['resumeText', 'targetJobSection'],
+    content: `你是一位资深的人力资源专家和人才评估顾问。请针对以下简历内容，生成一份专业、客观且犀利的【AI深度分析报告】。
+
+### 核心分析重点：
+1. **能力画像**：深度挖掘候选人的技术栈深度、核心专业能力及跨领域综合素养。
+2. **实战价值**：评估项目经验的含金量、解决复杂问题的能力及在团队中的实际贡献。
+3. **潜能与成长性**：分析其学习能力、技术敏感度、逻辑思维及未来发展潜力。
+4. **匹配度评估**：结合行业标准或提供的职位描述，评估其与岗位的适配程度（若无JD则基于通用职级要求）。
+
+### 注意事项：
+- **禁止提供简历编写优化建议**（如“建议增加量化成果”、“建议调整格式”等）。
+- 重点在于对候选人【人本身】的能力和潜质进行客观评估。
+- 语言风格：专业、严谨、不套话、直击要害。
+
+### 简历内容：
+"""
+{{resumeText}}
+"""
+
+{{targetJobSection}}
+
+### 输出要求：
+必须输出严格的JSON格式（不带Markdown代码块，不带多余文字），包含以下结构：
+{
+  "summary": "【能力总结】对候选人的综合能力进行深度画像总结（不少于150字）。",
+  "strengths": ["【核心优势1】具体、客观的优势点", "【核心优势2】", "【核心优势3】"],
+  "weaknesses": ["【不足之处1】识别出的能力短板或潜在风险点", "【不足之处2】", "【不足之处3】"],
+  "suggestions": ["【改进建议1】针对其能力短板的提升建议或面试深度考察方向", "【改进建议2】"],
+  "hiring_advice": "【录用建议】综合各维度表现，给出明确的面试或录用建议。"
+}
+
+注意：直接返回 JSON 对象本身，确保它可以被 JSON.parse() 直接解析。`
+  },
+
+  // 6. 面试问题生成
+  interview_questions: {
+    name: '面试问题生成',
+    category: 'analysis',
+    variables: ['resumeText', 'targetJobSection'],
+    content: `你是一位资深面试官。请基于候选人的简历和目标职位要求，设计一套具有针对性的面试问题。
+
+### 简历内容：
+"""
+{{resumeText}}
+"""
+
+{{targetJobSection}}
+
+### 输出要求：
+必须输出严格的JSON格式，包含以下结构：
+{
+  "ice_breaking": "破冰问题",
+  "technical_questions": ["技术问题1", "技术问题2"],
+  "behavioral_questions": ["行为面试题1", "行为面试题2"],
+  "logic_potential": ["潜力/逻辑考察题1"],
+  "interviewer_tips": "给面试官的提问技巧建议"
+}`
   }
 };
 
@@ -330,27 +397,23 @@ class PromptService {
   }
 
   /**
-   * Get formatted prompt with variables interpolated
-   * @param {string} key Template key
-   * @param {object} variables Variables to interpolate
+   * Render prompt with variables
    */
   async getPrompt(key, variables = {}) {
     const template = await this.getTemplate(key);
     if (!template) {
-      logger.warn(`Prompt template not found: ${key}`);
-      return '';
+      throw new Error(`Prompt template ${key} not found`);
     }
 
     let content = template.content;
-    
-    // Simple variable interpolation {{varName}}
-    for (const [varKey, varValue] of Object.entries(variables)) {
-      content = content.replace(new RegExp(`\\{\\{\\s*${varKey}\\s*\\}\\}`, 'g'), varValue || '');
+    for (const [v, val] of Object.entries(variables)) {
+      const regex = new RegExp(`{{${v}}}`, 'g');
+      content = content.replace(regex, val || '');
     }
-    
+
     return content;
   }
-  
+
   /**
    * Process variable for Job Description specifically
    * Handles both string JD and object/array of jobs

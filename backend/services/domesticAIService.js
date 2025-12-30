@@ -334,8 +334,11 @@ class DomesticAIService {
     if (scene === 'talent_pool') {
         promptKey = 'resume_quick_score';
         taskType = 'job_matching';
-    } else if (scene === 'deep_analysis') {
+    } else if (scene === 'deep_analysis' || scene === 'analysis') {
         promptKey = 'resume_deep_analysis';
+        taskType = 'resume_analysis';
+    } else if (scene === 'supplement_report') {
+        promptKey = 'resume_supplement_report';
         taskType = 'resume_analysis';
     } else {
         // Legacy fallback
@@ -353,8 +356,13 @@ class DomesticAIService {
               resumeText,
               jobDescriptionSection: promptService.prepareJobDescriptionVar(jobDescription)
           });
-      } else if (scene === 'deep_analysis') {
+      } else if (scene === 'deep_analysis' || scene === 'analysis') {
           prompt = await promptService.getPrompt('resume_deep_analysis', {
+              resumeText,
+              targetJobSection: promptService.prepareTargetJobSection(jobDescription)
+          });
+      } else if (scene === 'supplement_report') {
+          prompt = await promptService.getPrompt('resume_supplement_report', {
               resumeText,
               targetJobSection: promptService.prepareTargetJobSection(jobDescription)
           });
@@ -407,8 +415,13 @@ class DomesticAIService {
               resumeText,
               jobDescriptionSection: promptService.prepareJobDescriptionVar(jobDescription)
           });
-      } else if (scene === 'deep_analysis') {
+      } else if (scene === 'deep_analysis' || scene === 'analysis') {
           prompt = await promptService.getPrompt('resume_deep_analysis', {
+              resumeText,
+              targetJobSection: promptService.prepareTargetJobSection(jobDescription)
+          });
+      } else if (scene === 'supplement_report') {
+          prompt = await promptService.getPrompt('resume_supplement_report', {
               resumeText,
               targetJobSection: promptService.prepareTargetJobSection(jobDescription)
           });

@@ -40,7 +40,14 @@ const PORT = process.env.PORT || 3000;
 // 日志中间件 - 移动到最上方以捕获所有请求
 app.use((req, res, next) => {
   const timestamp = new Date().toISOString();
-  console.log(`[${timestamp}] ${req.method} ${req.url}`);
+  const start = Date.now();
+  
+  // 响应结束时记录
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    console.log(`[${timestamp}] ${req.method} ${req.url} - ${res.statusCode} (${duration}ms)`);
+  });
+  
   next();
 });
 
@@ -355,12 +362,15 @@ app.use((err, req, res, next) => {
 });
 
 // 404处理
+// 404 处理
 app.use((req, res) => {
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] 404 Not Found: ${req.method} ${req.originalUrl || req.url}`);
   res.status(404).json({
     success: false,
     error: {
       code: 'NOT_FOUND',
-      message: '接口不存在'
+      message: `接口不存在: ${req.method} ${req.originalUrl || req.url}`
     }
   });
 });

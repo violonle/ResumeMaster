@@ -278,19 +278,6 @@ class ResumeParser {
             }
 
             setTimeout(() => {
-                try {
-                    var list = JSON.parse(localStorage.getItem('resumeAnalysisData')||'[]');
-                    var latest = list && list.length ? list[list.length-1] : null;
-                    var sample = latest && latest.parsedData ? {
-                        basic_info: { name: latest.parsedData.personalInfo?.name || '', email: latest.parsedData.personalInfo?.email || '', phone: latest.parsedData.personalInfo?.phone || '', location: latest.parsedData.personalInfo?.location || '' },
-                        education_background: latest.parsedData.education || [],
-                        work_experience: latest.parsedData.experience || [],
-                        evaluation_report: latest.parsedData.evaluation_report || { core_strengths: [], potential_issues: [], career_advice: [] },
-                        scores_percent: latest.parsedData.scores_percent || { job_fit: 0, skill_fit: 0, experience_fit: 0, learning_ability: 0, teamwork: 0 },
-                        summary: latest.parsedData.summary || ''
-                    } : null;
-                    if (sample) localStorage.setItem('last_analysis_result', JSON.stringify(sample));
-                } catch(_) {}
                 var fn = (typeof window.renderSingleAnalysisResult==='function') ? window.renderSingleAnalysisResult : null;
                 if (fn) fn();
                 this.hideAnalysisModal();
