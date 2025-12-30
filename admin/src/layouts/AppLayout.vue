@@ -35,7 +35,7 @@
       </VContainer>
 
       <VFooter class="justify-center py-4 text-grey-darken-1 text-caption border-t bg-background">
-        <div>云璞网科 © 2018-2025  鲁ICP备2023016452号</div>
+        <div>云璞网科 © 2018-2025  <a href="https://beian.miit.gov.cn/" target="_blank" class="text-grey-darken-1 text-decoration-none hover-blue">鲁ICP备2023016452号</a></div>
       </VFooter>
     </VMain>
   </VApp>
@@ -98,6 +98,10 @@ watch(drawer, (v) => { try { localStorage.setItem('admin:menuDrawer', String(v))
 </script>
 
 <style scoped>
+.hover-blue:hover {
+  color: #2196F3 !important;
+}
+
 .app-layout {
   background-color: rgb(var(--v-theme-background));
 }

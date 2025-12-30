@@ -21,7 +21,7 @@
       </div>
 
       <VFooter class="justify-center py-4 text-grey-darken-1 text-caption border-t">
-        <div>云璞网科 © 2018-2025  鲁ICP备2023016452号</div>
+        <div>云璞网科 © 2018-2025  <a href="https://beian.miit.gov.cn/" target="_blank" class="text-grey-darken-1 text-decoration-none hover-blue">鲁ICP备2023016452号</a></div>
       </VFooter>
     </VMain>
   </VApp>
@@ -102,6 +102,9 @@ const handleLogout = async () => {
 </script>
 
 <style>
+.hover-blue:hover {
+  color: #2196F3 !important;
+}
 .page-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid rgba(0,0,0,.06); }
 .page-title { font-size: 18px; font-weight: 600; }
 .page-actions { display: flex; align-items: center; gap: 8px; }

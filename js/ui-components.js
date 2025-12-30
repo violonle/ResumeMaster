@@ -32,7 +32,7 @@ class UIComponents {
                 footer.className = 'py-6 text-center text-gray-400 text-xs mt-auto border-t border-gray-100 w-full bg-white bg-opacity-50';
                 footer.innerHTML = `
                     <div class="container mx-auto px-4">
-                        <p>云璞网科 © 2018-2025  鲁ICP备2023016452号</p>
+                        <p>云璞网科 © 2018-2025  <a href="https://beian.miit.gov.cn/" target="_blank" class="hover:text-blue-500 transition-colors">鲁ICP备2023016452号</a></p>
                     </div>
                 `;
 
