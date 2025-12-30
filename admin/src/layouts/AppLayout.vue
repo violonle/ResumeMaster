@@ -33,6 +33,10 @@
           </VFadeTransition>
         </RouterView>
       </VContainer>
+
+      <VFooter class="justify-center py-4 text-grey-darken-1 text-caption border-t bg-background">
+        <div>云璞网科 © 2018-2025  鲁ICP备2023016452号</div>
+      </VFooter>
     </VMain>
   </VApp>
 </template>
