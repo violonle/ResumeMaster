@@ -121,7 +121,7 @@ app.get('/api/health', async (req, res) => {
     let adminExists = false;
     try {
       userCount = await User.count();
-      const admin = await User.findOne({ where: { username: 'admin' } });
+      const admin = await User.findOne({ where: { username: 'masteradmin' } });
       adminExists = !!admin;
     } catch (e) {
       userCount = `error: ${e.message}`;
@@ -235,13 +235,13 @@ async function ensureDefaultAdmin() {
     }
 
     // 2. 确保管理员账号存在
-    const adminUser = await User.findOne({ where: { username: 'admin' } });
+    const adminUser = await User.findOne({ where: { username: 'masteradmin' } });
     const superRole = await Role.findOne({ where: { key: 'SUPER_ADMIN' } });
 
     if (!adminUser) {
-      const hash = await bcrypt.hash('admin123', 10);
+      const hash = await bcrypt.hash('Longkou7', 10);
       const created = await User.create({
-        username: 'admin',
+        username: 'masteradmin',
         role: 'admin',
         is_active: true,
         password_hash: hash,
@@ -265,7 +265,7 @@ async function ensureDefaultAdmin() {
       
       // 修复无效密码 (非 bcrypt 格式)
       if (!adminUser.password_hash.startsWith('$2')) {
-        const hash = await bcrypt.hash('admin123', 10);
+        const hash = await bcrypt.hash('Longkou7', 10);
         await adminUser.update({ password_hash: hash });
         console.log('✅ Default admin password reset.');
       }

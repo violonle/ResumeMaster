@@ -13,23 +13,24 @@
   <script src="../js/header-profile.js"></script>
     <script src="/js/sidebar.js"></script>
   <style>
-    body{ background:#f8fafc }
-    .shell{ width:100%; max-width:1200px; margin:40px auto; background:#fff; border-radius:16px; box-shadow:0 20px 60px rgba(15,23,42,.12); overflow:hidden; border:1px solid #e5e7eb }
-    .header{ display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid #e5e7eb; background:#ffffff }
+    html, body { height: 100%; overflow: hidden; }
+    body{ background:#f8fafc; display: flex; flex-direction: column; }
+    .shell{ width:100%; max-width:1200px; margin:0 auto; background:#fff; border-radius:16px; box-shadow:0 20px 60px rgba(15,23,42,.12); overflow:hidden; border:1px solid #e5e7eb; display: flex; flex-direction: column; flex: 1; min-height: 0; }
+    .header{ display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid #e5e7eb; background:#ffffff; flex-shrink: 0; }
     .brand{ display:flex; align-items:center; gap:12px }
     .brand .logo{ width:36px; height:36px; border-radius:10px; background:#0f172a; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700 }
     .brand .title{ font-weight:700; color:#111827 }
     .status{ display:flex; align-items:center; gap:8px; font-size:12px }
     .status .dot{ width:8px; height:8px; border-radius:50%; background:#10b981 }
-    .content{ display:grid; grid-template-columns: 280px 1fr }
-    .sidebar{ border-right:1px solid #e5e7eb; background:#f9fafb; display: flex; flex-direction: column; }
-    .sidebar .section{ padding:16px 16px 8px; font-size:12px; color:#6b7280; font-weight:600 }
+    .content{ display:grid; grid-template-columns: 280px 1fr; flex: 1; min-height: 0; }
+    .sidebar{ border-right:1px solid #e5e7eb; background:#f9fafb; display: flex; flex-direction: column; overflow: hidden; }
+    .sidebar .section{ padding:16px 16px 8px; font-size:12px; color:#6b7280; font-weight:600; flex-shrink: 0; }
     .threads{ padding:0 12px 12px; flex: 1; overflow-y: auto; }
     .thread{ display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:10px; cursor:pointer }
     .thread:hover{ background:#eef2f7 }
     .thread.active{ background:#e0e7ff }
-    .chat{ display:flex; flex-direction:column; height:640px }
-    .log{ flex:1; padding:16px; overflow-y:auto }
+    .chat{ display:flex; flex-direction:column; height: 100%; min-height: 0; }
+    .log{ flex:1; padding:16px; overflow-y:auto; min-height: 0; }
     .msg{ max-width:85%; padding:10px 12px; border-radius:12px; margin:6px 0; font-size:14px; line-height:1.6; word-wrap: break-word; overflow-wrap: break-word; }
     .msg.user{ margin-left:auto; background:#2563eb; color:#fff }
     .msg.assistant{ background:#f3f4f6; color:#111827 }
@@ -52,21 +53,26 @@
     .msg.assistant th, .msg.assistant td { border: 1px solid #d1d5db; padding: 8px; text-align: left; }
     .msg.assistant th { background: #e5e7eb; font-weight: 600; }
     
-    .composer{ display:flex; gap:8px; padding:12px; border-top:1px solid #e5e7eb; background:#ffffff; align-items: center; }
+    .composer{ display:flex; gap:8px; padding:12px; border-top:1px solid #e5e7eb; background:#ffffff; align-items: center; flex-shrink: 0; }
     .input{ flex:1; border:1px solid #d1d5db; border-radius:12px; padding:12px 14px; outline:none }
     .input:focus{ border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.15) }
     .btn{ padding:12px 16px; border-radius:12px; font-weight:600; cursor: pointer; }
     .btn-icon { padding: 12px; background: #f3f4f6; color: #4b5563; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
     .btn-icon:hover { background: #e5e7eb; color: #1f2937; }
     .btn-primary{ background:#2563eb; color:#fff }
-    .suggests{ display:flex; gap:8px; padding:0 16px 12px }
+    .suggests{ display:flex; gap:8px; padding:0 16px 12px; flex-shrink: 0; flex-wrap: wrap; }
     .chip{ padding:8px 12px; background:#eef2f7; color:#374151; border-radius:999px; font-size:12px; cursor:pointer }
     .chip:hover{ background:#e5e7eb }
-    @media (max-width: 768px){ .content{ grid-template-columns: 1fr } .sidebar{ display:none } .chat{ height: calc(100vh - 140px) } .shell{ margin:0; border-radius:0 }
+    
+    @media (max-width: 768px){ 
+      .content{ grid-template-columns: 1fr }
+      .sidebar{ display:none }
+      .shell{ margin:0; border-radius:0; border: none; height: 100%; }
+      .main-content { padding-top: 60px !important; height: calc(100vh - 60px); }
     }
   </style>
 </head>
-<body>
+<body class="bg-gray-50">
   <aside id="sidebar" class="fixed left-0 top-0 bottom-0 sidebar-modern z-40"></aside>
   <header class="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20">
       <div class="flex items-center justify-between p-4">
@@ -80,87 +86,82 @@
       </div>
   </header>
 
-  <main class="main-content pt-20" id="main-content">
-  <div class="shell" style="margin-top: 20px; height: calc(100vh - 120px);">
-    <div class="header" style="display:none;"> <!-- Hide original header -->
-      <div class="brand">
-        <div class="logo">SRM</div>
-        <div class="title">AI 助手对话</div>
-      </div>
-      <div class="status"><div class="dot"></div><span>在线</span></div>
-    </div>
-    <div class="content" style="height: 100%;">
-      <aside class="sidebar" style="height: 100%;">
-        <div class="section">最近对话</div>
-        <div class="threads" id="threads">
-          <div class="thread active"><i class="fas fa-comments text-gray-900"></i><span class="text-sm text-gray-900">默认对话</span></div>
-        </div>
-        <!-- 快速提问 -->
-        <div class="mt-4 px-3 pb-4">
-            <div class="section mb-2" style="padding:0">快速提问</div>
-            <div class="grid grid-cols-1 gap-2">
-                <button onclick="document.getElementById('chat-input').value='如何让简历更有竞争力？'; doSend()" class="bg-white p-3 rounded-xl border border-gray-200 text-left hover:border-indigo-300 group transition-all w-full">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center group-hover:bg-indigo-100 transition-colors shrink-0">
-                            <i class="fas fa-file-alt text-black text-sm"></i>
-                        </div>
-                        <div class="min-w-0">
-                            <h4 class="font-medium text-gray-900 text-sm truncate">简历优化</h4>
-                            <p class="text-xs text-gray-500 truncate">如何让简历更有竞争力？</p>
-                        </div>
-                    </div>
-                </button>
-                
-                <button onclick="document.getElementById('chat-input').value='分析我的简历匹配度'; doSend()" class="bg-white p-3 rounded-xl border border-gray-200 text-left hover:border-indigo-300 group transition-all w-full">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center group-hover:bg-indigo-100 transition-colors shrink-0">
-                            <i class="fas fa-target text-black text-sm"></i>
-                        </div>
-                        <div class="min-w-0">
-                            <h4 class="font-medium text-gray-900 text-sm truncate">职位匹配</h4>
-                            <p class="text-xs text-gray-500 truncate">分析我的简历匹配度</p>
-                        </div>
-                    </div>
-                </button>
-                
-                <button onclick="document.getElementById('chat-input').value='面试常见问题解答'; doSend()" class="bg-white p-3 rounded-xl border border-gray-200 text-left hover:border-indigo-300 group transition-all w-full">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center group-hover:bg-indigo-100 transition-colors shrink-0">
-                            <i class="fas fa-comments text-black text-sm"></i>
-                        </div>
-                        <div class="min-w-0">
-                            <h4 class="font-medium text-gray-900 text-sm truncate">面试准备</h4>
-                            <p class="text-xs text-gray-500 truncate">面试常见问题解答</p>
-                        </div>
-                    </div>
-                </button>
-                
-                <button onclick="document.getElementById('chat-input').value='制定职业发展路径'; doSend()" class="bg-white p-3 rounded-xl border border-gray-200 text-left hover:border-indigo-300 group transition-all w-full">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center group-hover:bg-indigo-100 transition-colors shrink-0">
-                            <i class="fas fa-chart-line text-black text-sm"></i>
-                        </div>
-                        <div class="min-w-0">
-                            <h4 class="font-medium text-gray-900 text-sm truncate">职业规划</h4>
-                            <p class="text-xs text-gray-500 truncate">制定职业发展路径</p>
-                        </div>
-                    </div>
-                </button>
+  <main class="main-content flex flex-col h-screen overflow-hidden" id="main-content">
+    <div class="p-0 md:p-6 flex-1 min-h-0 flex flex-col items-center">
+      <div class="shell">
+        <div class="content">
+          <aside class="sidebar">
+            <div class="section">最近对话</div>
+            <div class="threads" id="threads">
+              <div class="thread active"><i class="fas fa-comments text-gray-900"></i><span class="text-sm text-gray-900">默认对话</span></div>
             </div>
+            <!-- 快速提问 -->
+            <div class="mt-auto px-3 pb-4 flex-shrink-0">
+                <div class="section mb-2" style="padding:0">快速提问</div>
+                <div class="grid grid-cols-1 gap-2">
+                    <button onclick="document.getElementById('chat-input').value='如何让简历更有竞争力？'; doSend()" class="bg-white p-3 rounded-xl border border-gray-200 text-left hover:border-indigo-300 group transition-all w-full">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center group-hover:bg-indigo-100 transition-colors shrink-0">
+                                <i class="fas fa-file-alt text-black text-sm"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <h4 class="font-medium text-gray-900 text-sm truncate">简历优化</h4>
+                                <p class="text-xs text-gray-500 truncate">如何让简历更有竞争力？</p>
+                            </div>
+                        </div>
+                    </button>
+                    
+                    <button onclick="document.getElementById('chat-input').value='分析我的简历匹配度'; doSend()" class="bg-white p-3 rounded-xl border border-gray-200 text-left hover:border-indigo-300 group transition-all w-full">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center group-hover:bg-indigo-100 transition-colors shrink-0">
+                                <i class="fas fa-target text-black text-sm"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <h4 class="font-medium text-gray-900 text-sm truncate">职位匹配</h4>
+                                <p class="text-xs text-gray-500 truncate">分析我的简历匹配度</p>
+                            </div>
+                        </div>
+                    </button>
+                    
+                    <button onclick="document.getElementById('chat-input').value='面试常见问题解答'; doSend()" class="bg-white p-3 rounded-xl border border-gray-200 text-left hover:border-indigo-300 group transition-all w-full">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center group-hover:bg-indigo-100 transition-colors shrink-0">
+                                <i class="fas fa-comments text-black text-sm"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <h4 class="font-medium text-gray-900 text-sm truncate">面试准备</h4>
+                                <p class="text-xs text-gray-500 truncate">面试常见问题解答</p>
+                            </div>
+                        </div>
+                    </button>
+                    
+                    <button onclick="document.getElementById('chat-input').value='制定职业发展路径'; doSend()" class="bg-white p-3 rounded-xl border border-gray-200 text-left hover:border-indigo-300 group transition-all w-full">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center group-hover:bg-indigo-100 transition-colors shrink-0">
+                                <i class="fas fa-chart-line text-black text-sm"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <h4 class="font-medium text-gray-900 text-sm truncate">职业规划</h4>
+                                <p class="text-xs text-gray-500 truncate">制定职业发展路径</p>
+                            </div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+          </aside>
+          <section class="chat">
+            <div class="log custom-scroll" id="chat-log"></div>
+            <div class="suggests" id="suggests"></div>
+            <div class="composer">
+              <button id="upload-btn" class="btn btn-icon" title="导入简历文件"><i class="fas fa-paperclip"></i></button>
+              <input type="file" id="file-input" hidden accept=".pdf,.doc,.docx,.txt" />
+              <input id="chat-input" class="input" placeholder="请输入问题，例如：为Java岗位生成JD要点" />
+              <button id="chat-send" class="btn btn-primary">发送</button>
+            </div>
+          </section>
         </div>
-      </aside>
-      <section class="chat">
-        <div class="log custom-scroll" id="chat-log"></div>
-        <div class="suggests" id="suggests"></div>
-        <div class="composer">
-          <button id="upload-btn" class="btn btn-icon" title="导入简历文件"><i class="fas fa-paperclip"></i></button>
-          <input type="file" id="file-input" hidden accept=".pdf,.doc,.docx,.txt" />
-          <input id="chat-input" class="input" placeholder="请输入问题，例如：为Java岗位生成JD要点" />
-          <button id="chat-send" class="btn btn-primary">发送</button>
-        </div>
-      </section>
+      </div>
     </div>
-  </div>
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {

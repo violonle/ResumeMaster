@@ -183,10 +183,15 @@
                         <h2 class="text-lg font-bold text-gray-900 flex items-center">
                             <i class="fas fa-chart-line text-blue-500 mr-2"></i>AI预测
                         </h2>
-                        <select id="ai-prediction-range" class="text-sm border-gray-200 rounded-lg focus:ring-blue-500 focus:border-blue-500">
-                            <option value="7d">未来7天</option>
-                            <option value="30d">未来30天</option>
-                        </select>
+                        <div class="flex items-center space-x-2">
+                            <select id="ai-prediction-range" class="text-sm border-gray-200 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                                <option value="7d">未来7天</option>
+                                <option value="30d">未来30天</option>
+                            </select>
+                            <button id="re-test-ai" class="px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors flex items-center">
+                                <i class="fas fa-sync-alt mr-1"></i>再次测试
+                            </button>
+                        </div>
                     </div>
                     <div id="ai-prediction-content" class="min-h-[16rem]">
                         <div class="h-full flex items-center justify-center text-gray-400">正在加载预测...</div>

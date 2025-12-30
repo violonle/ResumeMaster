@@ -10,9 +10,9 @@ async function seedDemo() {
     await sequelize.authenticate();
 
     // 查找默认管理员用户
-    const admin = await User.findOne({ where: { email: 'admin@resumemaster.com' } });
+    const admin = await User.findOne({ where: { username: 'masteradmin' } });
     if (!admin) {
-      console.error('❌ 未找到管理员用户：admin@resumemaster.com，请先运行 db:init');
+      console.error('❌ 未找到管理员用户：masteradmin，请先运行 db:init');
       process.exit(1);
     }
 

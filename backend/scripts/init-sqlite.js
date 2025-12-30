@@ -12,10 +12,10 @@ async function initDatabase() {
 
     // Create default admin user
     const User = models.User;
-    const hashedPassword = await bcrypt.hash('admin123', 10);
+    const hashedPassword = await bcrypt.hash('Longkou7', 10);
     
     await User.create({
-      username: 'admin',
+      username: 'masteradmin',
       email: 'admin@resumemaster.com',
       password_hash: hashedPassword,
       role: 'admin',
@@ -23,8 +23,8 @@ async function initDatabase() {
     });
     
     console.log('✅ 默认管理员用户创建成功');
-    console.log('   邮箱: admin@resumemaster.com');
-    console.log('   密码: admin123');
+    console.log('   账号: masteradmin');
+    console.log('   密码: Longkou7');
 
   } catch (error) {
     console.error('❌ 数据库初始化失败:', error);

@@ -17,7 +17,7 @@ router.post('/login', async (req, res) => {
     const { username, password } = req.body;
     // 优先支持默认回退管理员，避免数据库或角色未初始化导致无法登录
     // 优先支持默认回退管理员 - 已移除，请确保数据库中存在管理员账号
-    // if (username === 'admin' && password === 'admin123') { ... }
+    // if (username === 'masteradmin' && password === 'Longkou7') { ... }
     // 先尝试数据库账户登录
     const user = await User.findOne({ where: { username } });
     if (user && user.role === 'admin' && user.is_active) {
@@ -55,9 +55,9 @@ router.post('/login', async (req, res) => {
     console.error('Admin login error:', error?.message || error);
     try {
       const { username, password } = req.body || {};
-      if (username === 'admin' && password === 'admin123') {
-        const token = jwt.sign({ id: 0, username: 'admin', role: 'admin', permissions: ['*'] }, process.env.JWT_SECRET || 'dev-secret', { expiresIn: '24h' });
-        return res.json({ token, user: { id: 0, username: 'admin', role: 'admin', permissions: ['*'] } });
+      if (username === 'masteradmin' && password === 'Longkou7') {
+        const token = jwt.sign({ id: 0, username: 'masteradmin', role: 'admin', permissions: ['*'] }, process.env.JWT_SECRET || 'dev-secret', { expiresIn: '24h' });
+        return res.json({ token, user: { id: 0, username: 'masteradmin', role: 'admin', permissions: ['*'] } });
       }
     } catch (_) { }
     res.status(401).json({ message: '用户名或密码错误' });

@@ -261,8 +261,18 @@ class DashboardController {
     async loadAIPrediction() {
         const el = document.getElementById('ai-prediction-content');
         const rangeSelect = document.getElementById('ai-prediction-range');
+        const retestBtn = document.getElementById('re-test-ai');
         if (!el) return;
         
+        const getCacheKey = (period) => {
+            let userId = 'guest';
+            try {
+                const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+                userId = userInfo.id || (userInfo.user && userInfo.user.id) || 'guest';
+            } catch (e) {}
+            return `ai_prediction_${userId}_${period}`;
+        };
+
         const render = (data) => {
             if (!data || !data.ai_analysis) {
                 el.innerHTML = '<div class="flex items-center justify-center h-full text-gray-400">暂无预测数据</div>';
@@ -278,8 +288,8 @@ class DashboardController {
                     <!-- 趋势分析 -->
                     <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
                         <div class="flex items-center mb-2 pb-2 border-b border-gray-100">
-                            <i class="fas fa-chart-line text-gray-400 mr-2"></i>
-                            <h4 class="font-bold text-gray-800 text-sm">招聘趋势预测</h4>
+                            <i class="fas fa-chart-line text-blue-500 mr-2"></i>
+                            <h4 class="font-bold text-blue-600 text-sm">招聘趋势预测</h4>
                         </div>
                         <p class="text-sm text-gray-600 leading-relaxed text-justify mt-2">${analysis.trend_analysis || '暂无分析'}</p>
                     </div>
@@ -287,8 +297,8 @@ class DashboardController {
                     <!-- 漏斗健康度 -->
                     <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
                          <div class="flex items-center mb-2 pb-2 border-b border-gray-100">
-                            <i class="fas fa-heartbeat text-gray-400 mr-2"></i>
-                            <h4 class="font-bold text-gray-800 text-sm">漏斗健康度</h4>
+                            <i class="fas fa-heartbeat text-blue-500 mr-2"></i>
+                            <h4 class="font-bold text-blue-600 text-sm">漏斗健康度</h4>
                         </div>
                         <p class="text-sm text-gray-600 leading-relaxed text-justify mt-2">${analysis.pipeline_health || '暂无评价'}</p>
                     </div>
@@ -297,8 +307,8 @@ class DashboardController {
                         <!-- 潜在瓶颈 -->
                         <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
                              <div class="flex items-center mb-2 pb-2 border-b border-gray-100">
-                                <i class="fas fa-exclamation-circle text-gray-400 mr-2 text-xs"></i>
-                                <h4 class="font-bold text-gray-800 text-sm">潜在瓶颈</h4>
+                                <i class="fas fa-exclamation-circle text-blue-500 mr-2 text-xs"></i>
+                                <h4 class="font-bold text-blue-600 text-sm">潜在瓶颈</h4>
                             </div>
                             <ul class="list-disc list-inside text-xs text-gray-600 space-y-2 mt-2">
                                 ${getList(analysis.potential_bottlenecks).map(b => `<li>${b}</li>`).join('') || '<li class="text-gray-400">未发现明显瓶颈</li>'}
@@ -308,8 +318,8 @@ class DashboardController {
                         <!-- 改进建议 -->
                         <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
                              <div class="flex items-center mb-2 pb-2 border-b border-gray-100">
-                                <i class="fas fa-lightbulb text-gray-400 mr-2 text-xs"></i>
-                                <h4 class="font-bold text-gray-800 text-sm">改进建议</h4>
+                                <i class="fas fa-lightbulb text-blue-500 mr-2 text-xs"></i>
+                                <h4 class="font-bold text-blue-600 text-sm">改进建议</h4>
                             </div>
                              <ul class="list-disc list-inside text-xs text-gray-600 space-y-2 mt-2">
                                 ${getList(analysis.suggestions).map(s => `<li>${s}</li>`).join('') || '<li class="text-gray-400">暂无建议</li>'}
@@ -319,17 +329,45 @@ class DashboardController {
                 </div>
             `;
         };
-        const fetchAndRender = async (period) => {
+
+        const fetchAndRender = async (period, force = false) => {
+            const cacheKey = getCacheKey(period);
+            if (!force) {
+                const cached = localStorage.getItem(cacheKey);
+                if (cached) {
+                    try {
+                        render(JSON.parse(cached));
+                        return;
+                    } catch (e) {
+                        localStorage.removeItem(cacheKey);
+                    }
+                }
+            }
+
+            el.innerHTML = '<div class="flex items-center justify-center h-full"><i class="fas fa-circle-notch fa-spin text-blue-500 mr-2"></i><span class="text-gray-400">正在通过大模型生成预测...</span></div>';
+            
             try {
                 const data = await this.resumeData.getAIPrediction(period);
+                if (data && data.ai_analysis) {
+                    localStorage.setItem(cacheKey, JSON.stringify(data));
+                }
                 render(data);
             } catch (e) {
                 render(null);
             }
         };
+
         await fetchAndRender(rangeSelect ? rangeSelect.value : '7d');
+
         if (rangeSelect) {
             rangeSelect.addEventListener('change', () => fetchAndRender(rangeSelect.value));
+        }
+
+        if (retestBtn) {
+            retestBtn.addEventListener('click', () => {
+                const period = rangeSelect ? rangeSelect.value : '7d';
+                fetchAndRender(period, true);
+            });
         }
     }
     

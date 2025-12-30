@@ -31,13 +31,13 @@ async function initDatabase() {
 
         // 3. 初始化默认管理员
         console.log('正在检查默认管理员账号...');
-        const adminUser = await User.findOne({ where: { username: 'admin' } });
+        const adminUser = await User.findOne({ where: { username: 'masteradmin' } });
         
         if (!adminUser) {
-            console.log('正在创建默认管理员 (admin/admin123)...');
-            const hashedPassword = await bcrypt.hash('admin123', 10);
+            console.log('正在创建默认管理员 (masteradmin/Longkou7)...');
+            const hashedPassword = await bcrypt.hash('Longkou7', 10);
             const created = await User.create({
-                username: 'admin',
+                username: 'masteradmin',
                 role: 'admin',
                 is_active: true,
                 password_hash: hashedPassword
@@ -55,16 +55,12 @@ async function initDatabase() {
         } else {
             console.log('ℹ️ 默认管理员账号已存在');
             // 确保密码和权限正确
-            const isInvalidPassword = !adminUser.password_hash.startsWith('$2');
-            if (isInvalidPassword) {
-                const hashedPassword = await bcrypt.hash('admin123', 10);
-                await adminUser.update({ password_hash: hashedPassword });
-                console.log('✅ 已重置默认管理员密码为 admin123');
-            }
-            if (adminUser.role !== 'admin') {
-                await adminUser.update({ role: 'admin' });
-                console.log('✅ 已修正管理员角色');
-            }
+            const hashedPassword = await bcrypt.hash('Longkou7', 10);
+            await adminUser.update({ 
+                password_hash: hashedPassword,
+                role: 'admin'
+            });
+            console.log('✅ 已更新默认管理员密码和角色');
         }
 
         console.log('--- 数据库初始化完成 ---');
