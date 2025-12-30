@@ -24,7 +24,7 @@ echo ">>> 正在通过 SSH 将镜像直接传输到服务器 (这可能需要 1-
 docker save $IMAGE_NAME:latest | ssh $SERVER_USER@$SERVER_IP "docker load"
 
 # 4. 服务器端重启
-echo ">>> 正在远程重启服务器容器..."
-ssh $SERVER_USER@$SERVER_IP "cd $PROJECT_PATH && git pull origin main && docker-compose -f docker-compose.prod.yml up -d"
+echo ">>> 正在远程重启服务器容器 (强制重新创建)..."
+ssh $SERVER_USER@$SERVER_IP "cd $PROJECT_PATH && docker-compose -f docker-compose.prod.yml up -d --force-recreate"
 
 echo "✅ 部署完成！"

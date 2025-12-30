@@ -55,5 +55,5 @@ WORKDIR /app/backend
 EXPOSE 3000
 
 # 启动命令
-# 增加一个检查，确保数据库迁移或初始化在启动前完成
-CMD ["sh", "-c", "npm run db:init && npm start"]
+# 生产环境下如果数据库已初始化，可以跳过 npm run db:init 以避免 ER_TOO_MANY_KEYS 错误
+CMD ["sh", "-c", "npm start"]
