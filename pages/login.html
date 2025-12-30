@@ -33,9 +33,9 @@
         @media (max-width: 960px){ .auth-shell{ grid-template-columns: 1fr } }
     </style>
 </head>
-<body class="bg-gray-50 flex flex-col min-h-screen">
+<body class="bg-gray-50 flex flex-col h-screen overflow-hidden">
 
-    <main class="flex-1 flex items-center justify-center p-8" id="main-content">
+    <main class="flex-1 flex items-center justify-center p-4 min-h-0" id="main-content">
         <div class="auth-shell">
           <div class="brand-pane">
             <div class="flex items-end mb-8">
@@ -96,7 +96,7 @@
     </main>
 
     <!-- 全局页脚 -->
-    <footer class="py-4 text-center text-gray-400 text-xs">
+    <footer class="py-4 text-center text-gray-400 text-xs flex-shrink-0">
         <div class="container mx-auto px-4">
             <p>云璞网科 © 2018-2025  <a href="https://beian.miit.gov.cn/" target="_blank" class="hover:text-blue-500 transition-colors">鲁ICP备2023016452号</a></p>
         </div>
