@@ -385,7 +385,7 @@ sequelize.sync({ force: false })
     // 检查并添加 company_id 到相关表
     (async () => {
       try {
-        const tables = ['users', 'jobs', 'resumes', 'analysis_results', 'orders', 'invoices', 'recruitment_processes', 'user_activities'];
+        const tables = ['users', 'jobs', 'resumes', 'analysis_results', 'orders', 'invoices', 'recruitment_processes', 'user_activities', 'deep_analysis_records'];
         const dialect = sequelize.getDialect();
         
         for (const table of tables) {
@@ -460,6 +460,16 @@ sequelize.sync({ force: false })
         if (!hasTalent) {
           await sequelize.query("ALTER TABLE resumes ADD COLUMN is_talent_pool INTEGER DEFAULT 0");
           console.log('Added column resumes.is_talent_pool');
+        }
+
+        // 检查并添加 score 列
+        const hasScore = Array.isArray(cols) && cols.some(c => {
+          const name = (c.name || c.cid || c.Field || '').toString().toLowerCase();
+          return name === 'score';
+        });
+        if (!hasScore) {
+          await sequelize.query("ALTER TABLE resumes ADD COLUMN score INTEGER DEFAULT 0");
+          console.log('Added column resumes.score');
         }
       } catch (e) { console.error('Ensure resumes extra columns failed:', e.message) }
     })();

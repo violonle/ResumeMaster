@@ -180,6 +180,11 @@ class PermissionMiddleware {
         const userId = req.user.id;
         const subscription = req.subscription;
 
+        // 如果是管理员或者处于开发模式，解除限制
+        if (req.user.role === 'admin' || process.env.NODE_ENV === 'development') {
+          return next();
+        }
+
         if (!subscription) {
           return res.status(403).json({
             success: false,
@@ -263,11 +268,11 @@ class PermissionMiddleware {
         storage: 1000 // MB
       },
       free_monthly: { // Add free plan fallback
-        aiAnalysis: 10,
-        resumeUpload: 5,
-        jobMatching: 10,
-        apiCalls: 20,
-        storage: 50
+        aiAnalysis: 1000, // 大幅提高免费版限制，避免阻塞用户
+        resumeUpload: 500,
+        jobMatching: 1000,
+        apiCalls: 2000,
+        storage: 500
       },
       pro_monthly: {
         aiAnalysis: -1, // 无限制

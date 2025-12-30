@@ -58,9 +58,10 @@ class UserAuth {
      * @param {string} method - HTTP方法
      * @param {Object} data - 请求数据
      * @param {boolean} showLoading - 是否显示加载状态
+     * @param {boolean} silent - 是否不显示错误通知
      * @returns {Promise} - API响应
      */
-    async apiRequest(endpoint, method = 'GET', data = null, showLoading = true) {
+    async apiRequest(endpoint, method = 'GET', data = null, showLoading = true, silent = false) {
         // 显示加载状态
         if (showLoading && typeof ErrorHandler !== 'undefined') {
             ErrorHandler.showLoading(true);
@@ -152,7 +153,9 @@ class UserAuth {
         if (showLoading && typeof ErrorHandler !== 'undefined') { ErrorHandler.showLoading(false); }
         console.error('❌ API请求失败:', lastError);
         if (lastError && lastError.url) { console.error('❌ 请求URL:', lastError.url); }
-        if (typeof ErrorHandler !== 'undefined') { ErrorHandler.showError(lastError && lastError.message ? lastError.message : '请求失败，请稍后重试'); }
+        if (!silent && typeof ErrorHandler !== 'undefined') { 
+            ErrorHandler.showError(lastError && lastError.message ? lastError.message : '请求失败，请稍后重试'); 
+        }
         throw lastError;
     }
 
@@ -196,6 +199,7 @@ class UserAuth {
             isLoggedIn: true
         };
         localStorage.setItem('userInfo', JSON.stringify(userInfo));
+        localStorage.setItem('token', result.data.token); // 同时设置 token 键以保持旧代码兼容性
         this.currentUser = result.data.user;
         this.token = result.data.token;
         this.syncResumeDataManager();
@@ -227,6 +231,7 @@ class UserAuth {
                     isLoggedIn: true
                 };
                 localStorage.setItem('userInfo', JSON.stringify(userInfo));
+                localStorage.setItem('token', result.data.token); // 同时设置 token 键以保持旧代码兼容性
                 // 标记需要进行首次设置引导
                 localStorage.setItem('firstSetupRequired', '1');
                 
@@ -280,6 +285,7 @@ class UserAuth {
 
         // 清除本地存储
         localStorage.removeItem('userInfo');
+        localStorage.removeItem('token');
         sessionStorage.clear();
 
         this.currentUser = null;
@@ -505,9 +511,15 @@ class UserAuth {
                     };
 
                     if (userData) {
-                        this.currentUser = userData;
-                        this.token = userInfo.token;
-                        this.dispatchEvent('userRestore', userData);
+                            this.currentUser = userData;
+                            this.token = userInfo.token;
+                            
+                            // 确保 localStorage 中的 token 键存在，兼容旧代码
+                            if (!localStorage.getItem('token')) {
+                                localStorage.setItem('token', userInfo.token);
+                            }
+
+                            this.dispatchEvent('userRestore', userData);
 
                         // 同步到数据管理器
                         this.syncResumeDataManager();
@@ -526,9 +538,9 @@ class UserAuth {
      * 获取当前用户信息
      * @returns {Object|null}
      */
-    async fetchCurrentUser() {
+    async fetchCurrentUser(silent = true) {
         try {
-            const result = await this.apiRequest('/auth/user');
+            const result = await this.apiRequest('/auth/user', 'GET', null, false, silent);
 
             if (result.success) {
                 return result.data.user;
@@ -536,7 +548,7 @@ class UserAuth {
                 return null;
             }
         } catch (error) {
-            console.error('获取当前用户信息失败:', error);
+            if (!silent) console.error('获取当前用户信息失败:', error);
             return null;
         }
     }

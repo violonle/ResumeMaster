@@ -89,8 +89,8 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-white opacity-80">简历总数</p>
-                        <p class="text-3xl font-bold text-white mt-1">—</p>
-                    <p class="text-sm text-white opacity-80 mt-1">—</p>
+                        <p class="text-3xl font-bold text-white mt-1" id="total-candidates">—</p>
+                        <p class="text-sm text-white opacity-80 mt-1" id="new-candidates-today">—</p>
                     </div>
                     <div class="text-right">
                         <i class="fas fa-file-alt text-white opacity-80 text-2xl"></i>
@@ -103,8 +103,8 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-white opacity-80">活跃职位</p>
-                        <p class="text-3xl font-bold text-white mt-1">—</p>
-                        <p class="text-sm text-white opacity-80 mt-1">—</p>
+                        <p class="text-3xl font-bold text-white mt-1" id="active-jobs">—</p>
+                        <p class="text-sm text-white opacity-80 mt-1">正在招聘中</p>
                     </div>
                     <div class="text-right">
                         <i class="fas fa-briefcase text-white opacity-80 text-2xl"></i>
@@ -112,38 +112,30 @@
                 </div>
             </div>
 
-            <!-- AI分析次数 -->
+            <!-- 面试安排 -->
             <div class="bg-blue-600 rounded-xl shadow-sm hover-lift p-6 text-white">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-medium text-white opacity-80">AI分析</p>
-                        <p class="text-3xl font-bold text-white mt-1">—</p>
-                        <p class="text-sm text-white opacity-80 mt-1">—</p>
+                        <p class="text-sm font-medium text-white opacity-80">面试安排</p>
+                        <p class="text-3xl font-bold text-white mt-1" id="interviews-scheduled">—</p>
+                        <p class="text-sm text-white opacity-80 mt-1">待面试人数</p>
                     </div>
                     <div class="text-right">
-                        <i class="fas fa-robot text-white opacity-80 text-2xl"></i>
+                        <i class="fas fa-calendar-check text-white opacity-80 text-2xl"></i>
                     </div>
                 </div>
             </div>
 
-            <!-- 匹配成功率 -->
+            <!-- 录用通知 -->
             <div class="bg-blue-600 rounded-xl shadow-sm hover-lift p-6 text-white">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-medium text-white opacity-80">匹配成功率</p>
-                        <p class="text-3xl font-bold text-white mt-1">87%</p>
-                        <p class="text-sm text-white opacity-80 mt-1">
-                            <i class="fas fa-chart-line mr-1"></i>+5.2% 提升
-                        </p>
+                        <p class="text-sm font-medium text-white opacity-80">录用通知</p>
+                        <p class="text-3xl font-bold text-white mt-1" id="offers-sent">—</p>
+                        <p class="text-sm text-white opacity-80 mt-1">待入职人数</p>
                     </div>
-                    <div class="relative">
-                        <svg class="w-16 h-16 transform -rotate-90" viewBox="0 0 36 36">
-                            <path class="text-blue-300" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3"></path>
-                            <path class="text-white" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3" stroke-dasharray="87, 100"></path>
-                        </svg>
-                        <div class="absolute inset-0 flex items-center justify-center">
-                            <span class="text-xs font-bold text-white">87%</span>
-                        </div>
+                    <div class="text-right">
+                        <i class="fas fa-user-check text-white opacity-80 text-2xl"></i>
                     </div>
                 </div>
             </div>
@@ -175,61 +167,9 @@
                             
                             <!-- 最近分析的简历列表（动态容器） -->
                             <div id="recent-activity" class="space-y-3 mb-6">
-                                <a href="resume-analysis-pc.html?id=001" class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 hover:shadow-md transition-all cursor-pointer">
-                                    <div class="flex items-center">
-                                        <i class="fas fa-file-alt text-blue-500 mr-3"></i>
-                                        <div>
-                                            <p class="text-sm font-medium text-gray-900">张三_前端工程师.pdf</p>
-                                            <p class="text-xs text-gray-500">2024-01-15 14:30</p>
-                                        </div>
-                                    </div>
-                                    <div class="flex items-center space-x-2">
-                                        <span class="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded">匹配度: 92%</span>
-                                        <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
-                                    </div>
-                                </a>
-                                
-                                <a href="resume-analysis-pc.html?id=002" class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 hover:shadow-md transition-all cursor-pointer">
-                                    <div class="flex items-center">
-                                        <i class="fas fa-file-alt text-blue-500 mr-3"></i>
-                                        <div>
-                                            <p class="text-sm font-medium text-gray-900">李四_Java开发.pdf</p>
-                                            <p class="text-xs text-gray-500">2024-01-15 11:20</p>
-                                        </div>
-                                    </div>
-                                    <div class="flex items-center space-x-2">
-                                        <span class="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded">匹配度: 78%</span>
-                                        <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
-                                    </div>
-                                </a>
-                                
-                                <a href="resume-analysis-pc.html?id=003" class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 hover:shadow-md transition-all cursor-pointer">
-                                    <div class="flex items-center">
-                                        <i class="fas fa-file-alt text-blue-500 mr-3"></i>
-                                        <div>
-                                            <p class="text-sm font-medium text-gray-900">王五_UI设计师.pdf</p>
-                                            <p class="text-xs text-gray-500">2024-01-14 16:45</p>
-                                        </div>
-                                    </div>
-                                    <div class="flex items-center space-x-2">
-                                        <span class="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded">匹配度: 85%</span>
-                                        <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
-                                    </div>
-                                </a>
-                                
-                                <a href="resume-analysis-pc.html?id=004" class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 hover:shadow-md transition-all cursor-pointer">
-                                    <div class="flex items-center">
-                                        <i class="fas fa-file-alt text-blue-500 mr-3"></i>
-                                        <div>
-                                            <p class="text-sm font-medium text-gray-900">赵六_产品经理.pdf</p>
-                                            <p class="text-xs text-gray-500">2024-01-14 09:15</p>
-                                        </div>
-                                    </div>
-                                    <div class="flex items-center space-x-2">
-                                        <span class="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded">匹配度: 65%</span>
-                                        <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
-                                    </div>
-                                </a>
+                                <div class="flex items-center justify-center py-8">
+                                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                                </div>
                             </div>
                             
                             <!-- 快速操作按钮 -->
@@ -362,15 +302,10 @@
                             <span class="text-xs text-blue-600">在线</span>
                         </div>
                     </div>
-                    <div class="space-y-3">
-                        <div class="p-3 bg-blue-50 rounded-lg">
-                            <p class="text-sm text-blue-800">💡 建议：本周简历投递成功率较高，建议增加职位发布频率</p>
-                        </div>
-                        <div class="p-3 bg-green-50 rounded-lg">
-                            <p class="text-sm text-green-800">📊 统计：本月AI分析准确率达到 98.5%</p>
-                        </div>
-                        <div class="p-3 bg-yellow-50 rounded-lg">
-                            <p class="text-sm text-yellow-800">⚠️ 提醒：有 5 份简历需要人工复核</p>
+                    <div class="space-y-3" id="ai-advice-container">
+                        <!-- AI 建议将通过 JS 动态加载 -->
+                        <div class="flex items-center justify-center py-4">
+                            <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
                         </div>
                     </div>
                     <a href="/pages/assistant-chat.html" target="_blank" rel="noopener noreferrer" class="w-full mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg text-center inline-block">
@@ -420,21 +355,10 @@
                         <h3 class="text-lg font-semibold text-gray-900">待办事项</h3>
                         <button class="text-sm text-blue-600 hover:text-blue-700">+ 添加</button>
                     </div>
-                    <div class="space-y-3">
-                        <div class="flex items-center p-3 bg-gray-50 rounded-lg">
-                            <input type="checkbox" class="mr-3 rounded">
-                            <span class="text-sm text-gray-700 flex-1">审核新投递的简历 (5)</span>
-                            <span class="text-xs text-gray-500">今天</span>
-                        </div>
-                        <div class="flex items-center p-3 bg-gray-50 rounded-lg">
-                            <input type="checkbox" class="mr-3 rounded">
-                            <span class="text-sm text-gray-700 flex-1">更新职位描述</span>
-                            <span class="text-xs text-gray-500">明天</span>
-                        </div>
-                        <div class="flex items-center p-3 bg-gray-50 rounded-lg">
-                            <input type="checkbox" class="mr-3 rounded" checked>
-                            <span class="text-sm text-gray-500 flex-1 line-through">月度数据分析报告</span>
-                            <span class="text-xs text-green-600">已完成</span>
+                    <div class="space-y-3" id="todo-list-container">
+                        <!-- 待办事项将通过 JS 动态加载 -->
+                        <div class="flex items-center justify-center py-4">
+                            <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
                         </div>
                     </div>
                 </div>
@@ -520,73 +444,204 @@
                 setInterval(updateDate, 60000); // 每分钟更新
             }
 
-            async loadDashboardData() {}
+            async loadDashboardData() {
+                try {
+                    const token = localStorage.getItem('token');
+                    if (!token) return;
 
-            updateDashboardDisplay() {
-                if (!this.dashboardData) return;
+                    // 1. 加载基础统计
+                    const statsResponse = await fetch('/api/dashboard/stats', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const statsResult = await statsResponse.json();
+                    
+                    if (statsResult.data) {
+                        const data = statsResult.data;
+                        this.updateElementText('total-candidates', data.total_candidates);
+                        this.updateElementText('new-candidates-today', `今日新增 ${data.new_candidates_today || 0}`);
+                        this.updateElementText('active-jobs', data.active_jobs);
+                        this.updateElementText('interviews-scheduled', data.interviews_scheduled);
+                        this.updateElementText('offers-sent', data.offers_sent);
+                        
+                        // 更新欢迎区域的数字
+                        const pendingEl = document.querySelector('.font-semibold.text-blue-600');
+                        if (pendingEl) pendingEl.textContent = data.new_candidates_today || 0;
+                        
+                        // AI 评分默认 100
+                        const aiScoreEl = document.getElementById('ai-score');
+                        if (aiScoreEl) aiScoreEl.textContent = '100';
+                    }
 
-                // 更新统计数字
-                const animateNumber = (element, target) => {
-                    let current = 0;
-                    const increment = target / 50;
-                    const timer = setInterval(() => {
-                        current += increment;
-                        if (current >= target) {
-                            element.textContent = target.toLocaleString();
-                            clearInterval(timer);
-                        } else {
-                            element.textContent = Math.floor(current).toLocaleString();
-                        }
-                    }, 20);
+                    // 2. 加载待办事项
+                    const tasksResponse = await fetch('/api/dashboard/tasks', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const tasksResult = await tasksResponse.json();
+                    if (tasksResult.data) {
+                        this.renderTasks(tasksResult.data);
+                    }
+
+                    // 3. 加载 AI 助手建议
+                    this.loadAIAdvice();
+
+                } catch (error) {
+                    console.error('加载仪表盘数据失败:', error);
+                }
+            }
+
+            updateElementText(id, text) {
+                const el = document.getElementById(id);
+                if (el) {
+                    // 简单的数字增加动画效果
+                    if (typeof text === 'number' && text > 0) {
+                        this.animateNumber(el, text);
+                    } else {
+                        el.textContent = text;
+                    }
+                }
+            }
+
+            animateNumber(element, target) {
+                let current = 0;
+                const duration = 1000;
+                const start = performance.now();
+                
+                const step = (now) => {
+                    const progress = Math.min((now - start) / duration, 1);
+                    current = Math.floor(progress * target);
+                    element.textContent = current.toLocaleString();
+                    if (progress < 1) {
+                        requestAnimationFrame(step);
+                    } else {
+                        element.textContent = target.toLocaleString();
+                    }
                 };
-
-                // 更新统计卡片
-                const resumeCount = document.querySelector('#total-resumes');
-                const jobCount = document.querySelector('#active-jobs');
-                const aiCount = document.querySelector('#ai-analysis-count');
-                const matchRate = document.querySelector('#match-success-rate');
-
-                if (resumeCount) animateNumber(resumeCount, this.dashboardData.totalResumes);
-                if (jobCount) animateNumber(jobCount, this.dashboardData.activeJobs);
-                if (aiCount) animateNumber(aiCount, this.dashboardData.aiAnalysisCount);
-                if (matchRate) matchRate.textContent = this.dashboardData.matchSuccessRate + '%';
+                requestAnimationFrame(step);
             }
 
-            renderCharts() {
-                this.renderAnalysisTrendChart();
+            renderTasks(tasks) {
+                const container = document.getElementById('todo-list-container') || document.querySelector('#todo-list-container');
+                // 如果页面上还没有 todo-list-container，可以根据结构寻找
+                const todoSection = document.querySelector('h3:contains("待办事项")')?.closest('div')?.querySelector('.space-y-3');
+                const targetContainer = container || todoSection;
+                
+                if (!targetContainer) return;
+
+                if (!tasks || tasks.length === 0) {
+                    targetContainer.innerHTML = '<p class="text-sm text-gray-500 text-center py-4">暂无待办事项</p>';
+                    return;
+                }
+
+                // 将任务转换为 HTML
+                let html = '';
+                tasks.forEach(task => {
+                    if (task.items && task.items.length > 0) {
+                        task.items.forEach(item => {
+                            html += `
+                                <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                                    <input type="checkbox" class="mr-3 rounded">
+                                    <span class="text-sm text-gray-700 flex-1">${item.desc}</span>
+                                    <span class="text-xs text-gray-500">${this.formatTime(item.time)}</span>
+                                </div>
+                            `;
+                        });
+                    }
+                });
+                targetContainer.innerHTML = html || '<p class="text-sm text-gray-500 text-center py-4">暂无待办事项</p>';
             }
 
-            renderAnalysisTrendChart() {
-                const ctx = document.getElementById('analysis-trend-chart');
-                if (!ctx) return;
-                this.charts.analysisTrend = null;
+            async loadAIAdvice() {
+                const container = document.getElementById('ai-advice-container');
+                if (!container) return;
+
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await fetch('/api/dashboard/ai-prediction', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const result = await response.json();
+                    
+                    if (result.data && result.data.ai_analysis) {
+                        const analysis = result.data.ai_analysis;
+                        let html = '';
+                        
+                        // 趋势分析
+                        if (analysis.trend_analysis) {
+                            html += `
+                                <div class="p-3 bg-blue-50 rounded-lg">
+                                    <p class="text-sm text-blue-800">💡 趋势：${analysis.trend_analysis}</p>
+                                </div>
+                            `;
+                        }
+                        
+                        // 建议
+                        if (analysis.suggestions && analysis.suggestions.length > 0) {
+                            analysis.suggestions.slice(0, 2).forEach(s => {
+                                html += `
+                                    <div class="p-3 bg-green-50 rounded-lg">
+                                        <p class="text-sm text-green-800">📊 建议：${s}</p>
+                                    </div>
+                                `;
+                            });
+                        }
+                        
+                        container.innerHTML = html || '<p class="text-sm text-gray-500">暂无AI分析建议</p>';
+                    }
+                } catch (error) {
+                    container.innerHTML = '<p class="text-sm text-gray-500">无法加载AI建议</p>';
+                }
+            }
+
+            formatTime(timeStr) {
+                const date = new Date(timeStr);
+                const now = new Date();
+                const diff = now - date;
+                
+                if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前';
+                if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前';
+                return date.toLocaleDateString();
             }
 
             loadRecentActivities() {
-                if (!this.dashboardData?.recentActivities) return;
+                // 这个方法在 loadDashboardData 中已经通过 renderTasks 间接实现了
+                // 或者我们可以单独加载最近的简历分析记录
+                this.loadRecentResumeAnalysis();
+            }
 
-                const container = document.getElementById('recent-activities');
+            async loadRecentResumeAnalysis() {
+                const container = document.getElementById('recent-activity');
                 if (!container) return;
 
-                const colors = {
-                    blue: 'bg-blue-100 text-blue-600',
-                    green: 'bg-green-100 text-green-600',
-                    purple: 'bg-purple-100 text-purple-600',
-                    orange: 'bg-orange-100 text-orange-600'
-                };
-
-                container.innerHTML = this.dashboardData.recentActivities.map(activity => `
-                    <div class="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                        <div class="flex-shrink-0 w-8 h-8 ${colors[activity.color]} rounded-full flex items-center justify-center">
-                            <i class="fas ${activity.icon} text-sm"></i>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm font-medium text-gray-900">${activity.title}</p>
-                            <p class="text-sm text-gray-600">${activity.description}</p>
-                            <p class="text-xs text-gray-500 mt-1">${activity.time}</p>
-                        </div>
-                    </div>
-                `).join('');
+                try {
+                    const token = localStorage.getItem('token');
+                    // 假设有一个获取最近分析的 API，或者从 tasks 中提取
+                    // 这里我们暂时从 Resume 列表获取最近上传的
+                    const response = await fetch('/api/resumes?limit=5', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const result = await response.json();
+                    
+                    if (result.data && result.data.length > 0) {
+                        container.innerHTML = result.data.map(resume => `
+                            <a href="resume-analysis-pc.html?id=${resume.id}" class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 hover:shadow-md transition-all cursor-pointer">
+                                <div class="flex items-center">
+                                    <i class="fas fa-file-alt text-blue-500 mr-3"></i>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900">${resume.file_name}</p>
+                                        <p class="text-xs text-gray-500">${new Date(resume.upload_date).toLocaleString()}</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">查看详情</span>
+                                </div>
+                            </a>
+                        `).join('');
+                    } else {
+                        container.innerHTML = '<p class="text-sm text-gray-500 text-center py-8">暂无分析记录</p>';
+                    }
+                } catch (error) {
+                    console.error('加载最近活动失败:', error);
+                }
             }
 
             handleQuickAction(button) {

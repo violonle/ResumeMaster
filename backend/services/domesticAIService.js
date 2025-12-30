@@ -1,4 +1,5 @@
 const axios = require('axios');
+const OpenAI = require('openai');
 const { AI_SERVICES, SERVICE_PRIORITY, MODEL_STRATEGIES } = require('../config/aiServices');
 const { SystemConfig, ModelKey } = require('../models');
 const promptService = require('./promptService');
@@ -81,16 +82,18 @@ class DomesticAIService {
     const p = this.getProviderConfig(service);
     const originalProvider = this.getOriginalProviderName(service);
     
-    const defaultBaseUrl = AI_SERVICES[originalProvider] ? AI_SERVICES[originalProvider].baseUrl : '';
+    const defaultBaseUrl = (
+      originalProvider === 'SILICONFLOW' ? process.env.SILICONFLOW_BASE_URL :
+      originalProvider === 'GLM' ? process.env.GLM_BASE_URL :
+      originalProvider === 'QWEN' ? process.env.QWEN_BASE_URL :
+      originalProvider === 'DEEPSEEK' ? process.env.DEEPSEEK_BASE_URL : ''
+    ) || (AI_SERVICES[originalProvider] ? AI_SERVICES[originalProvider].baseUrl : '');
     const baseURL = p && p.baseUrl ? p.baseUrl : defaultBaseUrl;
     
     const apiKey = apiKeyOverride || (p && p.apiKey ? p.apiKey : (
-      originalProvider === 'MODELSCOPE' ? process.env.MODELSCOPE_API_KEY :
       originalProvider === 'SILICONFLOW' ? process.env.SILICONFLOW_API_KEY :
       originalProvider === 'GLM' ? process.env.GLM_API_KEY :
       originalProvider === 'QWEN' ? process.env.QWEN_API_KEY :
-      originalProvider === 'KIMI' ? process.env.KIMI_API_KEY :
-      originalProvider === 'MINIMAX' ? process.env.MINIMAX_API_KEY :
       originalProvider === 'DEEPSEEK' ? process.env.DEEPSEEK_API_KEY : ''
     ));
     const headers = {};
@@ -188,12 +191,9 @@ class DomesticAIService {
     const p = this.getProviderConfig(service);
     if (p && p.enabled && p.apiKey) return true;
     const apiKeyMap = {
-      MODELSCOPE: process.env.MODELSCOPE_API_KEY,
       SILICONFLOW: process.env.SILICONFLOW_API_KEY,
       GLM: process.env.GLM_API_KEY,
       QWEN: process.env.QWEN_API_KEY,
-      KIMI: process.env.KIMI_API_KEY,
-      MINIMAX: process.env.MINIMAX_API_KEY,
       DEEPSEEK: process.env.DEEPSEEK_API_KEY
     };
     return !!apiKeyMap[service];
@@ -300,41 +300,98 @@ class DomesticAIService {
       };
     } catch (error) {
       this.recordServiceStats(service, false);
-      // 降级处理
+      console.error(`AI 预测分析失败 (${service}):`, error.message);
+      
+      // 如果是明确的 API 错误，抛出异常
+      if (error.response && error.response.status === 401) {
+          throw new Error(`${service} API Key 无效或已过期`);
+      }
+      
+      // 否则返回降级数据，但标记为 fallback
       return {
-        success: true,
+        success: false,
+        error: error.message,
         data: {
-            trend_analysis: "当前招聘活动保持平稳，建议持续关注关键岗位的候选人储备。",
-            pipeline_health: "招聘漏斗运转正常",
-            potential_bottlenecks: ["暂未发现明显瓶颈"],
-            suggestions: ["继续保持当前的招聘节奏", "定期复盘招聘渠道效果"]
+            trend_analysis: "无法生成实时趋势分析，请检查 AI 服务配置。",
+            pipeline_health: "服务暂时不可用",
+            potential_bottlenecks: [],
+            suggestions: ["请在后台检查 AI 模型配置和 API Key"]
         },
-        service: 'FALLBACK',
-        model: 'fallback'
+        service: 'ERROR',
+        model: 'error'
       };
     }
   }
 
   // 简历分析
-  async analyzeResume(resumeText, jobDescription = '', userCtx = null) {
+  async analyzeResume(resumeText, jobDescription = '', userCtx = null, scene = null) {
     const startTime = Date.now();
-    const { service, model, apiKey } = await this.selectOptimalService('resume_analysis', userCtx);
+    
+    // Determine prompt key and task type based on scene
+    let promptKey;
+    let taskType;
+
+    if (scene === 'talent_pool') {
+        promptKey = 'resume_quick_score';
+        taskType = 'job_matching';
+    } else if (scene === 'deep_analysis') {
+        promptKey = 'resume_deep_analysis';
+        taskType = 'resume_analysis';
+    } else {
+        // Legacy fallback
+        promptKey = jobDescription ? 'resume_quick_score' : 'resume_deep_analysis';
+        taskType = jobDescription ? 'job_matching' : 'resume_analysis';
+    }
+
+    const { service, model, apiKey } = await this.selectOptimalService(taskType, userCtx);
 
     try {
-      const prompt = await promptService.getPrompt('resume_analysis', {
-        resumeText,
-        jobDescriptionSection: promptService.prepareJobDescriptionVar(jobDescription)
-      });
+      let prompt;
+      
+      if (scene === 'talent_pool') {
+          prompt = await promptService.getPrompt('resume_quick_score', {
+              resumeText,
+              jobDescriptionSection: promptService.prepareJobDescriptionVar(jobDescription)
+          });
+      } else if (scene === 'deep_analysis') {
+          prompt = await promptService.getPrompt('resume_deep_analysis', {
+              resumeText,
+              targetJobSection: promptService.prepareTargetJobSection(jobDescription)
+          });
+      } else {
+          // Original fallback logic
+          if (jobDescription) {
+            prompt = await promptService.getPrompt('resume_quick_score', {
+              resumeText,
+              jobDescriptionSection: promptService.prepareJobDescriptionVar(jobDescription)
+            });
+          } else {
+            prompt = await promptService.getPrompt('resume_deep_analysis', {
+              resumeText,
+              targetJobSection: ''
+            });
+          }
+      }
+      
       const result = await this.callAIService(service, model, prompt, apiKey);
       const responseTime = Date.now() - startTime;
+      
+      console.log(`[AI Service] Raw response from ${service}/${model}:`, 
+        typeof result === 'string' ? result.substring(0, 500) + (result.length > 500 ? '...' : '') : 'Object received');
       
       // 估算token数量（简化计算）
       const tokens = Math.ceil((prompt.length + JSON.stringify(result).length) / 4);
       this.recordServiceStats(service, true, tokens, responseTime);
 
+      // 使用通用的解析逻辑
+      const parsed = this.parseJSONResponse(result);
+      if (!parsed) {
+        throw new Error('无法从 AI 响应中解析出有效的对比 JSON 结构');
+      }
+
       return {
         success: true,
-        data: result,
+        data: parsed,
         service: service,
         model: model,
         cost: this.calculateCost(service, tokens),
@@ -344,11 +401,31 @@ class DomesticAIService {
       this.recordServiceStats(service, false);
       
       // 尝试使用备用服务
-      const prompt = await promptService.getPrompt('resume_analysis', {
-        resumeText,
-        jobDescriptionSection: promptService.prepareJobDescriptionVar(jobDescription)
-      });
-      return await this.fallbackToBackupService('resume_analysis', prompt, null, userCtx);
+      let prompt;
+      if (scene === 'talent_pool') {
+          prompt = await promptService.getPrompt('resume_quick_score', {
+              resumeText,
+              jobDescriptionSection: promptService.prepareJobDescriptionVar(jobDescription)
+          });
+      } else if (scene === 'deep_analysis') {
+          prompt = await promptService.getPrompt('resume_deep_analysis', {
+              resumeText,
+              targetJobSection: promptService.prepareTargetJobSection(jobDescription)
+          });
+      } else {
+          if (jobDescription) {
+            prompt = await promptService.getPrompt('resume_quick_score', {
+              resumeText,
+              jobDescriptionSection: promptService.prepareJobDescriptionVar(jobDescription)
+            });
+          } else {
+            prompt = await promptService.getPrompt('resume_deep_analysis', {
+              resumeText,
+              targetJobSection: ''
+            });
+          }
+      }
+      return await this.fallbackToBackupService(taskType, prompt, null, userCtx);
     }
   }
 
@@ -356,9 +433,9 @@ class DomesticAIService {
     const startTime = Date.now();
     const { service, model, apiKey } = await this.selectOptimalService('url_read', userCtx);
     try {
-      const prompt = await promptService.getPrompt('resume_analysis', {
+      const prompt = await promptService.getPrompt('resume_deep_analysis', {
         resumeText: urlText,
-        jobDescriptionSection: ''
+        targetJobSection: ''
       });
       const result = await this.callAIService(service, model, prompt, apiKey);
       const responseTime = Date.now() - startTime;
@@ -367,12 +444,44 @@ class DomesticAIService {
       return { success: true, data: result, service, model, cost: this.calculateCost(service, tokens), responseTime };
     } catch (error) {
       this.recordServiceStats(service, false);
-      const prompt = await promptService.getPrompt('resume_analysis', {
+      const prompt = await promptService.getPrompt('resume_deep_analysis', {
         resumeText: urlText,
-        jobDescriptionSection: ''
+        targetJobSection: ''
       });
       return await this.fallbackToBackupService('url_read', prompt, null, userCtx);
     }
+  }
+
+  // 解析 AI 响应中的 JSON
+  parseJSONResponse(text) {
+    if (!text) return null;
+    if (typeof text === 'object') return text;
+
+    try {
+      // 1. 尝试直接解析
+      return JSON.parse(text);
+    } catch (e) {
+      try {
+      // 2. 尝试从 Markdown 代码块中提取 (处理可能带有 json 标识的情况)
+        const markdownRegex = /```(?:json)?\s*([\s\S]*?)\s*```/i;
+        const match = text.match(markdownRegex);
+        if (match && match[1]) {
+          return JSON.parse(match[1].trim());
+        }
+
+        // 3. 尝试提取第一个 { 和最后一个 } 之间的内容 (针对大模型可能带有的解释性文字)
+        const firstBrace = text.indexOf('{');
+        const lastBrace = text.lastIndexOf('}');
+        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+          const jsonStr = text.substring(firstBrace, lastBrace + 1);
+          return JSON.parse(jsonStr);
+        }
+      } catch (innerError) {
+        console.error('[AI Service] JSON parse error:', innerError.message);
+        console.debug('[AI Service] Failed text snippet:', text.substring(0, 200));
+      }
+    }
+    return null;
   }
 
   // 职位匹配
@@ -381,9 +490,9 @@ class DomesticAIService {
     const { service, model, apiKey } = await this.selectOptimalService('job_matching', userCtx);
 
     try {
-      const prompt = await promptService.getPrompt('job_matching', {
+      const prompt = await promptService.getPrompt('resume_quick_score', {
         resumeText,
-        jobsJson: JSON.stringify(jobs, null, 2)
+        jobDescriptionSection: promptService.prepareJobDescriptionVar(JSON.stringify(jobs))
       });
       const result = await this.callAIService(service, model, prompt, apiKey);
       const responseTime = Date.now() - startTime;
@@ -391,9 +500,16 @@ class DomesticAIService {
       const tokens = Math.ceil((prompt.length + JSON.stringify(result).length) / 4);
       this.recordServiceStats(service, true, tokens, responseTime);
 
+      // 使用通用的解析逻辑
+      const parsed = this.parseJSONResponse(result) || {
+          overall_score: 0,
+          match_level: "未知",
+          reason: "解析失败"
+      };
+
       return {
         success: true,
-        data: result,
+        data: parsed,
         service: service,
         model: model,
         cost: this.calculateCost(service, tokens),
@@ -401,9 +517,9 @@ class DomesticAIService {
       };
     } catch (error) {
       this.recordServiceStats(service, false);
-      const prompt = await promptService.getPrompt('job_matching', {
+      const prompt = await promptService.getPrompt('resume_quick_score', {
         resumeText,
-        jobsJson: JSON.stringify(jobs, null, 2)
+        jobDescriptionSection: promptService.prepareJobDescriptionVar(JSON.stringify(jobs))
       });
       return await this.fallbackToBackupService('job_matching', prompt, null, userCtx);
     }
@@ -420,13 +536,22 @@ class DomesticAIService {
       
       switch (type) {
         case 'resume_summary':
-          prompt = await promptService.getPrompt('content_gen_resume_summary', { dataJson });
+          prompt = await promptService.getPrompt('resume_deep_analysis', { 
+              resumeText: dataJson,
+              targetJobSection: '请根据以上数据生成简历摘要。'
+          });
           break;
         case 'cover_letter':
-          prompt = await promptService.getPrompt('content_gen_cover_letter', { dataJson });
+          prompt = await promptService.getPrompt('resume_deep_analysis', { 
+              resumeText: dataJson,
+              targetJobSection: '请根据以上数据生成求职信。'
+          });
           break;
         case 'job_description':
-          prompt = await promptService.getPrompt('content_gen_job_description', { dataJson });
+          prompt = await promptService.getPrompt('resume_deep_analysis', { 
+              resumeText: dataJson,
+              targetJobSection: '请根据以上数据优化职位描述。'
+          });
           break;
         default:
           prompt = data.prompt || '请生成相关内容';
@@ -452,13 +577,22 @@ class DomesticAIService {
       const dataJson = JSON.stringify(data, null, 2);
       switch (type) {
         case 'resume_summary':
-          prompt = await promptService.getPrompt('content_gen_resume_summary', { dataJson });
+          prompt = await promptService.getPrompt('resume_deep_analysis', { 
+              resumeText: dataJson,
+              targetJobSection: '请根据以上数据生成简历摘要。'
+          });
           break;
         case 'cover_letter':
-          prompt = await promptService.getPrompt('content_gen_cover_letter', { dataJson });
+          prompt = await promptService.getPrompt('resume_deep_analysis', { 
+              resumeText: dataJson,
+              targetJobSection: '请根据以上数据生成求职信。'
+          });
           break;
         case 'job_description':
-          prompt = await promptService.getPrompt('content_gen_job_description', { dataJson });
+          prompt = await promptService.getPrompt('resume_deep_analysis', { 
+              resumeText: dataJson,
+              targetJobSection: '请根据以上数据优化职位描述。'
+          });
           break;
         default:
           prompt = data.prompt || '请生成相关内容';
@@ -499,234 +633,46 @@ class DomesticAIService {
 
   // 调用AI服务
   async callAIService(service, model, promptOrMessages, apiKey = null) {
-    const config = this.getServiceConfig(service, apiKey);
     const originalProvider = this.getOriginalProviderName(service);
     
-    switch (originalProvider) {
-      case 'MODELSCOPE':
-        return await this.callModelScope(config, model, promptOrMessages);
-      case 'SILICONFLOW':
-        return await this.callSiliconFlow(config, model, promptOrMessages);
-      case 'GLM':
-        return await this.callGLM(config, model, promptOrMessages);
-      case 'QWEN':
-        return await this.callQwen(config, model, promptOrMessages);
-      case 'KIMI':
-        return await this.callKimi(config, model, promptOrMessages);
-      case 'MINIMAX':
-        return await this.callMiniMax(config, model, promptOrMessages);
-      case 'DEEPSEEK':
-        return await this.callDeepSeek(config, model, promptOrMessages);
-      case 'MOCK':
-        return await this.callMockService(model, promptOrMessages);
-      default:
-        throw new Error(`不支持的服务: ${service} (Mapped to: ${originalProvider})`);
-    }
-  }
-
-  // 调用魔搭服务
-  async callModelScope(config, model, promptOrMessages) {
-    const response = await axios.post(
-      `${config.baseURL}/chat/completions`,
-      {
-        model: AI_SERVICES.MODELSCOPE.models[model] || model,
-        messages: Array.isArray(promptOrMessages) ? promptOrMessages : [{ role: 'user', content: promptOrMessages }],
-        temperature: 0.7,
-        max_tokens: 2000
-      },
-      config
-    );
-
-    return response.data.choices[0].message.content;
-  }
-
-  // 调用硅基流动服务
-  async callSiliconFlow(config, model, promptOrMessages) {
-    const response = await axios.post(
-      `${config.baseURL}/chat/completions`,
-      {
-        model: AI_SERVICES.SILICONFLOW.models[model] || model,
-        messages: Array.isArray(promptOrMessages) ? promptOrMessages : [{ role: 'user', content: promptOrMessages }],
-        temperature: 0.7,
-        max_tokens: 2000
-      },
-      config
-    );
-
-    return response.data.choices[0].message.content;
-  }
-
-  // 调用GLM服务
-  async callGLM(config, model, promptOrMessages) {
-    const response = await axios.post(
-      `${config.baseURL}/chat/completions`,
-      {
-        model: AI_SERVICES.GLM.models[model] || model,
-        messages: Array.isArray(promptOrMessages) ? promptOrMessages : [{ role: 'user', content: promptOrMessages }],
-        temperature: 0.7,
-        max_tokens: 2000
-      },
-      config
-    );
-
-    return response.data.choices[0].message.content;
-  }
-
-  // 调用千问服务
-  async callQwen(config, model, promptOrMessages) {
-    const response = await axios.post(
-      `${config.baseURL}/api/v1/services/aigc/text-generation/generation`,
-      {
-        model: AI_SERVICES.QWEN.models[model] || model,
-        input: {
-          messages: Array.isArray(promptOrMessages) ? promptOrMessages : [{ role: 'user', content: promptOrMessages }]
-        },
-        parameters: {
-          temperature: 0.7,
-          max_tokens: 2000
-        }
-      },
-      config
-    );
-
-    return response.data.output.choices[0].message.content;
-  }
-
-  // 调用 Kimi (Moonshot)
-  async callKimi(config, model, promptOrMessages) {
-    const response = await axios.post(
-      `${config.baseURL}/chat/completions`,
-      {
-        model: AI_SERVICES.KIMI.models[model] || model,
-        messages: Array.isArray(promptOrMessages) ? promptOrMessages : [{ role: 'user', content: promptOrMessages }]
-      },
-      config
-    );
-    return response.data.choices?.[0]?.message?.content || '';
-  }
-
-  // 调用 MiniMax
-  async callMiniMax(config, model, promptOrMessages) {
-    const response = await axios.post(
-      `${config.baseURL}/text/chatcompletion`,
-      {
-        model: AI_SERVICES.MINIMAX.models[model] || model,
-        messages: Array.isArray(promptOrMessages) ? promptOrMessages : [{ role: 'user', content: promptOrMessages }]
-      },
-      config
-    );
-    const out = response.data?.choices?.[0]?.messages?.[0]?.text || response.data?.choices?.[0]?.message || '';
-    return out;
-  }
-
-  // 调用 DeepSeek
-  async callDeepSeek(config, model, promptOrMessages) {
-    const response = await axios.post(
-      `${config.baseURL}/chat/completions`,
-      {
-        model: AI_SERVICES.DEEPSEEK.models[model] || model,
-        messages: Array.isArray(promptOrMessages) ? promptOrMessages : [{ role: 'user', content: promptOrMessages }]
-      },
-      config
-    );
-    return response.data?.choices?.[0]?.message?.content || '';
-  }
-
-  // 调用 Mock 服务
-  async callMockService(model, promptOrMessages) {
-    await new Promise(resolve => setTimeout(resolve, 1500)); // 模拟延迟
-
-    // 判断是简历分析还是简历对比
-    const input = Array.isArray(promptOrMessages) 
-      ? promptOrMessages.map(m => m.content).join('\n') 
-      : promptOrMessages;
-
-    if (input.includes('comparison_table') || input.includes('对比报告')) {
-      return JSON.stringify({
-        radar_scores: {
-          job_match: {"A": 4, "B": 3},
-          skill_match: {"A": 5, "B": 4},
-          experience_match: {"A": 3, "B": 5},
-          learning_ability: {"A": 4, "B": 4},
-          teamwork: {"A": 4, "B": 5}
-        },
-        comparison_table: [
-          {
-            "dimension": "教育背景", 
-            "A": "重点大学硕士，计算机专业，学术背景扎实。", 
-            "B": "本科学历，但有相关专业认证。", 
-            "winner": "A", 
-            "comment": "A的学历层次更高，专业对口。"
-          },
-          {
-            "dimension": "工作经验", 
-            "A": "3年大厂经验，参与过核心项目。", 
-            "B": "5年创业公司经验，全栈能力强。", 
-            "winner": "B", 
-            "comment": "B的实战经验更丰富，适应性可能更强。"
-          },
-          {
-            "dimension": "技能专长", 
-            "A": "精通Java后端，熟悉分布式系统。", 
-            "B": "熟悉Node.js/Python，擅长快速开发。", 
-            "winner": "Tie", 
-            "comment": "各有侧重，取决于具体岗位需求。"
-          }
-        ],
-        recommendation: {
-          "winner": "A", 
-          "reason": "考虑到岗位对基础架构的要求，A的系统性思维和教育背景更匹配。"
-        },
-        summary_report: "两份简历都非常优秀。候选人A学术背景好，适合攻坚核心技术；候选人B实战经验丰富，适合业务快速迭代。建议根据当前团队短板选择。"
-      });
+    const config = this.getServiceConfig(service, apiKey);
+    
+    // 使用 OpenAI SDK 调用兼容的服务
+    const supportedProviders = ['SILICONFLOW', 'GLM', 'QWEN', 'DEEPSEEK'];
+    if (supportedProviders.includes(originalProvider)) {
+      return await this.callOpenAICompatible(originalProvider, config, model, promptOrMessages);
     }
 
-    // 默认简历分析
-    return JSON.stringify({
-      basic_info: { 
-        name: "张三 (模拟)", 
-        email: "zhangsan@example.com", 
-        phone: "13800138000", 
-        location: "北京", 
-        age: "28", 
-        education: "硕士", 
-        school: "北京科技大学", 
-        work_years: "5年", 
-        last_company: "某知名互联网公司", 
-        last_position: "高级后端工程师", 
-        salary_expectation: "30k-45k" 
-      },
-      education_background: [ 
-        { "school": "北京科技大学", "degree": "硕士", "major": "计算机科学与技术", "start_date": "2018-09", "end_date": "2021-06" },
-        { "school": "北京科技大学", "degree": "本科", "major": "软件工程", "start_date": "2014-09", "end_date": "2018-06" }
-      ],
-      work_experience: [ 
-        { "company": "某知名互联网公司", "title": "高级后端工程师", "start_date": "2021-07", "end_date": "至今", "responsibilities": "负责核心交易系统的设计与开发，优化高并发场景下的系统性能。" } 
-      ],
-      project_experience: [ 
-        { "name": "分布式交易系统重构", "role": "核心开发", "stack": ["Java", "Spring Boot", "MySQL", "Redis"], "description": "对老旧交易系统进行微服务化重构。", "impact": "系统吞吐量提升50%，故障率降低90%。" } 
-      ],
-      skills_certifications: { 
-        "skills": ["Java", "Python", "Spring Cloud", "MySQL", "Docker", "Kubernetes"], 
-        "certifications": ["PMP", "AWS Certified Solutions Architect" ] 
-      },
-      self_evaluation: "热爱技术，善于解决复杂问题，有良好的团队协作精神。",
-      evaluation_report: {
-        "core_strengths": ["扎实的计算机基础", "丰富的高并发实战经验", "良好的系统设计能力"],
-        "potential_issues": ["前端技术相对薄弱", "团队管理经验尚缺"],
-        "career_advice": ["建议深入研究云原生架构", "可以尝试带领小型团队，提升管理能力"]
-      },
-      radar_scores: {
-        "job_match": 4,
-        "skill_match": 5,
-        "experience_match": 4,
-        "learning_ability": 4,
-        "teamwork": 5
-      },
-      overall_score: 88,
-      summary: "该候选人（模拟数据）具备扎实的技术功底和丰富的实战经验，非常适合后端开发相关的高级岗位。建议重点考察其在复杂系统设计方面的具体思路。"
+    throw new Error(`不支持的服务: ${service} (Mapped to: ${originalProvider})`);
+  }
+
+  // 调用OpenAI SDK调用兼容的服务
+  async callOpenAICompatible(provider, config, model, promptOrMessages) {
+    const client = new OpenAI({
+      apiKey: config.headers.Authorization.replace('Bearer ', ''),
+      baseURL: config.baseURL,
+      timeout: config.timeout
     });
+
+    const messages = Array.isArray(promptOrMessages) 
+      ? promptOrMessages 
+      : [{ role: 'user', content: promptOrMessages }];
+
+    console.log(`[AI Service] Calling ${provider} with model ${model}`);
+    console.log(`[AI Service] First 200 chars of prompt: ${messages[messages.length-1].content.substring(0, 200)}...`);
+
+    const response = await client.chat.completions.create({
+      model: AI_SERVICES[provider].models[model] || model,
+      messages: messages,
+      temperature: 0.3,
+      max_tokens: 2000
+    });
+
+    const content = response.choices[0].message.content;
+    console.log(`[AI Service] Response received from ${provider}, length: ${content.length}`);
+    return content;
   }
+
 
   // 简历对比
   async compareResumes(resumeList, jobDescription = '') {
@@ -757,9 +703,15 @@ class DomesticAIService {
       const tokens = Math.ceil((prompt.length + JSON.stringify(result).length) / 4);
       this.recordServiceStats(service, true, tokens, responseTime);
 
+      // 解析 AI 响应中的 JSON
+      const parsed = this.parseJSONResponse(result);
+      if (!parsed) {
+        throw new Error('无法从 AI 响应中解析出有效的对比 JSON 结构');
+      }
+
       return {
         success: true,
-        data: result,
+        data: parsed,
         service: service,
         model: model,
         cost: this.calculateCost(service, tokens),
@@ -784,7 +736,9 @@ class DomesticAIService {
           const idx = this.nextIndexForService(svc, keysOfSvc.length);
           const chosen = keysOfSvc[idx];
           const result = await this.callAIService(svc, chosen.model, args[0], chosen.apiKey);
-          return { success:true, data: result, service: svc, model: chosen.model, fallback:true };
+          // 确保解析 JSON
+          const parsed = this.parseJSONResponse(result);
+          return { success:true, data: parsed || result, service: svc, model: chosen.model, fallback:true };
         } catch (e) { continue }
       }
     }
@@ -794,9 +748,11 @@ class DomesticAIService {
         try {
           const models = Object.keys(AI_SERVICES[service].models);
           const result = await this.callAIService(service, models[0], args[0]);
+          // 确保解析 JSON
+          const parsed = this.parseJSONResponse(result);
           return {
             success: true,
-            data: result,
+            data: parsed || result,
             service: service,
             model: models[0],
             fallback: true
@@ -807,11 +763,8 @@ class DomesticAIService {
         }
       }
     }
-    try {
-      const mock = await this.callMockService('mock', args[0]);
-      return { success: true, data: mock, service: 'MOCK', model: 'mock', fallback: true };
-    } catch (_) {}
-    return { success: false, error: '所有AI服务都不可用' };
+    // 所有可用服务尝试完毕，不再回退到 MOCK，直接报错
+    return { success: false, error: '所有AI服务均不可用，请检查API Key配置。' };
   }
 
   // 获取服务统计信息
@@ -854,24 +807,31 @@ class DomesticAIService {
           status[service] = { available: false, lastFailure: this.serviceFailures[service], stats: this.serviceStats[service] };
           continue;
         }
-        const modelKey = prov && prov.model ? prov.model : (Object.keys(AI_SERVICES[service].models)[0] || '');
-        const remoteModel = AI_SERVICES[service].models[modelKey] || modelKey;
-        let url = '';
-        let payload = {};
-        if (service === 'QWEN') {
-          url = `${cfg.baseURL}/services/aigc/text-generation/generation`;
-          payload = { model: remoteModel, input: { messages: [{ role: 'user', content: 'ping' }] }, parameters: { max_tokens: 1 } };
-        } else if (service === 'MINIMAX') {
-          url = `${cfg.baseURL}/text/chatcompletion`;
-          payload = { model: remoteModel, messages: [{ role: 'user', content: 'ping' }] };
-        } else {
-          url = `${cfg.baseURL}/chat/completions`;
-          payload = { model: remoteModel, messages: [{ role: 'user', content: 'ping' }], max_tokens: 1 };
+        
+        const originalProvider = this.getOriginalProviderName(service);
+        const modelKey = prov && prov.model ? prov.model : (Object.keys(AI_SERVICES[originalProvider]?.models || {})[0] || '');
+        const remoteModel = (AI_SERVICES[originalProvider]?.models || {})[modelKey] || modelKey;
+        
+        // 统一使用 OpenAI SDK 方式进行探活
+        const client = new OpenAI({
+          apiKey: cfg.headers.Authorization.replace('Bearer ', ''),
+          baseURL: cfg.baseURL,
+          timeout: 5000 // 探活超时设置短一点
+        });
+
+        try {
+          await client.chat.completions.create({
+            model: remoteModel,
+            messages: [{ role: 'user', content: 'ping' }],
+            max_tokens: 1
+          });
+          status[service] = { available: true, lastFailure: 0, stats: this.serviceStats[service] };
+        } catch (e) {
+          console.error(`[AI Service] Status check failed for ${service}:`, e.message);
+          status[service] = { available: false, lastFailure: this.serviceFailures[service], stats: this.serviceStats[service], error: e.message };
         }
-        const resp = await axios.post(url, payload, { headers: cfg.headers, timeout: 8000 }).catch(() => null);
-        status[service] = { available: !!(resp && resp.status === 200), lastFailure: this.serviceFailures[service], stats: this.serviceStats[service] };
-      } catch (_) {
-        status[service] = { available: false, lastFailure: this.serviceFailures[service], stats: this.serviceStats[service] };
+      } catch (err) {
+        status[service] = { available: false, lastFailure: this.serviceFailures[service], stats: this.serviceStats[service], error: err.message };
       }
     }
     return status;

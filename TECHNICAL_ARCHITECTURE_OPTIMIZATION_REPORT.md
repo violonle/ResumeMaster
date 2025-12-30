@@ -41,10 +41,10 @@
 #### 多服务商支持
 - **服务文件**: `/backend/services/domesticAIService.js`
 - **支持服务商**（按优先级排序）:
-  1. **通义千问 (Qwen)** - 阿里云，稳定性高
-  2. **智谱GLM** - 国内领先的大模型
-  3. **硅基流动 (SiliconFlow)** - 性价比高
-  4. **魔搭 (ModelScope)** - 模型丰富
+  1. **硅基流动 (SiliconFlow)** - 大模型综合接入服务平台，高性价比
+  2. **阿里云百炼 (QWEN)** - 支持 Qwen 系列大模型，稳定性高
+  3. **智谱AI开放平台 (GLM)** - 支持 GLM 系列大模型，国内领先
+  4. **DeepSeek** - 官方 DeepSeek 接入，性能强劲
 
 #### 智能服务管理
 - **智能切换**: 自动检测服务状态，主服务失败时自动切换到备用服务
@@ -55,10 +55,10 @@
 #### AI服务配置
 - **配置文件**: `/backend/config/aiServices.js`
 - **模型支持**:
-  - Qwen: qwen-turbo, qwen-plus, qwen-max
-  - GLM: glm-3-turbo, glm-4, glm-4v
-  - SiliconFlow: deepseek-chat, yi-34b-chat, qwen-72b-chat
-  - ModelScope: qwen-7b-chat, qwen-14b-chat, chatglm3-6b
+  - SiliconFlow: DeepSeek-V3, DeepSeek-R1, Qwen-72B-Chat等
+  - Qwen: qwen-turbo, qwen-plus, qwen-max, qwen-long
+  - GLM: glm-4-flash, glm-4, glm-4v, GLM-4.5-Flash
+  - DeepSeek: deepseek-chat, deepseek-reasoner
 
 ### 3. 会员权限控制系统 ✅
 
@@ -205,10 +205,10 @@ ALIPAY_PRIVATE_KEY=your_alipay_private_key
 ALIPAY_PUBLIC_KEY=your_alipay_public_key
 
 # AI服务配置
-MODELSCOPE_API_KEY=your_modelscope_api_key
 SILICONFLOW_API_KEY=your_siliconflow_api_key
 GLM_API_KEY=your_glm_api_key
 QWEN_API_KEY=your_qwen_api_key
+DEEPSEEK_API_KEY=your_deepseek_api_key
 ```
 
 ### 2. 数据库迁移

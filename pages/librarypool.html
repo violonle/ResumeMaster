@@ -146,6 +146,20 @@
     .resume-list-action-btn:hover {
       transform: translateY(-1px);
     }
+    
+    .resume-list-action-btn:active {
+      transform: translateY(0);
+      filter: brightness(0.9);
+    }
+
+    /* 按钮点击交互优化 */
+    .btn-interactive {
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .btn-interactive:active {
+      transform: scale(0.95);
+      filter: brightness(0.9);
+    }
 
     .resume-list-action-btn.view {
       background-color: #2563eb;
@@ -203,6 +217,47 @@
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    /* 进度条样式 */
+    .progress-bar-container {
+      height: 6px;
+      background-color: #f3f4f6;
+      border-radius: 3px;
+      overflow: hidden;
+      width: 100%;
+      min-width: 60px;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background-color: #2563eb;
+      border-radius: 3px;
+      transition: width 0.6s ease;
+    }
+
+    /* Tooltip 样式 */
+    .tooltip {
+      position: relative;
+    }
+    .tooltip::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 125%;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #111827;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      white-space: nowrap;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s, visibility 0.2s;
+      z-index: 50;
+    }
+    .tooltip:hover::after {
+      opacity: 1;
+      visibility: visible;
+    }
   </style>
 </head>
 <body class="font-sans text-gray-900 antialiased">
@@ -230,8 +285,8 @@
           <p class="text-gray-500 mt-2 text-sm">集中管理您的所有人才资源，高效筛选与跟进。</p>
         </div>
         <div class="flex gap-3">
-            <button onclick="batchAnalysis()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-md shadow-blue-200 transition-all hover:shadow-lg flex items-center text-sm font-bold">
-              <i class="fas fa-chart-line mr-2"></i> 批量分析
+            <button onclick="batchScoring()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-md shadow-blue-200 transition-all hover:shadow-lg flex items-center text-sm font-bold btn-interactive">
+              <i class="fas fa-star mr-2"></i> 批量初筛
             </button>
             <input id="libraryUploadInput" type="file" accept=".pdf,.doc,.docx,.txt" class="hidden" />
             <button onclick="openLibraryUploadModal()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-md shadow-blue-200 transition-all hover:shadow-lg flex items-center text-sm font-bold">
@@ -329,11 +384,11 @@
               </button>
               <div class="h-10 w-px bg-gray-200 mx-1"></div>
               <div class="flex items-center gap-2">
-                <button id="view-grid-btn" class="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors" title="卡片视图">
-                  <i class="fas fa-th-large"></i>
-                </button>
-                <button id="view-list-btn" class="p-2 rounded-lg bg-white text-gray-400 hover:bg-gray-50 hover:text-gray-600 transition-colors" title="列表视图">
+                <button id="view-list-btn" class="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors" title="列表视图">
                   <i class="fas fa-list"></i>
+                </button>
+                <button id="view-grid-btn" class="p-2 rounded-lg bg-white text-gray-400 hover:bg-gray-50 hover:text-gray-600 transition-colors" title="卡片视图">
+                  <i class="fas fa-th-large"></i>
                 </button>
               </div>
             </div>
@@ -351,8 +406,8 @@
               </button>
             </div>
             <div class="flex items-center gap-4">
-              <button onclick="filterManager.batchAnalyzeSelected()" class="text-sm text-blue-600 hover:text-blue-800 font-medium">
-                <i class="fas fa-chart-line mr-1"></i>批量分析
+              <button onclick="filterManager.batchScoreSelected()" class="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                <i class="fas fa-star mr-1"></i>批量初筛
               </button>
               <button onclick="filterManager.batchDeleteSelected()" class="text-sm text-red-600 hover:text-red-800 font-medium">
                 <i class="fas fa-trash mr-1"></i>批量删除
@@ -412,7 +467,7 @@
 
         <!-- Resume Grid -->
         <div class="p-6 bg-gray-50/30 min-h-[500px]">
-          <div id="resume-cards-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+          <div id="resume-cards-container" class="flex flex-col gap-0"></div>
           
           <!-- States -->
           <div id="loading-indicator" class="text-center py-12 hidden">
@@ -687,7 +742,7 @@
         var pos = associatedPos || '未关联职位';
         var isAssociated = !!associatedPos;
         
-        var score = (typeof r.overall_score==='number') ? r.overall_score : 0;
+        var score = (typeof r.score==='number') ? r.score : ((typeof r.overall_score==='number') ? r.overall_score : 0);
         var exp = (typeof pd.experience_years==='number') ? pd.experience_years : '—';
         var edu = (pd.education && pd.education[0] && pd.education[0].degree) ? pd.education[0].degree : '—';
         var last = fmtDate(r.upload_date||Date.now());
@@ -714,10 +769,33 @@
             this.filteredResumes = [...resumes];
             this.itemsPerPage = 9;
             this.currentPage = 1;
+            this.analysisRecords = []; // 初始化为空数组
             this.initElements();
             this.initEventListeners();
             this.updateCounts();
+            
+            // 异步加载解析记录并重新渲染
+            this.loadAnalysisRecords();
+            
             this.renderPage(1);
+        }
+
+        async loadAnalysisRecords() {
+            try {
+                const token = (JSON.parse(localStorage.getItem('userInfo') || '{}').token) || null;
+                const headers = token ? { Authorization: 'Bearer ' + token } : {};
+                const response = await fetch('/api/ai/records', { headers });
+                const result = await response.json();
+                if (result.success) {
+                    this.analysisRecords = result.data;
+                    console.log('加载到解析记录:', this.analysisRecords.length);
+                    // 加载完成后重新渲染当前页面
+                    this.renderPage(this.currentPage);
+                    this.updateCounts();
+                }
+            } catch (error) {
+                console.error('加载解析记录失败:', error);
+            }
         }
 
         initElements() {
@@ -745,9 +823,11 @@
             this.multiSelectBtn = document.getElementById('multi-select-btn');
             this.multiSelectBar = document.getElementById('multi-select-bar');
             this.selectedCount = document.getElementById('selected-count');
-            this.currentView = 'grid';
+            this.currentView = 'list';
+            this.itemsPerPage = 10;
             this.multiSelectMode = false;
             this.selectedResumes = new Set();
+            this.analysisRecords = []; // 存放深度解析记录
         }
 
         initEventListeners() {
@@ -881,55 +961,95 @@
             }
         }
 
-        batchAnalyzeSelected() {
+        batchScoreSelected() {
             if (this.selectedResumes.size === 0) {
-                alert('请先选择要分析的简历');
+                alert('请先选择要打分的简历');
                 return;
             }
             
             const ids = Array.from(this.selectedResumes);
+            const token = (JSON.parse(localStorage.getItem('userInfo') || '{}').token) || null;
+            const headers = token ? { Authorization: 'Bearer ' + token } : {};
             
-            fetch('/api/analysis/batch-analyze', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ ids: ids })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert(data.message);
-                    this.filterAndRender();  // 使用正确的方法重新加载简历列表
-                } else {
-                    alert('分析失败: ' + data.error.message);
-                }
-            })
-            .catch(error => {
-                console.error('分析请求失败:', error);
-                alert('分析请求失败: ' + error.message);
-            });
-        }
+            // 获取精准职位作为打分参考
+            const jobDescription = this.jobTitleFilter ? this.jobTitleFilter.value : '';
 
-        analyzeResume(resumeId) {
             fetch('/api/ai/batch-analyze', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    ...headers
                 },
-                body: JSON.stringify({ ids: [resumeId] })
+                body: JSON.stringify({ 
+                    resumeIds: ids,
+                    options: { 
+                        jobDescription: jobDescription,
+                        scene: 'talent_pool'
+                    }
+                })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    window.location.href = '/pages/resume-analysis-result.html?resumeId=' + resumeId;
+                    alert('批量初筛任务已启动');
+                    this.filterAndRender(); 
                 } else {
-                    alert('分析失败: ' + data.error.message);
+                    alert('打分失败: ' + (data.error || '未知错误'));
                 }
             })
             .catch(error => {
-                console.error('分析请求失败:', error);
-                alert('分析请求失败: ' + error.message);
+                console.error('打分请求失败:', error);
+                alert('打分请求失败: ' + error.message);
+            });
+        }
+
+        scoreResume(resumeId) {
+            const btn = document.getElementById(`score-btn-${resumeId}`) || document.getElementById(`list-score-btn-${resumeId}`);
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>打分中...';
+            }
+
+            const token = (JSON.parse(localStorage.getItem('userInfo') || '{}').token) || null;
+            const headers = token ? { Authorization: 'Bearer ' + token } : {};
+            
+            // 获取精准职位作为打分参考
+            const jobDescription = this.jobTitleFilter ? this.jobTitleFilter.value : '';
+        
+            fetch('/api/ai/batch-analyze', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...headers
+                },
+                body: JSON.stringify({ 
+                    resumeIds: [resumeId],
+                    options: { 
+                        jobDescription: jobDescription,
+                        scene: 'talent_pool'
+                    }
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // 不再弹出 alert，直接刷新
+                    this.filterAndRender();
+                } else {
+                    alert('打分失败: ' + (data.error || '未知错误'));
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-star mr-1"></i>快速打分';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('打分请求失败:', error);
+                alert('打分请求失败: ' + error.message);
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-star mr-1"></i>快速打分';
+                }
             });
         }
 
@@ -968,28 +1088,21 @@
                 this.cardsContainer.classList.add('hidden');
                 this.emptyState.classList.add('hidden');
                 
-                let data = [];
+                const token = (JSON.parse(localStorage.getItem('userInfo') || '{}').token) || null;
+                const headers = token ? { Authorization: 'Bearer ' + token } : {};
+
+                // 并行获取简历和解析记录
+                const [resumeResult, analysisResult] = await Promise.all([
+                    this.fetchResumeData(),
+                    fetch('/api/ai/records', { headers }).then(r => r.json())
+                ]);
                 
-                // 使用 resumeDataManager 获取最新数据
-                if (window.resumeDataManager && typeof window.resumeDataManager.getTalentPoolResumes === 'function') {
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 10000);
-                    
-                    data = await window.resumeDataManager.getTalentPoolResumes();
-                    clearTimeout(timeoutId);
-                } else if (window.resumeDataManager && typeof window.resumeDataManager.apiRequest === 'function') {
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 10000);
-                    
-                    const result = await window.resumeDataManager.apiRequest('/library/resumes', 'GET', null, true);
-                    clearTimeout(timeoutId);
-                    
-                    data = (result && result.data) ? result.data : [];
-                }
+                let data = Array.isArray(resumeResult) ? resumeResult : [];
+                this.analysisRecords = analysisResult.success ? analysisResult.data : [];
                 
                 // 更新本地数据
                 if (Array.isArray(data)) {
-                    this.allResumes = data;
+                    this.allResumes = normalizeResumes(data);
                     window.resumeData = data;
                     // 更新统计信息
                     this.updateCounts();
@@ -1000,6 +1113,16 @@
                 console.error('获取简历数据失败:', error);
                 return this.allResumes; // 如果获取失败，返回现有数据
             }
+        }
+
+        async fetchResumeData() {
+            if (window.resumeDataManager && typeof window.resumeDataManager.getTalentPoolResumes === 'function') {
+                return await window.resumeDataManager.getTalentPoolResumes();
+            } else if (window.resumeDataManager && typeof window.resumeDataManager.apiRequest === 'function') {
+                const result = await window.resumeDataManager.apiRequest('/library/resumes', 'GET', null, true);
+                return (result && result.data) ? result.data : [];
+            }
+            return [];
         }
 
         async filterAndRender() {
@@ -1031,15 +1154,17 @@
             const jobTitle = this.jobTitleFilter.value.toLowerCase();
 
             this.filteredResumes = this.allResumes.filter(resume => {
-                const nameMatch = resume.name.toLowerCase().includes(searchTerm);
-                const positionMatch = resume.position.toLowerCase().includes(searchTerm);
+                const name = (resume.name || '').toLowerCase();
+                const position = (resume.position || '').toLowerCase();
+                const nameMatch = name.includes(searchTerm);
+                const positionMatch = position.includes(searchTerm);
                 const searchMatch = nameMatch || positionMatch;
                 
                 const categoryMatch = activeCategory === 'all' || resume.status === activeCategory;
-                const scoreMatch = resume.score >= minScore;
+                const scoreMatch = (resume.score || 0) >= minScore;
                 const expMatch = exp === 'any' || this.matchExperience(resume.experience, exp);
-                const eduMatch = edu === 'any' || resume.education.toLowerCase().startsWith(edu);
-                const jobTitleMatch = !jobTitle || resume.position.toLowerCase().includes(jobTitle);
+                const eduMatch = edu === 'any' || (resume.education || '').toLowerCase().startsWith(edu);
+                const jobTitleMatch = !jobTitle || position.includes(jobTitle);
 
                 return searchMatch && categoryMatch && scoreMatch && expMatch && eduMatch && jobTitleMatch;
             });
@@ -1104,13 +1229,19 @@
         }
 
         createResumeCard(resume) {
+            const analysis = this.getAnalysisForResume(resume.id);
             if (this.currentView === 'list') {
-                return this.createListItem(resume);
+                return this.createListItem(resume, analysis);
             }
-            return this.createGridItem(resume);
+            return this.createGridItem(resume, analysis);
         }
 
-        createGridItem(resume) {
+        getAnalysisForResume(resumeId) {
+            if (!this.analysisRecords) return null;
+            return this.analysisRecords.find(r => r.resume_id === resumeId);
+        }
+
+        createGridItem(resume, analysis) {
             const card = document.createElement('div');
             card.className = 'resume-card group relative bg-white rounded-2xl border border-gray-100 hover:border-blue-300 p-6 flex flex-col h-full transition-all duration-300 hover:shadow-lg cursor-pointer overflow-hidden';
             card.style.animationDelay = `${(this.filteredResumes.indexOf(resume) % this.itemsPerPage) * 0.05}s`;
@@ -1124,8 +1255,9 @@
                 }
             };
 
-            const scoreBg = resume.score >= 80 ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-600/20' : 
-                           (resume.score >= 60 ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-600/20' : 'bg-blue-50 text-blue-700 ring-1 ring-blue-600/20');
+            const displayScore = analysis ? analysis.overall_score : resume.score;
+            const scoreBg = displayScore >= 80 ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-600/20' : 
+                           (displayScore >= 60 ? 'bg-yellow-50 text-yellow-700 ring-1 ring-yellow-600/20' : 'bg-gray-50 text-gray-700 ring-1 ring-gray-600/20');
             
             let checkboxHtml = '';
             if (this.multiSelectMode) {
@@ -1139,52 +1271,104 @@
                 `;
             }
 
+            let analysisHtml = '';
+            if (analysis) {
+                const dimensions = [
+                    { label: '技能', value: analysis.dimensions?.skills || 0 },
+                    { label: '经验', value: analysis.dimensions?.experience || 0 },
+                    { label: '学历', value: analysis.dimensions?.education || 0 },
+                    { label: '潜力', value: analysis.dimensions?.potential || 0 }
+                ];
+
+                analysisHtml = `
+                    <div class="grid grid-cols-2 gap-x-4 gap-y-3 mb-6">
+                        ${dimensions.map(d => `
+                            <div class="flex flex-col">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-[10px] text-gray-400">${d.label}</span>
+                                    <span class="text-[10px] font-bold text-gray-600">${d.value}%</span>
+                                </div>
+                                <div class="progress-bar-container" style="height: 4px;">
+                                    <div class="progress-bar-fill" style="width: ${d.value}%"></div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else {
+                analysisHtml = `
+                    <div class="space-y-3 mb-6 flex-grow">
+                        <div class="flex items-center text-sm text-gray-500 group-hover:text-gray-700 transition-colors">
+                            <i class="fas fa-briefcase w-5 text-gray-400"></i>
+                            <span class="truncate font-medium">${resume.experience}年经验</span>
+                        </div>
+                        <div class="flex items-center text-sm text-gray-500 group-hover:text-gray-700 transition-colors">
+                            <i class="fas fa-graduation-cap w-5 text-gray-400"></i>
+                            <span class="truncate font-medium">${resume.education}</span>
+                        </div>
+                        <div class="flex items-center text-sm text-gray-500 group-hover:text-gray-700 transition-colors">
+                            <i class="far fa-clock w-5 text-gray-400"></i>
+                            <span class="truncate text-xs">更新于 ${resume.lastUpdated}</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            const actionHtml = analysis ? `
+                <div class="flex gap-2">
+                    <button class="flex-1 py-2 text-center text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-all tooltip" data-tooltip="查看详情" onclick="event.stopPropagation(); window.location.href='analysis-detail.html?id=${analysis.id}'">
+                        查看解析
+                    </button>
+                    <button class="flex-1 py-2 text-center text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-all tooltip" data-tooltip="查看简历" onclick="event.stopPropagation(); window.location.href='resume-details.html?id=${resume.id}'">
+                        查看简历
+                    </button>
+                </div>
+            ` : `
+                <div class="flex flex-col gap-2">
+                    <div class="flex gap-2">
+                        <button class="flex-1 py-2 text-center text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-all" onclick="event.stopPropagation(); window.location.href='resume-details.html?id=${resume.id}'">
+                            查看简历
+                        </button>
+                        <button class="flex-1 py-2 text-center text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-all btn-interactive" onclick="event.stopPropagation(); window.location.href='resume-tools.html?id=${resume.id}'">
+                            深度解析
+                        </button>
+                    </div>
+                    ${resume.score === 0 ? `
+                        <button id="score-btn-${resume.id}" class="w-full py-1.5 text-center text-xs font-semibold text-white bg-green-600 hover:bg-green-700 rounded-lg transition-all btn-interactive" onclick="event.stopPropagation(); filterManager.scoreResume(${resume.id})">
+                            初筛
+                        </button>
+                    ` : ''}
+                </div>
+            `;
+
             card.innerHTML = `
                 ${checkboxHtml}
+                <div class="absolute top-0 right-0 z-20">
+                    <div class="px-3 py-1.5 rounded-bl-2xl text-xs font-bold ${scoreBg} shadow-sm border-l border-b border-gray-100/50">
+                        ${displayScore}分
+                    </div>
+                </div>
+                
                 <div class="flex justify-between items-start mb-4 ${this.multiSelectMode ? 'pl-8' : ''}">
-                    <div class="flex-1 min-w-0 mr-4">
+                    <div class="flex-1 min-w-0 mr-12">
                         <h3 class="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors truncate tracking-tight mb-1" title="${resume.name}">${resume.name}</h3>
                         <p class="text-sm ${resume.isAssociated ? 'text-blue-600 font-semibold' : 'text-gray-400 italic'} truncate flex items-center" title="${resume.position}">
                             ${resume.isAssociated ? '<i class="fas fa-link mr-1 text-xs"></i>' : ''}${resume.position}
                         </p>
                     </div>
-                    <div class="px-2.5 py-1 rounded-md text-sm font-bold ${scoreBg} flex-shrink-0">
-                        ${resume.score}分
-                    </div>
                 </div>
                 
-                <div class="space-y-3 mb-6 flex-grow">
-                    <div class="flex items-center text-sm text-gray-500 group-hover:text-gray-700 transition-colors">
-                        <i class="fas fa-briefcase w-5 text-gray-400"></i>
-                        <span class="truncate font-medium">${resume.experience}年经验</span>
-                    </div>
-                    <div class="flex items-center text-sm text-gray-500 group-hover:text-gray-700 transition-colors">
-                        <i class="fas fa-graduation-cap w-5 text-gray-400"></i>
-                        <span class="truncate font-medium">${resume.education}</span>
-                    </div>
-                    <div class="flex items-center text-sm text-gray-500 group-hover:text-gray-700 transition-colors">
-                        <i class="far fa-clock w-5 text-gray-400"></i>
-                        <span class="truncate text-xs">更新于 ${resume.lastUpdated}</span>
-                    </div>
-                </div>
+                ${analysisHtml}
                 
                 <div class="pt-4 border-t border-gray-50 mt-auto">
-                    <div class="flex gap-2">
-                        <button class="flex-1 py-2.5 text-center text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-sm shadow-blue-200 transition-all duration-200 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0">
-                            查看详情
-                        </button>
-                        <button class="flex-1 py-2.5 text-center text-sm font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl transition-all duration-200 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0">
-                            <i class="fas fa-chart-line mr-1"></i>分析
-                        </button>
-                    </div>
-                    <div class="h-[42px] w-full hidden group-hover:hidden"></div> 
+                    ${actionHtml}
                 </div>
                 <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-blue-50 rounded-full opacity-50 pointer-events-none"></div>
             `;
             return card;
         }
 
-        createListItem(resume) {
+        createListItem(resume, analysis) {
             const item = document.createElement('div');
             item.className = 'bg-white border-b border-gray-200 hover:bg-gray-50 transition-colors';
             item.style.animationDelay = `${(this.filteredResumes.indexOf(resume) % this.itemsPerPage) * 0.05}s`;
@@ -1203,14 +1387,6 @@
                 }
             };
 
-            const scoreBg = resume.score >= 90 ? 'bg-green-100 text-green-800' : 
-                           (resume.score >= 80 ? 'bg-blue-100 text-blue-800' : 
-                           (resume.score >= 60 ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'));
-            
-            const statusText = resume.score >= 90 ? '优秀' : 
-                              (resume.score >= 80 ? '良好' : 
-                              (resume.score >= 60 ? '一般' : '待评估'));
-
             let checkboxHtml = '';
             if (this.multiSelectMode) {
                 checkboxHtml = `
@@ -1222,46 +1398,127 @@
                 `;
             }
 
-            item.innerHTML = `
-                <div class="flex items-center justify-between p-6">
-                    <div class="flex items-center space-x-4">
-                        ${checkboxHtml}
-                        <div class="flex-shrink-0">
-                            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-file-alt text-blue-600 text-xl"></i>
+            if (analysis) {
+                // 已深度解析的情况
+                const dimensions = [
+                    { label: '专业技能', value: analysis.dimensions?.skills || 0 },
+                    { label: '经验契合', value: analysis.dimensions?.experience || 0 },
+                    { label: '学历背景', value: analysis.dimensions?.education || 0 },
+                    { label: '离职稳定', value: analysis.dimensions?.stability || 0 },
+                    { label: '发展潜力', value: analysis.dimensions?.potential || 0 },
+                    { label: '团队协作', value: analysis.dimensions?.teamwork || 0 }
+                ];
+
+                const dimensionHtml = dimensions.map(d => `
+                    <div class="flex flex-col min-w-[100px]">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-[11px] text-gray-500">${d.label}</span>
+                            <span class="text-[11px] font-bold text-gray-700">${d.value}%</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill" style="width: ${d.value}%"></div>
+                        </div>
+                    </div>
+                `).join('');
+
+                item.innerHTML = `
+                    <div class="flex flex-col lg:flex-row lg:items-center justify-between p-4 md:p-6 gap-4">
+                        <div class="flex items-start md:items-center space-x-4 flex-1 min-w-0">
+                            ${checkboxHtml}
+                            <div class="flex-shrink-0 hidden md:block">
+                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-file-alt text-blue-600 text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex flex-wrap items-center gap-2 mb-2">
+                                    <h4 class="text-lg font-bold text-gray-900 truncate">${resume.name}</h4>
+                                    <span class="text-xs text-blue-600 font-medium px-2 py-0.5 bg-blue-50 rounded-full border border-blue-100 whitespace-nowrap">
+                                        <i class="fas fa-link mr-1"></i>${resume.position}
+                                    </span>
+                                </div>
+                                <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-x-4 gap-y-2">
+                                    ${dimensionHtml}
+                                </div>
                             </div>
                         </div>
-                        <div class="flex-1 min-w-0">
-                            <div class="flex items-center space-x-2">
-                                <h4 class="text-lg font-medium text-gray-900">${resume.name}</h4>
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${scoreBg}">
-                                    ${statusText}
-                                </span>
+                        
+                        <div class="flex items-center justify-between lg:justify-end space-x-6 pt-4 lg:pt-0 border-t lg:border-t-0 border-gray-50">
+                            <div class="text-left lg:text-right">
+                                <div class="text-2xl font-black text-blue-600 leading-none">${analysis.overall_score || 0}<span class="text-xs ml-0.5">分</span></div>
+                                <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-1">综合匹配度</div>
                             </div>
-                            <div class="mt-1 flex items-center space-x-4 text-sm text-gray-500">
-                                <span><i class="fas fa-calendar mr-1"></i>${resume.experience}年经验</span>
-                                <span><i class="fas fa-map-marker-alt mr-1"></i>北京</span>
-                                <span><i class="fas fa-graduation-cap mr-1"></i>${resume.education}</span>
-                                <span><i class="fas fa-clock mr-1"></i>更新于 ${resume.lastUpdated}</span>
+                            <div class="flex flex-wrap lg:flex-nowrap gap-2 items-center">
+                                <button class="px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-xl text-sm font-bold transition-all border border-blue-100" 
+                                        onclick="event.stopPropagation(); window.location.href='resume-details.html?id=${resume.id}'">
+                                    查看简历
+                                </button>
+                                <button class="px-4 py-2 bg-green-50 text-green-700 hover:bg-green-100 rounded-xl text-sm font-bold transition-all flex items-center space-x-2 border border-green-100" 
+                                        onclick="event.stopPropagation(); window.location.href='analysis-detail.html?id=${analysis.id}'">
+                                    <i class="fas fa-chart-line"></i>
+                                    <span>查看解析</span>
+                                </button>
                             </div>
                         </div>
                     </div>
-                    <div class="flex items-center space-x-4">
-                        <div class="text-right">
-                            <div class="text-lg font-semibold text-blue-600">${resume.score}分</div>
-                            <div class="text-xs text-gray-500">匹配度</div>
+                `;
+            } else {
+                // 未深度解析的情况
+                const scoreBg = resume.score >= 90 ? 'bg-green-100 text-green-800' : 
+                               (resume.score >= 80 ? 'bg-blue-100 text-blue-800' : 
+                               (resume.score >= 60 ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'));
+                
+                const statusText = resume.score > 0 ? (resume.score >= 90 ? '优秀' : (resume.score >= 80 ? '良好' : '一般')) : '待初筛';
+
+                const hasScreened = resume.score > 0;
+                const screeningBtnHtml = !hasScreened ? `
+                    <button id="list-score-btn-${resume.id}" class="px-4 py-1.5 bg-green-600 text-white hover:bg-green-700 rounded-lg text-sm font-medium btn-interactive shadow-sm shadow-green-100" onclick="event.stopPropagation(); filterManager.scoreResume(${resume.id})">
+                        初筛
+                    </button>
+                ` : '';
+
+                item.innerHTML = `
+                    <div class="flex flex-col lg:flex-row lg:items-center justify-between p-4 md:p-6 gap-4">
+                        <div class="flex items-start md:items-center space-x-4">
+                            ${checkboxHtml}
+                            <div class="flex-shrink-0 hidden md:block">
+                                <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-file-alt text-gray-400 text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex flex-wrap items-center gap-2 mb-1">
+                                    <h4 class="text-lg font-bold text-gray-900">${resume.name}</h4>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${scoreBg}">
+                                        ${statusText}
+                                    </span>
+                                </div>
+                                <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500 font-medium">
+                                    <span class="flex items-center"><i class="fas fa-briefcase mr-1.5 text-gray-400"></i>${resume.experience}年经验</span>
+                                    <span class="flex items-center"><i class="fas fa-graduation-cap mr-1.5 text-gray-400"></i>${resume.education}</span>
+                                    <span class="flex items-center"><i class="fas fa-clock mr-1.5 text-gray-400"></i>${resume.lastUpdated}</span>
+                                </div>
+                            </div>
                         </div>
-                        <div class="flex flex-col space-y-2">
-                            <button class="text-blue-600 hover:text-blue-800 text-sm" onclick="event.stopPropagation(); window.location.href='resume-details.html?id=${resume.id}'">
-                                <i class="fas fa-eye mr-1"></i>查看
-                            </button>
-                            <button class="text-blue-600 hover:text-blue-800 text-sm" onclick="event.stopPropagation(); filterManager.analyzeResume(${resume.id})">
-                                <i class="fas fa-chart-line mr-1"></i>分析
-                            </button>
+                        <div class="flex items-center justify-between lg:justify-end space-x-6 pt-4 lg:pt-0 border-t lg:border-t-0 border-gray-50">
+                            <div class="text-left lg:text-right">
+                                <div class="text-xl font-black text-gray-900 leading-none">${resume.score || 0}<span class="text-xs ml-0.5">分</span></div>
+                                <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-1">初筛分数</div>
+                            </div>
+                            <div class="flex flex-wrap lg:flex-nowrap gap-2">
+                                <button class="px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-xl text-sm font-bold transition-all border border-blue-100" onclick="event.stopPropagation(); window.location.href='resume-details.html?id=${resume.id}'">
+                                    查看简历
+                                </button>
+                                ${screeningBtnHtml}
+                                <button class="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-xl text-sm font-bold transition-all shadow-sm shadow-blue-100 flex items-center space-x-2" onclick="event.stopPropagation(); window.location.href='resume-tools.html?id=${resume.id}'">
+                                    <i class="fas fa-magic"></i>
+                                    <span>深度解析</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            `;
+                `;
+            }
             return item;
         }
 
@@ -1316,9 +1573,27 @@
 
         updateCounts() {
             this.totalResumesCount.textContent = this.allResumes.length;
-            this.excellentResumesCount.textContent = this.allResumes.filter(r => r.score >= 90).length;
-            this.passedScreeningCount.textContent = this.allResumes.filter(r => r.score >= 60).length;
-            this.pendingResumesCount.textContent = this.allResumes.filter(r => r.status === 'pending').length;
+            
+            // 统计优秀简历：深度解析分数 >= 90 或 初筛分数 >= 90
+            this.excellentResumesCount.textContent = this.allResumes.filter(r => {
+                const analysis = this.getAnalysisForResume(r.id);
+                const score = analysis ? analysis.overall_score : r.score;
+                return score >= 90;
+            }).length;
+            
+            // 统计通过初筛：深度解析分数 >= 60 或 初筛分数 >= 60
+            this.passedScreeningCount.textContent = this.allResumes.filter(r => {
+                const analysis = this.getAnalysisForResume(r.id);
+                const score = analysis ? analysis.overall_score : r.score;
+                return score >= 60;
+            }).length;
+            
+            // 统计待处理：未初筛且未深度解析的
+            this.pendingResumesCount.textContent = this.allResumes.filter(r => {
+                const analysis = this.getAnalysisForResume(r.id);
+                return !analysis && (r.score === 0 || !r.score);
+            }).length;
+            
             this.updateFilteredCount();
         }
 
@@ -1329,16 +1604,68 @@
 
     window.filterManager = null;
 
-    function batchAnalysis() {
-        if (window.resumeFilterManager && window.resumeFilterManager.filteredResumes.length === 0) {
-            alert('当前没有可分析的简历');
+    function batchScoring() {
+        if (!window.filterManager) {
+            alert('人才库未初始化');
+            return;
+        }
+
+        // 筛选分数为0的简历
+        const resumesToScore = window.filterManager.filteredResumes.filter(r => !r.score || r.score === 0);
+        
+        if (resumesToScore.length === 0) {
+            alert('当前筛选列表中没有分数为0的简历需要打分');
             return;
         }
         
-        const count = window.resumeFilterManager ? window.resumeFilterManager.filteredResumes.length : 0;
-        if (confirm(`确定要对当前筛选的 ${count} 份简历进行批量分析吗？`)) {
-            console.log('批量分析简历:', count);
-            alert(`开始批量分析 ${count} 份简历`);
+        const count = resumesToScore.length;
+        const btn = event.currentTarget;
+        const originalHtml = btn.innerHTML;
+
+        if (confirm(`确定要对当前筛选出的 ${count} 份分数为 0 的简历进行批量初筛吗？\n由于 AI 处理较慢，请耐心等待完成。`)) {
+            // 设置按钮加载状态
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i>批量初筛中(${count})...`;
+            
+            const ids = resumesToScore.map(r => r.id);
+            const token = (JSON.parse(localStorage.getItem('userInfo') || '{}').token) || null;
+            const headers = token ? { Authorization: 'Bearer ' + token } : {};
+            
+            // 获取精准职位作为打分参考
+            const jobDescription = window.filterManager.jobTitleFilter ? window.filterManager.jobTitleFilter.value : '';
+
+            fetch('/api/ai/batch-analyze', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...headers
+                },
+                body: JSON.stringify({ 
+                    resumeIds: ids,
+                    options: { 
+                        jobDescription: jobDescription,
+                        scene: 'talent_pool'
+                    }
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // 批量初筛完成后直接刷新
+                    window.filterManager.filterAndRender(); 
+                } else {
+                    alert('批量初筛启动失败: ' + (data.error || '未知错误'));
+                }
+            })
+            .catch(error => {
+                console.error('批量初筛请求失败:', error);
+                alert('批量初筛请求失败: ' + error.message);
+            })
+            .finally(() => {
+                // 恢复按钮状态
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            });
         }
     }
   </script>

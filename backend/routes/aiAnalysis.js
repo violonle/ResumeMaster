@@ -78,6 +78,12 @@ router.post('/compare-resumes', authenticate, Permission.requireSubscription, Pe
 // 批量分析
 router.post('/batch-analyze', authenticate, Permission.requireSubscription, Permission.checkApiLimit('aiAnalysis'), Permission.rateLimit(100, 60*60*1000), aiController.batchAnalyzeResumes.bind(aiController));
 
+// 获取解析记录列表
+router.get('/records', authenticate, aiController.getAnalysisRecords);
+
+// 获取解析记录详情
+router.get('/records/:id', authenticate, aiController.getAnalysisDetail);
+
 // 获取AI服务状态
 router.get('/status', authenticate, Permission.rateLimit(500, 60*60*1000), aiController.getServiceStatus);
 

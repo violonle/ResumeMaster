@@ -64,6 +64,10 @@ async function getTalentPoolResumes(req, res){
             position: associatedJobTitle || resume.job_title || parsedData.jobTitle || parsedData.position || '未知职位',
             recruitment_status: resume.recruitment_status,
             upload_date: resume.upload_date,
+            score: resume.score || 0,
+            experience: resume.experience_years !== null ? String(resume.experience_years) : (parsedData.workYears || '0'),
+            education: resume.highest_education || parsedData.education || '未知学历',
+            lastUpdated: resume.updated_at ? new Date(resume.updated_at).toLocaleDateString() : (resume.upload_date ? new Date(resume.upload_date).toLocaleDateString() : '未知'),
             parsed_data: parsedData
           });
         }
@@ -74,14 +78,24 @@ async function getTalentPoolResumes(req, res){
       // 返回原始格式，但也带上关联职位信息以便前端处理
       const enrichedRows = rows.map(resume => {
           const r = resume.toJSON();
+          const parsedData = r.parsed_data || {};
           const associatedJobTitle = (resume.Jobs && resume.Jobs.length > 0) ? resume.Jobs[0].title : null;
-          // 将关联职位名称添加到顶层属性，方便前端直接读取
-          r.associated_job_title = associatedJobTitle;
-          // 如果原有的 job_title 为空或未知，且有关联职位，则覆盖
-          if ((!r.job_title || r.job_title === '未知职位') && associatedJobTitle) {
-              r.job_title = associatedJobTitle;
-          }
-          return r;
+          
+          // 统一字段映射，确保前端展示正常
+          return {
+              ...r,
+              id: r.id,
+              name: r.name || parsedData.name || r.file_name || '未命名',
+              position: associatedJobTitle || r.job_title || parsedData.jobTitle || parsedData.position || '未知职位',
+              job_title: associatedJobTitle || r.job_title || parsedData.jobTitle || parsedData.position || '未知职位',
+              experience: r.experience_years !== null ? String(r.experience_years) : (parsedData.workYears || '0'),
+              education: r.highest_education || parsedData.education || '未知学历',
+              score: r.score || 0,
+              lastUpdated: r.updated_at ? new Date(r.updated_at).toLocaleDateString() : (r.upload_date ? new Date(r.upload_date).toLocaleDateString() : '未知'),
+              status: r.recruitment_status || '投递',
+              associated_job_title: associatedJobTitle,
+              isAssociated: !!associatedJobTitle
+          };
       });
       res.json({ success: true, data: enrichedRows });
     }

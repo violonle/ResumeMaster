@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>简历智能解析与对比 - 争湃·简历大师</title>
+    <title>深度解析 - 争湃·简历大师</title>
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <script src="../js/tailwindcss.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
@@ -21,7 +21,6 @@
     
     <!-- Parsing Specific -->
     <script src="../js/ai-analyzer.js"></script>
-    <script src="../js/resume-parser.js"></script>
     
     <!-- Comparison Specific -->
     <script src="../js/chart-utils.js"></script>
@@ -148,7 +147,7 @@
                 <button class="menu-button p-2 rounded-lg hover:bg-gray-100" id="sidebar-toggle">
                     <i class="fas fa-bars text-gray-900"></i>
                 </button>
-                <h1 class="text-xl font-bold text-gray-900">简历智能解析与对比</h1>
+                <h1 class="text-xl font-bold text-gray-900">深度解析</h1>
             </div>
             <div class="flex items-center space-x-4" id="header-right-section"></div>
         </div>
@@ -214,9 +213,15 @@
         <div class="main-content-area">
             <div class="max-w-7xl mx-auto">
                 <div class="flex items-center justify-between mb-8">
-                    <div>
-                        <h2 class="text-2xl font-bold text-gray-900">简历智能解析与对比</h2>
-                        <p class="text-gray-500 mt-1">选择候选人进行深度分析或多维度横向对比。</p>
+                    <div class="flex items-center space-x-4">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-900">深度解析</h2>
+                            <p class="text-gray-500 mt-1">选择候选人进行深度分析或多维度横向对比。</p>
+                        </div>
+                        <a href="analysis-records.html" class="inline-flex items-center px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-all shadow-sm">
+                            <i class="fas fa-history mr-2"></i>
+                            解析记录
+                        </a>
                     </div>
                     <div class="flex bg-white p-1 rounded-lg border border-gray-200">
                         <button class="tab-btn active px-4 py-2 text-sm" data-mode="single">单一深度解析</button>
@@ -310,10 +315,42 @@
     </div>
 
     <!-- Loading Overlay -->
-    <div id="loading-overlay" class="fixed inset-0 bg-white/80 backdrop-blur-sm z-[100] hidden flex flex-col items-center justify-center">
-        <div class="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-        <p class="text-blue-600 font-bold">AI 正在深度解析中，请稍候...</p>
-        <p class="text-gray-400 text-sm mt-2">预计需要 15-30 秒</p>
+    <div id="loading-overlay" class="fixed inset-0 bg-white/90 backdrop-blur-md z-[100] hidden flex flex-col items-center justify-center p-6">
+        <div class="w-20 h-20 relative mb-8">
+            <div class="absolute inset-0 border-4 border-blue-100 rounded-full"></div>
+            <div class="absolute inset-0 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <div class="absolute inset-0 flex items-center justify-center">
+                <i class="fas fa-robot text-2xl text-blue-600 animate-pulse"></i>
+            </div>
+        </div>
+        
+        <h3 class="text-xl font-black text-gray-900 mb-2 loading-text">AI 正在深度解析中...</h3>
+        <p class="text-gray-500 text-sm mb-8">这可能需要 15-30 秒，请勿刷新页面</p>
+        
+        <div class="w-full max-w-md bg-gray-100 h-2 rounded-full overflow-hidden shadow-inner">
+            <div class="progress-bar-inner h-full bg-gradient-to-r from-blue-500 to-blue-700 transition-all duration-500 ease-out" style="width: 10%"></div>
+        </div>
+        
+        <div class="mt-10 grid grid-cols-3 gap-8 w-full max-w-lg">
+            <div class="flex flex-col items-center">
+                <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 mb-2">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <span class="text-[10px] font-bold text-gray-400 uppercase">读取简历</span>
+            </div>
+            <div class="flex flex-col items-center">
+                <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 mb-2">
+                    <i class="fas fa-brain"></i>
+                </div>
+                <span class="text-[10px] font-bold text-gray-400 uppercase">逻辑推理</span>
+            </div>
+            <div class="flex flex-col items-center">
+                <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 mb-2">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+                <span class="text-[10px] font-bold text-gray-400 uppercase">生成报告</span>
+            </div>
+        </div>
     </div>
 
     <!-- Main Controller for this page -->

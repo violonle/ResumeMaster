@@ -201,7 +201,8 @@ const analyzeResumeWithAI = async (req, res) => {
         // 调用AI分析服务
         const analysisResult = await aiAnalysisService.analyzeResume(
             resumeContent,
-            targetJobObj
+            targetJobObj,
+            options ? JSON.parse(options) : {}
         );
 
         // 如果有resumeId，更新数据库
@@ -239,9 +240,12 @@ const analyzeResumeWithAI = async (req, res) => {
                 });
             }
 
-            // 更新简历状态
+            // 更新简历状态和分数
             await Resume.update(
-                { status: 'analyzed' },
+                { 
+                    status: 'analyzed',
+                    score: analysisResult.overall_score // 确保更新 Resume 表的分数字段
+                },
                 { where: { id: resumeId } }
             );
         }
@@ -283,6 +287,8 @@ const batchAnalyzeResumes = async (req, res) => {
 
         // 获取所有简历内容
         const resumes = [];
+        const jobDescription = options?.jobDescription || '';
+        
         for (const resumeId of resumeIds) {
             const resume = await Resume.findOne({
                 where: { 
@@ -294,8 +300,8 @@ const batchAnalyzeResumes = async (req, res) => {
             if (resume) {
                 resumes.push({
                     id: resume.id,
-                    content: resume.parsed_data?.content || '',
-                    targetJob: null // 可以从请求中获取目标职位
+                    content: resume.parsed_data?.content || resume.raw_text || '',
+                    targetJob: jobDescription ? { title: jobDescription, requirements: jobDescription } : null
                 });
             }
         }
@@ -312,6 +318,55 @@ const batchAnalyzeResumes = async (req, res) => {
 
         // 批量分析
         const results = await aiAnalysisService.batchAnalyzeResumes(resumes, options);
+
+        // 保存批量分析结果到数据库
+        const { AnalysisResult } = require('../models');
+        for (const result of results) {
+            if (result.success && result.data) {
+                const analysisResult = result.data;
+                const resumeId = result.resumeId;
+
+                // 检查是否已有分析结果
+                const existingAnalysis = await AnalysisResult.findOne({
+                    where: { resume_id: resumeId },
+                    order: [['analysis_date', 'DESC']]
+                });
+
+                if (existingAnalysis) {
+                    await existingAnalysis.update({
+                        overall_score: analysisResult.overall_score,
+                        dimensions: analysisResult.dimensions,
+                        suggestions: analysisResult.suggestions,
+                        strengths: analysisResult.strengths,
+                        weaknesses: analysisResult.weaknesses,
+                        target_job: analysisResult.targetJob,
+                        detailed_analysis: analysisResult.detailed_analysis
+                    });
+                } else {
+                    await AnalysisResult.create({
+                        resume_id: resumeId,
+                        user_id: req.user.id,
+                        analysis_date: new Date(),
+                        overall_score: analysisResult.overall_score,
+                        dimensions: analysisResult.dimensions,
+                        suggestions: analysisResult.suggestions,
+                        strengths: analysisResult.strengths,
+                        weaknesses: analysisResult.weaknesses,
+                        target_job: analysisResult.targetJob,
+                        detailed_analysis: analysisResult.detailed_analysis
+                    });
+                }
+
+                // 更新简历表的状态和分数
+                await Resume.update(
+                    { 
+                        status: 'analyzed',
+                        score: analysisResult.overall_score
+                    },
+                    { where: { id: resumeId } }
+                );
+            }
+        }
 
         res.json({
             success: true,
@@ -366,7 +421,7 @@ const getAIServiceStatus = async (req, res) => {
  */
 const analyzeTextContent = async (req, res) => {
     try {
-        const { content, targetJob } = req.body;
+        const { content, targetJob, options } = req.body;
         const targetJobObj = targetJob ? JSON.parse(targetJob) : null;
 
         if (!content || content.trim().length === 0) {
@@ -386,7 +441,8 @@ const analyzeTextContent = async (req, res) => {
 
         const analysisResult = await aiAnalysisService.analyzeResume(
             content,
-            targetJobObj
+            targetJobObj,
+            options ? JSON.parse(options) : {}
         );
 
         res.json({

@@ -31,10 +31,6 @@ class ConfigHelper {
   // 获取AI服务配置
   static getAIServiceConfig() {
     return {
-      modelscope: {
-        apiKey: process.env.MODELSCOPE_API_KEY || 'default_modelscope_key',
-        baseUrl: process.env.MODELSCOPE_BASE_URL || 'https://api.modelscope.cn'
-      },
       siliconflow: {
         apiKey: process.env.SILICONFLOW_API_KEY || 'default_siliconflow_key',
         baseUrl: process.env.SILICONFLOW_BASE_URL || 'https://api.siliconflow.cn'
@@ -45,15 +41,7 @@ class ConfigHelper {
       },
       qwen: {
         apiKey: process.env.QWEN_API_KEY || 'default_qwen_key',
-        baseUrl: process.env.QWEN_BASE_URL || 'https://dashscope.aliyuncs.com'
-      },
-      kimi: {
-        apiKey: process.env.KIMI_API_KEY || 'default_kimi_key',
-        baseUrl: process.env.KIMI_BASE_URL || 'https://api.moonshot.cn'
-      },
-      minimax: {
-        apiKey: process.env.MINIMAX_API_KEY || 'default_minimax_key',
-        baseUrl: process.env.MINIMAX_BASE_URL || 'https://api.minimax.chat'
+        baseUrl: process.env.QWEN_BASE_URL || 'https://dashscope.aliyuncs.com/compatible-mode/v1'
       },
       deepseek: {
         apiKey: process.env.DEEPSEEK_API_KEY || 'default_deepseek_key',
@@ -67,7 +55,7 @@ class ConfigHelper {
     const required = {
       wechatpay: ['WECHAT_APP_ID', 'WECHAT_MCH_ID', 'WECHAT_API_KEY'],
       alipay: ['ALIPAY_APP_ID', 'ALIPAY_PRIVATE_KEY', 'ALIPAY_PUBLIC_KEY'],
-      ai: ['MODELSCOPE_API_KEY', 'SILICONFLOW_API_KEY', 'GLM_API_KEY', 'QWEN_API_KEY', 'KIMI_API_KEY', 'MINIMAX_API_KEY', 'DEEPSEEK_API_KEY']
+      ai: ['SILICONFLOW_API_KEY', 'GLM_API_KEY', 'QWEN_API_KEY', 'DEEPSEEK_API_KEY']
     };
 
     const configType = required[type];

@@ -147,7 +147,7 @@ const recruitmentFlowController = {
             resumeId: String(item.id),
             name: item.name || item.file_name || '未知候选人',
             jobId: 'all',
-            score: 0,
+            score: item.score || 0,
             experience: experienceStr,
             education: educationStr,
             interviewTime: null,

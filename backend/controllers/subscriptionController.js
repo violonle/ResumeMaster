@@ -31,11 +31,11 @@ class SubscriptionController {
         storage: 1000 // MB
       },
       free_monthly: {
-        aiAnalysis: 10,
-        resumeUpload: 5,
-        jobMatching: 10,
-        apiCalls: 20,
-        storage: 50
+        aiAnalysis: 1000,
+        resumeUpload: 500,
+        jobMatching: 1000,
+        apiCalls: 2000,
+        storage: 500
       },
       pro_monthly: {
         aiAnalysis: -1, // 无限制
@@ -515,46 +515,6 @@ class SubscriptionController {
         error: '获取使用统计失败'
       });
     }
-  }
-
-  // 获取订阅限额
-  getSubscriptionLimits(planType) {
-    const limits = {
-      monthly: {
-        basic: {
-          aiAnalysis: 50,
-          resumeUpload: 20,
-          jobMatching: 30,
-          total: 100
-        },
-        pro: {
-          aiAnalysis: -1, // -1 表示无限制
-          resumeUpload: -1,
-          jobMatching: -1,
-          total: -1
-        }
-      },
-      yearly: {
-        basic: {
-          aiAnalysis: 600,
-          resumeUpload: 240,
-          jobMatching: 360,
-          total: 1200
-        },
-        pro: {
-          aiAnalysis: -1,
-          resumeUpload: -1,
-          jobMatching: -1,
-          total: -1
-        }
-      }
-    };
-
-    // 简化处理
-    if (planType.includes('pro') || planType.includes('enterprise')) {
-         return limits.monthly.pro;
-    }
-    return limits.monthly.basic;
   }
 
   // 检查订阅状态（定时任务调用）

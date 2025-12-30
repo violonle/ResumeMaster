@@ -55,8 +55,9 @@ class AIResumeAnalyzer {
         try {
             const response = await resumeDataManager.apiRequest('/ai/analyze', 'POST', {
                 resumeText: content,
-                jobDescription: targetJob ? JSON.stringify(targetJob) : null
-            });
+                jobDescription: targetJob ? JSON.stringify(targetJob) : null,
+                options: { scene: 'deep_analysis' }
+            }, true, true); // Added silent=true
 
             if (response.success) {
                 if (progressCallback) {
@@ -123,8 +124,9 @@ class AIResumeAnalyzer {
 
             const analysisResponse = await resumeDataManager.apiRequest('/ai/analyze', 'POST', {
                 resumeId: uploadResult.data.resumeId,
-                jobDescription: targetJob ? JSON.stringify(targetJob) : null
-            });
+                jobDescription: targetJob ? JSON.stringify(targetJob) : null,
+                options: { scene: 'deep_analysis' }
+            }, true, true); // Added silent=true
 
             if (analysisResponse.success) {
                 if (analysisResponse.status === 'processing') {
@@ -167,8 +169,9 @@ class AIResumeAnalyzer {
         try {
             const response = await resumeDataManager.apiRequest('/ai/analyze', 'POST', {
                 resumeId: resumeId,
-                jobDescription: targetJob ? JSON.stringify(targetJob) : null
-            });
+                jobDescription: targetJob ? JSON.stringify(targetJob) : null,
+                options: { scene: 'deep_analysis' }
+            }, true, true); // Added silent=true
 
             if (response.success) {
                 if (response.status === 'processing') {
@@ -202,20 +205,22 @@ class AIResumeAnalyzer {
         while (attempts < MAX_ATTEMPTS) {
             attempts++;
             try {
-                const statusRes = await resumeDataManager.apiRequest(`/ai/status/${resumeId}`, 'GET', null, false);
+                // 使用 silent=true 避免轮询期间的正常错误（如结果未生成）触发警示框或控制台报错
+                const statusRes = await resumeDataManager.apiRequest(`/ai/status/${resumeId}`, 'GET', null, false, true);
                 if (statusRes && statusRes.success) {
                     const status = statusRes.data.status;
                     if (status === 'analyzed') {
-                        const resultRes = await resumeDataManager.apiRequest(`/ai/result/${resumeId}`, 'GET', null, false);
+                        const resultRes = await resumeDataManager.apiRequest(`/ai/result/${resumeId}`, 'GET', null, false, true);
                         if (resultRes && resultRes.success) {
                             return resultRes.data;
                         }
                     } else if (status === 'failed') {
                         throw new Error('分析失败');
                     } else {
+                        // 尝试性获取，如果还没好也不报错
                         if (attempts % 3 === 0) {
                             try {
-                                const rr = await resumeDataManager.apiRequest(`/ai/result/${resumeId}`, 'GET', null, false);
+                                const rr = await resumeDataManager.apiRequest(`/ai/result/${resumeId}`, 'GET', null, false, true);
                                 if (rr && rr.success && rr.data) {
                                     return rr.data;
                                 }
@@ -262,9 +267,10 @@ class AIResumeAnalyzer {
             const response = await resumeDataManager.apiRequest('/ai/batch-analyze', 'POST', {
                 resumeIds: resumeIds,
                 options: {
-                    jobDescription: targetJob ? JSON.stringify(targetJob) : null
+                    jobDescription: targetJob ? JSON.stringify(targetJob) : null,
+                    scene: 'deep_analysis'
                 }
-            });
+            }, true, true);
 
             if (response.success) {
                 if (progressCallback) {
@@ -310,8 +316,9 @@ class AIResumeAnalyzer {
 
             const response = await resumeDataManager.apiRequest('/ai/compare-resumes', 'POST', {
                 resumeIds: resumeIds,
-                jobDescription: targetJob ? JSON.stringify(targetJob) : null
-            });
+                jobDescription: targetJob ? JSON.stringify(targetJob) : null,
+                options: { scene: 'deep_analysis' }
+            }, true, true); // Added silent=true
 
             if (response.success) {
                 if (progressCallback) {

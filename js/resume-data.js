@@ -38,9 +38,10 @@ class ResumeDataManager {
      * @param {string} method - HTTP方法
      * @param {Object} data - 请求数据
      * @param {boolean} showLoading - 是否显示加载状态
+     * @param {boolean} silent - 是否不显示错误通知
      * @returns {Promise} - API响应
      */
-    async apiRequest(endpoint, method = 'GET', data = null, showLoading = true) {
+    async apiRequest(endpoint, method = 'GET', data = null, showLoading = true, silent = false) {
         if (showLoading && typeof ErrorHandler !== 'undefined') {
             ErrorHandler.showLoading(true);
         }
@@ -93,8 +94,12 @@ class ResumeDataManager {
             }
         }
         if (showLoading && typeof ErrorHandler !== 'undefined') { ErrorHandler.showLoading(false); }
-        console.error('API请求失败:', lastError);
-        if (typeof ErrorHandler !== 'undefined') { ErrorHandler.showError(lastError && lastError.message ? lastError.message : '请求失败，请稍后重试'); }
+        if (!silent) {
+            console.error('API请求失败:', lastError);
+            if (typeof ErrorHandler !== 'undefined') {
+                ErrorHandler.showError(lastError && lastError.message ? lastError.message : '请求失败，请稍后重试');
+            }
+        }
         throw lastError;
     }
 
@@ -151,16 +156,17 @@ class ResumeDataManager {
 
     /**
      * 获取所有简历
+     * @param {boolean} silent - 是否不显示错误通知
      * @returns {Promise<Array>} - 简历数组
      */
-    async getAllResumes() {
-        const result = await this.apiRequest('/resumes');
+    async getAllResumes(silent = false) {
+        const result = await this.apiRequest('/resumes', 'GET', null, true, silent);
         return result.data;
     }
 
-    async getTalentPoolResumes(groupByStatus = false) {
+    async getTalentPoolResumes(groupByStatus = false, silent = false) {
         const endpoint = groupByStatus ? '/library/resumes?groupByStatus=true' : '/library/resumes';
-        const result = await this.apiRequest(endpoint);
+        const result = await this.apiRequest(endpoint, 'GET', null, true, silent);
         // 添加调试信息
         console.log('从API获取的人才库数据:', result.data);
         return result.data;
@@ -168,10 +174,11 @@ class ResumeDataManager {
 
     /**
      * 获取所有分析结果
+     * @param {boolean} silent - 是否不显示错误通知
      * @returns {Promise<Array>} - 分析结果数组
      */
-    async getAllAnalyses() {
-        const result = await this.apiRequest('/analysis');
+    async getAllAnalyses(silent = false) {
+        const result = await this.apiRequest('/analysis', 'GET', null, true, silent);
         return result.data;
     }
 
@@ -179,12 +186,13 @@ class ResumeDataManager {
      * 获取招聘流程数据
      * @param {string} jobId - 职位ID (可选)
      * @param {string} status - 状态 (可选)
+     * @param {boolean} silent - 是否不显示错误通知
      * @returns {Promise<Array>} - 流程数据
      */
-    async getRecruitmentPipeline(jobId = null, status = null) {
+    async getRecruitmentPipeline(jobId = null, status = null, silent = false) {
         // 现在使用统一的人才库API获取招聘流程数据
         // 忽略jobId和status参数，因为我们只关注在人才库中的简历
-        return this.getTalentPoolResumes(true);
+        return this.getTalentPoolResumes(true, silent);
     }
 
     /**

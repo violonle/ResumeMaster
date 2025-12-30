@@ -274,6 +274,11 @@ const Resume = sequelize.define('Resume', {
     type: DataTypes.ENUM('投递', '初筛', '面试', 'Offer', '入职', '放弃'),
     defaultValue: '投递',
     comment: '招聘流程状态'
+  },
+  score: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+    comment: 'AI匹配得分'
   }
 }, {
   tableName: 'resumes',
@@ -359,6 +364,15 @@ const AnalysisResult = sequelize.define('AnalysisResult', {
     allowNull: true,
     defaultValue: []
   },
+  summary: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    comment: '核心画像/分析总结'
+  },
+  hiring_advice: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
   target_job: {
     type: DataTypes.JSON,
     allowNull: true,
@@ -411,6 +425,77 @@ const AnalysisResult = sequelize.define('AnalysisResult', {
     {
       fields: ['resume_id', 'user_id']
     }
+  ]
+});
+
+// 深度解析记录表 (Deep Analysis Records) - 新建
+const DeepAnalysisRecord = sequelize.define('DeepAnalysisRecord', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  user_id: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'users',
+      key: 'id'
+    }
+  },
+  resume_id: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'resumes',
+      key: 'id'
+    }
+  },
+  job_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'jobs',
+      key: 'id'
+    }
+  },
+  company_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    comment: '所属公司ID'
+  },
+  type: {
+    type: DataTypes.ENUM('single', 'multi'),
+    defaultValue: 'single'
+  },
+  overall_score: {
+    type: DataTypes.INTEGER,
+    allowNull: false
+  },
+  dimensions: {
+    type: DataTypes.JSON,
+    allowNull: false,
+    comment: '包含 skills, experience, education, stability, potential, teamwork 六个维度'
+  },
+  details: {
+    type: DataTypes.JSON,
+    allowNull: false,
+    comment: '完整的 AI 解析结果'
+  },
+  analysis_date: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
+  }
+}, {
+  tableName: 'deep_analysis_records',
+  timestamps: true,
+  createdAt: 'analysis_date',
+  updatedAt: 'updated_at',
+  indexes: [
+    { fields: ['user_id'] },
+    { fields: ['resume_id'] },
+    { fields: ['type'] },
+    { fields: ['overall_score'] }
   ]
 });
 
@@ -1078,6 +1163,11 @@ Resume.hasMany(AnalysisResult, { foreignKey: 'resume_id', onDelete: 'CASCADE' })
 AnalysisResult.belongsTo(Resume, { foreignKey: 'resume_id' });
 AnalysisResult.belongsTo(User, { foreignKey: 'user_id' });
 
+Resume.hasMany(DeepAnalysisRecord, { foreignKey: 'resume_id', onDelete: 'CASCADE' });
+DeepAnalysisRecord.belongsTo(Resume, { foreignKey: 'resume_id' });
+DeepAnalysisRecord.belongsTo(User, { foreignKey: 'user_id' });
+DeepAnalysisRecord.belongsTo(Job, { foreignKey: 'job_id' });
+
 User.hasMany(Job, { foreignKey: 'user_id', onDelete: 'CASCADE' });
 Job.belongsTo(User, { foreignKey: 'user_id' });
 
@@ -1130,6 +1220,9 @@ Company.hasMany(Invoice, { foreignKey: 'company_id', as: 'Invoices' });
 RecruitmentProcess.belongsTo(Company, { foreignKey: 'company_id', as: 'Company' });
 Company.hasMany(RecruitmentProcess, { foreignKey: 'company_id', as: 'RecruitmentProcesses' });
 
+DeepAnalysisRecord.belongsTo(Company, { foreignKey: 'company_id', as: 'Company' });
+Company.hasMany(DeepAnalysisRecord, { foreignKey: 'company_id', as: 'DeepAnalysisRecords' });
+
 UserActivity.belongsTo(Company, { foreignKey: 'company_id', as: 'Company' });
 Company.hasMany(UserActivity, { foreignKey: 'company_id', as: 'UserActivities' });
 
@@ -1148,6 +1241,7 @@ module.exports = {
   RecruitmentProcess,
   ResumeJob,
   UserActivity,
+  DeepAnalysisRecord,
   SystemConfig,
   Company,
   CompanyMember,

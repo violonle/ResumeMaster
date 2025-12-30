@@ -10,9 +10,9 @@
     { href: 'dashboard.html', icon: 'fas fa-home', label: '工作台', key: 'dashboard' },
     { href: 'librarypool.html', icon: 'fas fa-folder-open', label: '人才库', key: 'librarypool' },
     { href: 'job-management.html', icon: 'fas fa-briefcase', label: '职位管理', key: 'job' },
+    { href: 'resume-tools.html', icon: 'fas fa-tools', label: '深度解析', key: 'resume-tools' },
     { href: 'recruitment-flow.html', icon: 'fas fa-project-diagram', label: '招聘流程', key: 'recruitment-flow' },
-    { href: 'resume-tools.html', icon: 'fas fa-tools', label: '简历解析与对比', key: 'resume-tools' },
-    { href: 'data-analysis.html', icon: 'fas fa-chart-bar', label: '招聘数据分析', key: 'analysis' }
+    { href: 'data-analysis.html', icon: 'fas fa-chart-bar', label: '数据分析', key: 'analysis' }
   ];
 
   const DEFAULT_QA = [
@@ -66,6 +66,8 @@
       'resume-details.html': 'librarypool',
       'resume-analysis-result.html': 'resume-tools',
       'resume-compare-results.html': 'resume-tools',
+      'analysis-records.html': 'resume-tools',
+      'analysis-detail.html': 'resume-tools',
       'profile.html': 'profile',
       'account-settings.html': 'profile',
       'settings.html': 'profile',

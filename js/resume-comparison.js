@@ -12,7 +12,7 @@ class ResumeComparison {
         };
         this.selectedResumes = [];
         this.comparisonData = null;
-        this.maxCompareCount = 3; // 最多对比3份简历
+        this.maxCompareCount = 5; // 最多对比5份简历
     }
 
     /**

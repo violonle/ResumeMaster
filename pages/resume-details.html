@@ -334,7 +334,7 @@
           // Assuming /uploads is served statically
           const parts = data.file_path.split('uploads');
           if (parts.length > 1) {
-              const relativePath = '/uploads' + parts[1]; // Ensure it starts with /uploads
+              const relativePath = '/uploads' + parts[parts.length - 1].replace(/\\/g, '/'); // Ensure it starts with /uploads and handle Windows paths
               previewBtn.href = relativePath;
               // If it's a PDF, browser opens it. If docx, it downloads.
               // For docx preview, we might need a viewer, but for now browser default behavior is fine.

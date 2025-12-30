@@ -26,7 +26,6 @@
         <VTab value="prompts">提示词管理</VTab>
       </VTabs>
       <VDivider />
-      
       <VWindow v-model="activeTab">
         <VWindowItem value="models">
           <div class="d-flex align-center pa-4 gap-4 border-b">
@@ -400,7 +399,7 @@ const platforms = computed(() => {
   return (aiConfig.value.strategies?.platforms || []).map(p => p.name)
 })
 const presetPlatforms = computed(() => {
-  const base = ['QWEN','GLM','ZHIPUAI','SILICONFLOW','MODELSCOPE','DEEPSEEK','KIMI','MINIMAX']
+  const base = ['SILICONFLOW', 'GLM', 'QWEN', 'DEEPSEEK']
   const extra = platforms.value || []
   return Array.from(new Set([...base, ...extra]))
 })
@@ -408,11 +407,10 @@ const presetPlatforms = computed(() => {
 const canonicalProviderKey = (name) => {
   const s = String(name || '').trim().toUpperCase()
   const map = {
-    'QWEN':'QWEN','通义千问':'QWEN','QIANWEN':'QWEN','千问':'QWEN',
-    'GLM':'GLM','ZHIPUAI':'GLM','智谱':'GLM','CHATGLM':'GLM',
+    'QWEN':'QWEN','通义千问':'QWEN','QIANWEN':'QWEN','千问':'QWEN','阿里云百炼':'QWEN',
+    'GLM':'GLM','ZHIPUAI':'GLM','智谱':'GLM','CHATGLM':'GLM','质谱AI':'GLM',
     'SILICONFLOW':'SILICONFLOW','硅基流动':'SILICONFLOW',
-    'MODELSCOPE':'MODELSCOPE','魔搭':'MODELSCOPE',
-    'DEEPSEEK':'DEEPSEEK','KIMI':'KIMI','MINIMAX':'MINIMAX'
+    'DEEPSEEK':'DEEPSEEK'
   }
   return map[s] || s
 }
@@ -432,30 +430,34 @@ const ensureUniqueKey = (providerName) => {
 const reloadAIConfig = async () => {
   loading.value = true
   try {
-    const localProvidersMap = new Map(providersList.value.map(p => [p.name, p]))
-  const res = await aiModelAPI.getAIConfig()
-  const data = res.data?.data || res.data || {}
-  aiConfig.value = data || { providers: {}, taskMapping: {}, strategies: {} }
+    const res = await aiModelAPI.getAIConfig()
+    const data = res.data?.data || res.data || {}
+    aiConfig.value = data || { providers: {}, taskMapping: {}, strategies: {} }
+    
     const pv = aiConfig.value.providers || {}
     const backendKeys = Object.keys(pv)
-    const allKeys = Array.from(new Set([...backendKeys]))
-    const newProvidersList = allKeys
-      .map((name) => {
-        const remoteConf = pv[name] || {}
-        const localConf = localProvidersMap.get(name) || {}
-        const apiKey = remoteConf.apiKey && !String(remoteConf.apiKey).includes('*') ? remoteConf.apiKey : (localConf.apiKey || '')
-        const models = Array.isArray(remoteConf.models) ? remoteConf.models : (remoteConf.model ? [remoteConf.model] : [])
-        return { name, enabled: !!remoteConf.enabled, apiKey, model: remoteConf.model || localConf.model || '', models }
-      })
+    
+    // 保持现有的 providersList，只更新状态
+    const newProvidersList = backendKeys.map((name) => {
+      const remoteConf = pv[name] || {}
+      const models = Array.isArray(remoteConf.models) ? remoteConf.models : (remoteConf.model ? [remoteConf.model] : [])
+      return { 
+        name, 
+        enabled: !!remoteConf.enabled, 
+        apiKey: remoteConf.apiKey || '', 
+        model: remoteConf.model || '', 
+        models 
+      }
+    })
     providersList.value = newProvidersList
-  const tm = aiConfig.value.taskMapping || {}
-  const a = tm['analysis'] || tm['resume_analysis'] || tm['resume_compare'] || {}
-  const next = {
-    analysis: { provider: a.provider || '', model: a.model || '' },
-    chat: { provider: tm['chat']?.provider || '', model: tm['chat']?.model || '' },
-    url_read: { provider: tm['url_read']?.provider || '', model: tm['url_read']?.model || '' }
-  }
-  sceneForm.value = { models: next }
+
+    const tm = aiConfig.value.taskMapping || {}
+    const a = tm['analysis'] || tm['resume_analysis'] || tm['resume_compare'] || {}
+    const next = {
+      analysis: { provider: a.provider || '', model: a.model || '' },
+      chat: { provider: tm['chat']?.provider || '', model: tm['chat']?.model || '' }
+    }
+    sceneForm.value = { models: next }
   } finally {
     loading.value = false
   }
@@ -483,6 +485,14 @@ const openProviderDialog = (provider) => {
   loadProviderDialogModels(provider.name)
 }
 
+const updateProviderModels = (val) => {
+  // 当从远程加载完模型列表，或者用户选择了某个模型时，确保 providersList 同步更新
+  const p = providersList.value.find(x => x.name === providerForm.value.provider)
+  if (p) {
+    p.models = Array.from(new Set([...(p.models || []), ...val]))
+  }
+}
+
 const saveProvider = async () => {
   saving.value = true
   try {
@@ -508,7 +518,14 @@ const loadProviderDialogModels = async (provider) => {
   if (!provider) { availableModels.value = []; return }
   try {
     const res = await aiModelAPI.listProviderModels(provider)
-    availableModels.value = (res?.data?.data) || []
+    const models = (res?.data?.data) || []
+    availableModels.value = models
+    
+    // 同步到 providersList 中，以便策略配置能选到
+    const p = providersList.value.find(x => x.name === provider)
+    if (p) {
+      p.models = Array.from(new Set([...(p.models || []), ...models]))
+    }
   } catch { availableModels.value = [] }
 }
 
@@ -549,27 +566,33 @@ const providerRows = computed(() => providersList.value
 
 // 已配置的提供商与模型选项
 const providerNameMap = {
-  QWEN: '通义千问',
-  GLM: '智谱 GLM',
-  ZHIPUAI: '智谱 AI 开放平台',
-  SILICONFLOW: 'SiliconFlow',
-  MODELSCOPE: 'ModelScope',
-  DEEPSEEK: 'DeepSeek',
-  KIMI: 'Kimi（月之暗面）',
-  MINIMAX: 'MiniMax'
+  QWEN: '阿里云百炼 (QWEN)',
+  GLM: '质谱AI开放平台 (GLM)',
+  SILICONFLOW: '硅基流动 (综合平台)',
+  DEEPSEEK: 'DeepSeek 官方'
 }
 const displayProviderName = (name) => providerNameMap[baseKey(name)] || name
 const configuredProviderItems = computed(() => providersList.value.map(p => ({ title: displayProviderName(p.name), value: p.name })))
 const configuredModelItems = (providerName) => {
   const p = providersList.value.find(x => x.name === providerName)
-  const m = Array.isArray(p?.models) ? p.models : (p?.model ? [p.model] : [])
-  return m.map(x => ({ title: x, value: x }))
+  if (!p) return []
+  
+  // 综合 models 数组和单个 model 字段
+  const models = []
+  if (Array.isArray(p.models)) {
+    models.push(...p.models)
+  }
+  if (p.model && !models.includes(p.model)) {
+    models.push(p.model)
+  }
+  
+  // 如果都没有，尝试从远程获取一次（异步不适合这里，但可以作为兜底）
+  return models.map(x => ({ title: x, value: x }))
 }
 
 const scenes = [
-  { key:'analysis', title:'解析（简历解析与对比）' },
-  { key:'chat', title:'对话-AI助理' },
-  { key:'url_read', title:'网址读取' }
+  { key:'analysis', title:'深度解析' },
+  { key:'chat', title:'对话-AI助理' }
 ]
 const sceneForm = ref({ models: Object.fromEntries(scenes.map(s=>[s.key,{ provider:'', model:'' }])) })
 const saveScenes = async () => {
@@ -577,7 +600,7 @@ const saveScenes = async () => {
   try {
     const mapping = {}
     const aSel = sceneForm.value.models['analysis'] || {}
-    const aProv = canonicalProviderKey(aSel.provider)
+    const aProv = aSel.provider // 直接使用配置中的 provider key，不再 canonicalize 导致丢失后缀
     const aModel = aSel.model || ''
     if (aProv && aModel) {
       mapping['analysis'] = { provider: aProv, model: aModel }
@@ -585,15 +608,69 @@ const saveScenes = async () => {
       mapping['resume_compare'] = { provider: aProv, model: aModel }
     }
     const cSel = sceneForm.value.models['chat'] || {}
-    const cProv = canonicalProviderKey(cSel.provider)
+    const cProv = cSel.provider
     const cModel = cSel.model || ''
     if (cProv && cModel) mapping['chat'] = { provider: cProv, model: cModel }
-    const uSel = sceneForm.value.models['url_read'] || {}
-    const uProv = canonicalProviderKey(uSel.provider)
-    const uModel = uSel.model || ''
-    if (uProv && uModel) mapping['url_read'] = { provider: uProv, model: uModel }
+    
     await aiModelAPI.updateAIConfig({ taskMapping: mapping })
     await reloadAIConfig()
+    ui.showNotification('保存成功', 'success')
+  } finally { saving.value = false }
+}
+
+const isDefaultStrategy = (id) => id === 'default'
+const editingStrategy = ref(null)
+const strategyDialog = ref(false)
+const strategyForm = ref({ id: '', name: '', scope: [], models: Object.fromEntries(scenes.map(s => [s.key, { provider: '', model: '' }])) })
+
+const openCreateStrategy = () => {
+  editingStrategy.value = null
+  strategyForm.value = {
+    id: '',
+    name: '',
+    scope: [],
+    models: Object.fromEntries(scenes.map(s => [s.key, { provider: '', model: '' }]))
+  }
+  strategyDialog.value = true
+}
+
+const openEditStrategy = (strategy) => {
+  editingStrategy.value = strategy
+  strategyForm.value = JSON.parse(JSON.stringify(strategy))
+  // 确保所有场景都有对应的模型配置对象
+  scenes.forEach(s => {
+    if (!strategyForm.value.models[s.key]) {
+      strategyForm.value.models[s.key] = { provider: '', model: '' }
+    }
+  })
+  strategyDialog.value = true
+}
+
+const saveStrategy = async () => {
+  saving.value = true
+  try {
+    const s = strategyForm.value
+    const models = {}
+    Object.keys(s.models).forEach(k => {
+      const m = s.models[k]
+      if (m.provider && m.model) {
+        models[k] = { provider: m.provider, model: m.model }
+      }
+    })
+    const payload = {
+      strategies: {
+        [s.id]: {
+          id: s.id,
+          name: s.name,
+          scope: s.scope,
+          models: models
+        }
+      }
+    }
+    await aiModelAPI.updateAIConfig(payload)
+    strategyDialog.value = false
+    await reloadAIConfig()
+    ui.showNotification('保存成功', 'success')
   } finally { saving.value = false }
 }
 

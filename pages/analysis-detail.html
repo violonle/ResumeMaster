@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>解析详情 - 争湃·简历大师</title>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <script src="../js/tailwindcss.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Shared Utils -->
+    <script src="../js/user-auth.js"></script>
+    <script src="../js/header-profile.js"></script>
+    <script src="../js/ui-components.js"></script>
+    <script src="/js/sidebar.js"></script>
+
+    <link rel="stylesheet" href="/css/design-system.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <link rel="stylesheet" href="../css/responsive.css">
+
+    <style>
+        .main-content-area {
+            flex: 1;
+            background: #f9fafb;
+            min-height: calc(100vh - 64px);
+            padding: 40px 20px;
+            overflow-y: auto;
+        }
+        .main-content {
+            padding: 64px 0 0 0 !important;
+        }
+        .score-card {
+            background: #fff;
+            border: 1px solid #f3f4f6;
+            border-radius: 12px;
+            padding: 16px;
+            transition: all 0.2s;
+        }
+        .score-card:hover {
+            border-color: #2563eb;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.05);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans antialiased text-gray-900">
+    <!-- Header -->
+    <header class="fixed top-0 left-0 right-0 h-16 bg-white shadow-sm border-b border-gray-200 z-50">
+        <div class="max-w-[1600px] mx-auto h-full px-6 flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <button onclick="history.back()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <h1 id="header-title" class="text-xl font-bold text-gray-900">解析详情</h1>
+            </div>
+            <div class="flex items-center space-x-4" id="header-right-section"></div>
+        </div>
+    </header>
+
+    <div class="main-content flex" id="main-content">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="sidebar-modern"></aside>
+
+        <div class="main-content-area">
+            <div class="max-w-6xl mx-auto">
+                <!-- Loading State -->
+                <div id="loading-state" class="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-gray-100 shadow-sm">
+                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+                    <p class="text-gray-500">正在加载解析详情...</p>
+                </div>
+
+                <!-- Content (Hidden by default) -->
+                <div id="detail-content" class="hidden space-y-6">
+                    <!-- Title -->
+                    <div class="mb-2">
+                        <h2 class="text-2xl font-bold text-gray-900">简历解析详情</h2>
+                    </div>
+                    
+                    <!-- Basic Info Card -->
+                    <div class="bg-white rounded-xl p-6 border border-gray-100 shadow-sm flex items-center justify-between">
+                        <div class="flex items-center space-x-6">
+                            <div class="w-16 h-16 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 text-2xl font-bold border border-blue-100">
+                                <i class="fas fa-user-tie"></i>
+                            </div>
+                            <div>
+                                <div class="flex items-center space-x-3">
+                                    <h3 id="res-name" class="text-xl font-bold text-gray-900">候选人姓名</h3>
+                                    <a id="quick-preview-btn" href="#" target="_blank" class="text-blue-600 hover:text-blue-700 text-sm flex items-center hidden" title="快速预览原件">
+                                        <i class="fas fa-external-link-alt"></i>
+                                    </a>
+                                </div>
+                                <p id="res-info" class="text-sm text-gray-500 mt-1">载入中...</p>
+                                <div class="flex items-center mt-2.5 space-x-2">
+                                    <span class="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-bold rounded uppercase tracking-wider">AI Analysis Record</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">Overall Score</div>
+                            <div class="flex items-baseline justify-end space-x-1">
+                                <span id="res-score" class="text-4xl font-black text-blue-600">0</span>
+                                <span class="text-gray-400 font-bold text-sm">/100</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Unified Analysis Card -->
+                    <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-6 md:p-8">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+                            <h4 class="text-lg font-bold text-gray-900 flex items-center">
+                                <i class="fas fa-chart-line mr-2 text-blue-600"></i>
+                                核心能力多维分析
+                            </h4>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+                            <!-- Radar Chart -->
+                            <div class="lg:col-span-7">
+                                <div id="radar-container" class="h-[350px] md:h-[480px] relative">
+                                    <canvas id="radarChart"></canvas>
+                                </div>
+                            </div>
+
+                            <!-- Score Cards -->
+                            <div class="lg:col-span-5">
+                                <div id="score-cards" class="flex flex-col space-y-4">
+                                    <!-- Dynamic Items -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI Analysis Report -->
+                    <div class="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
+                        <h4 class="text-base font-bold text-gray-900 mb-5 flex items-center">
+                            <i class="fas fa-file-invoice mr-2 text-blue-600"></i>
+                            AI 深度分析报告
+                        </h4>
+                        <div id="ai-report" class="prose prose-blue prose-sm max-w-none text-gray-600 leading-relaxed">
+                            <!-- Dynamic Content -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // 权限检查
+            if (!userAuthInstance.isLoggedIn()) {
+                window.location.href = 'login.html?redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
+                return;
+            }
+
+            // 初始化侧边栏
+            if (window.Sidebar) {
+                window.Sidebar.init({ mount: '#sidebar', active: 'resume-tools' });
+            }
+            
+            // 初始化头像
+            if (typeof HeaderProfile !== 'undefined') {
+                HeaderProfile.init('#header-right-section');
+            }
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const recordId = urlParams.get('id');
+
+            if (!recordId) {
+                showError('未找到记录ID');
+                return;
+            }
+
+            const dom = {
+                loading: document.getElementById('loading-state'),
+                content: document.getElementById('detail-content'),
+                resName: document.getElementById('res-name'),
+                resInfo: document.getElementById('res-info'),
+                resScore: document.getElementById('res-score'),
+                radarChart: document.getElementById('radarChart'),
+                scoreCards: document.getElementById('score-cards'),
+                aiReport: document.getElementById('ai-report')
+            };
+
+            async function fetchDetail() {
+                try {
+                    const token = userAuthInstance.getToken();
+                    const response = await fetch(`/api/ai/records/${recordId}`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    const result = await response.json();
+                    
+                    if (response.status === 401) {
+                        userAuthInstance.logout();
+                        window.location.href = 'login.html?message=' + encodeURIComponent('会话已过期，请重新登录');
+                        return;
+                    }
+
+                    if (result.success) {
+                        renderDetail(result.data);
+                    } else {
+                        const errorMsg = typeof result.error === 'object' ? (result.error.message || '未知错误') : (result.error || '未知错误');
+                        showError('获取详情失败: ' + errorMsg);
+                    }
+                } catch (error) {
+                    console.error('Fetch error:', error);
+                    showError('网络连接失败，请稍后重试');
+                }
+            }
+
+            function renderDetail(record) {
+                dom.loading.classList.add('hidden');
+                dom.content.classList.remove('hidden');
+
+                // 1. 基础信息
+                const details = record.details || {};
+                const analysisData = record.type === 'single' ? (details.analysis || details) : details;
+                const info = analysisData.basic_info || analysisData.parsed_data?.basic_info || {};
+                
+                // 优先使用解析出的姓名，如果没有则使用文件名
+                const parsedName = info.name || info.candidate_name;
+                const fileName = record.Resume?.name || record.Resume?.file_name || '未知简历';
+                const displayName = parsedName || fileName;
+                
+                // 更新标题
+                const headerTitle = document.getElementById('header-title');
+                if (headerTitle) headerTitle.textContent = `解析详情 - ${displayName}`;
+                
+                const contentTitle = document.getElementById('content-title');
+                if (contentTitle) contentTitle.textContent = `${displayName} 的简历解析报告`;
+                
+                const subtitle = document.getElementById('res-name-subtitle');
+                if (subtitle) subtitle.textContent = `匹配岗位：${record.position || '未指定'}`;
+
+                if (dom.resName) dom.resName.textContent = displayName;
+                
+                // 设置快速预览链接
+                const quickPreview = document.getElementById('quick-preview-btn');
+                if (quickPreview && record.Resume?.file_path) {
+                    let filePath = record.Resume.file_path;
+                    // 处理路径：如果包含 uploads，转换为以 /uploads 开头的相对路径
+                    if (filePath.includes('uploads')) {
+                        const parts = filePath.split('uploads');
+                        filePath = '/uploads' + parts[parts.length - 1].replace(/\\/g, '/');
+                    }
+                    quickPreview.href = filePath;
+                    quickPreview.classList.remove('hidden');
+                }
+
+                if (dom.resInfo) dom.resInfo.textContent = `匹配岗位：${record.position || '未指定'} | ${info.experience || '多年'}经验 | ${info.education || '本科'}`;
+
+                // 填充附件预览
+                const resume = record.Resume;
+                if (resume) {
+                    const attachmentName = document.getElementById('attachment-name');
+                    const attachmentSize = document.getElementById('attachment-size');
+                    const previewBtn = document.getElementById('preview-attachment-btn');
+                    
+                    if (attachmentName) attachmentName.textContent = resume.file_name || '未知文件名';
+                    if (attachmentSize) attachmentSize.textContent = resume.file_size ? `${(resume.file_size / 1024).toFixed(1)} KB` : '未知大小';
+                    
+                    if (previewBtn) {
+                        if (resume.file_path) {
+                            let filePath = resume.file_path;
+                            // 处理路径：如果包含 uploads，转换为以 /uploads 开头的相对路径
+                            if (filePath.includes('uploads')) {
+                                const parts = filePath.split('uploads');
+                                filePath = '/uploads' + parts[parts.length - 1].replace(/\\/g, '/');
+                            }
+                            previewBtn.href = filePath;
+                            previewBtn.classList.remove('hidden');
+                            
+                            // 根据文件后缀设置图标
+                            const icon = document.getElementById('attachment-icon');
+                            if (icon) {
+                                const ext = (resume.file_name || '').split('.').pop().toLowerCase();
+                                if (['doc', 'docx'].includes(ext)) {
+                                    icon.className = 'fas fa-file-word text-xl';
+                                } else if (['pdf'].includes(ext)) {
+                                    icon.className = 'fas fa-file-pdf text-xl';
+                                } else {
+                                    icon.className = 'fas fa-file-alt text-xl';
+                                }
+                            }
+                        } else {
+                            previewBtn.classList.add('hidden');
+                        }
+                    }
+                }
+                
+                // 2. 综合得分
+                dom.resScore.textContent = record.overall_score;
+
+                // 3. 雷达图
+                renderRadarChart(record.dimensions);
+
+                // 4. 维度卡片
+                renderScoreCards(record.dimensions);
+
+                // 5. AI报告
+                const report = analysisData.evaluation_report || analysisData.analysis_report || analysisData.report || '暂无报告';
+                renderAIReport(report);
+            }
+
+            function renderRadarChart(scores) {
+                const ctx = dom.radarChart.getContext('2d');
+                const labels = ['专业技能', '经验契合', '学历背景', '稳定性', '潜力', '团队协作'];
+                const values = [
+                    scores.skills || 0,
+                    scores.experience || 0,
+                    scores.education || 0,
+                    scores.stability || 0,
+                    scores.potential || 0,
+                    scores.teamwork || 0
+                ];
+
+                new Chart(ctx, {
+                    type: 'radar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: '能力维度',
+                            data: values,
+                            backgroundColor: 'rgba(37, 99, 235, 0.2)',
+                            borderColor: 'rgb(37, 99, 235)',
+                            pointBackgroundColor: 'rgb(37, 99, 235)',
+                            pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: 'rgb(37, 99, 235)'
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            r: {
+                                suggestedMin: 0,
+                                suggestedMax: 100,
+                                ticks: { display: false, stepSize: 20 }
+                            }
+                        },
+                        plugins: { legend: { display: false } },
+                        maintainAspectRatio: false
+                    }
+                });
+            }
+
+            function renderScoreCards(scores) {
+                dom.scoreCards.innerHTML = '';
+                const dimensions = [
+                    { key: 'skills', label: '技能匹配', icon: 'fa-tools' },
+                    { key: 'experience', label: '经验契合', icon: 'fa-briefcase' },
+                    { key: 'education', label: '学历背景', icon: 'fa-graduation-cap' },
+                    { key: 'stability', label: '离职稳定性', icon: 'fa-anchor' },
+                    { key: 'potential', label: '发展潜力', icon: 'fa-rocket' },
+                    { key: 'teamwork', label: '团队协作', icon: 'fa-users' }
+                ];
+
+                dimensions.forEach(dim => {
+                    const score = scores[dim.key] || 0;
+                    const card = document.createElement('div');
+                    card.className = 'score-card flex items-center justify-between';
+                    card.innerHTML = `
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
+                                <i class="fas ${dim.icon}"></i>
+                            </div>
+                            <div>
+                                <div class="text-xs text-gray-400 font-bold uppercase tracking-wider">${dim.label}</div>
+                                <div class="text-lg font-black text-gray-900">${score}</div>
+                            </div>
+                        </div>
+                        <div class="w-24 bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                            <div class="h-full bg-blue-600 rounded-full" style="width: ${score}%"></div>
+                        </div>
+                    `;
+                    dom.scoreCards.appendChild(card);
+                });
+            }
+
+            function renderAIReport(report) {
+                const keyMap = {
+                    'summary': '能力总结',
+                    'strengths': '核心优势',
+                    'weaknesses': '不足之处',
+                    'suggestions': '改进建议',
+                    'hiring_advice': '录用建议',
+                    'parsed_data': '解析详情',
+                    'basic_info': '基础信息',
+                    'skills': '技能评估',
+                    'experience': '经验分析',
+                    'education': '教育背景',
+                    'evaluation_report': '深度评估报告'
+                };
+
+                if (typeof report === 'string') {
+                    // 简单的 Markdown 换行转换
+                    dom.aiReport.innerHTML = report.split('\n').map(line => {
+                        let content = line.trim();
+                        if (!content) return '';
+                        
+                        if (content.startsWith('###')) {
+                            const rawText = content.replace('###', '').trim();
+                            const title = keyMap[rawText.toLowerCase()] || rawText;
+                            return `<h4 class="text-lg font-bold text-gray-900 mt-6 mb-3 flex items-center">
+                                        <span class="w-1 h-5 bg-blue-600 rounded-full mr-2"></span>${title}
+                                    </h4>`;
+                        }
+                        if (content.startsWith('##')) {
+                            const rawText = content.replace('##', '').trim();
+                            const title = keyMap[rawText.toLowerCase()] || rawText;
+                            return `<h3 class="text-xl font-bold text-gray-900 mt-8 mb-4">${title}</h3>`;
+                        }
+                        if (content.startsWith('- ')) return `<li class="ml-4 text-gray-600 mb-2">${content.substring(2)}</li>`;
+                        return `<p class="text-gray-600 leading-relaxed mb-3">${content}</p>`;
+                    }).join('');
+                } else if (typeof report === 'object') {
+                    // 如果是对象结构，尝试渲染关键字段
+                    let html = '';
+                    for (const [key, value] of Object.entries(report)) {
+                        if (key === 'basic_info' || key === 'parsed_data') continue; // 跳过已在上方显示的
+                        
+                        const title = keyMap[key] || key;
+                        html += `
+                            <div class="mb-6">
+                                <h4 class="text-lg font-bold text-gray-900 mt-6 mb-3 flex items-center">
+                                    <span class="w-1 h-5 bg-blue-600 rounded-full mr-2"></span>${title}
+                                </h4>
+                                <div class="text-gray-600 leading-relaxed pl-3 border-l border-gray-100 ml-0.5">
+                                    ${typeof value === 'string' ? value.replace(/\n/g, '<br>') : JSON.stringify(value)}
+                                </div>
+                            </div>`;
+                    }
+                    dom.aiReport.innerHTML = html || '<p class="text-gray-400 italic">暂无报告内容</p>';
+                }
+            }
+
+            function showError(msg) {
+                dom.loading.innerHTML = `
+                    <i class="fas fa-exclamation-circle text-4xl text-red-500 mb-4"></i>
+                    <p class="text-gray-700 font-medium">${msg}</p>
+                    <button onclick="history.back()" class="mt-4 text-blue-600 hover:underline">返回上一页</button>
+                `;
+            }
+
+            fetchDetail();
+        });
+    </script>
+</body>
+</html>

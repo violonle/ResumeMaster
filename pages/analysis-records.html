@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>解析记录 - 争湃·简历大师</title>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <script src="../js/tailwindcss.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
+    
+    <!-- Shared Utils -->
+    <script src="../js/user-auth.js"></script>
+    <script src="../js/header-profile.js"></script>
+    <script src="../js/ui-components.js"></script>
+    <script src="/js/sidebar.js"></script>
+
+    <link rel="stylesheet" href="/css/design-system.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <link rel="stylesheet" href="../css/responsive.css">
+
+    <style>
+        .main-content-area {
+            flex: 1;
+            background: #f9fafb;
+            min-height: calc(100vh - 64px);
+            padding: 40px 20px;
+            overflow-y: auto;
+        }
+        .main-content {
+            padding: 64px 0 0 0 !important;
+        }
+        .record-card {
+            transition: all 0.2s;
+            border: 1px solid #f3f4f6;
+        }
+        .record-card:hover {
+            border-color: #2563eb;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.05);
+            transform: translateY(-2px);
+        }
+        .score-badge {
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .dimension-tag {
+            font-size: 12px;
+            padding: 2px 8px;
+            background: #f3f4f6;
+            color: #6b7280;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans antialiased text-gray-900">
+    <!-- Header -->
+    <header class="fixed top-0 left-0 right-0 h-16 bg-white shadow-sm border-b border-gray-200 z-50">
+        <div class="max-w-[1600px] mx-auto h-full px-6 flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <button onclick="history.back()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <h1 class="text-xl font-bold text-gray-900">解析记录</h1>
+            </div>
+            <div class="flex items-center space-x-4" id="header-right-section"></div>
+        </div>
+    </header>
+
+    <div class="main-content flex" id="main-content">
+        <!-- Sidebar will be injected here -->
+        <aside id="sidebar" class="sidebar-modern"></aside>
+
+        <div class="main-content-area">
+            <div class="max-w-6xl mx-auto">
+                <div class="flex items-center justify-between mb-8">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">历史解析记录</h2>
+                        <p class="text-gray-500 mt-1">查看所有已完成的单人深度解析和多人对比解析结果。</p>
+                    </div>
+                    <div class="flex space-x-3">
+                        <div class="relative">
+                            <select id="job-filter" class="pl-4 pr-10 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-white appearance-none min-w-[160px]">
+                                <option value="all">全部职位</option>
+                            </select>
+                            <div class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                                <i class="fas fa-chevron-down text-xs"></i>
+                            </div>
+                        </div>
+                        <div class="relative">
+                            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                            <input type="text" id="record-search" placeholder="搜索简历名称..." 
+                                   class="pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-white w-64">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Records List -->
+                <div id="records-list" class="grid grid-cols-1 gap-4">
+                    <!-- Loading State -->
+                    <div class="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-gray-100 shadow-sm">
+                        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+                        <p class="text-gray-500">正在加载解析记录...</p>
+                    </div>
+                </div>
+
+                <!-- Empty State (Hidden) -->
+                <div id="empty-state" class="hidden flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-dashed border-gray-200 shadow-sm">
+                    <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
+                        <i class="fas fa-folder-open text-3xl text-gray-300"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 mb-2">暂无解析记录</h3>
+                    <p class="text-gray-500">您还没有进行过深度解析，去“深度解析”页面开始吧。</p>
+                    <a href="resume-tools.html" class="mt-6 px-6 py-2.5 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-all">
+                        去解析
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // 权限检查
+            if (!userAuthInstance.isLoggedIn()) {
+                window.location.href = 'login.html?redirect=' + encodeURIComponent(window.location.pathname);
+                return;
+            }
+
+            // 初始化侧边栏
+            if (window.Sidebar) {
+                window.Sidebar.init({ mount: '#sidebar', active: 'resume-tools' });
+            }
+            
+            // 初始化头像
+            if (typeof HeaderProfile !== 'undefined') {
+                HeaderProfile.init('#header-right-section');
+            }
+
+            const recordsList = document.getElementById('records-list');
+            const emptyState = document.getElementById('empty-state');
+            const searchInput = document.getElementById('record-search');
+            const jobFilter = document.getElementById('job-filter');
+
+            let allRecords = [];
+
+            async function fetchJobs() {
+                try {
+                    const token = userAuthInstance.getToken();
+                    const response = await fetch('/api/jobs', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    const result = await response.json();
+                    if (result.success && result.data) {
+                        result.data.forEach(job => {
+                            const option = document.createElement('option');
+                            option.value = job.id;
+                            option.textContent = job.title;
+                            jobFilter.appendChild(option);
+                        });
+                    }
+                } catch (error) {
+                    console.error('Fetch jobs error:', error);
+                }
+            }
+
+            async function fetchRecords() {
+                try {
+                    const token = userAuthInstance.getToken();
+                    const response = await fetch('/api/ai/records', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    const result = await response.json();
+                    
+                    if (response.status === 401) {
+                        userAuthInstance.logout();
+                        window.location.href = 'login.html?message=' + encodeURIComponent('会话已过期，请重新登录');
+                        return;
+                    }
+
+                    if (result.success) {
+                        allRecords = result.data;
+                        renderRecords(allRecords);
+                    } else {
+                        const errorMsg = typeof result.error === 'object' ? (result.error.message || '未知错误') : (result.error || '未知错误');
+                        showError('获取记录失败: ' + errorMsg);
+                    }
+                } catch (error) {
+                    console.error('Fetch error:', error);
+                    showError('网络连接失败，请稍后重试');
+                }
+            }
+
+            function renderRecords(records) {
+                if (records.length === 0) {
+                    recordsList.innerHTML = '';
+                    recordsList.classList.add('hidden');
+                    emptyState.classList.remove('hidden');
+                    return;
+                }
+
+                emptyState.classList.add('hidden');
+                recordsList.classList.remove('hidden');
+                
+                recordsList.innerHTML = records.map(record => {
+                    const date = new Date(record.analysis_date).toLocaleString('zh-CN', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+
+                    const typeTag = record.type === 'single' 
+                        ? '<span class="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-bold rounded uppercase">单人解析</span>'
+                        : '<span class="px-2 py-0.5 bg-purple-50 text-purple-600 text-[10px] font-bold rounded uppercase">对比解析</span>';
+
+                    const scoreColor = record.overall_score >= 80 ? 'text-green-600 bg-green-50' : 
+                                     record.overall_score >= 60 ? 'text-blue-600 bg-blue-50' : 'text-orange-600 bg-orange-50';
+
+                    // 维度简览
+                    const dims = record.dimensions || {};
+                    const dimHtml = Object.entries(dims).map(([key, val]) => {
+                        const dimNames = {
+                            skills: '技能', experience: '经验', education: '教育',
+                            stability: '稳定性', potential: '潜力', teamwork: '团队'
+                        };
+                        return `<span class="dimension-tag">${dimNames[key] || key}: ${val}</span>`;
+                    }).join('');
+
+                    return `
+                        <div class="record-card bg-white rounded-xl p-5 flex items-center justify-between shadow-sm">
+                            <div class="flex items-center space-x-4 flex-1">
+                                <div class="w-12 h-12 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400">
+                                    <i class="fas fa-file-alt text-xl"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex items-center space-x-2">
+                                        <h4 class="font-bold text-gray-900">${record.Resume?.file_name || '未知简历'}</h4>
+                                        ${typeTag}
+                                    </div>
+                                    <div class="flex items-center mt-2 space-x-3">
+                                        <span class="text-xs text-gray-400"><i class="far fa-clock mr-1"></i>${date}</span>
+                                        <div class="flex space-x-1">
+                                            ${dimHtml}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center space-x-8">
+                                <div class="text-center">
+                                    <p class="text-[10px] text-gray-400 uppercase font-bold mb-1 tracking-wider">综合评分</p>
+                                    <span class="score-badge ${scoreColor}">${record.overall_score}</span>
+                                </div>
+                                <a href="analysis-detail.html?id=${record.id}" class="px-5 py-2 bg-gray-50 text-gray-700 rounded-lg text-sm font-bold hover:bg-blue-600 hover:text-white transition-all">
+                                    查看详情
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            function showError(msg) {
+                recordsList.innerHTML = `
+                    <div class="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-red-100 shadow-sm">
+                        <i class="fas fa-exclamation-circle text-4xl text-red-500 mb-4"></i>
+                        <p class="text-gray-700 font-medium">${msg}</p>
+                        <button onclick="location.reload()" class="mt-4 text-blue-600 hover:underline">点击重试</button>
+                    </div>
+                `;
+            }
+
+            // 搜索过滤
+            function applyFilters() {
+                const term = searchInput.value.toLowerCase();
+                const jobId = jobFilter.value;
+                
+                const filtered = allRecords.filter(r => {
+                    const matchesSearch = (r.Resume?.file_name || '').toLowerCase().includes(term);
+                    const matchesJob = jobId === 'all' || String(r.job_id) === String(jobId);
+                    return matchesSearch && matchesJob;
+                });
+                
+                renderRecords(filtered);
+            }
+
+            searchInput.addEventListener('input', applyFilters);
+            jobFilter.addEventListener('change', applyFilters);
+
+            // 初始加载
+            fetchJobs();
+            fetchRecords();
+        });
+    </script>
+</body>
+</html>
