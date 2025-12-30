@@ -1,11 +1,14 @@
 <template>
   <VApp>
-    <VLayout class="layout-wrapper layout-blank">
-      <VMain>
+    <VLayout class="layout-wrapper layout-blank flex-column">
+      <VMain class="flex-grow-1">
         <div class="d-flex flex-column justify-center align-center h-100">
           <RouterView />
         </div>
       </VMain>
+      <VFooter class="justify-center py-4 text-white text-caption bg-transparent">
+        <div>云璞网科 © 2018-2025  鲁ICP备2023016452号</div>
+      </VFooter>
     </VLayout>
   </VApp>
 </template>

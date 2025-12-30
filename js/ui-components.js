@@ -13,6 +13,51 @@ class UIComponents {
         this.setupLoadingStates();
         this.setupModalSystem();
         this.setupTooltipSystem();
+        this.setupFooter();
+    }
+
+    /**
+     * 全局页脚注入 - 确保全站版权信息一致性
+     */
+    setupFooter() {
+        try {
+            const inject = () => {
+                // 检查是否已存在包含版权信息的页脚
+                const bodyText = document.body.innerText;
+                if (bodyText.includes('鲁ICP备2023016452号')) {
+                    return;
+                }
+
+                const footer = document.createElement('footer');
+                footer.className = 'py-6 text-center text-gray-400 text-xs mt-auto border-t border-gray-100 w-full bg-white bg-opacity-50';
+                footer.innerHTML = `
+                    <div class="container mx-auto px-4">
+                        <p>云璞网科 © 2018-2025  鲁ICP备2023016452号</p>
+                    </div>
+                `;
+
+                // 尝试找到主内容区域
+                const mainContent = document.getElementById('main-content') || document.querySelector('main');
+                
+                if (mainContent) {
+                    // 确保父容器是 flex 布局以支持 mt-auto 效果
+                    const parent = mainContent.parentElement;
+                    if (parent) {
+                        parent.classList.add('flex', 'flex-col', 'min-h-screen');
+                    }
+                    mainContent.classList.add('flex-1');
+                    mainContent.after(footer);
+                } else {
+                    document.body.classList.add('flex', 'flex-col', 'min-h-screen');
+                    document.body.appendChild(footer);
+                }
+            };
+
+            if (document.readyState === 'complete') inject();
+            else window.addEventListener('load', inject);
+        } catch (error) {
+            console.warn('页脚注入失败:', error);
+        }
     }
 
     /**
