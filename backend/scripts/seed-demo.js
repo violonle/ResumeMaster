@@ -4,22 +4,22 @@
  */
 const { sequelize, User, Resume, AnalysisResult, Job } = require('../models');
 
-async function seedDemo() {
-  console.log('🚀 开始写入演示数据...');
+async function seedDemo(targetUsername = 'masteradmin') {
+  console.log(`🚀 开始为用户 ${targetUsername} 写入演示数据...`);
   try {
     await sequelize.authenticate();
 
-    // 查找默认管理员用户
-    const admin = await User.findOne({ where: { username: 'masteradmin' } });
-    if (!admin) {
-      console.error('❌ 未找到管理员用户：masteradmin，请先运行 db:init');
-      process.exit(1);
+    // 查找目标用户
+    const user = await User.findOne({ where: { username: targetUsername } });
+    if (!user) {
+      console.error(`❌ 未找到用户：${targetUsername}，请先创建该用户`);
+      return;
     }
 
     // 如果该用户已有简历，避免重复插入
-    const existingResumes = await Resume.count({ where: { user_id: admin.id } });
+    const existingResumes = await Resume.count({ where: { user_id: user.id } });
     if (existingResumes > 0) {
-      console.log(`ℹ️ 管理员已有 ${existingResumes} 条简历数据，跳过重复种子写入。`);
+      console.log(`ℹ️ 用户 ${targetUsername} 已有 ${existingResumes} 条简历数据，跳过重复种子写入。`);
     } else {
       // 创建一些职位
       const jobs = [
@@ -31,8 +31,8 @@ async function seedDemo() {
         { title: '市场营销经理', location: '成都', salary_range: '25K-40K', experience_required: '5年以上', status: 'active' }
       ];
 
-      await Job.bulkCreate(jobs.map(j => ({ ...j, user_id: admin.id })));
-      console.log(`✅ 已创建 ${jobs.length} 个职位`);
+      await Job.bulkCreate(jobs.map(j => ({ ...j, user_id: user.id })));
+      console.log(`✅ 已为 ${targetUsername} 创建 ${jobs.length} 个职位`);
 
       const candidates = [
         { name: '张三', role: '前端工程师', skills: ['JavaScript', 'React', 'Vue', 'CSS', 'Webpack'] },
@@ -52,7 +52,7 @@ async function seedDemo() {
         const c = candidates[i];
         const fileName = `${c.name}_${c.role}.pdf`;
         const resume = await Resume.create({
-          user_id: admin.id,
+          user_id: user.id,
           file_name: fileName,
           file_size: 1024 * (120 + Math.floor(Math.random() * 80)),
           file_type: 'pdf',
@@ -84,7 +84,7 @@ async function seedDemo() {
           };
 
           await AnalysisResult.create({
-            user_id: admin.id,
+            user_id: user.id,
             resume_id: resume.id,
             analysis_date: new Date(Date.now() - (i * 86400000) + 3600 * 1000),
             overall_score: score,
@@ -99,25 +99,27 @@ async function seedDemo() {
             target_job: { title: c.role, location: '全国', salary: '面议' },
             detailed_analysis: { note: '分析由演示脚本生成，仅供展示' }
           });
-
-          // 更新简历状态为已分析
-          await resume.update({ status: 'analyzed' });
         }
       }
-
-      console.log(`✅ 已创建 ${candidates.length} 份简历，其中 8 份带分析结果`);
+      console.log(`✅ 已为 ${targetUsername} 生成演示简历及分析结果`);
     }
 
-    console.log('🎉 演示数据写入完成');
-    process.exit(0);
-  } catch (err) {
-    console.error('❌ 写入演示数据失败:', err);
-    process.exit(1);
+  } catch (error) {
+    console.error(`❌ 为 ${targetUsername} 写入演示数据失败:`);
+    console.error(error);
   }
 }
 
+async function run() {
+  // 依次为 masteradmin 和 demo 用户生成数据
+  await seedDemo('masteradmin');
+  await seedDemo('demo');
+  console.log('--- 所有演示数据处理完成 ---');
+  process.exit(0);
+}
+
 if (require.main === module) {
-  seedDemo();
+  run();
 }
 
 module.exports = seedDemo;
