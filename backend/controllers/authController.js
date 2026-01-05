@@ -71,7 +71,7 @@ const verifyCode = async (req,res)=>{
 
     await user.update({ last_login_at: new Date(), login_count: (user.login_count||0)+1 });
     const token = generateToken(user);
-    res.json({ success:true, data:{ user:{ id:user.id, username:user.username, email:user.email, phone:user.phone, avatar:user.avatar, company_name:user.company_name, company_id:user.company_id }, token, action }, message: action==='registered'?'注册并登录成功':'登录成功' });
+    res.json({ success:true, data:{ user:{ id:user.id, username:user.username, email:user.email, phone:user.phone, avatar:user.avatar, role:user.role, company_name:user.company_name, company_id:user.company_id }, token, action }, message: action==='registered'?'注册并登录成功':'登录成功' });
   }catch(e){
     res.status(500).json({ success:false, error:{ code:'VERIFY_CODE_ERROR', message:e.message } });
   }
@@ -139,6 +139,7 @@ const register = async (req, res) => {
           email: user.email,
           phone: user.phone,
           avatar: user.avatar,
+          role: user.role,
           company_name: user.company_name,
           company_id: user.company_id
         },
@@ -225,6 +226,7 @@ const login = async (req, res) => {
           email: user.email,
           phone: user.phone,
           avatar: user.avatar,
+          role: user.role,
           company_name: user.company_name,
           company_id: user.company_id
         },
@@ -316,6 +318,7 @@ const updateCurrentUser = async (req, res) => {
           email: user.email,
           phone: user.phone,
           avatar: user.avatar,
+          role: user.role,
           company_name: user.company_name,
           company_id: user.company_id
         }

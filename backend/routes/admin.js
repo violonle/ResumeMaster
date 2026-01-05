@@ -20,6 +20,12 @@ router.post('/login', async (req, res) => {
     // if (username === 'masteradmin' && password === 'Longkou7') { ... }
     // 先尝试数据库账户登录
     const user = await User.findOne({ where: { username } });
+
+    // 显式拦截演示账号，提示其只能登录前端
+    if (user && user.username === 'demo') {
+      return res.status(403).json({ message: '演示账号仅能登录用户端，不能登录管理后台' });
+    }
+
     if (user && user.role === 'admin' && user.is_active) {
       let ok = false;
       try {
