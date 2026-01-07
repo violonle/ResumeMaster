@@ -30,40 +30,34 @@ function cleanTextPreserveNewlines(text) {
 class OptimizedResumeParseService {
     constructor() {
         this.patterns = {
-            name: /(?:姓名|Name)[:：]\s*([^\n\r]+)/i,
-            phone: /(?:电话|手机|Phone|Mobile|Tel|联系电话|联系方式)[:：]\s*([0-9\-\+\s()]{7,20})/i,
-            email: /(?:邮箱|Email|E-mail)[:：]\s*([^\n\r\s]+)/i,
-            location: /(?:地址|城市|Location|City)[:：]\s*([^\n\r]+)/i,
-            jobTitle: /(?:职位|应聘|目标|Position|Job Title)[:：]\s*([^\n\r]+)/i,
-            education: /(?:教育|学历|Education|Degree)[:：]([^\n\r]+)/i,
-            university: /(?:学校|大学|University|School)[:：]([^\n\r]+)/i,
-            experience: /(?:工作|工作经历|Work Experience|Experience)[:：]([^\n\r]+)/i,
-            skills: /(?:技能|Skills|Skill)[:：]([^\n\r]+)/i
-        };
+      // 增强姓名匹配：支持 [姓名]、姓名：、或者独立成行的中文名
+      name: /(?:姓名|Name|候选人|申请人)[:：]\s*([^\n\r]+)|\[([\u4e00-\u9fa5]{2,4})\]|^([\u4e00-\u9fa5]{2,4})$/im,
+      phone: /(?:电话|手机|Phone|Mobile|Tel|联系电话|联系方式)[:：]\s*([0-9\-\+\s()]{7,20})/i,
+      // 增强邮箱匹配：支持 电子邮件：
+      email: /(?:邮箱|Email|E-mail|电子邮件)[:：]\s*([^\n\r\s]+)/i,
+      location: /(?:地址|城市|Location|City|籍贯)[:：]\s*([^\n\r]+)/i,
+      jobTitle: /(?:职位|应聘|目标|Position|Job Title|求职意向|期望职位)[:：]\s*([^\n\r]+)/i,
+      education: /(?:教育|学历|Education|Degree)[:：]([^\n\r]+)/i,
+      university: /(?:学校|大学|University|School)[:：]([^\n\r]+)/i,
+      experience: /(?:工作|工作经历|Work Experience|Experience)[:：]([^\n\r]+)/i,
+      skills: /(?:技能|Skills|Skill)[:：]([^\n\r]+)/i
+    };
     }
 
-    async parseResumeContent(content, fileType = 'txt') {
+    async parseResumeContent(content, fileType = 'txt', fileName = '') {
         try {
             if (!content || typeof content !== 'string') {
                 return { rawText: '', parseError: '内容为空' };
             }
 
-            content = cleanTextPreserveNewlines(content);
+            content = this.cleanTextPreserveNewlines(content);
 
             const sections = this.extractAllSections(content);
             console.log('提取到的章节:', Object.keys(sections));
-            console.log('章节内容长度:', Object.entries(sections).map(([k, v]) => [k, v.length]));
-
-            let workExperience = this.extractExperience(content);
-            
-            if (!workExperience || workExperience.length === 0) {
-                console.log('从原始文本中提取工作经历失败，尝试从工作经历章节提取');
-                workExperience = this.extractExperience(sections.experience || '');
-            }
 
             const parsed = {
                 rawText: content,
-                name: this.extractName(content),
+                name: this.extractName(content, fileName),
                 email: this.extractEmail(content),
                 phone: this.extractPhone(content),
                 location: this.extractLocation(content),
@@ -350,8 +344,17 @@ class OptimizedResumeParseService {
         return null;
     }
 
-    extractName(content) {
-        // 1. 尝试使用多行匹配逻辑查找姓名
+    extractName(content, fileName = '') {
+        // 1. 尝试从文件名提取姓名 (通常文件名中最可能是姓名)
+        if (fileName) {
+            const nameFromFile = this.extractNameFromFileName(fileName);
+            if (nameFromFile && this.isValidName(nameFromFile)) {
+                console.log(`[OptimizedParse] 从文件名提取到姓名: ${nameFromFile}`);
+                return nameFromFile;
+            }
+        }
+
+        // 2. 尝试使用多行匹配逻辑查找姓名
         const nameKeywords = ['姓名', 'Name', '求职者', '应聘者', '申请人'];
         const lines = content.split('\n').map(l => l.trim()).filter(l => l);
         
@@ -362,12 +365,14 @@ class OptimizedResumeParseService {
             return labeledName.replace(/([\u4e00-\u9fa5])\s+([\u4e00-\u9fa5])/g, '$1$2');
         }
 
-        // 2. 尝试正则匹配（增强对中间有空格的姓名支持）
+        // 3. 尝试正则匹配（增强对中间有空格的姓名支持）
         const patterns = [
+            // 中文姓名带括号：[肖彦文]
+            /\[([\u4e00-\u9fa5]{2,4})\]/,
             // 中文姓名带空格：姓名：张 三 / 姓名：李 四
-            /(?:姓名|Name)[:：]\s*([\u4e00-\u9fa5]\s+[\u4e00-\u9fa5]{1,2})(?=\s|$)/i,
+            /(?:姓名|Name|候选人|申请人)[:：]\s*([\u4e00-\u9fa5]\s+[\u4e00-\u9fa5]{1,2})(?=\s|$)/i,
             // 标准姓名格式
-            /(?:姓名|Name)[:：]\s*([A-Za-z\u4e00-\u9fa5\s.]{2,20})/i,
+            /(?:姓名|Name|候选人|申请人)[:：]\s*([A-Za-z\u4e00-\u9fa5\s.]{2,20})/i,
             // 简历开头的姓名
             /(?:个人简历|简历)\s*([A-Za-z\u4e00-\u9fa5\s.]{2,20})/,
             // 纯文本行首匹配
@@ -382,16 +387,14 @@ class OptimizedResumeParseService {
                 const normalizedName = name.replace(/([\u4e00-\u9fa5])\s+([\u4e00-\u9fa5])/g, '$1$2');
                 
                 if (this.isValidName(normalizedName)) {
-                    // 返回原始名称（带空格）还是标准化名称？通常标准化名称更好
                     return normalizedName; 
                 }
             }
         }
         
-        // 3. 尝试在文件开头查找独立的一行作为姓名（支持带空格的中文名）
+        // 4. 尝试在文件开头查找独立的一行作为姓名
         for (let i = 0; i < Math.min(lines.length, 5); i++) {
             const line = lines[i];
-            // 移除中间的空格进行检查
             const normalizedLine = line.replace(/([\u4e00-\u9fa5])\s+([\u4e00-\u9fa5])/g, '$1$2');
             
             if (this.isValidName(normalizedLine)) {
@@ -402,25 +405,53 @@ class OptimizedResumeParseService {
         return '';
     }
 
+    extractNameFromFileName(fileName) {
+        if (!fileName) return null;
+        
+        // 移除扩展名
+        let name = fileName.replace(/\.[^/.]+$/, "");
+        
+        // 常见的连接符分割
+        // 例如: "__低代码开发工程师_长沙_4-6K_肖彦文_6年"
+        const segments = name.split(/[_-\s]+/).filter(s => s.length >= 2 && s.length <= 4);
+        
+        // 优先找纯中文且长度 2-4 的段落
+        for (const segment of segments) {
+            if (/^[\u4e00-\u9fa5]{2,4}$/.test(segment)) {
+                // 排除常见的非姓名词汇
+                const nonNameKeywords = ['简历', '工程师', '长沙', '北京', '上海', '广州', '深圳', '开发', '设计', '经理', '项目', '年经验'];
+                if (!nonNameKeywords.some(k => segment.includes(k))) {
+                    return segment;
+                }
+            }
+        }
+        
+        return null;
+    }
+
     isValidName(name) {
         if (!name) return false;
         // 清理可能存在的标点
         name = name.replace(/[:：]/g, '').trim();
         
-        // 长度检查
+        // 长度检查：真实姓名通常 2-6 个汉字，或 2-20 个英文字符
         if (name.length < 2 || name.length > 20) return false;
+        
+        // 如果包含 "熟悉"、"精通"、"掌握"、"使用" 等技能动词，肯定不是姓名
+        const skillKeywords = ['熟悉', '精通', '掌握', '使用', '负责', '项目', '经验', '能力', '开发', '架构', '数据库', '系统'];
+        if (skillKeywords.some(k => name.includes(k))) return false;
         
         // 必须包含字母或汉字
         if (!/[a-zA-Z\u4e00-\u9fa5]/.test(name)) return false;
         
         // 不能包含特殊关键字
-        const keywords = ['简历', '个人简历', '电话', '手机', '邮箱', '地址', '求职', '意向', '教育', '经历', '本科', '硕士', '学历', '性别', '年龄'];
+        const keywords = ['简历', '个人简历', '电话', '手机', '邮箱', '地址', '求职', '意向', '教育', '经历', '本科', '硕士', '学历', '性别', '年龄', '工作'];
         if (keywords.some(k => name.includes(k))) return false;
         
-        // 排除性别关键字 (精确匹配)
+        // 排除性别关键字
         if (['男', '女'].includes(name)) return false;
         
-        // 字符合法性检查 (允许汉字、字母、空格、点)
+        // 字符合法性检查
         return /^[\u4e00-\u9fa5a-zA-Z\s.]+$/.test(name);
     }
 
@@ -428,19 +459,24 @@ class OptimizedResumeParseService {
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
             for (const label of labels) {
-                // 检查 "Label: Value" 或 "Label Value"
-                const regex = new RegExp(`^(?:${label})[:：]?\\s*(.*)$`, 'i');
+                // 允许标签前有内容，比如 "[姓名] 电话：138..."
+                const regex = new RegExp(`(?:${label})[:：]?\\s*([^\\s\n\r]+)`, 'i');
                 const match = line.match(regex);
                 
                 if (match) {
                     let value = match[1].trim();
                     
+                    // 如果匹配到的值看起来像是下一个标签（比如 "姓名： 电话："），则跳过
+                    if (labels.some(l => value.includes(l)) && value.length < 10) {
+                        value = '';
+                    }
+
                     // 如果当前行只有标签，检查下一行
                     if (!value && i + 1 < lines.length) {
                         value = lines[i + 1].trim();
                     }
                     
-                    if (!validator || validator(value)) {
+                    if (value && (!validator || validator(value))) {
                         return value;
                     }
                 }
@@ -451,7 +487,7 @@ class OptimizedResumeParseService {
 
     extractEmail(content) {
         // 1. 尝试使用多行匹配逻辑
-        const emailKeywords = ['邮箱', 'Email', 'E-mail'];
+        const emailKeywords = ['邮箱', 'Email', 'E-mail', '电子邮件', '电子信箱'];
         const lines = content.split('\n').map(l => l.trim()).filter(l => l);
         
         const labeledEmail = this.findValueByLabels(lines, emailKeywords, (val) => /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/.test(val));
@@ -468,7 +504,7 @@ class OptimizedResumeParseService {
 
     extractPhone(content) {
         // 1. 尝试使用多行匹配逻辑
-        const phoneKeywords = ['电话', '手机', 'Phone', 'Mobile', 'Tel', '联系电话', '联系方式'];
+        const phoneKeywords = ['电话', '手机', 'Phone', 'Mobile', 'Tel', '联系电话', '联系方式', '移动电话'];
         const lines = content.split('\n').map(l => l.trim()).filter(l => l);
         
         const labeledPhone = this.findValueByLabels(lines, phoneKeywords, (val) => /\d/.test(val));

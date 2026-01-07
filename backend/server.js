@@ -69,8 +69,8 @@ app.use(cors({
 
 // 统一开启预检请求处理
 app.options('*', cors());
-app.use(bodyParser.json({ limit: '10mb' }));
-app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
 
 // 静态文件服务
 const path = require('path');
@@ -483,8 +483,9 @@ sequelize.sync({ force: false })
         }
       } catch (e) { console.error('Ensure resumes extra columns failed:', e.message) }
     })();
-    app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+    const HOST = process.env.HOST || '0.0.0.0';
+    app.listen(PORT, HOST, () => {
+    console.log(`Server is running on http://${HOST}:${PORT}`);
     // 面试提醒调度：每分钟检查一次
     setInterval(async ()=>{
       try{

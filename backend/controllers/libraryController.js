@@ -161,7 +161,7 @@ async function uploadToLibrary(req, res){
         parsedData = { rawText: '', parseError: '文档内容为空' }
       } else {
         // 优先使用优化的解析服务
-        parsedData = await optimizedResumeParseService.parseResumeContent(content, type)
+        parsedData = await optimizedResumeParseService.parseResumeContent(content, type, safe)
         // ... existing logging ...
       }
     } catch (parseError) {
@@ -169,7 +169,7 @@ async function uploadToLibrary(req, res){
       try {
         const content = await extractTextFromFile(p)
         rawText = content
-        parsedData = await resumeParseService.parseResumeContent(content, type)
+        parsedData = await resumeParseService.parseResumeContent(content, type, safe)
       } catch (fallbackError) {
         console.warn('基础解析也失败，仅保存文件信息:', fallbackError.message)
         parsedData = { rawText: '', parseError: fallbackError.message }

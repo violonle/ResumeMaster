@@ -1100,11 +1100,17 @@ class AIController {
         console.log('[AI Controller] Comparison successful, data length:', JSON.stringify(result.data).length);
         
         // 为每一位候选人保存分析结果到 DeepAnalysisRecord
-        if (result.data && result.data.candidates && Array.isArray(result.data.candidates)) {
-          for (const candidate of result.data.candidates) {
-            // 尝试通过名字匹配 resumeId
-            const matchedResume = resumeList.find(r => r.name.includes(candidate.name) || candidate.name.includes(r.name));
-            if (matchedResume) {
+              if (result.data && result.data.candidates && Array.isArray(result.data.candidates)) {
+                for (const candidate of result.data.candidates) {
+                  // 尝试通过文件名匹配 resumeId (优先)，如果失败则回退到名字匹配
+                  let matchedResume = resumeList.find(r => r.name === candidate.file_name);
+                  
+                  // 回退机制：如果文件名不匹配，尝试通过名字模糊匹配
+                  if (!matchedResume) {
+                    matchedResume = resumeList.find(r => r.name.includes(candidate.name) || candidate.name.includes(r.name));
+                  }
+
+                  if (matchedResume) {
               // 构建完整的对比报告内容，作为每个人的 evaluation_report
               let fullComparisonReport = `### 简历对比分析报告\n\n`;
               fullComparisonReport += `#### 总体评价\n${result.data.comparison_summary || '暂无总体评价'}\n\n`;

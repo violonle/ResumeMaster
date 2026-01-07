@@ -19,12 +19,23 @@ services:
     restart: always
     env_file:
       - .env
+    environment:
+      - TIKA_SERVER_URL=http://tika:9998
     ports:
       - "3000:3000"
     volumes:
       - ./uploads:/app/backend/uploads
     depends_on:
       - db
+    networks:
+      - srm-network
+
+  # Apache Tika 解析服务
+  tika:
+    image: apache/tika:latest
+    restart: always
+    ports:
+      - "9998:9998"
     networks:
       - srm-network
 

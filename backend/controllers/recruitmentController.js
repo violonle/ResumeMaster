@@ -54,13 +54,34 @@ exports.scheduleInterview = async (req, res) => {
     if (!datetime){
       return res.status(400).json({ success:false, error:{ code:'INVALID_TIME', message:'缺少面试时间' } })
     }
-    const rj = await ResumeJob.findOne({ where:{ id } })
+    const rj = await ResumeJob.findOne({ where:{ id }, include: [Resume] })
     if (!rj || !(await ensureOwnership(req, rj))){
       return res.status(404).json({ success:false, error:{ code:'NOT_FOUND', message:'候选记录不存在' } })
     }
     const rn = safeJson(rj.recruiter_notes)
     rn.interview = { datetime, channel: channel||'offline', location: location||'', note: note||'' }
     await rj.update({ status:'interview', recruiter_notes: JSON.stringify(rn) })
+
+    // 发送面试通知短信
+    try {
+      const resume = rj.Resume;
+      // 尝试从不同结构中获取电话和姓名
+      const parsed = resume ? (resume.parsed_data || {}) : {};
+      const basicInfo = parsed.basic_info || {};
+      const phone = parsed.phone || basicInfo.phone || parsed.mobile || basicInfo.mobile;
+      const name = parsed.name || basicInfo.name || '候选人';
+
+      if (phone) {
+        const timeStr = new Date(datetime).toLocaleString('zh-CN', { hour12: false });
+        const typeStr = channel === 'video' ? '视频面试' : (channel === 'phone' ? '电话面试' : '现场面试');
+        const content = `【面试通知】${name}您好，您的${typeStr}已安排在 ${timeStr}。${location ? `地点/链接：${location}` : ''}。请准时参加。`;
+        await sms.sendText(String(phone), content);
+      }
+    } catch (smsError) {
+      console.error('发送面试短信失败:', smsError);
+      // 不中断主流程
+    }
+
     return res.json({ success:true, data:{ id:rj.id, interview: rn.interview } })
   }catch(e){
     return res.status(500).json({ success:false, error:{ code:'SCHEDULE_ERROR', message:e.message } })

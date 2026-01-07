@@ -25,6 +25,16 @@ services:
       - ./uploads:/app/backend/uploads
     depends_on:
       - db
+      - tika
+    networks:
+      - srm-network
+
+  # Apache Tika 解析服务
+  tika:
+    image: apache/tika:latest
+    restart: always
+    ports:
+      - "9998:9998"
     networks:
       - srm-network
 

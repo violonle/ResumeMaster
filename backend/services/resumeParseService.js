@@ -15,7 +15,7 @@ class ResumeParseService {
         };
     }
 
-    async parseResumeContent(content, fileType = 'txt') {
+    async parseResumeContent(content, fileType = 'txt', fileName = '') {
         try {
             if (!content || typeof content !== 'string') {
                 return { rawText: '', parseError: '内容为空' };
@@ -25,7 +25,7 @@ class ResumeParseService {
 
             const parsed = {
                 rawText: content,
-                name: this.extractName(content),
+                name: this.extractName(content, fileName),
                 email: this.extractEmail(content),
                 phone: this.extractPhone(content),
                 location: this.extractLocation(content),
@@ -44,19 +44,35 @@ class ResumeParseService {
         }
     }
 
-    extractName(content) {
+    extractName(content, fileName = '') {
+        // 1. 尝试从文件名提取
+        if (fileName) {
+            const name = fileName.replace(/\.[^/.]+$/, "");
+            const segments = name.split(/[_-\s]+/).filter(s => s.length >= 2 && s.length <= 4);
+            for (const segment of segments) {
+                if (/^[\u4e00-\u9fa5]{2,4}$/.test(segment)) {
+                    const nonNameKeywords = ['简历', '工程师', '开发', '设计', '经理', '项目'];
+                    if (!nonNameKeywords.some(k => segment.includes(k))) {
+                        return segment;
+                    }
+                }
+            }
+        }
+
+        // 2. 尝试正则匹配
         const patterns = [
-            /(?:姓名|Name)[:：]\s*([^\n\r]{2,20})/i,
-            /(?:个人简历|简历)\s*([^\n\r]{2,10})/,
-            /^([A-Za-z\u4e00-\u9fa5]{2,10})\s*(?:\n|$)/m,
-            /(?:求职者|应聘者|申请人)[:：]\s*([^\n\r]{2,20})/i
+            /(?:姓名|Name)[:：]\s*([\u4e00-\u9fa5]{2,4})/i,
+            /(?:姓名|Name)[:：]\s*([A-Za-z\s.]{2,20})/i,
+            /(?:个人简历|简历)\s*([\u4e00-\u9fa5]{2,4})/,
+            /^([\u4e00-\u9fa5]{2,4})\s*(?:\n|$)/m
         ];
 
         for (const pattern of patterns) {
             const match = content.match(pattern);
             if (match && match[1]) {
                 const name = match[1].trim();
-                if (name.length >= 2 && name.length <= 20 && !name.match(/^[0-9]+$/)) {
+                const skillKeywords = ['熟悉', '精通', '掌握', '使用', '负责'];
+                if (!skillKeywords.some(k => name.includes(k))) {
                     return name;
                 }
             }

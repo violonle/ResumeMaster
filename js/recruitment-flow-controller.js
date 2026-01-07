@@ -33,6 +33,7 @@ const recruitmentFlowController = {
 
         this.loadData();
         this.setupEventListeners();
+        this.initFlatpickr();
         
         // Check URL params for auto-actions (e.g., open specific job)
         const urlParams = new URLSearchParams(window.location.search);
@@ -502,7 +503,7 @@ const recruitmentFlowController = {
                 
                 try {
                     await resumeDataManager.scheduleInterview(id, {
-                        datetime: data.date + ' ' + data.time,
+                        datetime: data.datetime || (data.date + ' ' + data.time),
                         channel: data.type,
                         location: data.interviewer || '',
                         note: data.notes || ''
@@ -552,6 +553,19 @@ const recruitmentFlowController = {
                         window.ui.showAlert('发送失败: ' + err.message, { type: 'error' });
                     }
                 }
+            });
+        }
+    },
+
+    initFlatpickr() {
+        if (typeof flatpickr !== 'undefined') {
+            flatpickr(".flatpickr", {
+                enableTime: true,
+                dateFormat: "Y-m-d H:i",
+                time_24hr: true,
+                locale: "zh",
+                minDate: "today",
+                defaultHour: 10
             });
         }
     }

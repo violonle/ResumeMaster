@@ -101,7 +101,7 @@ class DomesticAIService {
     if (service === 'QWEN') headers['Content-Type'] = 'application/json';
     const timeout = (p && typeof p.timeout === 'number' && p.timeout > 0)
       ? p.timeout
-      : (process.env.AI_TIMEOUT_MS ? parseInt(process.env.AI_TIMEOUT_MS, 10) : 30000);
+      : (process.env.AI_TIMEOUT_MS ? parseInt(process.env.AI_TIMEOUT_MS, 10) : 120000);
     return { baseURL, timeout, headers };
   }
 
@@ -732,7 +732,25 @@ class DomesticAIService {
       };
     } catch (error) {
       this.recordServiceStats(service, false);
-      return { success: false, error: error.message };
+      console.error(`[AI Service] Compare resumes failed with ${service}:`, error.message);
+      
+      // Fallback mechanism
+      try {
+        let resumesText = '';
+        resumeList.forEach((r, index) => {
+            const label = String.fromCharCode(65 + index);
+            resumesText += `简历${label} (文件名: ${r.name}):\n${r.text.substring(0, 3000)}\n\n`; 
+        });
+
+        const prompt = await promptService.getPrompt('resume_compare', {
+          resumesText,
+          jobDescriptionSection: promptService.prepareJobDescriptionVar(jobDescription)
+        });
+
+        return await this.fallbackToBackupService('resume_compare', prompt, null);
+      } catch (fallbackError) {
+        return { success: false, error: error.message };
+      }
     }
   }
 

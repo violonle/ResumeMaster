@@ -87,7 +87,13 @@ async function sendAliyunSms(phone, signName, templateCode, templateParam){
   const sign = signName || cfg.signName
   let tpl = templateCode || cfg.templateCode
   
-  if (!id || !secret) return { success:false, error:'CONFIG_MISSING_KEYS' }
+  if (!id || !secret) {
+    console.warn('[SMS] Config missing (AccessKeyId/Secret). Using MOCK mode.');
+    console.log(`[SMS MOCK] To: ${phone}`);
+    console.log(`[SMS MOCK] Template: ${tpl || 'DEFAULT'}`);
+    console.log(`[SMS MOCK] Params: ${JSON.stringify(templateParam)}`);
+    return { success: true, mock: true };
+  }
   if (!sign) return { success:false, error:'CONFIG_MISSING_SIGN' }
   
   // Try to create template if missing
