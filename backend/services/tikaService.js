@@ -1,14 +1,17 @@
-const axios = require('axios');
+const { exec } = require('child_process');
+const path = require('path');
 const fs = require('fs');
+const util = require('util');
+const execPromise = util.promisify(exec);
 
 /**
- * Apache Tika 服务封装
+ * Apache Tika 服务封装 (本地 JAR 版)
  * 用于高效解析 PDF, DOCX, DOC, MD 等多种格式文件
  */
 class TikaService {
     constructor() {
-        // 默认 Tika Server 地址，生产环境通过环境变量配置
-        this.baseUrl = process.env.TIKA_SERVER_URL || 'http://localhost:9998';
+        // JAR 包路径
+        this.jarPath = path.join(__dirname, '../docparser/target/docparser-1.0-SNAPSHOT.jar');
     }
 
     /**
@@ -22,56 +25,28 @@ class TikaService {
                 throw new Error(`文件不存在: ${filePath}`);
             }
 
-            const fileStream = fs.createReadStream(filePath);
-            
-            // 使用 Tika 的 /tika 接口获取纯文本内容
-            const response = await axios({
-                method: 'put',
-                url: `${this.baseUrl}/tika`,
-                data: fileStream,
-                headers: {
-                    'Accept': 'text/plain',
-                    'Content-Type': 'application/octet-stream'
-                },
-                // 设置较长的超时时间，处理大文件解析
-                timeout: 30000 
+            if (!fs.existsSync(this.jarPath)) {
+                console.error(`[TikaService] JAR 包不存在: ${this.jarPath}，请确保已运行 mvn package`);
+                throw new Error('Tika 解析组件未就绪');
+            }
+
+            // 调用 Java JAR 包进行解析
+            // 使用 maxBuffer 防止大文件解析导致输出溢出 (设置 10MB)
+            const { stdout, stderr } = await execPromise(`java -jar "${this.jarPath}" "${filePath}"`, {
+                maxBuffer: 10 * 1024 * 1024 
             });
 
-            if (response.status === 200) {
-                return response.data;
-            } else {
-                throw new Error(`Tika 解析失败，状态码: ${response.status}`);
+            if (stderr && stderr.trim()) {
+                // 有些日志输出在 stderr，如果不影响 stdout 则忽略
+                if (!stdout || stdout.trim().length === 0) {
+                    console.warn('[TikaService] 解析过程中有错误输出:', stderr);
+                }
             }
+
+            return stdout || '';
         } catch (error) {
             console.error('[TikaService] 文本提取出错:', error.message);
-            // 如果是因为 Tika Server 没启动，可以记录详细错误
-            if (error.code === 'ECONNREFUSED') {
-                console.error('[TikaService] 无法连接到 Tika Server，请检查服务是否启动。');
-            }
             throw error;
-        }
-    }
-
-    /**
-     * 获取文件元数据 (可选)
-     * @param {string} filePath 
-     */
-    async getMetadata(filePath) {
-        try {
-            const fileStream = fs.createReadStream(filePath);
-            const response = await axios({
-                method: 'put',
-                url: `${this.baseUrl}/meta`,
-                data: fileStream,
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/octet-stream'
-                }
-            });
-            return response.data;
-        } catch (error) {
-            console.error('[TikaService] 获取元数据出错:', error.message);
-            return null;
         }
     }
 
@@ -80,8 +55,8 @@ class TikaService {
      */
     async isAvailable() {
         try {
-            const response = await axios.get(`${this.baseUrl}/tika`, { timeout: 2000 });
-            return response.status === 200 || response.status === 405; // 405 是因为 GET 不被允许，但说明服务在运行
+            const { stdout } = await execPromise('java -version');
+            return fs.existsSync(this.jarPath);
         } catch (error) {
             return false;
         }

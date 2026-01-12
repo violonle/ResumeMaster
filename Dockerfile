@@ -18,7 +18,14 @@ COPY admin/ .
 RUN npm run build:icons
 RUN npm run build
 
-# --- Stage 2: Final Image ---
+# --- Stage 2: Build Java DocParser ---
+FROM maven:3.9.6-eclipse-temurin-17-alpine AS java-builder
+WORKDIR /app/docparser
+COPY backend/docparser/pom.xml .
+COPY backend/docparser/src ./src
+RUN mvn clean package -DskipTests
+
+# --- Stage 3: Final Image ---
 FROM node:20-alpine
 WORKDIR /app
 
@@ -27,8 +34,8 @@ ENV NODE_ENV=production
 ENV PUPPETEER_SKIP_DOWNLOAD=true
 
 # 安装运行后端所需的系统库
-# 增加 py3-setuptools 以解决 sqlite3 编译时缺失 distutils 的问题
-RUN apk add --no-cache python3 make g++ py3-setuptools
+# 增加 openjdk17-jre 用于运行 Tika 解析组件
+RUN apk add --no-cache python3 make g++ py3-setuptools openjdk17-jre
 
 # 1. 复制后端依赖并安装
 COPY backend/package*.json ./backend/
@@ -45,8 +52,9 @@ COPY public/ ./public/
 COPY components/ ./components/
 COPY index.html ./
 
-# 4. 从编译阶段复制 Admin 编译后的文件
+# 4. 从编译阶段复制编译后的文件
 COPY --from=admin-builder /app/admin/dist ./admin/dist
+COPY --from=java-builder /app/docparser/target/docparser-1.0-SNAPSHOT.jar ./backend/docparser/target/docparser-1.0-SNAPSHOT.jar
 
 # 5. 设置权限
 RUN mkdir -p backend/uploads

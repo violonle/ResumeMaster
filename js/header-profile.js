@@ -151,7 +151,7 @@ class HeaderProfile {
         const name = rawName || '显示ID';
         const role = user.role;
         const enterprise = user.enterpriseName;
-        const avatarUrl = user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0D8ABC&color=fff`;
+        const avatarUrl = user.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name)}&backgroundColor=0d8abc&fontSize=45`;
 
         return `
             <div class="flex items-center space-x-4 ml-4">

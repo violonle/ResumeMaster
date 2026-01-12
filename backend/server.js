@@ -25,6 +25,7 @@ const dashboardRoutes = require('./routes/dashboard');
 const recruitmentRoutes = require('./routes/recruitment');
 const libraryRoutes = require('./routes/library');
 const promptRoutes = require('./routes/prompt');
+const interviewRoutes = require('./routes/interview');
 const { SubscriptionPlan } = require('./models');
 const { Op } = require('sequelize');
 const bcrypt = require('bcryptjs');
@@ -94,6 +95,10 @@ app.get('/admin/*', (req, res) => {
 // 3. 其他静态资源
  app.use('/uploads', express.static(path.join(ROOT_DIR, 'uploads')));
  app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+ app.use('/pages/Interview', express.static(path.join(ROOT_DIR, 'pages/interview/dist')));
+  app.use('/pages/interview', express.static(path.join(ROOT_DIR, 'pages/interview/dist')));
+  // 确保 assets 目录也能被正确访问（针对某些路径解析情况）
+  app.use('/assets', express.static(path.join(ROOT_DIR, 'pages/interview/dist/assets')));
  app.use('/pages', express.static(path.join(ROOT_DIR, 'pages')));
  app.use('/components', express.static(path.join(ROOT_DIR, 'components')));
  app.use('/css', express.static(path.join(ROOT_DIR, 'css')));
@@ -164,6 +169,7 @@ app.use('/api/admin', adminAIConfigRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/recruitment', recruitmentRoutes);
+app.use('/api/interview', interviewRoutes);
 app.use('/api/library', libraryRoutes);
 app.use('/api/admin/prompts', promptRoutes);
 
@@ -378,111 +384,52 @@ app.use((req, res) => {
 const promptService = require('./services/promptService');
 
 // 启动服务器
-sequelize.sync({ force: false })
+sequelize.sync({ force: false, alter: false })
   .then(async () => {
-    console.log('Database synchronized successfully.');
+    console.log('Database connected successfully.');
     
     // 初始化数据
     try {
       await ensureDefaultAdmin();
+      await ensureDefaultPlans();
       await ensureDemoResumes();
       await promptService.ensureDefaultPrompts();
       console.log('Initial data verification completed.');
     } catch (e) {
       console.error('Initial data setup failed:', e.message);
     }
-    // 确保 VerificationCode 表存在（如果不存在sequelize.sync会创建，但为了保险起见）
-    // 检查并添加 company_id 到相关表
-    (async () => {
-      try {
-        const tables = ['users', 'jobs', 'resumes', 'analysis_results', 'orders', 'invoices', 'recruitment_processes', 'user_activities', 'deep_analysis_records'];
-        const dialect = sequelize.getDialect();
-        
-        for (const table of tables) {
-          let cols;
-          if (dialect === 'sqlite') {
-            [cols] = await sequelize.query(`PRAGMA table_info('${table}')`);
-          } else {
-            [cols] = await sequelize.query(`SHOW COLUMNS FROM ${table}`);
-          }
-          
-          const hasCompanyId = Array.isArray(cols) && cols.some(c => {
-            const name = (c.name || c.cid || c.Field || '').toString().toLowerCase();
-            return name === 'company_id';
-          });
-          
-          if (!hasCompanyId) {
-            await sequelize.query(`ALTER TABLE ${table} ADD COLUMN company_id INTEGER DEFAULT NULL`);
-            console.log(`Added column ${table}.company_id`);
-          }
-        }
-      } catch (e) { console.error('Ensure company_id columns failed:', e.message) }
-    })();
-    // 修复: 为旧数据库补充缺失的 subscription_plans.i18n_names 列
+    
+    // 安全地补充缺失列
     (async () => {
       try {
         const dialect = sequelize.getDialect();
-        let cols;
-        if (dialect === 'sqlite') {
-          [cols] = await sequelize.query("PRAGMA table_info('subscription_plans')");
-        } else {
-          [cols] = await sequelize.query("SHOW COLUMNS FROM subscription_plans");
-        }
-        
-        const hasI18n = Array.isArray(cols) && cols.some(c => {
-          const name = (c.name || c.cid || c.Field || '').toString().toLowerCase();
-          return name === 'i18n_names';
-        });
-        
-        if (!hasI18n) {
-          const addColSql = dialect === 'sqlite' 
-            ? "ALTER TABLE subscription_plans ADD COLUMN i18n_names TEXT DEFAULT '{}' "
-            : "ALTER TABLE subscription_plans ADD COLUMN i18n_names JSON";
-          await sequelize.query(addColSql);
-          console.log('Added column subscription_plans.i18n_names');
-        }
-      } catch (e) { console.error('Ensure subscription_plans.i18n_names failed:', e.message) }
-    })();
-    // 为 resumes 表补充缺失的 source / is_talent_pool 列
-    (async () => {
-      try {
-        const dialect = sequelize.getDialect();
-        let cols;
-        if (dialect === 'sqlite') {
-          [cols] = await sequelize.query("PRAGMA table_info('resumes')");
-        } else {
-          [cols] = await sequelize.query("SHOW COLUMNS FROM resumes");
-        }
-        
-        const hasSource = Array.isArray(cols) && cols.some(c => {
-          const name = (c.name || c.cid || c.Field || '').toString().toLowerCase();
-          return name === 'source';
-        });
-        const hasTalent = Array.isArray(cols) && cols.some(c => {
-          const name = (c.name || c.cid || c.Field || '').toString().toLowerCase();
-          return name === 'is_talent_pool';
-        });
-        
-        if (!hasSource) {
-          await sequelize.query("ALTER TABLE resumes ADD COLUMN source TEXT");
-          console.log('Added column resumes.source');
-        }
-        if (!hasTalent) {
-          await sequelize.query("ALTER TABLE resumes ADD COLUMN is_talent_pool INTEGER DEFAULT 0");
-          console.log('Added column resumes.is_talent_pool');
-        }
+        if (dialect === 'mysql') {
+          // 在 MySQL 下，我们通过 information_schema 检查列是否存在，避免重复 ALTER
+          const checkAndAddColumn = async (table, column, definition) => {
+            const [results] = await sequelize.query(
+              `SELECT COLUMN_NAME FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = '${table}' AND COLUMN_NAME = '${column}'`
+            );
+            if (results.length === 0) {
+              await sequelize.query(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+              console.log(`✅ Added missing column: ${table}.${column}`);
+            }
+          };
 
-        // 检查并添加 score 列
-        const hasScore = Array.isArray(cols) && cols.some(c => {
-          const name = (c.name || c.cid || c.Field || '').toString().toLowerCase();
-          return name === 'score';
-        });
-        if (!hasScore) {
-          await sequelize.query("ALTER TABLE resumes ADD COLUMN score INTEGER DEFAULT 0");
-          console.log('Added column resumes.score');
+          const tables = ['users', 'jobs', 'resumes', 'analysis_results', 'orders', 'invoices', 'recruitment_processes', 'user_activities', 'deep_analysis_records'];
+          for (const table of tables) {
+            await checkAndAddColumn(table, 'company_id', 'INTEGER DEFAULT NULL');
+          }
+          
+          await checkAndAddColumn('subscription_plans', 'i18n_names', 'JSON');
+          await checkAndAddColumn('resumes', 'source', 'TEXT');
+          await checkAndAddColumn('resumes', 'is_talent_pool', 'INTEGER DEFAULT 0');
+          await checkAndAddColumn('resumes', 'score', 'INTEGER DEFAULT 0');
         }
-      } catch (e) { console.error('Ensure resumes extra columns failed:', e.message) }
+      } catch (e) { 
+        console.error('⚠️ Safe column check failed:', e.message);
+      }
     })();
+
     const HOST = process.env.HOST || '0.0.0.0';
     app.listen(PORT, HOST, () => {
     console.log(`Server is running on http://${HOST}:${PORT}`);

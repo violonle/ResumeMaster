@@ -300,29 +300,65 @@ JSON结构如下：
 注意：直接返回 JSON 对象本身，确保它可以被 JSON.parse() 直接解析。`
   },
 
-  // 6. 面试问题生成
-  interview_questions: {
-    name: '面试问题生成',
-    category: 'analysis',
-    variables: ['resumeText', 'targetJobSection'],
-    content: `你是一位资深面试官。请基于候选人的简历和目标职位要求，设计一套具有针对性的面试问题。
+  // 6. 模拟面试题生成
+  interview_question_generation: {
+    name: '模拟面试题生成',
+    category: 'interview',
+    variables: ['resumeText', 'questionCount'],
+    content: `你是一位资深的技术面试官。请基于以下简历内容，生成 {{questionCount}} 道针对性的面试题。
+    
+    ### 任务要求：
+    1. **针对性**：题目必须紧扣简历中的技术栈、项目经验和工作职责。
+    2. **专业性**：涵盖基础理论、实战应用、方案设计和问题解决。
+    3. **层次感**：题目应包含从易到难的不同梯度。
+    4. **分类**：将题目分为以下类别之一：PROJECT, JAVA_BASIC, JAVA_COLLECTION, JAVA_CONCURRENT, MYSQL, REDIS, SPRING, SPRING_BOOT (若简历不是Java背景，请根据实际技术栈分类，但类别名称保持大写且尽量贴近)。
 
-### 简历内容：
-"""
-{{resumeText}}
-"""
+    ### 简历内容：
+    """
+    {{resumeText}}
+    """
 
-{{targetJobSection}}
+    ### 输出要求：
+    必须输出严格的JSON格式（不带Markdown代码块，不带多余文字），包含以下结构：
+    {
+      "questions": [
+        {
+          "questionIndex": 1,
+          "question": "题目描述",
+          "type": "CATEGORY_NAME",
+          "category": "类别中文描述"
+        }
+      ]
+    }
+    `
+  },
+  
+  // 7. 面试回答评估
+  interview_answer_evaluation: {    name: '面试回答评估',
+    category: 'interview',
+    variables: ['question', 'userAnswer'],
+    content: `你是一位资深的技术面试官。请对以下面试题的回答进行专业评估。
 
-### 输出要求：
-必须输出严格的JSON格式，包含以下结构：
-{
-  "ice_breaking": "破冰问题",
-  "technical_questions": ["技术问题1", "技术问题2"],
-  "behavioral_questions": ["行为面试题1", "行为面试题2"],
-  "logic_potential": ["潜力/逻辑考察题1"],
-  "interviewer_tips": "给面试官的提问技巧建议"
-}`
+    ### 面试题：
+    {{question}}
+
+    ### 候选人回答：
+    {{userAnswer}}
+
+    ### 评估要求：
+    1. **打分**：0-100分，客观评价回答的准确性、深度和逻辑。
+    2. **反馈**：指出回答中的亮点和不足，给出改进建议。
+    3. **参考答案**：提供一份标准或优秀的参考答案，并列出核心关键词/要点。
+
+    ### 输出要求：
+    必须输出严格的JSON格式（不带Markdown代码块，不带多余文字），包含以下结构：
+    {
+      "score": 85,
+      "feedback": "反馈意见",
+      "referenceAnswer": "参考答案",
+      "keyPoints": ["核心要点1", "核心要点2"]
+    }
+    `
   }
 };
 

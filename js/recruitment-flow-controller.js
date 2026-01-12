@@ -399,6 +399,15 @@ const recruitmentFlowController = {
             }
         }
 
+        // For status that requires extra info via modal, open modal first
+        if (targetStatus === 'interview') {
+            this.openModal('interview', id);
+            return;
+        } else if (targetStatus === 'offer') {
+            this.openModal('offer', id);
+            return;
+        }
+
         // Map English status to Chinese for API
         const statusToChinese = {
             'applied': '投递',
@@ -415,13 +424,6 @@ const recruitmentFlowController = {
             if (typeof ErrorHandler !== 'undefined') ErrorHandler.showLoading(true);
             await resumeDataManager.updateRecruitmentStatus(id, chineseStatus);
             candidate.status = targetStatus;
-            
-            // Trigger modals if needed
-            if (targetStatus === 'interview') {
-                this.openModal('interview', id);
-            } else if (targetStatus === 'offer') {
-                this.openModal('offer', id);
-            }
             
             // Emit event to notify other pages of data update
             if (typeof window !== 'undefined') {
@@ -502,14 +504,18 @@ const recruitmentFlowController = {
                 const data = Object.fromEntries(formData.entries());
                 
                 try {
+                    if (typeof ErrorHandler !== 'undefined') ErrorHandler.showLoading(true);
+                    
                     await resumeDataManager.scheduleInterview(id, {
-                        datetime: data.datetime || (data.date + ' ' + data.time),
+                        datetime: data.datetime,
                         channel: data.type,
-                        location: data.interviewer || '',
-                        note: data.notes || ''
+                        aiQuestionCount: data.aiQuestionCount, // 新增：传递题目数量
+                        location: data.location || '',
+                        note: (data.interviewer ? `面试官: ${data.interviewer}\n` : '') + (data.notes || '')
                     });
+                    
                     if (typeof window !== 'undefined' && window.ui && window.ui.showAlert) {
-                        window.ui.showAlert('面试安排已发送！', { type: 'success' });
+                        window.ui.showAlert('面试已成功安排，短信通知已发送！', { type: 'success' });
                     }
                     this.closeModal('interview');
                     this.loadData();
@@ -520,6 +526,8 @@ const recruitmentFlowController = {
                     if (typeof window !== 'undefined' && window.ui && window.ui.showAlert) {
                         window.ui.showAlert('安排失败: ' + err.message, { type: 'error' });
                     }
+                } finally {
+                    if (typeof ErrorHandler !== 'undefined') ErrorHandler.showLoading(false);
                 }
             });
         }
@@ -559,13 +567,21 @@ const recruitmentFlowController = {
 
     initFlatpickr() {
         if (typeof flatpickr !== 'undefined') {
+            // Register Chinese locale if available
+            const locale = (typeof flatpickr.l10ns !== 'undefined' && flatpickr.l10ns.zh) ? flatpickr.l10ns.zh : 'zh';
+            
             flatpickr(".flatpickr", {
                 enableTime: true,
                 dateFormat: "Y-m-d H:i",
                 time_24hr: true,
-                locale: "zh",
+                locale: locale,
                 minDate: "today",
-                defaultHour: 10
+                defaultHour: 10,
+                disableMobile: "true",
+                animate: true,
+                onOpen: function(selectedDates, dateStr, instance) {
+                    instance.calendarContainer.classList.add('shadow-xl', 'border-0', 'rounded-xl');
+                }
             });
         }
     }

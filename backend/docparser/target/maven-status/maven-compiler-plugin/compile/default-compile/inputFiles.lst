@@ -1,0 +1,4 @@
+/Users/yangyong/工作/Projects/SuperResumeMaster/backend/docparser/src/main/java/interview/guide/infrastructure/docparser/DocParserApp.java
+/Users/yangyong/工作/Projects/SuperResumeMaster/backend/docparser/src/main/java/interview/guide/infrastructure/docparser/core/TikaDocParser.java
+/Users/yangyong/工作/Projects/SuperResumeMaster/backend/docparser/src/main/java/interview/guide/infrastructure/docparser/exception/DocParserException.java
+/Users/yangyong/工作/Projects/SuperResumeMaster/backend/docparser/src/main/java/interview/guide/infrastructure/docparser/utils/DocTextCleaner.java

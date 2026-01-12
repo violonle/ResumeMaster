@@ -1,5 +1,6 @@
 const { ResumeJob, Resume, Job, User } = require('../models')
 const sms = require('../services/smsService')
+const emailService = require('../services/emailService')
 const emailImport = require('../services/emailImportService')
 
 function safeJson(obj){
@@ -50,7 +51,7 @@ exports.updateStatus = async (req, res) => {
 exports.scheduleInterview = async (req, res) => {
   try{
     const { id } = req.params
-    const { datetime, channel, location, note } = req.body || {}
+    const { datetime, channel, location, note, aiQuestionCount } = req.body || {}
     if (!datetime){
       return res.status(400).json({ success:false, error:{ code:'INVALID_TIME', message:'缺少面试时间' } })
     }
@@ -59,26 +60,67 @@ exports.scheduleInterview = async (req, res) => {
       return res.status(404).json({ success:false, error:{ code:'NOT_FOUND', message:'候选记录不存在' } })
     }
     const rn = safeJson(rj.recruiter_notes)
-    rn.interview = { datetime, channel: channel||'offline', location: location||'', note: note||'' }
+    rn.interview = { 
+      datetime, 
+      channel: channel||'offline', 
+      location: location||'', 
+      note: note||'',
+      aiQuestionCount: aiQuestionCount || 8 // 默认8题
+    }
     await rj.update({ status:'interview', recruiter_notes: JSON.stringify(rn) })
 
-    // 发送面试通知短信
+    // 发送面试通知（短信 + 邮件）
     try {
       const resume = rj.Resume;
-      // 尝试从不同结构中获取电话和姓名
+      // 尝试从不同结构中获取电话、姓名和邮箱
       const parsed = resume ? (resume.parsed_data || {}) : {};
       const basicInfo = parsed.basic_info || {};
       const phone = parsed.phone || basicInfo.phone || parsed.mobile || basicInfo.mobile;
+      const email = parsed.email || basicInfo.email || resume.email; // 也可以检查 resume 模型上的直接字段
       const name = parsed.name || basicInfo.name || '候选人';
 
+      const timeStr = new Date(datetime).toLocaleString('zh-CN', { hour12: false });
+      const typeStr = channel === 'video' ? '视频面试' : (channel === 'phone' ? '线上面试' : '现场面试');
+      
+      // 生成面试链接
+      const protocol = req.protocol || 'http';
+      const host = req.get('host') || 'localhost:3000';
+      const interviewLink = `${protocol}://${host}/pages/interview/index.html?id=${rj.id}`;
+
+      const content = `【面试通知】${name}您好，您的${typeStr}已安排在 ${timeStr}。请点击链接进行在线面试：${interviewLink} 。${location ? `地点/链接：${location}` : ''}。请准时参加。`;
+
+      // 1. 发送短信
       if (phone) {
-        const timeStr = new Date(datetime).toLocaleString('zh-CN', { hour12: false });
-        const typeStr = channel === 'video' ? '视频面试' : (channel === 'phone' ? '电话面试' : '现场面试');
-        const content = `【面试通知】${name}您好，您的${typeStr}已安排在 ${timeStr}。${location ? `地点/链接：${location}` : ''}。请准时参加。`;
         await sms.sendText(String(phone), content);
       }
-    } catch (smsError) {
-      console.error('发送面试短信失败:', smsError);
+
+      // 2. 发送邮件
+      if (email) {
+        const subject = `【面试邀请】${typeStr}安排 - 争湃·简历大师`;
+        const html = `
+          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+            <h2 style="color: #2563eb;">面试邀请通知</h2>
+            <p>${name} 您好：</p>
+            <p>我们已为您安排了 <strong>${typeStr}</strong>，具体安排如下：</p>
+            <div style="background-color: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0;">
+              <p style="margin: 5px 0;"><strong>面试时间：</strong> ${timeStr}</p>
+              ${location ? `<p style="margin: 5px 0;"><strong>面试地点/链接：</strong> ${location}</p>` : ''}
+              <p style="margin: 5px 0;"><strong>面试题量：</strong> ${aiQuestionCount || 8} 题</p>
+            </div>
+            <p>请点击下方按钮进入在线面试界面进行答题：</p>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${interviewLink}" style="background-color: #2563eb; color: white; padding: 12px 25px; text-decoration: none; border-radius: 6px; font-weight: bold;">立即开始面试</a>
+            </div>
+            <p style="color: #64748b; font-size: 0.9em;">(如无法点击按钮，请复制此链接到浏览器：${interviewLink})</p>
+            <p style="margin-top: 30px;">祝您面试顺利！</p>
+            <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+            <p style="color: #94a3b8; font-size: 0.8em; text-align: center;">此邮件由 争湃·简历大师 系统自动发送，请勿直接回复。</p>
+          </div>
+        `;
+        await emailService.sendMail(email, subject, html, content);
+      }
+    } catch (notifyError) {
+      console.error('发送面试通知失败:', notifyError);
       // 不中断主流程
     }
 

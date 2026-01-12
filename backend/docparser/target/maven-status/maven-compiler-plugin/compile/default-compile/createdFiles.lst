@@ -1,0 +1,4 @@
+interview/guide/infrastructure/docparser/utils/DocTextCleaner.class
+interview/guide/infrastructure/docparser/core/TikaDocParser.class
+interview/guide/infrastructure/docparser/exception/DocParserException.class
+interview/guide/infrastructure/docparser/DocParserApp.class

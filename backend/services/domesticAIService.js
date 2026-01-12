@@ -340,6 +340,12 @@ class DomesticAIService {
     } else if (scene === 'supplement_report') {
         promptKey = 'resume_supplement_report';
         taskType = 'resume_analysis';
+    } else if (scene === 'interview_question_generation') {
+        promptKey = 'interview_question_generation';
+        taskType = 'interview';
+    } else if (scene === 'interview_answer_evaluation') {
+        promptKey = 'interview_answer_evaluation';
+        taskType = 'interview';
     } else {
         // Legacy fallback
         promptKey = jobDescription ? 'resume_quick_score' : 'resume_deep_analysis';
@@ -349,37 +355,12 @@ class DomesticAIService {
     const { service, model, apiKey } = await this.selectOptimalService(taskType, userCtx);
 
     try {
-      let prompt;
-      
-      if (scene === 'talent_pool') {
-          prompt = await promptService.getPrompt('resume_quick_score', {
-              resumeText,
-              jobDescriptionSection: promptService.prepareJobDescriptionVar(jobDescription)
-          });
-      } else if (scene === 'deep_analysis' || scene === 'analysis') {
-          prompt = await promptService.getPrompt('resume_deep_analysis', {
-              resumeText,
-              targetJobSection: promptService.prepareTargetJobSection(jobDescription)
-          });
-      } else if (scene === 'supplement_report') {
-          prompt = await promptService.getPrompt('resume_supplement_report', {
-              resumeText,
-              targetJobSection: promptService.prepareTargetJobSection(jobDescription)
-          });
-      } else {
-          // Original fallback logic
-          if (jobDescription) {
-            prompt = await promptService.getPrompt('resume_quick_score', {
-              resumeText,
-              jobDescriptionSection: promptService.prepareJobDescriptionVar(jobDescription)
-            });
-          } else {
-            prompt = await promptService.getPrompt('resume_deep_analysis', {
-              resumeText,
-              targetJobSection: ''
-            });
-          }
-      }
+      const prompt = await promptService.getPrompt(promptKey, {
+        resumeText,
+        jobDescriptionSection: jobDescription ? `### 目标职位描述 (JD):\n${jobDescription}` : '',
+        targetJobSection: jobDescription ? `### 目标职位描述 (JD):\n${jobDescription}` : '',
+        questionCount: jobDescription && jobDescription.includes('生成') ? (jobDescription.match(/\d+/) || [8])[0] : 8
+      });
       
       const result = await this.callAIService(service, model, prompt, apiKey);
       const responseTime = Date.now() - startTime;
@@ -408,37 +389,15 @@ class DomesticAIService {
     } catch (error) {
       this.recordServiceStats(service, false);
       
-      // 尝试使用备用服务
-      let prompt;
-      if (scene === 'talent_pool') {
-          prompt = await promptService.getPrompt('resume_quick_score', {
-              resumeText,
-              jobDescriptionSection: promptService.prepareJobDescriptionVar(jobDescription)
-          });
-      } else if (scene === 'deep_analysis' || scene === 'analysis') {
-          prompt = await promptService.getPrompt('resume_deep_analysis', {
-              resumeText,
-              targetJobSection: promptService.prepareTargetJobSection(jobDescription)
-          });
-      } else if (scene === 'supplement_report') {
-          prompt = await promptService.getPrompt('resume_supplement_report', {
-              resumeText,
-              targetJobSection: promptService.prepareTargetJobSection(jobDescription)
-          });
-      } else {
-          if (jobDescription) {
-            prompt = await promptService.getPrompt('resume_quick_score', {
-              resumeText,
-              jobDescriptionSection: promptService.prepareJobDescriptionVar(jobDescription)
-            });
-          } else {
-            prompt = await promptService.getPrompt('resume_deep_analysis', {
-              resumeText,
-              targetJobSection: ''
-            });
-          }
-      }
-      return await this.fallbackToBackupService(taskType, prompt, null, userCtx);
+      // 准备重试的 prompt
+      const retryPrompt = await promptService.getPrompt(promptKey, {
+        resumeText,
+        jobDescriptionSection: jobDescription ? `### 目标职位描述 (JD):\n${jobDescription}` : '',
+        targetJobSection: jobDescription ? `### 目标职位描述 (JD):\n${jobDescription}` : '',
+        questionCount: jobDescription && jobDescription.includes('生成') ? (jobDescription.match(/\d+/) || [8])[0] : 8
+      });
+      
+      return await this.fallbackToBackupService(taskType, retryPrompt, null, userCtx);
     }
   }
 

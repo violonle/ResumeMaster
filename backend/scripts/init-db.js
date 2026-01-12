@@ -9,10 +9,15 @@ async function initDatabase() {
     try {
         console.log('--- 数据库初始化开始 ---');
         
-        // 1. 同步表结构
-        console.log('正在连接数据库并同步表结构...');
-        await sequelize.sync({ force: false });
-        console.log('✅ 数据库表结构同步成功');
+        // 1. 检查数据库连接，但不使用 sync() 自动同步（避免索引爆炸）
+        console.log('正在连接数据库...');
+        await sequelize.authenticate();
+        console.log('✅ 数据库连接成功');
+
+        // 尝试安全地同步表结构，禁用 alter 模式
+        console.log('正在同步表结构 (安全模式)...');
+        await sequelize.sync({ force: false, alter: false });
+        console.log('✅ 数据库表结构同步完成');
 
         // 2. 初始化角色
         console.log('正在初始化系统角色...');

@@ -1155,6 +1155,61 @@ const CompanyMember = sequelize.define('CompanyMember', {
   ]
 });
 
+// 面试会话模型
+const InterviewSession = sequelize.define('InterviewSession', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true
+  },
+  resume_job_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'resume_jobs',
+      key: 'id'
+    }
+  },
+  resume_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'resumes',
+      key: 'id'
+    }
+  },
+  resume_text: {
+    type: DataTypes.TEXT,
+    allowNull: false
+  },
+  total_questions: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0
+  },
+  current_question_index: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0
+  },
+  questions: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    defaultValue: []
+  },
+  status: {
+    type: DataTypes.ENUM('CREATED', 'IN_PROGRESS', 'COMPLETED', 'EVALUATED'),
+    defaultValue: 'CREATED'
+  },
+  report: {
+    type: DataTypes.JSON,
+    allowNull: true
+  }
+}, {
+  tableName: 'interview_sessions',
+  timestamps: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at'
+});
+
 // 定义模型关系
 User.hasMany(Resume, { foreignKey: 'user_id', onDelete: 'CASCADE' });
 Resume.belongsTo(User, { foreignKey: 'user_id' });
@@ -1195,6 +1250,12 @@ ResumeJob.belongsTo(Resume, { foreignKey: 'resume_id' });
 Job.hasMany(ResumeJob, { foreignKey: 'job_id', onDelete: 'CASCADE' });
 ResumeJob.belongsTo(Job, { foreignKey: 'job_id' });
 ResumeJob.belongsTo(User, { foreignKey: 'user_id' });
+
+// 面试会话关系
+ResumeJob.hasMany(InterviewSession, { foreignKey: 'resume_job_id', onDelete: 'CASCADE' });
+InterviewSession.belongsTo(ResumeJob, { foreignKey: 'resume_job_id' });
+Resume.hasMany(InterviewSession, { foreignKey: 'resume_id' });
+InterviewSession.belongsTo(Resume, { foreignKey: 'resume_id' });
 
 Company.belongsTo(User, { foreignKey: 'contact_account_id', as: 'Contact' });
 
@@ -1245,6 +1306,7 @@ module.exports = {
   SystemConfig,
   Company,
   CompanyMember,
+  InterviewSession,
   // 新增模型开始
   // 订阅模型（公司维度）
   Subscription: (() => {
