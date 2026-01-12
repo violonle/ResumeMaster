@@ -50,9 +50,9 @@ export default function InterviewChatPanel({
   }, [messages]);
 
   const progress = useMemo(() => {
-    if (!session || !currentQuestion) return 0;
-    return ((currentQuestion.questionIndex + 1) / session.totalQuestions) * 100;
-  }, [session, currentQuestion]);
+    if (!session) return 0;
+    return ((session.currentQuestionIndex + 1) / session.questions.length) * 100;
+  }, [session]);
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {

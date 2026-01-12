@@ -1,4 +1,4 @@
-const { InterviewSession, Resume, ResumeJob, sequelize } = require('../models');
+const { InterviewSession, Resume, ResumeJob, Job, sequelize } = require('../models');
 const DomesticAIService = require('../services/domesticAIService');
 const aiService = new DomesticAIService();
 const logger = require('../utils/logger');
@@ -8,23 +8,103 @@ const logger = require('../utils/logger');
  */
 class InterviewController {
   /**
+   * 从简历对象中重建或提取文本内容
+   */
+  _extractResumeText(resume) {
+    if (!resume) return '';
+    
+    // 1. 优先使用原始文本
+    if (resume.raw_text && resume.raw_text.trim() !== '') {
+      return resume.raw_text;
+    }
+
+    // 2. 尝试从解析数据中提取预设的文本字段
+    const data = resume.parsed_data || {};
+    if (data.resume_text && data.resume_text.trim() !== '') return data.resume_text;
+    if (data.text && data.text.trim() !== '') return data.text;
+
+    // 3. 如果都没有，则根据结构化字段重建文本
+    const textParts = [];
+    
+    // 基本信息
+    const name = resume.name || data.name;
+    const title = resume.job_title || data.job_title;
+    if (name) textParts.push(`姓名: ${name}`);
+    if (title) textParts.push(`意向职位: ${title}`);
+    if (resume.experience_years || data.experience_years) {
+      textParts.push(`工作经验: ${resume.experience_years || data.experience_years}年`);
+    }
+
+    // 核心技能
+    const skills = resume.skills || data.skills;
+    if (skills) {
+      const skillsStr = Array.isArray(skills) ? skills.join(', ') : skills;
+      textParts.push(`核心技能: ${skillsStr}`);
+    }
+
+    // 工作经历
+    const workExp = resume.work_experience || data.work_experience || data.experience;
+    if (workExp && Array.isArray(workExp) && workExp.length > 0) {
+      textParts.push('\n【工作经历】');
+      workExp.forEach(exp => {
+        textParts.push(`- ${exp.company || '未知公司'} | ${exp.position || '职位未标注'} | ${exp.duration || ''}`);
+        if (exp.description) textParts.push(`  职责描述: ${exp.description}`);
+      });
+    }
+
+    // 项目经验
+    const projects = resume.projects || data.projects;
+    if (projects && Array.isArray(projects) && projects.length > 0) {
+      textParts.push('\n【项目经验】');
+      projects.forEach(p => {
+        textParts.push(`- ${p.name || '项目名称'} | ${p.role || ''} | ${p.duration || ''}`);
+        if (p.description) textParts.push(`  项目描述: ${p.description}`);
+      });
+    }
+
+    // 教育背景
+    const edu = resume.education || data.education;
+    if (edu && Array.isArray(edu) && edu.length > 0) {
+      textParts.push('\n【教育背景】');
+      edu.forEach(e => {
+        textParts.push(`- ${e.school || '院校'} | ${e.degree || ''} | ${e.major || ''} | ${e.duration || ''}`);
+      });
+    }
+
+    return textParts.join('\n').trim();
+  }
+
+  /**
    * 创建面试会话
    */
   async createSession(req, res) {
     try {
       const { resumeText, questionCount, resumeId, resumeJobId, forceCreate = false } = req.body;
+      logger.info(`开始创建面试会话: resumeId=${resumeId}, resumeJobId=${resumeJobId}, hasResumeText=${!!resumeText}`);
 
       let finalResumeText = resumeText;
       let rjId = resumeJobId;
       let finalResumeId = resumeId;
       let finalQuestionCount = questionCount || 8;
+      let finalJobDescription = '';
 
       // 如果提供了 resumeJobId，优先使用它来获取简历和题目数量
       if (rjId) {
         const rj = await ResumeJob.findByPk(rjId, {
-          include: [{ model: Resume }]
+          include: [
+            { model: Resume },
+            { model: Job }
+          ]
         });
         if (rj) {
+          logger.info(`找到关联的 ResumeJob: ${rj.id}`);
+          
+          // 获取职位描述
+          if (rj.Job) {
+            finalJobDescription = rj.Job.description || rj.Job.requirements || '';
+            logger.info(`从关联职位获取到描述，长度: ${finalJobDescription.length}`);
+          }
+
           // 尝试从 recruiter_notes 中获取预设的题目数量
           if (rj.recruiter_notes) {
             try {
@@ -40,49 +120,74 @@ class InterviewController {
 
           if (rj.Resume) {
             finalResumeId = rj.resume_id;
-            finalResumeText = rj.Resume.raw_text || rj.Resume.parsed_data?.resume_text || rj.Resume.parsed_data?.text || finalResumeText;
+            finalResumeText = this._extractResumeText(rj.Resume);
+            logger.info(`从 ResumeJob 关联的 Resume 获取到文本，长度: ${finalResumeText?.length || 0}`);
+          } else {
+            logger.warn(`ResumeJob ${rjId} 关联的 Resume 不存在`);
           }
+        } else {
+          logger.warn(`未找到 ResumeJob: ${rjId}`);
         }
       } else if (finalResumeId) {
         // 如果只提供了 resumeId，尝试获取简历文本和关联的申请记录
         const resume = await Resume.findByPk(finalResumeId);
         if (resume) {
-          finalResumeText = resume.raw_text || resume.parsed_data?.resume_text || resume.parsed_data?.text || finalResumeText;
+          logger.info(`找到 Resume: ${resume.id}`);
+          finalResumeText = this._extractResumeText(resume);
+          logger.info(`获取到 Resume 文本，长度: ${finalResumeText?.length || 0}`);
           
           const rj = await ResumeJob.findOne({
             where: { resume_id: finalResumeId },
+            include: [{ model: Job }],
             order: [['applied_at', 'DESC']]
           });
-          if (rj) rjId = rj.id;
+          if (rj) {
+            rjId = rj.id;
+            logger.info(`找到该简历关联的最新申请记录: ${rjId}`);
+            if (rj.Job) {
+              finalJobDescription = rj.Job.description || rj.Job.requirements || '';
+              logger.info(`从关联职位获取到描述，长度: ${finalJobDescription.length}`);
+            }
+          }
+        } else {
+          logger.warn(`未找到 Resume: ${finalResumeId}`);
         }
       }
 
-      if (!finalResumeText) {
-        return res.status(400).json({ success: false, error: '简历内容不能为空' });
+      // 检查简历内容
+      if (!finalResumeText || finalResumeText.trim() === '') {
+        logger.warn(`创建面试失败: 简历内容为空. resumeId=${finalResumeId}, resumeJobId=${rjId}`);
+        return res.status(400).json({ success: false, error: '简历内容不能为空，请先在简历库中完善简历文本' });
       }
 
-      // 检查是否存在未完成的会话
-      if (!forceCreate && rjId) {
+      // 查找该简历是否已有活跃会话
+      if (!forceCreate) {
+        const { Op } = require('sequelize');
         const existingSession = await InterviewSession.findOne({
-          where: { 
-            resume_job_id: rjId,
-            status: ['CREATED', 'IN_PROGRESS']
+          where: {
+            resume_id: finalResumeId,
+            status: { [Op.ne]: 'COMPLETED' }
           },
           order: [['created_at', 'DESC']]
         });
 
         if (existingSession) {
+          logger.info(`找到已有活跃会话: ${existingSession.id}`);
           return res.json({
             success: true,
             data: {
               sessionId: existingSession.id,
+              id: existingSession.id,
+              resumeText: existingSession.resume_text,
               resumeId: existingSession.resume_id,
               resumeJobId: existingSession.resume_job_id,
-              resumeText: existingSession.resume_text,
               totalQuestions: existingSession.total_questions,
               currentQuestionIndex: existingSession.current_question_index,
               questions: existingSession.questions,
-              status: existingSession.status
+              status: existingSession.status,
+              report: existingSession.report,
+              createdAt: existingSession.created_at,
+              updatedAt: existingSession.updated_at
             }
           });
         }
@@ -91,9 +196,10 @@ class InterviewController {
       // 调用 AI 生成面试题
       const aiResult = await aiService.analyzeResume(
         finalResumeText,
-        `请生成 ${finalQuestionCount} 道面试题`,
+        finalJobDescription, // 直接传递 JD，让 aiService 和 promptService 处理格式
         null,
-        'interview_question_generation'
+        'interview_question_generation',
+        finalQuestionCount
       );
 
       if (!aiResult.success) {
@@ -124,17 +230,23 @@ class InterviewController {
         status: 'CREATED'
       });
 
+      // 成功返回
+      const sessionData = session.toJSON();
       return res.json({
         success: true,
         data: {
           sessionId: session.id,
+          id: session.id,
+          resumeText: session.resume_text,
           resumeId: session.resume_id,
           resumeJobId: session.resume_job_id,
-          resumeText: session.resume_text,
           totalQuestions: session.total_questions,
           currentQuestionIndex: session.current_question_index,
           questions: session.questions,
-          status: session.status
+          status: session.status,
+          report: session.report,
+          createdAt: session.created_at,
+          updatedAt: session.updated_at
         }
       });
 
@@ -161,16 +273,19 @@ class InterviewController {
         return res.status(400).json({ success: false, error: '面试已结束' });
       }
 
-      const questions = [...session.questions];
+      // 更新当前题目答案
+      const questions = JSON.parse(JSON.stringify(session.questions));
+      
+      // 鲁棒性校验：确保索引在有效范围内
       if (questionIndex < 0 || questionIndex >= questions.length) {
-        return res.status(400).json({ success: false, error: '无效的题目索引' });
+        logger.error(`无效的问题索引提交: sessionId=${id}, index=${questionIndex}, total=${questions.length}`);
+        return res.status(400).json({ 
+          success: false, 
+          error: `无效的问题索引: ${questionIndex}。当前面试共有 ${questions.length} 道题。` 
+        });
       }
 
-      // 更新当前题目答案
       questions[questionIndex].userAnswer = answer;
-      
-      // 调用 AI 进行实时评估（可选，也可以最后统一评估）
-      // 这里我们先只保存答案，提高响应速度
       
       const isLastQuestion = questionIndex === questions.length - 1;
       const nextIndex = isLastQuestion ? questionIndex : questionIndex + 1;
@@ -192,15 +307,54 @@ class InterviewController {
       return res.json({
         success: true,
         data: {
+          sessionId: session.id,
+          id: session.id,
           hasNextQuestion: !isLastQuestion,
           nextQuestion: isLastQuestion ? null : questions[nextIndex],
           currentIndex: nextIndex,
-          totalQuestions: session.total_questions
+          currentQuestionIndex: nextIndex,
+          totalQuestions: session.total_questions,
+          status: session.status
         }
       });
 
     } catch (error) {
       logger.error('提交面试回答失败:', error);
+      return res.status(500).json({ success: false, error: error.message });
+    }
+  }
+
+  /**
+   * 获取面试会话详情
+   */
+  async getSession(req, res) {
+    try {
+      const { sessionId } = req.params;
+      const session = await InterviewSession.findByPk(sessionId);
+
+      if (!session) {
+        return res.status(404).json({ success: false, error: '面试会话不存在' });
+      }
+
+      return res.json({
+        success: true,
+        data: {
+          sessionId: session.id,
+          id: session.id,
+          resumeText: session.resume_text,
+          resumeId: session.resume_id,
+          resumeJobId: session.resume_job_id,
+          totalQuestions: session.total_questions,
+          currentQuestionIndex: session.current_question_index,
+          questions: session.questions,
+          status: session.status,
+          report: session.report,
+          createdAt: session.created_at,
+          updatedAt: session.updated_at
+        }
+      });
+    } catch (error) {
+      logger.error('获取面试会话失败:', error);
       return res.status(500).json({ success: false, error: error.message });
     }
   }
@@ -228,6 +382,15 @@ class InterviewController {
         success: true,
         data: {
           completed: false,
+          sessionId: session.id,
+          id: session.id,
+          resumeText: session.resume_text,
+          resumeId: session.resume_id,
+          resumeJobId: session.resume_job_id,
+          totalQuestions: session.total_questions,
+          currentQuestionIndex: session.current_question_index,
+          questions: session.questions,
+          status: session.status,
           question: currentQuestion
         }
       });
@@ -288,17 +451,22 @@ class InterviewController {
         success: true,
         data: {
           sessionId: session.id,
+          id: session.id,
+          resumeText: session.resume_text,
           resumeId: session.resume_id,
           resumeJobId: session.resume_job_id,
-          resumeText: session.resume_text,
           totalQuestions: session.total_questions,
           currentQuestionIndex: session.current_question_index,
           questions: session.questions,
-          status: session.status
+          status: session.status,
+          report: session.report,
+          createdAt: session.created_at,
+          updatedAt: session.updated_at
         }
       });
     } catch (error) {
-      return res.status(500).json({ success: false, error: error.message });
+      logger.error('查找未完成面试会话失败:', error);
+      res.status(500).json({ success: false, error: '查找未完成面试会话失败' });
     }
   }
 

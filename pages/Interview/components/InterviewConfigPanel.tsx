@@ -90,8 +90,8 @@ export default function InterviewConfigPanel({
                 <div className="flex-1">
                   <h3 className="font-semibold text-amber-900 mb-1 text-sm sm:text-base">检测到未完成的模拟面试</h3>
                   <p className="text-xs sm:text-sm text-amber-700">
-                    已完成 {unfinishedSession.currentQuestionIndex} / {unfinishedSession.totalQuestions} 题
-                  </p>
+                已完成 {unfinishedSession.currentQuestionIndex} / {unfinishedSession.questions.length} 题
+              </p>
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row gap-3">

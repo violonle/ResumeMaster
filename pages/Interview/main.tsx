@@ -1,36 +1,61 @@
 import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import InterviewRunner from './index';
-import { interviewApi } from './api';
+import { interviewApi } from './interview-api';
 import './style.css'; // 我们稍后创建
 
 const App = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [resumeData, setResumeData] = useState<{ text: string; id?: number; rjId?: number } | null>(null);
+  const [resumeData, setResumeData] = useState<{ text: string; id?: number; rjId?: number; sessionId?: string } | null>(null);
 
   useEffect(() => {
     const init = async () => {
       try {
         const urlParams = new URLSearchParams(window.location.search);
-        const rjId = urlParams.get('id') || urlParams.get('resumeJobId');
+        const idParam = urlParams.get('id');
+        const rjIdParam = urlParams.get('resumeJobId');
+        const resumeIdParam = urlParams.get('resumeId');
 
-        if (!rjId) {
+        if (!idParam && !rjIdParam && !resumeIdParam) {
           setError('未找到面试信息，请检查链接是否正确');
           setLoading(false);
           return;
         }
 
-        // 尝试通过 ResumeJob ID 创建或获取会话
-        const session = await interviewApi.createSession({
-          resumeJobId: parseInt(rjId),
-          forceCreate: false
-        });
+        let session;
+        if (idParam && idParam.length > 10) {
+          // 如果 idParam 长度较长，认为是 sessionId (UUID)
+          session = await interviewApi.getSession(idParam);
+        } else {
+          // 否则可能是 resumeId 或 resumeJobId
+          const rId = parseInt(resumeIdParam || (idParam && idParam.length <= 10 ? idParam : '0'));
+          const rjId = parseInt(rjIdParam || '0');
+          
+          if (rId > 0) {
+            session = await interviewApi.createSession({
+              resumeId: rId,
+              forceCreate: false
+            });
+          } else if (rjId > 0) {
+            session = await interviewApi.createSession({
+              resumeJobId: rjId,
+              forceCreate: false
+            });
+          }
+        }
+
+        if (!session) {
+          setError('未找到面试会话，请检查链接是否正确');
+          setLoading(false);
+          return;
+        }
 
         setResumeData({
           text: session.resumeText,
           id: session.resumeId,
-          rjId: parseInt(rjId)
+          rjId: session.resumeJobId,
+          sessionId: session.sessionId
         });
         setLoading(false);
       } catch (err: any) {
@@ -80,6 +105,7 @@ const App = () => {
         resumeText={resumeData.text}
         resumeId={resumeData.id}
         resumeJobId={resumeData.rjId}
+        sessionId={resumeData.sessionId}
         onBack={() => window.history.back()}
         onComplete={() => {
           console.log('面试结束');

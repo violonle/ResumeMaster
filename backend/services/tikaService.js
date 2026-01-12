@@ -10,8 +10,9 @@ const execPromise = util.promisify(exec);
  */
 class TikaService {
     constructor() {
-        // JAR 包路径
-        this.jarPath = path.join(__dirname, '../docparser/target/docparser-1.0-SNAPSHOT.jar');
+        // JAR 包路径：优先检查环境变量，否则使用相对路径
+        // 在 Docker 环境中，我们将其放在 backend/docparser/docparser.jar
+        this.jarPath = process.env.TIKA_JAR_PATH || path.join(__dirname, '../docparser/docparser.jar');
     }
 
     /**

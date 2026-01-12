@@ -95,8 +95,8 @@ app.get('/admin/*', (req, res) => {
 // 3. 其他静态资源
  app.use('/uploads', express.static(path.join(ROOT_DIR, 'uploads')));
  app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
- app.use('/pages/Interview', express.static(path.join(ROOT_DIR, 'pages/interview/dist')));
-  app.use('/pages/interview', express.static(path.join(ROOT_DIR, 'pages/interview/dist')));
+ app.use('/pages/Interview', express.static(path.join(ROOT_DIR, 'pages/Interview/dist')));
+app.use('/pages/interview', express.static(path.join(ROOT_DIR, 'pages/Interview/dist')));
   // 确保 assets 目录也能被正确访问（针对某些路径解析情况）
   app.use('/assets', express.static(path.join(ROOT_DIR, 'pages/interview/dist/assets')));
  app.use('/pages', express.static(path.join(ROOT_DIR, 'pages')));
@@ -384,9 +384,18 @@ app.use((req, res) => {
 const promptService = require('./services/promptService');
 
 // 启动服务器
-sequelize.sync({ force: false, alter: false })
-  .then(async () => {
-    console.log('Database connected successfully.');
+const startServer = async () => {
+  try {
+    // 在生产环境下，我们不应该自动同步数据库结构，除非明确要求
+    // 这可以防止由于索引过多或其他限制导致的启动失败
+    if (process.env.NODE_ENV === 'production') {
+      await sequelize.authenticate();
+      console.log('Database connection established successfully (Production).');
+    } else {
+      // 非生产环境可以尝试同步，但禁用 alter 以避免 ER_TOO_MANY_KEYS 错误
+      await sequelize.sync({ force: false, alter: false });
+      console.log('Database synchronized (Development).');
+    }
     
     // 初始化数据
     try {
@@ -398,73 +407,71 @@ sequelize.sync({ force: false, alter: false })
     } catch (e) {
       console.error('Initial data setup failed:', e.message);
     }
-    
-    // 安全地补充缺失列
-    (async () => {
-      try {
-        const dialect = sequelize.getDialect();
-        if (dialect === 'mysql') {
-          // 在 MySQL 下，我们通过 information_schema 检查列是否存在，避免重复 ALTER
-          const checkAndAddColumn = async (table, column, definition) => {
-            const [results] = await sequelize.query(
-              `SELECT COLUMN_NAME FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = '${table}' AND COLUMN_NAME = '${column}'`
-            );
-            if (results.length === 0) {
-              await sequelize.query(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
-              console.log(`✅ Added missing column: ${table}.${column}`);
-            }
-          };
 
-          const tables = ['users', 'jobs', 'resumes', 'analysis_results', 'orders', 'invoices', 'recruitment_processes', 'user_activities', 'deep_analysis_records'];
-          for (const table of tables) {
-            await checkAndAddColumn(table, 'company_id', 'INTEGER DEFAULT NULL');
+    // 安全地补充缺失列
+    try {
+      const dialect = sequelize.getDialect();
+      if (dialect === 'mysql') {
+        const checkAndAddColumn = async (table, column, definition) => {
+          const [results] = await sequelize.query(
+            `SELECT COLUMN_NAME FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = '${table}' AND COLUMN_NAME = '${column}'`
+          );
+          if (results.length === 0) {
+            await sequelize.query(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+            console.log(`✅ Added missing column: ${table}.${column}`);
           }
-          
-          await checkAndAddColumn('subscription_plans', 'i18n_names', 'JSON');
-          await checkAndAddColumn('resumes', 'source', 'TEXT');
-          await checkAndAddColumn('resumes', 'is_talent_pool', 'INTEGER DEFAULT 0');
-          await checkAndAddColumn('resumes', 'score', 'INTEGER DEFAULT 0');
+        };
+
+        const tables = ['users', 'jobs', 'resumes', 'analysis_results', 'orders', 'invoices', 'recruitment_processes', 'user_activities', 'deep_analysis_records'];
+        for (const table of tables) {
+          await checkAndAddColumn(table, 'company_id', 'INTEGER DEFAULT NULL');
         }
-      } catch (e) { 
-        console.error('⚠️ Safe column check failed:', e.message);
+        
+        await checkAndAddColumn('subscription_plans', 'i18n_names', 'JSON');
+        await checkAndAddColumn('resumes', 'source', 'TEXT');
+        await checkAndAddColumn('resumes', 'is_talent_pool', 'INTEGER DEFAULT 0');
+        await checkAndAddColumn('resumes', 'score', 'INTEGER DEFAULT 0');
       }
-    })();
+    } catch (e) {
+      console.error('⚠️ Safe column check failed:', e.message);
+    }
 
     const HOST = process.env.HOST || '0.0.0.0';
     app.listen(PORT, HOST, () => {
-    console.log(`Server is running on http://${HOST}:${PORT}`);
-    // 面试提醒调度：每分钟检查一次
-    setInterval(async ()=>{
-      try{
-        const now = Date.now()
-        const upcoming = await ResumeJob.findAll({ where:{ status:'interview' }, limit: 50 })
-        for(const rj of upcoming){
-          const rn = (()=>{ try{ return JSON.parse(rj.recruiter_notes||'{}') }catch(_){ return {} } })()
-          const itv = rn && rn.interview && rn.interview.datetime ? new Date(rn.interview.datetime).getTime() : null
-          const notified = rn && rn.interview && rn.interview.notified
-          if (itv && !notified && itv <= now){
-            const resume = await Resume.findOne({ where:{ id: rj.resume_id } })
-            const user = await User.findOne({ where:{ id: rj.user_id } })
-            const msg = `提醒：候选人(${resume && resume.file_name})的面试时间已到。`
-            console.log('[Interview Notify]', msg)
-            // 如果存在手机号，尝试发送短信（示例：使用当前账户手机号）
-            if (user && user.phone){ await smsService.sendText(String(user.phone), msg) }
-            rn.interview = rn.interview || {}
-            rn.interview.notified = true
-            await rj.update({ recruiter_notes: JSON.stringify(rn) })
+      console.log(`Server is running on http://${HOST}:${PORT}`);
+      console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+
+      // 面试提醒调度：每分钟检查一次
+      setInterval(async () => {
+        try {
+          const now = Date.now()
+          const upcoming = await ResumeJob.findAll({ where: { status: 'interview' }, limit: 50 })
+          for (const rj of upcoming) {
+            const rn = (() => { try { return JSON.parse(rj.recruiter_notes || '{}') } catch (_) { return {} } })()
+            const itv = rn && rn.interview && rn.interview.datetime ? new Date(rn.interview.datetime).getTime() : null
+            const notified = rn && rn.interview && rn.interview.notified
+            if (itv && !notified && itv <= now) {
+              const resume = await Resume.findOne({ where: { id: rj.resume_id } })
+              const user = await User.findOne({ where: { id: rj.user_id } })
+              const msg = `提醒：候选人(${resume && resume.file_name})的面试时间已到。`
+              console.log('[Interview Notify]', msg)
+              if (user && user.phone) { await smsService.sendText(String(user.phone), msg) }
+              rn.interview = rn.interview || {}
+              rn.interview.notified = true
+              await rj.update({ recruiter_notes: JSON.stringify(rn) })
+            }
           }
-        }
-      }catch(e){ console.error('Interview scheduler error:', e.message) }
-    }, 60*1000)
-  });
-  })
-  .catch(err => {
-    console.error('Unable to connect to the database:', err);
-    // 即使同步失败，也启动服务器以进行开发
-    app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`);
-      console.log('Note: Server is running without a database connection.');
+        } catch (e) { console.error('Interview scheduler error:', e.message) }
+      }, 60 * 1000);
     });
-  });
+  } catch (err) {
+    console.error('Unable to connect to the database:', err);
+    if (process.env.NODE_ENV !== 'production') {
+      process.exit(1);
+    }
+  }
+};
+
+startServer();
 
 module.exports = app;

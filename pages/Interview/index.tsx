@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {AnimatePresence, motion} from 'framer-motion';
-import {interviewApi} from './api';
+import {interviewApi} from './interview-api';
 import ConfirmDialog from './components/ConfirmDialog';
 import InterviewChatPanel from './components/InterviewChatPanel';
 import type {InterviewQuestion, InterviewSession} from './types';
@@ -16,11 +16,12 @@ export interface InterviewRunnerProps {
   resumeText: string;
   resumeId?: number;
   resumeJobId?: number;
+  sessionId?: string; // 新增：支持直接传入会话ID
   onBack: () => void;
   onComplete: () => void;
 }
 
-export default function InterviewRunner({ resumeText, resumeId, resumeJobId, onBack, onComplete }: InterviewRunnerProps) {
+export default function InterviewRunner({ resumeText, resumeId, resumeJobId, sessionId: initialSessionId, onBack, onComplete }: InterviewRunnerProps) {
   const [session, setSession] = useState<InterviewSession | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState<InterviewQuestion | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -32,15 +33,36 @@ export default function InterviewRunner({ resumeText, resumeId, resumeJobId, onB
   
   // 组件挂载时自动初始化面试
   useEffect(() => {
-    startInterview();
+    // 如果 main.tsx 已经传来了 sessionId，且我们还没有 session 数据，或者 session 数据不匹配
+    if (initialSessionId && (!session || session.sessionId !== initialSessionId)) {
+      initBySessionId(initialSessionId);
+    } else if (!initialSessionId && (resumeId || resumeJobId)) {
+      startInterview();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resumeId]);
+  }, [initialSessionId, resumeId, resumeJobId]);
+
+  const initBySessionId = async (sid: string) => {
+    setIsLoading(true);
+    try {
+      const sessionData = await interviewApi.getSession(sid);
+      restoreSession(sessionData);
+    } catch (err: any) {
+      setError(err.message || '获取面试信息失败');
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   const restoreSession = (sessionToRestore: InterviewSession) => {
+    if (!sessionToRestore || !sessionToRestore.questions) {
+      console.error('Invalid session to restore:', sessionToRestore);
+      return;
+    }
     setSession(sessionToRestore);
     
     // 恢复当前问题
-    const currentIndex = sessionToRestore.currentQuestionIndex;
+    const currentIndex = sessionToRestore.currentQuestionIndex || 0;
     const currentQ = sessionToRestore.questions[currentIndex];
     
     if (currentQ) {
@@ -53,8 +75,10 @@ export default function InterviewRunner({ resumeText, resumeId, resumeJobId, onB
       
       // 恢复消息历史：严格按照 提问-回答 的顺序构建
       const restoredMessages: Message[] = [];
+      const questionsToRestore = sessionToRestore.questions || [];
+      
       for (let i = 0; i <= currentIndex; i++) {
-        const q = sessionToRestore.questions[i];
+        const q = questionsToRestore[i];
         if (!q) continue;
 
         // 添加面试官提问
@@ -80,20 +104,23 @@ export default function InterviewRunner({ resumeText, resumeId, resumeJobId, onB
   const startInterview = async () => {
     setIsLoading(true);
     setError('');
-    
     try {
-      // 这里的 questionCount 在后端会优先从 ResumeJob 记录中读取预设值
+      console.log('Starting interview for resume:', resumeId, 'job:', resumeJobId);
       const newSession = await interviewApi.createSession({
-        resumeText,
-        questionCount: 8, // 默认8题，会被后端 ResumeJob 中的配置覆盖
         resumeId,
-        resumeJobId, // 新增：传递申请记录ID以同步预设配置
+        resumeJobId,
         forceCreate: false
       });
-      
+      console.log('Session created/retrieved:', newSession);
+
+      if (!newSession || !newSession.sessionId) {
+        throw new Error('服务器返回的会话数据不完整');
+      }
+
       // 如果返回的是已有的会话（currentQuestionIndex > 0 或已有答案），恢复它
-      const hasProgress = newSession.currentQuestionIndex > 0 || 
-                          newSession.questions.some(q => q.userAnswer) ||
+      const questions = newSession.questions || [];
+      const hasProgress = (newSession.currentQuestionIndex || 0) > 0 || 
+                          questions.some(q => q.userAnswer) ||
                           newSession.status === 'IN_PROGRESS';
       
       if (hasProgress) {
@@ -101,8 +128,8 @@ export default function InterviewRunner({ resumeText, resumeId, resumeJobId, onB
       } else {
         setSession(newSession);
         
-        if (newSession.questions.length > 0) {
-          const firstQuestion = newSession.questions[0];
+        if (questions.length > 0) {
+          const firstQuestion = questions[0];
           setCurrentQuestion(firstQuestion);
           setMessages([{
             type: 'interviewer',
@@ -110,11 +137,13 @@ export default function InterviewRunner({ resumeText, resumeId, resumeJobId, onB
             category: firstQuestion.category,
             questionIndex: 0
           }]);
+        } else {
+          throw new Error('未生成面试题目，请刷新重试');
         }
       }
     } catch (err: any) {
-      setError(err.message || '初始化面试失败，请稍后重试');
-      console.error(err);
+      console.error('Failed to start interview:', err);
+      setError(err.response?.data?.error || err.message || '无法开始面试，请检查网络或重试');
     } finally {
       setIsLoading(false);
     }
@@ -136,7 +165,7 @@ export default function InterviewRunner({ resumeText, resumeId, resumeJobId, onB
     try {
       const response = await interviewApi.submitAnswer({
         sessionId: session.sessionId,
-        questionIndex: currentQuestion.questionIndex,
+        questionIndex: session.currentQuestionIndex, // 使用 session 中的 0-based 索引
         answer: submittedAnswer
       });
 
@@ -149,10 +178,10 @@ export default function InterviewRunner({ resumeText, resumeId, resumeJobId, onB
           questionIndex: response.nextQuestion!.questionIndex
         }]);
         
-        // 更新 session 中的当前索引
+        // 更新 session 中的当前索引，使用后端返回的 currentIndex
         setSession(prev => prev ? {
           ...prev,
-          currentQuestionIndex: response.nextQuestion!.questionIndex
+          currentQuestionIndex: response.currentIndex
         } : null);
       } else {
         // 面试已完成，评估将在后台进行，跳转到面试记录页
@@ -219,7 +248,7 @@ export default function InterviewRunner({ resumeText, resumeId, resumeJobId, onB
                         />
                       </div>
                       <p className="text-[10px] sm:text-xs text-gray-500 font-medium">
-                        {session.currentQuestionIndex + 1} / {session.questions.length}
+                        第 {session.currentQuestionIndex + 1} / {session.questions.length} 题
                       </p>
                     </div>
                   )}
@@ -274,7 +303,15 @@ export default function InterviewRunner({ resumeText, resumeId, resumeJobId, onB
                 </svg>
               </div>
               <h3 className="text-lg font-medium text-gray-900">无法开始面试</h3>
-              <p className="text-sm text-gray-500 mt-2">请刷新页面或检查您的网络连接</p>
+              <p className="text-sm text-gray-500 mt-2">{error || '请刷新页面或检查您的网络连接'}</p>
+              {error && (
+                <button 
+                  onClick={startInterview} 
+                  className="mt-6 px-6 py-2 bg-blue-600 text-white rounded-full font-medium hover:bg-blue-700 transition-colors"
+                >
+                  重新尝试
+                </button>
+              )}
             </div>
           )}
         </motion.div>

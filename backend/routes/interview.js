@@ -9,7 +9,7 @@ router.post('/sessions', interviewController.createSession.bind(interviewControl
 router.get('/sessions/unfinished/:resumeId', interviewController.findUnfinishedSession.bind(interviewController));
 
 // 获取会话详情
-router.get('/sessions/:sessionId', interviewController.getCurrentQuestion.bind(interviewController));
+router.get('/sessions/:sessionId', interviewController.getSession.bind(interviewController));
 
 // 获取当前题目 (前端 api.ts 中使用 /sessions/:sessionId/question)
 router.get('/sessions/:sessionId/question', interviewController.getCurrentQuestion.bind(interviewController));

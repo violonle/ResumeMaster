@@ -304,19 +304,32 @@ JSON结构如下：
   interview_question_generation: {
     name: '模拟面试题生成',
     category: 'interview',
-    variables: ['resumeText', 'questionCount'],
-    content: `你是一位资深的技术面试官。请基于以下简历内容，生成 {{questionCount}} 道针对性的面试题。
-    
+    variables: ['resumeText', 'jobDescriptionSection', 'questionCount'],
+    content: `你是一位具有20年经验的资深资深技术面试官和人才评估专家。
+    请基于以下【简历内容】和【目标岗位描述】，生成 {{questionCount}} 道具有深度、针对性和启发性的面试题。
+
+    ### 核心目标：
+    通过提问，全面评估候选人的【专业技能硬实力】、【项目实战深度】以及【与岗位的契合度】。
+
     ### 任务要求：
-    1. **针对性**：题目必须紧扣简历中的技术栈、项目经验和工作职责。
-    2. **专业性**：涵盖基础理论、实战应用、方案设计和问题解决。
-    3. **层次感**：题目应包含从易到难的不同梯度。
-    4. **分类**：将题目分为以下类别之一：PROJECT, JAVA_BASIC, JAVA_COLLECTION, JAVA_CONCURRENT, MYSQL, REDIS, SPRING, SPRING_BOOT (若简历不是Java背景，请根据实际技术栈分类，但类别名称保持大写且尽量贴近)。
+    1. **组合提问策略 (必做)**：
+       - **基于岗位的提问 (约40%)**：针对 JD 中的核心技术栈、职责要求和业务场景进行提问。重点考察候选人是否具备胜任该岗位所需的“即战力”。
+       - **基于简历项目的提问 (约60%)**：深入挖掘简历中提到的项目。不要只问表面，要针对项目中的技术选型原因、遇到的最难问题、如何解决的、以及最终量化的产出进行追问。重点考察项目真实性和思维深度。
+    2. **针对性**：严禁使用通用题库。每一道题都必须能在提供的简历或 JD 中找到对应的关联点。
+    3. **层次感**：题目应包含从基础原理到复杂架构设计，再到软素质（如抗压、沟通）的不同梯度。
+    4. **分类要求**：将题目分为以下类别：
+       - PROJECT (项目深挖)
+       - TECHNICAL_CORE (核心技术栈)
+       - ARCHITECTURE (架构设计)
+       - SOFT_SKILLS (综合素质)
+       - SCENARIO (情景模拟)
 
     ### 简历内容：
     """
     {{resumeText}}
     """
+
+    {{jobDescriptionSection}}
 
     ### 输出要求：
     必须输出严格的JSON格式（不带Markdown代码块，不带多余文字），包含以下结构：
@@ -324,9 +337,9 @@ JSON结构如下：
       "questions": [
         {
           "questionIndex": 1,
-          "question": "题目描述",
+          "question": "题目内容",
           "type": "CATEGORY_NAME",
-          "category": "类别中文描述"
+          "category": "分类中文名称"
         }
       ]
     }

@@ -13,17 +13,26 @@ export const interviewApi = {
    * 创建面试会话
    */
   async createSession(req: CreateInterviewRequest): Promise<InterviewSession> {
-    return request.post<InterviewSession>('/interview/sessions', req, {
-      timeout: 180000, // 3分钟超时，AI生成问题需要时间
-    });
-  },
-
-  /**
-   * 获取会话信息
-   */
-  async getSession(sessionId: string): Promise<InterviewSession> {
-    return request.get<InterviewSession>(`/interview/sessions/${sessionId}`);
-  },
+      const result = await request.post<any>('/interview/sessions', req, {
+        timeout: 180000, // 3分钟超时，AI生成问题需要时间
+      });
+      // request.ts 已经处理了 success 判断并返回了 res.data
+      return {
+        ...result,
+        sessionId: result.sessionId || result.id
+      };
+    },
+  
+    /**
+     * 获取现有面试会话
+     */
+    async getSession(sessionId: string): Promise<InterviewSession> {
+      const result = await request.get<any>(`/interview/sessions/${sessionId}`);
+      return {
+        ...result,
+        sessionId: result.sessionId || result.id
+      };
+    },
 
   /**
    * 获取当前问题

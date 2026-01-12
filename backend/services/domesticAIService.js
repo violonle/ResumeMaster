@@ -324,7 +324,7 @@ class DomesticAIService {
   }
 
   // 简历分析
-  async analyzeResume(resumeText, jobDescription = '', userCtx = null, scene = null) {
+  async analyzeResume(resumeText, jobDescription = '', userCtx = null, scene = null, questionCount = 8) {
     const startTime = Date.now();
     
     // Determine prompt key and task type based on scene
@@ -359,7 +359,7 @@ class DomesticAIService {
         resumeText,
         jobDescriptionSection: jobDescription ? `### 目标职位描述 (JD):\n${jobDescription}` : '',
         targetJobSection: jobDescription ? `### 目标职位描述 (JD):\n${jobDescription}` : '',
-        questionCount: jobDescription && jobDescription.includes('生成') ? (jobDescription.match(/\d+/) || [8])[0] : 8
+        questionCount: questionCount
       });
       
       const result = await this.callAIService(service, model, prompt, apiKey);
@@ -394,7 +394,7 @@ class DomesticAIService {
         resumeText,
         jobDescriptionSection: jobDescription ? `### 目标职位描述 (JD):\n${jobDescription}` : '',
         targetJobSection: jobDescription ? `### 目标职位描述 (JD):\n${jobDescription}` : '',
-        questionCount: jobDescription && jobDescription.includes('生成') ? (jobDescription.match(/\d+/) || [8])[0] : 8
+        questionCount: questionCount
       });
       
       return await this.fallbackToBackupService(taskType, retryPrompt, null, userCtx);
