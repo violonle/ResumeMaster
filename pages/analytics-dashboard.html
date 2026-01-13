@@ -4,25 +4,80 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>数据分析仪表板 - 智能简历助手</title>
+    <title>数据分析仪表板 - 争湃·简历大师</title>
     <script src="../js/tailwindcss.js"></script>
     <script src="https://fastly.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
-    <link href="https://cdn.staticfile.org/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <style>
-        .chart-container { position: relative; height: 300px; width: 100%; }
-        .metric-card { transition: all 0.3s ease; }
-        .metric-card:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-    </style>
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/design-system.css">
     <link rel="stylesheet" href="/css/sidebar.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        
+        body { 
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif; 
+            background-color: #fdfdfd;
+        }
+
+        .chart-container { position: relative; height: 300px; width: 100%; }
+        
+        .metric-card {
+            background: #ffffff;
+            border: 1px solid #f1f3f5;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+            border-color: #e5e7eb;
+        }
+
+        .glass-card {
+            background: #ffffff;
+            border: 1px solid #f1f3f5;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            border-radius: 1.5rem;
+            padding: 2rem;
+        }
+
+        .animate-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 5px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #f1f3f5;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #e9ecef;
+        }
+    </style>
 </head>
-<body class="bg-gray-50">
-    <header class="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20">
-        <div class="flex items-center justify-between p-4">
-            <div class="flex items-center space-x-4">
-                <button class="menu-button p-2 rounded-lg hover:bg-gray-100" id="sidebar-toggle">
-                    <i class="fas fa-bars text-gray-900"></i>
-                </button>
-                <h1 class="brand-title text-lg font-bold text-gray-900">数据分析仪表板</h1>
+<body class="antialiased text-gray-900 selection:bg-blue-100 selection:text-blue-700">
+    <!-- 侧边栏 -->
+    <aside id="sidebar" class="sidebar-modern"></aside>
+    <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+    <!-- 顶部导航栏 -->
+    <header class="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20 h-20">
+        <div class="flex items-center justify-between px-6 h-full">
+            <div class="flex items-center space-x-4 pl-8">
+                <div class="brand-title flex flex-col justify-center space-y-1.5">
+                    <h1 class="text-lg font-bold text-gray-900 leading-none">数据看板</h1>
+                    <p class="text-xs text-gray-500 font-medium leading-tight">全面分析您的招聘与运营指标，提供多维度的数据洞察与趋势预测</p>
+                </div>
             </div>
             <div class="flex items-center space-x-4" id="header-right-section">
                 <!-- User Profile rendered by HeaderProfile -->
@@ -30,76 +85,97 @@
         </div>
     </header>
 
-    
-        <aside id="sidebar" class="fixed left-0 top-0 bottom-0 sidebar-modern z-40"></aside>
-        
-        <main id="main-content" class="main-content pt-20 p-6">
+    <main id="main-content" class="main-content pt-24 p-8 lg:p-12 transition-all duration-300">
+        <div class="max-w-[1440px] mx-auto space-y-10 animate-in">
             <!-- Toolbar -->
-            <div class="flex justify-end mb-6 space-x-4">
-                <button class="text-gray-500 hover:text-gray-700"><i class="fas fa-sync-alt mr-2"></i>刷新</button>
-                <button class="text-gray-500 hover:text-gray-700"><i class="fas fa-download mr-2"></i>导出</button>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <div class="metric-card rounded-xl p-6 bg-blue-600 text-white">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm opacity-90">总简历数</p>
-                            <p class="text-2xl font-bold">—</p>
-                            <p class="text-sm opacity-75 mt-1">—</p>
-                        </div>
-                        <div class="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-file-alt text-2xl"></i>
-                        </div>
-                    </div>
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-black text-gray-900 tracking-tight">数据洞察</h1>
+                    <p class="text-gray-800 mt-1 font-black flex items-center">
+                        <span class="mr-2">📊</span>
+                        全面分析您的招聘与运营指标
+                    </p>
                 </div>
-
-                <div class="metric-card rounded-xl p-6 bg-blue-600 text-white">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm opacity-90">活跃用户</p>
-                            <p class="text-2xl font-bold">—</p>
-                            <p class="text-sm opacity-75 mt-1">—</p>
-                        </div>
-                        <div class="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-users text-2xl"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="metric-card rounded-xl p-6 bg-blue-600 text-white">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm opacity-90">AI优化次数</p>
-                            <p class="text-2xl font-bold">—</p>
-                            <p class="text-sm opacity-75 mt-1">—</p>
-                        </div>
-                        <div class="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-robot text-2xl"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="metric-card rounded-xl p-6 bg-blue-600 text-white">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm opacity-90">月收入</p>
-                            <p class="text-2xl font-bold">—</p>
-                            <p class="text-sm opacity-75 mt-1">—</p>
-                        </div>
-                        <div class="w-12 h-12 bg白 bg-opacity-20 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-yen-sign text-2xl"></i>
-                        </div>
-                    </div>
+                <div class="flex space-x-3">
+                    <button id="refresh-btn" class="px-6 py-3 bg-white text-gray-800 border border-gray-100 rounded-xl text-sm font-black shadow-sm hover:bg-gray-50 transition-all flex items-center">
+                        <span class="mr-2">🔄</span>刷新
+                    </button>
+                    <button id="export-btn" class="px-6 py-3 bg-blue-700 text-white rounded-xl text-sm font-black shadow-lg shadow-blue-100 hover:bg-blue-800 transition-all flex items-center">
+                        <span class="mr-2">📥</span>导出数据
+                    </button>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                <div class="bg-white border border-gray-200 shadow-sm p-6 rounded-xl">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-semibold text-gray-900">简历创建与优化趋势</h3>
-                        <button class="text-gray-500 hover:text-gray-700" data-export-chart="resumeAnalytics">
-                            <i class="fas fa-download"></i>
+            <!-- Metric Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="metric-card p-6 rounded-2xl">
+                    <div class="flex items-center space-x-5">
+                        <div class="w-14 h-14 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center text-2xl">
+                            <span>📄</span>
+                        </div>
+                        <div>
+                            <p class="text-[11px] font-black text-gray-500 uppercase tracking-widest mb-1">总简历数</p>
+                            <h3 class="text-2xl font-black text-gray-900">—</h3>
+                            <p class="text-[10px] font-black text-blue-600 mt-0.5">—</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="metric-card p-6 rounded-2xl">
+                    <div class="flex items-center space-x-5">
+                        <div class="w-14 h-14 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center text-2xl">
+                            <span>👥</span>
+                        </div>
+                        <div>
+                            <p class="text-[11px] font-black text-gray-500 uppercase tracking-widest mb-1">活跃用户</p>
+                            <h3 class="text-2xl font-black text-gray-900">—</h3>
+                            <p class="text-[10px] font-black text-gray-400 mt-0.5">—</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="metric-card p-6 rounded-2xl">
+                    <div class="flex items-center space-x-5">
+                        <div class="w-14 h-14 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center text-2xl">
+                            <span>🤖</span>
+                        </div>
+                        <div>
+                            <p class="text-[11px] font-black text-gray-500 uppercase tracking-widest mb-1">AI优化次数</p>
+                            <h3 class="text-2xl font-black text-gray-900">—</h3>
+                            <p class="text-[10px] font-black text-emerald-600 mt-0.5">—</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="metric-card p-6 rounded-2xl">
+                    <div class="flex items-center space-x-5">
+                        <div class="w-14 h-14 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center text-2xl">
+                            <span>💰</span>
+                        </div>
+                        <div>
+                            <p class="text-[11px] font-black text-gray-500 uppercase tracking-widest mb-1">月收入</p>
+                            <h3 class="text-2xl font-black text-gray-900">—</h3>
+                            <p class="text-[10px] font-black text-amber-600 mt-0.5">—</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section 1 -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                <div class="glass-card">
+                    <div class="flex items-center justify-between mb-8">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
+                                <span>📈</span>
+                            </div>
+                            <div>
+                                <h2 class="text-lg font-black text-gray-900">简历创建与优化趋势</h2>
+                                <p class="text-xs font-black text-gray-400">追踪每日简历活跃度</p>
+                            </div>
+                        </div>
+                        <button class="p-2 text-gray-400 hover:text-blue-600 transition-colors" data-export-chart="resumeAnalytics">
+                            <span>📥</span>
                         </button>
                     </div>
                     <div class="chart-container">
@@ -107,11 +183,19 @@
                     </div>
                 </div>
 
-                <div class="glass-card p-6 rounded-xl">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-semibold text-gray-900">用户活跃度统计</h3>
-                        <button class="text-gray-500 hover:text-gray-700" data-export-chart="userActivity">
-                            <i class="fas fa-download"></i>
+                <div class="glass-card">
+                    <div class="flex items-center justify-between mb-8">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center">
+                                <span>👥</span>
+                            </div>
+                            <div>
+                                <h2 class="text-lg font-black text-gray-900">用户活跃度统计</h2>
+                                <p class="text-xs font-black text-gray-400">分析用户访问与交互情况</p>
+                            </div>
+                        </div>
+                        <button class="p-2 text-gray-400 hover:text-indigo-600 transition-colors" data-export-chart="userActivity">
+                            <span>📥</span>
                         </button>
                     </div>
                     <div class="chart-container">
@@ -120,12 +204,21 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                <div class="glass-card p-6 rounded-xl">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-semibold text-gray-900">AI服务使用分布</h3>
-                        <button class="text-gray-500 hover:text-gray-700" data-export-chart="aiService">
-                            <i class="fas fa-download"></i>
+            <!-- Charts Section 2 -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                <div class="glass-card">
+                    <div class="flex items-center justify-between mb-8">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center">
+                                <span>🤖</span>
+                            </div>
+                            <div>
+                                <h2 class="text-lg font-black text-gray-900">AI服务使用分布</h2>
+                                <p class="text-xs font-black text-gray-400">各项智能功能的使用频率</p>
+                            </div>
+                        </div>
+                        <button class="p-2 text-gray-400 hover:text-emerald-600 transition-colors" data-export-chart="aiService">
+                            <span>📥</span>
                         </button>
                     </div>
                     <div class="chart-container">
@@ -133,11 +226,19 @@
                     </div>
                 </div>
 
-                <div class="glass-card p-6 rounded-xl">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-semibold text-gray-900">简历模板使用分析</h3>
-                        <button class="text-gray-500 hover:text-gray-700" data-export-chart="templateUsage">
-                            <i class="fas fa-download"></i>
+                <div class="glass-card">
+                    <div class="flex items-center justify-between mb-8">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center">
+                                <span>🥞</span>
+                            </div>
+                            <div>
+                                <h2 class="text-lg font-black text-gray-900">简历模板使用分析</h2>
+                                <p class="text-xs font-black text-gray-400">不同模版的受欢迎程度</p>
+                            </div>
+                        </div>
+                        <button class="p-2 text-gray-400 hover:text-amber-600 transition-colors" data-export-chart="templateUsage">
+                            <span>📥</span>
                         </button>
                     </div>
                     <div class="chart-container">
@@ -146,12 +247,21 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="glass-card p-6 rounded-xl">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-semibold text-gray-900">收入统计趋势</h3>
-                        <button class="text-gray-500 hover:text-gray-700" data-export-chart="revenue">
-                            <i class="fas fa-download"></i>
+            <!-- Charts Section 3 -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                <div class="glass-card">
+                    <div class="flex items-center justify-between mb-8">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-rose-50 text-rose-600 rounded-lg flex items-center justify-center">
+                                <span>💰</span>
+                            </div>
+                            <div>
+                                <h2 class="text-lg font-black text-gray-900">收入统计趋势</h2>
+                                <p class="text-xs font-black text-gray-400">平台营收增长曲线</p>
+                            </div>
+                        </div>
+                        <button class="p-2 text-gray-400 hover:text-rose-600 transition-colors" data-export-chart="revenue">
+                            <span>📥</span>
                         </button>
                     </div>
                     <div class="chart-container">
@@ -159,11 +269,19 @@
                     </div>
                 </div>
 
-                <div class="glass-card p-6 rounded-xl">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-semibold text-gray-900">系统性能监控</h3>
-                        <button class="text-gray-500 hover:text-gray-700" data-export-chart="performance">
-                            <i class="fas fa-download"></i>
+                <div class="glass-card">
+                    <div class="flex items-center justify-between mb-8">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-slate-50 text-slate-600 rounded-lg flex items-center justify-center">
+                                <span>🖥️</span>
+                            </div>
+                            <div>
+                                <h2 class="text-lg font-black text-gray-900">系统性能监控</h2>
+                                <p class="text-xs font-black text-gray-400">响应速度与稳定性分析</p>
+                            </div>
+                        </div>
+                        <button class="p-2 text-gray-400 hover:text-slate-600 transition-colors" data-export-chart="performance">
+                            <span>📥</span>
                         </button>
                     </div>
                     <div class="chart-container">
@@ -171,7 +289,8 @@
                     </div>
                 </div>
             </div>
-        </main>
+        </div>
+    </main>
 
     <div id="notification-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
 
@@ -187,8 +306,14 @@
     <script>
         const uiComponents=new UIComponents();
         document.addEventListener('DOMContentLoaded',function(){
-            document.querySelector('.fa-sync-alt').parentElement.addEventListener('click',function(){uiComponents.showNotification('数据刷新功能未连接','warning')});
-            document.querySelector('.fa-download').parentElement.addEventListener('click',function(){uiComponents.showNotification('导出功能未连接','warning')});
+            const syncBtn = document.getElementById('refresh-btn');
+            if(syncBtn) {
+                syncBtn.addEventListener('click',function(){uiComponents.showNotification('数据刷新功能未连接','warning')});
+            }
+            const exportBtn = document.getElementById('export-btn');
+            if(exportBtn) {
+                exportBtn.addEventListener('click',function(){uiComponents.showNotification('导出功能未连接','warning')});
+            }
         });
         window.addEventListener('beforeunload',function(){if(window.dashboardCharts){window.dashboardCharts.destroyAllCharts()}});
     </script>

@@ -7,6 +7,7 @@
     <title>收银台 - SuperResumeMaster</title>
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.staticfile.org/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/sidebar.css">
     <script src="/js/user-auth.js"></script>
@@ -14,15 +15,38 @@
     <script src="/js/sidebar.js"></script>
     <script src="/js/payments-client.js"></script>
     <script src="https://cdn.staticfile.org/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        :root {
+            --font-family-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+        }
+        body {
+            font-family: var(--font-family-sans);
+        }
+        .portal-card {
+            background-color: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+            transition-property: all;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 300ms;
+        }
+        .portal-card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transform: translateY(-2px);
+        }
+    </style>
 </head>
 
-<body class="bg-gray-50">
+<body class="bg-gray-50 antialiased text-gray-900 selection:bg-blue-100 selection:text-blue-700">
     <aside id="sidebar" class="fixed left-0 top-0 bottom-0 sidebar-modern z-40"></aside>
-    <header class="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20">
-        <div class="flex items-center justify-between p-4">
-            <div class="flex items-center space-x-4"><button class="menu-button p-2 rounded-lg hover:bg-gray-100"
-                    id="sidebar-toggle"><i class="fas fa-bars text-gray-600"></i></button>
-                <h1 class="brand-title text-lg font-bold text-gray-900">收银台</h1>
+    <header class="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20 h-20">
+        <div class="flex items-center justify-between px-6 h-full">
+            <div class="flex items-center space-x-4 pl-8">
+                <div class="brand-title flex flex-col justify-center space-y-1.5">
+                    <h1 class="text-lg font-bold text-gray-900 leading-none">收银台</h1>
+                    <p class="text-xs text-gray-500 font-medium leading-tight">请选择您偏好的支付方式，安全、快速地完成订阅支付</p>
+                </div>
             </div>
             <div class="flex items-center space-x-4" id="header-right-section">
                 <!-- User Profile will be rendered here -->
@@ -30,9 +54,9 @@
         </div>
     </header>
 
-    <main class="main-content pt-20" id="main-content">
-        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <div class="bg-white shadow rounded-lg overflow-hidden">
+    <main class="main-content pt-24" id="main-content">
+        <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="portal-card overflow-hidden max-w-4xl mx-auto">
                 <div class="p-6 border-b border-gray-200 bg-gray-50">
                     <h2 class="text-lg font-medium text-gray-900 mb-4">订单详情</h2>
                     <div class="flex justify-between items-center mb-2">
@@ -69,13 +93,13 @@
                             class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500" checked
                             onchange="updateSelection(this)">
                         <div class="ml-3 flex items-center flex-1">
-                            <i class="fab fa-weixin text-green-500 text-2xl mr-3"></i>
+                            <span class="text-green-500 text-2xl mr-3">💳</span>
                             <div>
                                 <span class="block text-sm font-medium text-gray-900">微信支付</span>
                                 <span class="block text-sm text-gray-500">亿万用户的选择，更快更安全</span>
                             </div>
                         </div>
-                        <i class="fas fa-check-circle text-blue-600 text-xl absolute right-4"></i>
+                        <span class="text-blue-600 text-xl absolute right-4">✅</span>
                     </label>
 
                     <label
@@ -85,13 +109,13 @@
                             class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                             onchange="updateSelection(this)">
                         <div class="ml-3 flex items-center flex-1">
-                            <i class="fab fa-alipay text-blue-500 text-2xl mr-3"></i>
+                            <span class="text-blue-500 text-2xl mr-3">💳</span>
                             <div>
                                 <span class="block text-sm font-medium text-gray-900">支付宝</span>
                                 <span class="block text-sm text-gray-500">数亿用户都在用，安全可信赖</span>
                             </div>
                         </div>
-                        <i class="fas fa-check-circle text-blue-600 text-xl absolute right-4 hidden"></i>
+                        <span class="text-blue-600 text-xl absolute right-4 hidden">✅</span>
                     </label>
                 </div>
 

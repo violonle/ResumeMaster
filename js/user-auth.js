@@ -166,11 +166,9 @@ class UserAuth {
      * @param {boolean} remember - 是否记住登录状态
      * @returns {Promise<Object>} 登录结果
      */
-    async login(email, password, remember = false) {
-        const id = String(email || '').trim();
-        const isEmail = this.isValidEmail(id);
-        const isPhone = /^1[3-9]\d{9}$/.test(id);
-        const loginData = isEmail ? { email: id, password } : (isPhone ? { phone: id, password } : { username: id, password });
+    async login(identifier, password, remember = false) {
+        const id = String(identifier || '').trim();
+        const loginData = { identifier: id, password };
 
         try {
             const result = await this.apiRequest('/auth/login', 'POST', loginData);

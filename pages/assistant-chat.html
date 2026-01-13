@@ -9,13 +9,29 @@
   <script src="../js/marked.min.js"></script>
   <link rel="stylesheet" href="https://cdn.staticfile.org/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/css/sidebar.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="../js/user-auth.js"></script>
   <script src="../js/header-profile.js"></script>
     <script src="/js/sidebar.js"></script>
   <style>
-    html, body { height: 100%; overflow: hidden; }
+    :root {
+      --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    }
+    html, body { height: 100%; overflow: hidden; font-family: var(--font-sans); }
     body{ background:#f8fafc; display: flex; flex-direction: column; }
-    .shell{ width:100%; max-width:1200px; margin:0 auto; background:#fff; border-radius:16px; box-shadow:0 20px 60px rgba(15,23,42,.12); overflow:hidden; border:1px solid #e5e7eb; display: flex; flex-direction: column; flex: 1; min-height: 0; }
+    
+    .portal-card {
+        background-color: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .portal-card:hover {
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        /* transform disabled for full-screen chat layout stability */
+    }
+
     .header{ display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid #e5e7eb; background:#ffffff; flex-shrink: 0; }
     .brand{ display:flex; align-items:center; gap:12px }
     .brand .logo{ width:36px; height:36px; border-radius:10px; background:#0f172a; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700 }
@@ -67,19 +83,21 @@
     @media (max-width: 768px){ 
       .content{ grid-template-columns: 1fr }
       .sidebar{ display:none }
-      .shell{ margin:0; border-radius:0; border: none; height: 100%; }
+      .portal-card{ margin:0; border-radius:0; border: none; height: 100%; }
       .main-content { padding-top: 60px !important; height: calc(100vh - 60px); }
     }
   </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50 antialiased text-gray-900 selection:bg-blue-100 selection:text-blue-700">
   <aside id="sidebar" class="fixed left-0 top-0 bottom-0 sidebar-modern z-40"></aside>
-  <header class="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20">
-      <div class="flex items-center justify-between p-4">
-          <div class="flex items-center space-x-4"><button class="menu-button p-2 rounded-lg hover:bg-gray-100"
-                  id="sidebar-toggle"><i class="fas fa-bars text-gray-600"></i></button>
-              <h1 class="brand-title text-lg font-bold text-gray-900">AI 助手对话</h1>
-          </div>
+  <header class="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20 h-20">
+      <div class="flex items-center justify-between px-6 h-full">
+          <div class="flex items-center space-x-4 pl-8">
+                <div class="brand-title flex flex-col justify-center space-y-1.5">
+                    <h1 class="text-lg font-bold text-gray-900 leading-none">AI 助理</h1>
+                    <p class="text-xs text-gray-500 font-medium leading-tight">即时对话，解决您的招聘与简历分析难题</p>
+                </div>
+            </div>
           <div class="flex items-center space-x-4" id="header-right-section">
               <!-- User Profile will be rendered here -->
           </div>
@@ -87,8 +105,8 @@
   </header>
 
   <main class="main-content flex flex-col h-screen overflow-hidden" id="main-content">
-    <div class="p-0 md:p-6 flex-1 min-h-0 flex flex-col items-center">
-      <div class="shell">
+    <div class="p-0 md:p-6 flex-1 min-h-0 flex flex-col items-center w-full max-w-[1440px] mx-auto">
+      <div class="portal-card flex flex-col flex-1 min-h-0 overflow-hidden w-full">
         <div class="content">
           <aside class="sidebar">
             <div class="section">最近对话</div>

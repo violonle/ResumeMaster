@@ -9,6 +9,7 @@
     <script src="../js/ui-components.js"></script>
     <script src="../js/resume-data.js"></script>
     <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/sidebar.css">
     <script>
         tailwind.config = {
@@ -23,25 +24,34 @@
                         }
                     },
                     fontFamily: {
-                        'sans': ['Inter', 'system-ui', 'sans-serif']
+                        'sans': ['Plus Jakarta Sans', 'Inter', 'system-ui', 'sans-serif']
                     }
                 }
             }
         }
     </script>
     <style>
+        :root {
+            --font-family-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+        }
+        body {
+            font-family: var(--font-family-sans);
+        }
+        .portal-card {
+            background-color: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+            transition-property: all;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 300ms;
+        }
+        .portal-card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transform: translateY(-2px);
+        }
         *, *::before, *::after { box-sizing: border-box; }
         html, body { width: 100%; max-width: 100%; overflow-x: hidden; }
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        
-        .form-section {
-            transition: all 0.3s ease;
-        }
-        
-        .form-section:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-        }
         
         .btn-primary {
             background-color: #2563eb;
@@ -95,21 +105,21 @@
         }
         
         .form-input, select, textarea { max-width: 100%; min-width: 0; }
+        .brand-title { white-space: normal !important; }
     </style>
 </head>
-<body class="font-sans bg-gray-50 min-h-screen overflow-x-hidden">
+<body class="bg-gray-50 antialiased text-gray-900 selection:bg-blue-100 selection:text-blue-700 min-h-screen overflow-x-hidden">
     <!-- 侧边栏 -->
     <aside id="sidebar" class="sidebar-modern"></aside>
     <div id="sidebar-overlay" class="sidebar-overlay"></div>
 
-    <!-- 顶部导航栏 -->
-    <header class="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20">
-        <div class="flex items-center justify-between p-4">
-            <div class="flex items-center space-x-4">
-                <button class="menu-button p-2 rounded-lg hover:bg-gray-100" id="sidebar-toggle">
-                    <i class="fas fa-bars text-gray-900"></i>
-                </button>
-                <h1 class="brand-title text-lg font-bold text-gray-900">发布职位</h1>
+    <header class="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20 h-20">
+        <div class="flex items-center justify-between px-6 h-full max-w-[1440px] mx-auto w-full">
+            <div class="flex items-center space-x-4 pl-8">
+                <div class="brand-title flex flex-col justify-center space-y-1.5">
+                    <h1 class="text-lg font-bold text-gray-900 leading-none">发布职位</h1>
+                    <p class="text-xs text-gray-500 font-medium leading-tight">创建新的职位招聘信息，吸引优秀人才加入</p>
+                </div>
             </div>
             <div class="flex items-center space-x-4" id="header-right-section"></div>
         </div>
@@ -117,28 +127,26 @@
 
     <!-- 主内容区 -->
     <main class="main-content pt-20 p-6 transition-all duration-300" id="main-content">
+        <div class="max-w-[1440px] mx-auto">
             <!-- 页面标题 -->
             <div class="flex items-center justify-between mb-8 fade-in-up">
-                <div>
-                    <h1 class="text-3xl font-bold text-gray-900 mb-2">发布职位</h1>
-                    <p class="text-lg text-gray-600">创建新的职位招聘信息，吸引优秀人才加入</p>
-                </div>
+                <div></div>
                 <div class="flex items-center space-x-4">
                     <button class="px-4 py-2 bg-white text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors" id="import-btn">
-                        <i class="fas fa-cloud-download-alt mr-2"></i>一键导入
+                        <span class="mr-2">📥</span>一键导入
                     </button>
                     <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors" id="preview-btn">
-                        <i class="fas fa-eye mr-2"></i>预览
+                        <span class="mr-2">👁️</span>预览
                     </button>
                     <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors" id="save-draft-btn">
-                        <i class="fas fa-save mr-2"></i>保存草稿
+                        <span class="mr-2">💾</span>保存草稿
                     </button>
                 </div>
             </div>
 
             <form id="job-posting-form" class="space-y-8">
                 <!-- 基本信息 -->
-                <div class="form-section bg-white rounded-2xl shadow-lg p-6 fade-in-up">
+                <div class="portal-card p-6 fade-in-up">
                     <div class="flex items-center mb-6">
                         <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
                             <i class="fas fa-info-circle text-blue-600"></i>
@@ -203,7 +211,7 @@
                 </div>
 
                 <!-- 职位描述 -->
-                <div class="form-section bg-white rounded-2xl shadow-lg p-6 fade-in-up">
+                <div class="portal-card p-6 fade-in-up">
                     <div class="flex items-center mb-6">
                         <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
                             <i class="fas fa-file-alt text-blue-600"></i>
@@ -220,7 +228,7 @@
                 </div>
 
                 <!-- 福利待遇 -->
-                <div class="form-section bg-white rounded-2xl shadow-lg p-6 fade-in-up">
+                <div class="portal-card p-6 fade-in-up">
                     <div class="flex items-center mb-6">
                         <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
                             <i class="fas fa-gift text-blue-600"></i>
@@ -285,7 +293,7 @@
                 </div>
 
                 <!-- 发布设置 -->
-                <div class="form-section bg-white rounded-2xl shadow-lg p-6 fade-in-up">
+                <div class="portal-card p-6 fade-in-up">
                     <div class="flex items-center mb-6">
                         <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
                             <i class="fas fa-cog text-blue-600"></i>

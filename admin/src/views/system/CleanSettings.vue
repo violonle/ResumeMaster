@@ -529,9 +529,9 @@ const testSMS = async () => {
     })
     ui.showNotification('测试短信发送成功', 'success')
   } catch (error) {
-    console.error('发送测试短信失败:', error)
-    const msg = (error?.response?.data?.error) || (error?.response?.data?.message) || error?.message || '发送测试短信失败'
-    ui.showNotification(msg, 'error')
+    console.error('Test SMS Error:', error)
+    const errorMsg = error.response?.data?.error || error.response?.data?.message || error.message || '发送失败'
+    ui.showNotification('发送测试短信失败: ' + errorMsg, 'error')
   } finally {
     saving.sms = false
   }

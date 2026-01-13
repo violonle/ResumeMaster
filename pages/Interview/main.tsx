@@ -73,9 +73,10 @@ const App = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">正在为您准备面试题目...</p>
+        <div className="text-center p-10 bg-white/50 backdrop-blur-xl rounded-[2.5rem] shadow-2xl shadow-blue-500/5 border border-gray-100 max-w-sm w-full">
+          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
+          <h2 className="text-xl font-black text-gray-900 mb-2 tracking-tight">准备中...</h2>
+          <p className="text-gray-500 font-medium">正在为您量身定制面试方案</p>
         </div>
       </div>
     );
@@ -84,16 +85,26 @@ const App = () => {
   if (error || !resumeData) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-sm p-8 text-center">
-          <div className="text-red-500 text-5xl mb-4">⚠️</div>
-          <h2 className="text-xl font-bold text-gray-900 mb-2">出错了</h2>
-          <p className="text-gray-600 mb-6">{error || '无法加载简历数据'}</p>
-          <button 
-            onClick={() => window.location.reload()}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
-          >
-            重试
-          </button>
+        <div className="max-w-md w-full bg-white rounded-[2.5rem] shadow-2xl p-10 text-center border border-gray-100">
+          <div className="w-20 h-20 bg-red-50 rounded-[2rem] flex items-center justify-center mx-auto mb-8 text-red-500">
+            <i className="fas fa-exclamation-triangle text-4xl"></i>
+          </div>
+          <h2 className="text-2xl font-black text-gray-900 mb-3 tracking-tight">初始化失败</h2>
+          <p className="text-gray-500 mb-10 font-medium leading-relaxed">{error || '无法加载简历数据'}</p>
+          <div className="space-y-4">
+            <button 
+              onClick={() => window.location.reload()}
+              className="w-full bg-blue-600 text-white py-4 px-6 rounded-2xl font-black shadow-xl shadow-blue-600/20 hover:bg-blue-700 hover:translate-y-[-2px] transition-all active:translate-y-[1px]"
+            >
+              重试一次
+            </button>
+            <button 
+              onClick={() => window.history.back()}
+              className="w-full bg-white text-gray-600 py-4 px-6 rounded-2xl font-black border-2 border-gray-100 hover:bg-gray-50 transition-all"
+            >
+              返回上一页
+            </button>
+          </div>
         </div>
       </div>
     );

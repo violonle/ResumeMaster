@@ -1,9 +1,12 @@
 const express = require('express');
 const { authenticate } = require('../middleware/auth');
 const Permission = require('../middleware/permission');
-const { getCompanyTeam, getRecruitmentStats, getFunnelStats, getCompanyProfile, upsertCompanyProfile, getCompanyResumeStats, getCompanyAnalysisStats, getTopRoles, getRecentActivity, getCompanyProcesses, createCompanyProcess, updateCompanyProcess, deleteCompanyProcess, submitCertification, getMembers, addMember, removeMember, getEfficiencyStats } = require('../controllers/companyController');
+const { getCompanyTeam, getRecruitmentStats, getFunnelStats, getCompanyProfile, upsertCompanyProfile, getCompanyResumeStats, getCompanyAnalysisStats, getTopRoles, getRecentActivity, getCompanyProcesses, createCompanyProcess, updateCompanyProcess, deleteCompanyProcess, submitCertification, getMembers, addMember, removeMember, getEfficiencyStats, getPublicCompanyProfile } = require('../controllers/companyController');
 
 const router = express.Router();
+
+// 公开路由 (Portal 使用)
+router.get('/public/:id', getPublicCompanyProfile);
 
 // 公司相关路由均需认证
 router.get('/team', authenticate, Permission.rateLimit(500, 60*60*1000), getCompanyTeam);

@@ -10,9 +10,25 @@
     <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="/css/design-system.css">
     <link rel="stylesheet" href="/css/sidebar.css">
+    <style>
+        .brand-title { white-space: normal !important; }
+        
+        .portal-card {
+            background: #ffffff;
+            border: 1px solid #f3f4f6;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            border-radius: 16px;
+            transition: all 0.2s;
+        }
+
+        .portal-card:hover {
+            border-color: #e5e7eb;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+    </style>
 </head>
-<body class="bg-gray-50">
-    <aside id="sidebar" class="sidebar-modern"></aside>
+<body class="bg-gray-50 font-sans text-gray-900 antialiased font-['Plus_Jakarta_Sans']">
+    <aside id="sidebar" class="fixed left-0 top-0 bottom-0 sidebar-modern z-40"></aside>
 
     <script>
         // 页面初始化
@@ -65,11 +81,11 @@
 
     <header class="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20">
         <div class="flex items-center justify-between p-4">
-            <div class="flex items-center space-x-4">
-                <button class="menu-button p-2 rounded-lg hover:bg-gray-100" id="sidebar-toggle">
-                    <i class="fas fa-bars text-gray-900"></i>
-                </button>
-                <h1 class="brand-title text-lg font-bold text-gray-900">争湃·简历大师</h1>
+            <div class="flex items-center space-x-4 pl-8">
+                <div class="brand-title flex flex-col justify-center space-y-1.5">
+                    <h1 class="text-lg font-bold text-gray-900 leading-none">职位管理</h1>
+                    <p class="text-xs text-gray-500 font-medium leading-tight">发布和管理招聘职位，匹配合适的简历</p>
+                </div>
             </div>
             <div class="flex items-center space-x-4" id="header-right-section"></div>
             <script src="/js/header-profile.js"></script>
@@ -78,13 +94,10 @@
     </header>
 
     <!-- 主要内容 -->
-    <main class="main-content pt-20 p-6" id="main-content">
-            <!-- 顶部标题栏 -->
-            <div class="flex items-center justify-between mb-6">
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900">职位管理</h1>
-                    <p class="text-gray-600 mt-1">发布和管理招聘职位，匹配合适的简历</p>
-                </div>
+    <main class="main-content min-h-screen pt-20 p-8" id="main-content">
+        <div class="max-w-[1440px] mx-auto">
+            <!-- 顶部操作栏 -->
+            <div class="flex items-center justify-end mb-6">
                 <div class="flex items-center space-x-3">
                     <a href="job-posting.html" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center">
                         <i class="fas fa-plus mr-2"></i>
@@ -101,53 +114,53 @@
             <!-- 统计卡片 -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                 <!-- 总职位数 -->
-                <div class="bg-blue-600 rounded-lg p-6 text-white card-hover">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-white opacity-80">总职位数</p>
-                            <p class="text-3xl font-bold mt-2" id="stats-total">—</p>
+                <div class="portal-card p-6">
+                    <div class="flex items-center space-x-5">
+                        <div class="w-14 h-14 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center text-2xl">
+                            <i class="fas fa-briefcase"></i>
                         </div>
-                        <div class="text-right">
-                            <i class="fas fa-briefcase text-white opacity-60"></i>
+                        <div>
+                            <p class="text-[11px] font-black text-gray-500 uppercase tracking-widest mb-1">总职位数</p>
+                            <h3 class="text-2xl font-black text-gray-900" id="stats-total">—</h3>
                         </div>
                     </div>
                 </div>
 
                 <!-- 活跃职位 -->
-                <div class="bg-blue-600 rounded-lg p-6 text-white card-hover">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-white opacity-80">活跃职位</p>
-                            <p class="text-3xl font-bold mt-2" id="stats-active">—</p>
+                <div class="portal-card p-6">
+                    <div class="flex items-center space-x-5">
+                        <div class="w-14 h-14 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center text-2xl">
+                            <i class="fas fa-check-circle"></i>
                         </div>
-                        <div class="text-right">
-                            <i class="fas fa-check-circle text-white opacity-60"></i>
+                        <div>
+                            <p class="text-[11px] font-black text-gray-500 uppercase tracking-widest mb-1">活跃职位</p>
+                            <h3 class="text-2xl font-black text-gray-900" id="stats-active">—</h3>
                         </div>
                     </div>
                 </div>
 
                 <!-- 简历数 -->
-                <div class="bg-blue-600 rounded-lg p-6 text-white card-hover">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-white opacity-80">简历数</p>
-                            <p class="text-3xl font-bold mt-2" id="stats-candidates">—</p>
+                <div class="portal-card p-6">
+                    <div class="flex items-center space-x-5">
+                        <div class="w-14 h-14 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center text-2xl">
+                            <i class="fas fa-user-friends"></i>
                         </div>
-                        <div class="text-right">
-                            <i class="fas fa-user-friends text-white opacity-60"></i>
+                        <div>
+                            <p class="text-[11px] font-black text-gray-500 uppercase tracking-widest mb-1">简历数</p>
+                            <h3 class="text-2xl font-black text-gray-900" id="stats-candidates">—</h3>
                         </div>
                     </div>
                 </div>
 
                 <!-- 匹配成功 -->
-                <div class="bg-blue-600 rounded-lg p-6 text-white card-hover">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-white opacity-80">匹配成功</p>
-                            <p class="text-3xl font-bold mt-2" id="stats-matched">—</p>
+                <div class="portal-card p-6">
+                    <div class="flex items-center space-x-5">
+                        <div class="w-14 h-14 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center text-2xl">
+                            <i class="fas fa-handshake"></i>
                         </div>
-                        <div class="text-right">
-                            <i class="fas fa-handshake text-white opacity-60"></i>
+                        <div>
+                            <p class="text-[11px] font-black text-gray-500 uppercase tracking-widest mb-1">匹配成功</p>
+                            <h3 class="text-2xl font-black text-gray-900" id="stats-matched">—</h3>
                         </div>
                     </div>
                 </div>
@@ -256,6 +269,7 @@
                         </div>
                     </div>
                 </div>
+        </div>
         </div>
     </main>
 

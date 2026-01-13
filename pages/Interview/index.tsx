@@ -213,33 +213,31 @@ export default function InterviewRunner({ resumeText, resumeId, resumeJobId, ses
   };
   
   return (
-    <div className="max-w-4xl mx-auto min-h-screen sm:min-h-0 sm:py-8 px-0 sm:px-4">
+    <div className="max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
       <AnimatePresence mode="wait">
         <motion.div
           key="interview"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
-          className="bg-white min-h-screen sm:min-h-[600px] sm:rounded-2xl shadow-xl overflow-hidden flex flex-col border border-gray-100"
+          className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] shadow-2xl shadow-blue-500/5 border border-gray-100 overflow-hidden flex flex-col"
         >
           {/* Header */}
-          <div className="px-4 py-3 sm:px-8 sm:py-6 border-b border-gray-100 bg-white/80 backdrop-blur-md sticky top-0 z-10">
+          <div className="px-6 py-5 sm:px-10 sm:py-8 border-b border-gray-100 bg-white/80 backdrop-blur-md sticky top-0 z-10">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-4">
                 <button 
                   onClick={onBack}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors sm:hidden"
+                  className="w-10 h-10 flex items-center justify-center hover:bg-gray-100 rounded-xl transition-all sm:hidden"
                 >
-                  <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
+                  <i className="fas fa-chevron-left text-gray-600"></i>
                 </button>
                 <div>
-                  <h1 className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                  <h1 className="text-xl sm:text-2xl font-black bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent tracking-tight">
                     AI 模拟面试
                   </h1>
                   {session && (
-                    <div className="flex items-center gap-3 mt-1">
+                    <div className="flex items-center gap-3 mt-1.5">
                       <div className="w-24 sm:w-32 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                         <motion.div 
                           initial={{ width: 0 }}
@@ -247,8 +245,8 @@ export default function InterviewRunner({ resumeText, resumeId, resumeJobId, ses
                           className="h-full bg-gradient-to-r from-blue-500 to-indigo-500"
                         />
                       </div>
-                      <p className="text-[10px] sm:text-xs text-gray-500 font-medium">
-                        第 {session.currentQuestionIndex + 1} / {session.questions.length} 题
+                      <p className="text-[10px] sm:text-xs text-gray-500 font-bold tracking-wider uppercase">
+                        Question {session.currentQuestionIndex + 1} / {session.questions.length}
                       </p>
                     </div>
                   )}
@@ -256,9 +254,9 @@ export default function InterviewRunner({ resumeText, resumeId, resumeJobId, ses
               </div>
               
               {session && (
-                <div className="hidden sm:flex items-center gap-2">
-                  <span className="text-sm font-medium text-gray-600">面试进度</span>
-                  <span className="text-sm font-bold text-blue-600">{Math.round(((session.currentQuestionIndex + 1) / session.questions.length) * 100)}%</span>
+                <div className="hidden sm:flex items-center gap-3 bg-blue-50/50 px-4 py-2 rounded-2xl">
+                  <span className="text-xs font-bold text-blue-600/60 uppercase tracking-widest">Progress</span>
+                  <span className="text-sm font-black text-blue-600">{Math.round(((session.currentQuestionIndex + 1) / session.questions.length) * 100)}%</span>
                 </div>
               )}
             </div>

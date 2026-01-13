@@ -9,8 +9,28 @@
     <script src="../js/tailwindcss.js"></script>
     <script src="../js/ui-components.js"></script>
     <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="/js/user-auth.js"></script>
     <style>
+        :root {
+            --font-family-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+        }
+        body {
+            font-family: var(--font-family-sans);
+        }
+        .portal-card {
+            background-color: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+            transition-property: all;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 300ms;
+        }
+        .portal-card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transform: translateY(-2px);
+        }
         .btn-primary {
             background: #2563eb;
             color: #fff;
@@ -49,22 +69,22 @@
     <link rel="stylesheet" href="/css/sidebar.css">
 </head>
 
-<body class="bg-gray-50">
+<body class="bg-gray-50 antialiased text-gray-900 selection:bg-blue-100 selection:text-blue-700">
     <aside id="sidebar" class="fixed left-0 top-0 bottom-0 sidebar-modern z-40"></aside>
 
-    <header class="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20">
-        <div class="flex items-center justify-between p-4">
-            <div class="flex items-center space-x-4">
-                <button id="sidebar-toggle" class="p-2 rounded hover:bg-gray-100">
-                    <i class="fas fa-bars text-gray-600"></i>
-                </button>
-                <h1 class="text-lg font-bold text-gray-900">个人中心</h1>
+    <header class="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20 h-20">
+        <div class="flex items-center justify-between px-6 h-full max-w-[1440px] mx-auto w-full">
+            <div class="flex items-center space-x-4 pl-8">
+                <div class="brand-title flex flex-col justify-center space-y-1.5">
+                    <h1 class="text-lg font-bold text-gray-900 leading-none">个人中心</h1>
+                    <p class="text-xs text-gray-500 font-medium leading-tight">查看和管理您的个人资料、账号信息及使用记录</p>
+                </div>
             </div>
             <div id="header-right-section" class="flex items-center space-x-4"></div>
         </div>
     </header>
-    <main id="main" class="main main-content">
-        <div class="p-6">
+    <main id="main" class="main main-content pt-24">
+        <div class="p-6 max-w-[1440px] mx-auto">
             <div id="first-setup-modal"
                 class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
                 <div class="bg-white rounded-xl shadow-lg w-full max-w-md p-6">
@@ -107,7 +127,7 @@
                     </div>
                 </div>
             </div>
-            <div class="bg-white rounded-xl shadow mb-6">
+            <div class="portal-card mb-6">
                 <div class="border-b border-gray-200">
                     <nav class="flex space-x-8 px-6">
                         <button class="tab-btn active py-3 px-2 text-sm" data-tab="notify">通知设置</button>
@@ -121,13 +141,13 @@
                         <h3 class="text-lg font-semibold text-gray-900">通知设置</h3>
                         <button class="text-blue-600 hover:text-blue-700 text-sm font-medium"
                             onclick="saveSection('notifications')">
-                            <i class="fas fa-save mr-1"></i>保存
+                            <span class="mr-1">💾</span>保存
                         </button>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <h4 class="font-medium text-gray-900 mb-3 flex items-center">
-                                <i class="fas fa-envelope text-blue-600 mr-2"></i>邮件通知
+                                <span class="mr-2">📧</span>邮件通知
                             </h4>
                             <div class="space-y-3">
                                 <label class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -155,7 +175,7 @@
                         </div>
                         <div>
                             <h4 class="font-medium text-gray-900 mb-3 flex items-center">
-                                <i class="fas fa-bell text-green-600 mr-2"></i>应用通知
+                                <span class="mr-2">🔔</span>应用通知
                             </h4>
                             <div class="space-y-3">
                                 <label class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -188,13 +208,13 @@
                         <h3 class="text-lg font-semibold text-gray-900">安全设置</h3>
                         <button class="text-blue-600 hover:text-blue-700 text-sm font-medium"
                             onclick="saveSection('security')">
-                            <i class="fas fa-save mr-1"></i>保存
+                            <span class="mr-1">💾</span>保存
                         </button>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <h4 class="font-medium text-gray-900 mb-3 flex items-center">
-                                <i class="fas fa-lock text-red-600 mr-2"></i>登录安全
+                                <span class="mr-2">🔒</span>登录安全
                             </h4>
                             <div class="space-y-4">
                                 <div class="p-4 border border-gray-200 rounded-lg">
@@ -215,7 +235,7 @@
                         </div>
                         <div>
                             <h4 class="font-medium text-gray-900 mb-3 flex items-center">
-                                <i class="fas fa-key text-blue-600 mr-2"></i>密码策略
+                                <span class="mr-2">🔑</span>密码策略
                             </h4>
                             <div class="space-y-4">
                                 <div>
@@ -247,7 +267,7 @@
                         <h3 class="text-lg font-semibold text-gray-900">数据备份</h3>
                         <button class="text-blue-600 hover:text-blue-700 text-sm font-medium"
                             onclick="saveSection('backup')">
-                            <i class="fas fa-save mr-1"></i>保存设置
+                            <span class="mr-1">💾</span>保存设置
                         </button>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -298,12 +318,12 @@
                                     <button
                                         class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
                                         onclick="backupData()">
-                                        <i class="fas fa-download mr-1"></i>立即备份
+                                        <span class="mr-1">📥</span>立即备份
                                     </button>
                                     <button
                                         class="flex-1 bg-white text-blue-600 border border-blue-600 hover:bg-blue-50 px-3 py-2 rounded-md text-sm font-medium transition-colors"
                                         onclick="importData()">
-                                        <i class="fas fa-upload mr-1"></i>恢复数据
+                                        <span class="mr-1">📤</span>恢复数据
                                     </button>
                                 </div>
                             </div>

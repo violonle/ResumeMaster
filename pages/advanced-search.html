@@ -7,16 +7,26 @@
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <script src="../js/tailwindcss.js"></script>
     <link href="https://cdn.staticfile.org/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/sidebar.css">
     <script src="../js/user-auth.js"></script>
     <script src="../js/header-profile.js"></script>
     <script src="/js/sidebar.js"></script>
     
     <style>
-        .glass-card {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+        :root { --font-sans: 'Plus Jakarta Sans', sans-serif; }
+        body { font-family: var(--font-sans); }
+        .portal-card {
+            background: white;
+            border-radius: 16px;
+            border: 1px solid rgba(229, 231, 235, 0.5);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .portal-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.12), 0 4px 8px -4px rgba(0, 0, 0, 0.08);
+            border-color: rgba(59, 130, 246, 0.3);
         }
         .search-highlight {
             background-color: #fef3c7;
@@ -54,13 +64,15 @@
         }
     </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50 text-gray-900 font-sans antialiased selection:bg-blue-100 selection:text-blue-700">
     <aside id="sidebar" class="fixed left-0 top-0 bottom-0 sidebar-modern z-40"></aside>
-    <header class="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20">
-        <div class="flex items-center justify-between p-4">
-            <div class="flex items-center space-x-4"><button class="menu-button p-2 rounded-lg hover:bg-gray-100"
-                    id="sidebar-toggle"><i class="fas fa-bars text-gray-600"></i></button>
-                <h1 class="brand-title text-lg font-bold text-gray-900">高级搜索</h1>
+    <header class="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20 h-20">
+        <div class="flex items-center justify-between px-6 h-full">
+            <div class="flex items-center space-x-4 pl-8">
+                <div class="brand-title flex flex-col justify-center space-y-1.5">
+                    <h1 class="text-lg font-bold text-gray-900 leading-none">高级搜索</h1>
+                    <p class="text-xs text-gray-500 font-medium leading-tight">通过多维条件筛选，精准定位您需要的人才和简历</p>
+                </div>
             </div>
             <div class="flex items-center space-x-4" id="header-right-section">
                 <!-- User Profile will be rendered here -->
@@ -68,21 +80,19 @@
         </div>
     </header>
 
-    <main class="main-content pt-20 p-6" id="main-content">
-        <div class="max-w-7xl mx-auto mb-4 flex justify-end space-x-4">
+    <main class="main-content pt-24 p-6" id="main-content">
+        <div class="max-w-[1440px] mx-auto mb-4 flex justify-end space-x-4">
             <button class="text-gray-500 hover:text-gray-700 bg-white p-2 rounded shadow-sm" id="saved-searches-btn">
-                <i class="fas fa-bookmark"></i>
-                <span class="ml-1">已保存</span>
+                <span class="ml-1">🔖 已保存</span>
             </button>
             <button class="text-gray-500 hover:text-gray-700 bg-white p-2 rounded shadow-sm" id="search-history-btn">
-                <i class="fas fa-history"></i>
-                <span class="ml-1">历史</span>
+                <span class="ml-1">🕒 历史</span>
             </button>
         </div>
 
-    <div class="max-w-7xl mx-auto py-8">
+    <div class="max-w-[1440px] mx-auto py-8">
         <!-- 搜索区域 -->
-        <div class="glass-card rounded-xl p-6 mb-8">
+        <div class="portal-card p-6 mb-8">
             <!-- 主要搜索栏 -->
             <div class="relative mb-4">
                 <div class="flex items-center">
@@ -93,19 +103,19 @@
                             placeholder="搜索简历、模板、用户... (Ctrl+K 快捷键)"
                             class="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         >
-                        <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">🔍</span>
                     </div>
                     <button 
                         data-search-button
                         class="ml-4 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                     >
-                        <i class="fas fa-search mr-2"></i>搜索
+                        <span class="mr-2">🔍</span>搜索
                     </button>
                     <button 
                         data-clear-search
                         class="ml-2 px-4 py-3 text-gray-600 hover:text-gray-800 transition-colors"
                     >
-                        <i class="fas fa-times"></i>
+                        <span>✖️</span>
                     </button>
                 </div>
             </div>
@@ -136,14 +146,14 @@
                     id="advanced-filter-toggle"
                     class="text-blue-600 hover:text-blue-800 text-sm font-medium"
                 >
-                    <i class="fas fa-filter mr-1"></i>
+                    <span class="mr-1">🎭</span>
                     高级筛选
                 </button>
                 <button 
                     data-save-search
                     class="text-green-600 hover:text-green-800 text-sm font-medium"
                 >
-                    <i class="fas fa-save mr-1"></i>
+                    <span class="mr-1">💾</span>
                     保存搜索
                 </button>
             </div>
@@ -238,7 +248,7 @@
             <div id="search-results" class="space-y-4">
                 <!-- 搜索结果将在这里显示 -->
                 <div class="text-center py-12">
-                    <i class="fas fa-search text-gray-400 text-4xl mb-4"></i>
+                    <span class="text-gray-400 text-4xl mb-4 block">🔍</span>
                     <p class="text-gray-500">输入关键词开始搜索</p>
                     <p class="text-sm text-gray-400 mt-2">支持按标题、分类、状态等多种条件筛选</p>
                 </div>
@@ -252,13 +262,13 @@
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-lg font-semibold text-gray-900">已保存的搜索</h3>
                         <button id="close-saved-searches" class="text-gray-400 hover:text-gray-600">
-                            <i class="fas fa-times"></i>
+                            <span>✖️</span>
                         </button>
                     </div>
                     <div id="saved-searches-list" class="space-y-2">
                         <!-- 已保存的搜索列表 -->
                         <div class="text-center py-8 text-gray-500">
-                            <i class="fas fa-bookmark text-2xl mb-2"></i>
+                            <span class="text-2xl mb-2 block">🔖</span>
                             <p>暂无保存的搜索</p>
                         </div>
                     </div>
@@ -269,22 +279,22 @@
         <!-- 搜索历史面板 -->
         <div id="search-history-panel" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50">
             <div class="flex items-center justify-center min-h-screen p-4">
-                <div class="glass-card rounded-xl p-6 max-w-md w-full max-h-96 overflow-y-auto">
+                <div class="portal-card p-6 max-w-md w-full max-h-96 overflow-y-auto">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-lg font-semibold text-gray-900">搜索历史</h3>
                         <div class="flex items-center space-x-2">
                             <button id="clear-history" class="text-sm text-red-600 hover:text-red-800">
-                                <i class="fas fa-trash mr-1"></i>清空
+                                <span class="mr-1">🗑️</span>清空
                             </button>
                             <button id="close-history" class="text-gray-400 hover:text-gray-600">
-                                <i class="fas fa-times"></i>
+                                <span>✖️</span>
                             </button>
                         </div>
                     </div>
                     <div id="search-history-list" class="space-y-2">
                         <!-- 搜索历史列表 -->
                         <div class="text-center py-8 text-gray-500">
-                            <i class="fas fa-history text-2xl mb-2"></i>
+                            <span class="text-2xl mb-2 block">🕒</span>
                             <p>暂无搜索历史</p>
                         </div>
                     </div>
@@ -321,9 +331,12 @@
             
             advancedFilterToggle.addEventListener('click', function() {
                 advancedFilterPanel.classList.toggle('open');
-                const icon = this.querySelector('i');
-                icon.classList.toggle('fa-filter');
-                icon.classList.toggle('fa-times');
+                const icon = this.querySelector('span');
+                if (advancedFilterPanel.classList.contains('open')) {
+                    icon.textContent = '✖️';
+                } else {
+                    icon.textContent = '🎭';
+                }
             });
 
             // 快速筛选按钮
@@ -408,7 +421,7 @@
                 if (advancedSearch.savedSearches.length === 0) {
                     listContainer.innerHTML = `
                         <div class="text-center py-8 text-gray-500">
-                            <i class="fas fa-bookmark text-2xl mb-2"></i>
+                            <span class="text-2xl mb-2 block">🔖</span>
                             <p>暂无保存的搜索</p>
                         </div>
                     `;
@@ -426,7 +439,7 @@
                                 </p>
                             </div>
                             <button class="text-red-500 hover:text-red-700" onclick="deleteSavedSearch(${search.id})">
-                                <i class="fas fa-trash text-sm"></i>
+                                <span class="text-sm">🗑️</span>
                             </button>
                         </div>
                     </div>
@@ -448,7 +461,7 @@
                 if (advancedSearch.searchHistory.length === 0) {
                     listContainer.innerHTML = `
                         <div class="text-center py-8 text-gray-500">
-                            <i class="fas fa-history text-2xl mb-2"></i>
+                            <span class="text-2xl mb-2 block">🕒</span>
                             <p>暂无搜索历史</p>
                         </div>
                     `;
@@ -463,7 +476,7 @@
                                 <p class="text-xs text-gray-400 mt-1">搜索历史</p>
                             </div>
                             <button class="text-blue-500 hover:text-blue-700" onclick="advancedSearch.selectSuggestion('${query}'); searchHistoryPanel.classList.add('hidden');">
-                                <i class="fas fa-arrow-right text-sm"></i>
+                                <span class="text-sm">➡️</span>
                             </button>
                         </div>
                     </div>

@@ -213,6 +213,27 @@ const removeMember = async (req, res) => {
   }
 };
 
+// 获取公开公司资料（供Portal使用）
+const getPublicCompanyProfile = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ success: false, error: { message: '公司ID必填' } });
+
+    const company = await Company.findOne({ 
+      where: { id },
+      attributes: ['id', 'name', 'industry', 'size', 'website', 'description', 'logo_url', 'established_date', 'address', 'verification_status']
+    });
+
+    if (!company) {
+      return res.status(404).json({ success: false, error: { message: '公司不存在' } });
+    }
+
+    res.json({ success: true, data: company });
+  } catch (error) {
+    res.status(500).json({ success: false, error: { message: error.message } });
+  }
+};
+
 module.exports = {
   getCompanyTeam,
   getRecruitmentStats,
@@ -221,6 +242,7 @@ module.exports = {
   getMembers,
   addMember,
   removeMember,
+  getPublicCompanyProfile,
   // getEfficiencyStats, // 移除重复的引用
   async getCompanyResumeStats(req, res) {
     try {

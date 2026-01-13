@@ -355,7 +355,7 @@ router.post('/system/sms/test', authenticateToken, requireAdmin, async (req, res
     const phone = req.body.phone
     const content = req.body.content || '测试短信'
     if (!phone) return res.status(400).json({ message: '缺少手机号' })
-    const r = await smsService.sendText(String(phone), String(content))
+    const r = await smsService.sendText(String(phone), content)
     if (r.success) return res.json({ success: true })
     return res.status(400).json({ success: false, error: r.error || '发送失败' })
   } catch (e) {

@@ -1,9 +1,13 @@
 const express = require('express');
-const { getAllJobs, getJobById, createJob, updateJob, deleteJob, importJobFromUrl } = require('../controllers/jobController');
+const { getAllJobs, getJobById, createJob, updateJob, deleteJob, importJobFromUrl, getPublicJobs, getPublicJobById } = require('../controllers/jobController');
 const { authenticate } = require('../middleware/auth');
 const Permission = require('../middleware/permission');
 
 const router = express.Router();
+
+// 公开路由 (Portal 使用)
+router.get('/public', getPublicJobs);
+router.get('/public/:id', getPublicJobById);
 
 // 所有职位相关路由都需要认证
 router.get('/', authenticate, Permission.rateLimit(500, 60*60*1000), getAllJobs);

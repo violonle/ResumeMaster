@@ -12,12 +12,11 @@ const recruitmentFlowController = {
         currentJobId: 'all',
         candidates: [],
         columns: [
-            { id: 'applied', title: '投递', color: 'blue' },
-            { id: 'screening', title: '初筛', color: 'indigo' },
-            { id: 'interview', title: '面试', color: 'purple' },
-            { id: 'offer', title: 'Offer', color: 'amber' },
-            { id: 'hired', title: '入职', color: 'emerald' },
-            { id: 'rejected', title: '淘汰', color: 'red' }
+            { id: 'applied', title: '新投递', icon: 'fa-inbox-in', color: 'blue' },
+            { id: 'screening', title: '已初筛', icon: 'fa-user-check', color: 'indigo' },
+            { id: 'interview', title: '面试中', icon: 'fa-comments-question', color: 'purple' },
+            { id: 'offer', title: '已录用', icon: 'fa-file-certificate', color: 'amber' },
+            { id: 'hired', title: '已入职', icon: 'fa-check-double', color: 'emerald' }
         ],
         draggedCardId: null
     },
@@ -178,23 +177,34 @@ const recruitmentFlowController = {
         if (!board) return;
 
         board.innerHTML = this.state.columns.map(col => `
-            <div class="flex flex-col h-full bg-gray-50 rounded-lg border border-gray-200 w-80 flex-shrink-0" data-column="${col.id}">
-                <div class="p-3 border-b border-gray-200 bg-white rounded-t-lg flex justify-between items-center sticky top-0 z-10">
-                    <div class="flex items-center gap-2">
-                        <div class="w-3 h-3 rounded-full bg-${col.color}-500"></div>
-                        <h3 class="font-semibold text-gray-700">${col.title}</h3>
-                        <span class="text-xs px-2 py-0.5 bg-gray-100 rounded-full text-gray-500 count-badge">0</span>
+            <div 
+                class="min-w-[340px] w-[340px] rounded-3xl p-5 border transition-all flex flex-col h-full bg-white border-gray-100/50 column-container" 
+                data-column="${col.id}"
+                ondrop="recruitmentFlowController.handleDrop(event, '${col.id}')"
+                ondragover="recruitmentFlowController.handleDragOver(event)"
+                ondragenter="recruitmentFlowController.handleDragEnter(event)"
+                ondragleave="recruitmentFlowController.handleDragLeave(event)"
+            >
+                <div class="flex items-center justify-between mb-6 px-3">
+                    <div class="flex items-center">
+                        <div class="w-9 h-9 rounded-lg bg-white border border-gray-100 shadow-sm flex items-center justify-center mr-3 text-${col.color}-600">
+                            <i class="fa-solid ${col.icon || 'fa-folder'} text-sm"></i>
+                        </div>
+                        <span class="text-sm font-black text-gray-900">${col.title}</span>
                     </div>
-                    <button class="text-gray-400 hover:text-gray-600"><i class="fas fa-ellipsis-h"></i></button>
+                    <span class="w-7 h-7 rounded-lg bg-white flex items-center justify-center text-[10px] font-black text-${col.color}-700 border border-gray-100 shadow-sm count-badge">
+                        0
+                    </span>
                 </div>
-                <div class="flex-1 p-2 overflow-y-auto space-y-3 custom-scrollbar kanban-column" 
-                     id="col-${col.id}"
-                     ondrop="recruitmentFlowController.handleDrop(event, '${col.id}')"
-                     ondragover="recruitmentFlowController.handleDragOver(event)"
-                     ondragenter="recruitmentFlowController.handleDragEnter(event)"
-                     ondragleave="recruitmentFlowController.handleDragLeave(event)">
+                
+                <div class="space-y-4 flex-1 overflow-y-auto custom-scrollbar pr-1 kanban-column" id="col-${col.id}">
                     <!-- Cards will be injected here -->
                 </div>
+
+                <button onclick="recruitmentFlowController.openAddCandidateModal()" class="w-full py-4 mt-4 border-2 border-dashed border-gray-100 rounded-2xl text-[11px] text-gray-400 font-black hover:bg-white hover:text-blue-700 hover:border-blue-200 transition-all flex items-center justify-center group">
+                    <i class="fa-solid fa-plus-circle mr-2 text-sm group-hover:scale-110 transition-transform"></i>
+                    添加候选人
+                </button>
             </div>
         `).join('');
 
@@ -210,109 +220,104 @@ const recruitmentFlowController = {
         this.state.columns.forEach(col => {
             const countBadge = document.querySelector(`[data-column="${col.id}"] .count-badge`);
             if (countBadge) countBadge.textContent = '0';
+            const colEl = document.getElementById(`col-${col.id}`);
+            if (colEl) colEl.innerHTML = '';
         });
 
         filteredCandidates.forEach(candidate => {
-            // 添加调试信息
-            console.log('创建简历卡片:', { id: candidate.id, resumeId: candidate.resumeId, name: candidate.name });
-            
             const colEl = document.getElementById(`col-${candidate.status}`);
             if (colEl) {
                 const card = document.createElement('div');
-                card.className = 'bg-white p-3 rounded shadow-sm border border-gray-100 cursor-move hover:shadow-md transition-all duration-200 group relative';
+                card.className = `bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:border-blue-300 transition-all cursor-move group relative animate-in overflow-hidden`;
                 card.draggable = true;
                 card.dataset.id = candidate.id;
-                // 添加点击事件，使整个卡片可点击查看详情
-                    card.addEventListener('click', (e) => {
-                        // 如果点击的是按钮，不执行卡片点击事件（避免冲突）
-                        if (!e.target.closest('button')) {
-                            this.viewResume(candidate.resumeId);
-                        }
-                    });
+                
+                card.addEventListener('click', (e) => {
+                    if (!e.target.closest('button') && !e.target.closest('a')) {
+                        this.viewResume(candidate.resumeId);
+                    }
+                });
+
+                const avatarUrl = `https://i.pravatar.cc/150?u=${candidate.id}`;
+                const tags = candidate.tags || ['待处理'];
+                
+                // Determine action text based on status
+                const nextActionText = {
+                    'applied': '通过初筛',
+                    'screening': '安排面试',
+                    'interview': '面试通过',
+                    'offer': '确认入职',
+                    'hired': '查看档案'
+                }[candidate.status] || '下一步';
+
                 card.innerHTML = `
-                    <div class="flex justify-between items-start mb-2">
-                        <div>
-                            <div class="font-medium text-gray-900">${candidate.name}</div>
-                            <div class="text-xs text-gray-500">${candidate.education} · ${candidate.experience}</div>
-                        </div>
-                        <div class="text-xs font-semibold ${candidate.score >= 90 ? 'text-green-600' : 'text-blue-600'}">
-                            ${candidate.score}分
+                    <!-- Hover Overlay -->
+                    <div class="absolute inset-0 bg-white/90 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-all duration-300 z-10 flex items-center justify-center px-2">
+                        <div class="flex items-center gap-1.5 w-[95%]">
+                            <button onclick="recruitmentFlowController.viewResume('${candidate.resumeId}')" 
+                                    class="flex-1 bg-white border border-gray-200 text-gray-700 text-[10px] font-black py-1.5 rounded-lg hover:bg-gray-50 transition-colors shadow-sm whitespace-nowrap overflow-hidden text-ellipsis">
+                                查看
+                            </button>
+                            <button onclick="recruitmentFlowController.advanceCandidate('${candidate.id}')" 
+                                    class="flex-1 bg-blue-600 text-white text-[10px] font-black py-1.5 rounded-lg hover:bg-blue-700 transition-colors shadow-md shadow-blue-100 whitespace-nowrap overflow-hidden text-ellipsis">
+                                ${nextActionText}
+                            </button>
+                            <a href="javascript:void(0)" onclick="recruitmentFlowController.advanceCandidate('${candidate.id}', 'rejected')" 
+                               class="pl-2 text-[10px] font-black text-gray-400 hover:text-red-500 transition-colors whitespace-nowrap border-l border-gray-100 shrink-0">
+                                淘汰
+                            </a>
                         </div>
                     </div>
-                    ${this.renderCardActions(candidate)}
+
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="flex flex-wrap gap-1">
+                            ${tags.map(tag => `
+                                <span class="inline-flex items-center text-[8px] font-black px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded border border-blue-100/50">
+                                    ${tag}
+                                </span>
+                            `).join('')}
+                        </div>
+                        <i class="fa-solid fa-grip-lines text-gray-100 group-hover:text-gray-200 text-[10px] transition-colors"></i>
+                    </div>
+
+                    <div class="flex items-center space-x-3 mt-2">
+                        <img class="w-8 h-8 rounded-lg border border-gray-50 shadow-sm pointer-events-none" src="${avatarUrl}" alt="${candidate.name}" />
+                        <div class="min-w-0 flex-1">
+                            <h4 class="text-[12px] font-black text-gray-900 truncate">${candidate.name}</h4>
+                            <p class="text-[10px] font-bold text-gray-400 truncate">${candidate.education} · ${candidate.experience}</p>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <div class="text-[11px] font-black ${candidate.score >= 90 ? 'text-green-600' : 'text-blue-600'}">
+                                ${candidate.score}
+                            </div>
+                        </div>
+                    </div>
                 `;
                 
-                // Drag events
                 card.addEventListener('dragstart', (e) => this.handleDragStart(e, candidate.id));
                 card.addEventListener('dragend', (e) => this.handleDragEnd(e));
 
                 colEl.appendChild(card);
 
-                // Update count
                 const countBadge = document.querySelector(`[data-column="${candidate.status}"] .count-badge`);
                 if (countBadge) {
                     countBadge.textContent = parseInt(countBadge.textContent) + 1;
                 }
             }
         });
-    },
-
-    renderCardActions(candidate) {
-        let actions = '';
-        const btnClass = "flex-1 text-xs py-1.5 rounded transition-colors text-center";
         
-        switch (candidate.status) {
-            case 'applied': // 投递
-                actions = `
-                    <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onclick="recruitmentFlowController.viewResume('${candidate.resumeId}')" class="${btnClass} bg-gray-100 text-gray-600 hover:bg-gray-200">查看</button>
-                        <button onclick="recruitmentFlowController.advanceCandidate('${candidate.id}', 'screening')" class="${btnClass} bg-indigo-50 text-indigo-600 hover:bg-indigo-100">通过初筛</button>
-                    </div>`;
-                break;
-                
-            case 'screening': // 初筛
-                actions = `
-                    <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                         <button onclick="recruitmentFlowController.viewResume('${candidate.resumeId}')" class="${btnClass} bg-gray-100 text-gray-600 hover:bg-gray-200">查看</button>
-                         <button onclick="recruitmentFlowController.advanceCandidate('${candidate.id}', 'interview')" class="${btnClass} bg-purple-50 text-purple-600 hover:bg-purple-100">安排面试</button>
-                    </div>`;
-                break;
-
-            case 'interview': // 面试
-                actions = `
-                    <div class="grid grid-cols-2 gap-2">
-                        <button onclick="recruitmentFlowController.openModal('interview', '${candidate.id}')" class="${btnClass} bg-purple-50 text-purple-600 hover:bg-purple-100 col-span-2"><i class="fas fa-calendar-alt mr-1"></i>安排/修改面试</button>
-                        <button onclick="recruitmentFlowController.advanceCandidate('${candidate.id}', 'offer')" class="${btnClass} bg-green-50 text-green-600 hover:bg-green-100">面试通过</button>
-                        <button onclick="recruitmentFlowController.advanceCandidate('${candidate.id}', 'rejected')" class="${btnClass} bg-red-50 text-red-600 hover:bg-red-100">淘汰</button>
-                    </div>`;
-                break;
-
-            case 'offer': // Offer
-                actions = `
-                    <div class="space-y-2">
-                        <button onclick="recruitmentFlowController.openModal('offer', '${candidate.id}')" class="${btnClass} w-full bg-amber-50 text-amber-600 hover:bg-amber-100"><i class="fas fa-file-contract mr-1"></i>发送/修改Offer</button>
-                        <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onclick="recruitmentFlowController.advanceCandidate('${candidate.id}', 'hired')" class="${btnClass} bg-emerald-50 text-emerald-600 hover:bg-emerald-100">确认入职</button>
-                            <button onclick="recruitmentFlowController.advanceCandidate('${candidate.id}', 'rejected')" class="${btnClass} bg-red-50 text-red-600 hover:bg-red-100">拒绝</button>
-                        </div>
-                    </div>`;
-                break;
-
-            case 'hired': // 入职
-                actions = `
-                    <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onclick="recruitmentFlowController.viewResume('${candidate.resumeId}')" class="${btnClass} w-full bg-gray-100 text-gray-600 hover:bg-gray-200">查看档案</button>
-                    </div>`;
-                break;
-
-            case 'rejected': // 淘汰
-                actions = `
-                    <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onclick="recruitmentFlowController.advanceCandidate('${candidate.id}', 'applied')" class="${btnClass} w-full bg-gray-100 text-gray-600 hover:bg-gray-200">恢复候选人</button>
-                    </div>`;
-                break;
-        }
-        return actions;
+        // Render empty states
+        this.state.columns.forEach(col => {
+            const colEl = document.getElementById(`col-${col.id}`);
+            if (colEl && colEl.children.length === 0) {
+                colEl.innerHTML = `
+                    <div class="py-12 text-center border-2 border-dashed border-gray-100 rounded-2xl bg-white/30 flex flex-col items-center">
+                        <i class="fa-solid fa-folder-open text-gray-200 text-3xl mb-3"></i>
+                        <p class="text-xs font-black text-gray-400">将卡片拖至此处</p>
+                    </div>
+                `;
+            }
+        });
     },
 
     updateStats() {
@@ -329,11 +334,30 @@ const recruitmentFlowController = {
         const statsEl = document.getElementById('process-stats');
         if (statsEl) {
             statsEl.innerHTML = `
-                <div class="flex items-center gap-4 text-sm text-gray-600">
-                    <div><span class="font-bold text-gray-900">${stats.total}</span> 候选人</div>
-                    <div><span class="font-bold text-indigo-600">${stats.interview}</span> 面试中</div>
-                    <div><span class="font-bold text-amber-600">${stats.offer}</span> Offer</div>
-                    <div><span class="font-bold text-emerald-600">${stats.hired}</span> 入职</div>
+                <div class="flex items-center gap-6">
+                    <div class="flex items-center">
+                        <div class="w-2 h-2 rounded-full bg-blue-600 mr-2"></div>
+                        <span class="text-[11px] font-black text-gray-400 mr-2">候选人</span>
+                        <span class="text-sm font-black text-gray-900">${stats.total}</span>
+                    </div>
+                    <div class="w-px h-4 bg-gray-100"></div>
+                    <div class="flex items-center">
+                        <div class="w-2 h-2 rounded-full bg-purple-600 mr-2"></div>
+                        <span class="text-[11px] font-black text-gray-400 mr-2">面试中</span>
+                        <span class="text-sm font-black text-gray-900">${stats.interview}</span>
+                    </div>
+                    <div class="w-px h-4 bg-gray-100"></div>
+                    <div class="flex items-center">
+                        <div class="w-2 h-2 rounded-full bg-amber-600 mr-2"></div>
+                        <span class="text-[11px] font-black text-gray-400 mr-2">录用中</span>
+                        <span class="text-sm font-black text-gray-900">${stats.offer}</span>
+                    </div>
+                    <div class="w-px h-4 bg-gray-100"></div>
+                    <div class="flex items-center">
+                        <div class="w-2 h-2 rounded-full bg-emerald-600 mr-2"></div>
+                        <span class="text-[11px] font-black text-gray-400 mr-2">已入职</span>
+                        <span class="text-sm font-black text-gray-900">${stats.hired}</span>
+                    </div>
                 </div>
             `;
         }
@@ -343,13 +367,14 @@ const recruitmentFlowController = {
     handleDragStart(e, id) {
         this.state.draggedCardId = id;
         e.dataTransfer.setData('text/plain', id);
-        e.target.classList.add('opacity-50');
+        e.target.classList.add('opacity-40', 'scale-95', 'grayscale');
     },
 
     handleDragEnd(e) {
-        e.target.classList.remove('opacity-50');
-        document.querySelectorAll('.kanban-column').forEach(col => {
-            col.classList.remove('bg-gray-100', 'ring-2', 'ring-blue-100');
+        e.target.classList.remove('opacity-40', 'scale-95', 'grayscale');
+        document.querySelectorAll('.column-container').forEach(col => {
+            col.classList.remove('bg-blue-50/80', 'border-blue-400', 'border-2', 'shadow-inner');
+            col.classList.add('bg-white', 'border-gray-100/50');
         });
         this.state.draggedCardId = null;
     },
@@ -360,16 +385,18 @@ const recruitmentFlowController = {
 
     handleDragEnter(e) {
         e.preventDefault();
-        const col = e.target.closest('.kanban-column');
+        const col = e.target.closest('.column-container');
         if (col) {
-            col.classList.add('bg-gray-100', 'ring-2', 'ring-blue-100');
+            col.classList.remove('bg-white', 'border-gray-100/50');
+            col.classList.add('bg-blue-50/80', 'border-blue-400', 'border-2', 'shadow-inner');
         }
     },
 
     handleDragLeave(e) {
-        const col = e.target.closest('.kanban-column');
+        const col = e.target.closest('.column-container');
         if (col) {
-            col.classList.remove('bg-gray-100', 'ring-2', 'ring-blue-100');
+            col.classList.remove('bg-blue-50/80', 'border-blue-400', 'border-2', 'shadow-inner');
+            col.classList.add('bg-white', 'border-gray-100/50');
         }
     },
 
@@ -457,6 +484,48 @@ const recruitmentFlowController = {
     },
 
     // Modal Management
+    openAddCandidateModal() {
+        const modal = document.getElementById('addCandidateModal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            // Populate job select
+            const jobSelect = document.getElementById('modalJobSelect');
+            if (jobSelect) {
+                jobSelect.innerHTML = '<option value="">请选择目标职位...</option>' + 
+                    this.state.jobs
+                        .filter(j => j.id !== 'all')
+                        .map(j => `<option value="${j.id}">${j.title} - ${j.department}</option>`)
+                        .join('');
+                
+                // Reset candidate select
+                const candidateSelect = document.getElementById('modalCandidateSelect');
+                if (candidateSelect) {
+                    candidateSelect.innerHTML = '<option value="">请先选择职位...</option>';
+                    candidateSelect.disabled = true;
+                }
+            }
+        }
+    },
+
+    async loadCandidatesForJob(jobId) {
+        // Mock function to load candidates not in pipeline for specific job
+        // In real app, this should fetch candidates who applied to this job but not processed yet
+        // For demo, we'll list all candidates not in current board
+        try {
+            // Reusing getRecruitmentPipeline logic or fetching from a different endpoint
+            // For now, let's just show some mock candidates or available resumes
+             if (typeof resumeDataManager === 'undefined') return [];
+             const resumes = await resumeDataManager.getAllResumes();
+             return resumes.map(r => ({
+                 id: r.id,
+                 name: r.file_name || '未命名候选人'
+             }));
+        } catch (error) {
+            console.error('Failed to load candidates', error);
+            return [];
+        }
+    },
+
     openModal(type, candidateId) {
         const modal = document.getElementById(`${type}Modal`);
         if (modal) {
@@ -492,6 +561,51 @@ const recruitmentFlowController = {
         };
 
         // Form submissions
+        const addCandidateForm = document.getElementById('addCandidateForm');
+        if (addCandidateForm) {
+            const modalJobSelect = document.getElementById('modalJobSelect');
+            const modalCandidateSelect = document.getElementById('modalCandidateSelect');
+
+            modalJobSelect.addEventListener('change', async (e) => {
+                const jobId = e.target.value;
+                if (jobId) {
+                    modalCandidateSelect.disabled = false;
+                    modalCandidateSelect.innerHTML = '<option value="">正在加载候选人...</option>';
+                    const candidates = await this.loadCandidatesForJob(jobId);
+                    modalCandidateSelect.innerHTML = '<option value="">请选择候选人...</option>' + 
+                        candidates.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+                } else {
+                    modalCandidateSelect.innerHTML = '<option value="">请先选择职位...</option>';
+                    modalCandidateSelect.disabled = true;
+                }
+            });
+
+            addCandidateForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const jobId = modalJobSelect.value;
+                const resumeId = modalCandidateSelect.value;
+                
+                if (!jobId || !resumeId) {
+                    if (window.ui && window.ui.showAlert) window.ui.showAlert('请选择职位和候选人', { type: 'warning' });
+                    return;
+                }
+
+                try {
+                    if (typeof ErrorHandler !== 'undefined') ErrorHandler.showLoading(true);
+                    // Add to pipeline (setting status to '投递')
+                    await resumeDataManager.updateRecruitmentStatus(resumeId, '投递');
+                    
+                    if (window.ui && window.ui.showAlert) window.ui.showAlert('候选人已成功添加！', { type: 'success' });
+                    this.closeModal('addCandidate');
+                    this.loadData();
+                } catch (err) {
+                    if (window.ui && window.ui.showAlert) window.ui.showAlert('添加失败: ' + err.message, { type: 'error' });
+                } finally {
+                    if (typeof ErrorHandler !== 'undefined') ErrorHandler.showLoading(false);
+                }
+            });
+        }
+
         const interviewForm = document.getElementById('interviewForm');
         if (interviewForm) {
             interviewForm.addEventListener('submit', async (e) => {

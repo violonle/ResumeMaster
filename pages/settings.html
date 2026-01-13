@@ -8,10 +8,23 @@
     <script src="../js/tailwindcss.js"></script>
     <script src="../js/ui-components.js"></script>
     <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/sidebar.css">
     <style>
-        .setting-card { background: white; border-radius: 16px; border: 1px solid #f3f4f6; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: all 0.2s; }
-        .setting-card:hover { border-color: #e5e7eb; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        :root { --font-sans: 'Plus Jakarta Sans', sans-serif; }
+        body { font-family: var(--font-sans); }
+        .portal-card {
+            background: white;
+            border-radius: 16px;
+            border: 1px solid rgba(229, 231, 235, 0.5);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .portal-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.12), 0 4px 8px -4px rgba(0, 0, 0, 0.08);
+            border-color: rgba(59, 130, 246, 0.3);
+        }
         
         .toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; }
         .toggle-switch input { opacity: 0; width: 0; height: 0; }
@@ -30,52 +43,50 @@
     </style>
 </head>
 
-<body class="bg-gray-50 font-sans text-gray-900">
+<body class="bg-gray-50 text-gray-900 font-sans antialiased selection:bg-blue-100 selection:text-blue-700">
     <!-- Sidebar -->
     <aside id="sidebar" class="fixed left-0 top-0 bottom-0 sidebar-modern z-40"></aside>
     
     <!-- Main Content -->
-    <main class="main-content pt-0 lg:pt-0 lg:ml-64 min-h-screen" id="main-content">
+    <main class="main-content min-h-screen" id="main-content">
         <!-- Header -->
-        <header class="bg-white/90 backdrop-blur-md shadow-sm border-b border-gray-100 sticky top-0 z-30 px-8 py-4 flex items-center justify-between">
-            <div class="flex items-center">
-                <button id="mobile-sidebar-toggle" class="lg:hidden mr-4 text-gray-600 hover:text-gray-900 p-2 rounded-lg hover:bg-gray-100">
-                    <i class="fas fa-bars text-xl"></i>
-                </button>
-                <h1 class="text-xl font-bold text-gray-900">系统设置</h1>
+        <header class="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20 h-20">
+            <div class="flex items-center justify-between px-6 h-full">
+                <div class="flex items-center space-x-4 pl-8">
+                    <div class="brand-title flex flex-col justify-center space-y-1.5">
+                        <h1 class="text-lg font-bold text-gray-900 leading-none">系统设置</h1>
+                        <p class="text-xs text-gray-500 font-medium leading-tight">管理您的账户偏好、安全设置及数据备份</p>
+                    </div>
+                </div>
+                <div id="header-right-section" class="flex items-center space-x-4"></div>
             </div>
-            <div id="header-right-section" class="flex items-center space-x-4"></div>
         </header>
 
-        <div class="flex flex-col lg:flex-row p-8 gap-8 max-w-7xl mx-auto">
+        <div class="flex flex-col lg:flex-row p-8 gap-8 max-w-[1440px] mx-auto">
             <!-- Left Navigation -->
             <div class="w-full lg:w-64 flex-shrink-0">
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden sticky top-28">
+                <div class="portal-card overflow-hidden sticky top-28">
                     <div class="p-5 border-b border-gray-50 bg-gray-50/50">
                         <h2 class="font-bold text-gray-900 text-sm uppercase tracking-wider">设置选项</h2>
                     </div>
                     <nav class="flex flex-col p-3 space-y-1">
                         <button onclick="switchTab('notification')" class="tab-btn active w-full text-left px-4 py-3.5 rounded-xl text-sm text-gray-600 hover:bg-gray-50 flex items-center group">
                             <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-500 flex items-center justify-center mr-3 group-hover:bg-blue-100 transition-colors">
-                                <i class="fas fa-bell"></i>
                             </div>
                             <span>通知偏好</span>
                         </button>
                         <button onclick="switchTab('security')" class="tab-btn w-full text-left px-4 py-3.5 rounded-xl text-sm text-gray-600 hover:bg-gray-50 flex items-center group">
                             <div class="w-8 h-8 rounded-lg bg-gray-100 text-gray-500 flex items-center justify-center mr-3 group-hover:bg-gray-200 transition-colors">
-                                <i class="fas fa-shield-alt"></i>
                             </div>
                             <span>安全与备份</span>
                         </button>
                         <button onclick="switchTab('import')" class="tab-btn w-full text-left px-4 py-3.5 rounded-xl text-sm text-gray-600 hover:bg-gray-50 flex items-center group">
                             <div class="w-8 h-8 rounded-lg bg-gray-100 text-gray-500 flex items-center justify-center mr-3 group-hover:bg-gray-200 transition-colors">
-                                <i class="fas fa-envelope-open-text"></i>
                             </div>
                             <span>简历导入配置</span>
                         </button>
                         <button onclick="switchTab('data')" class="tab-btn w-full text-left px-4 py-3.5 rounded-xl text-sm text-gray-600 hover:bg-gray-50 flex items-center group">
                             <div class="w-8 h-8 rounded-lg bg-gray-100 text-gray-500 flex items-center justify-center mr-3 group-hover:bg-gray-200 transition-colors">
-                                <i class="fas fa-database"></i>
                             </div>
                             <span>数据管理</span>
                         </button>
@@ -87,10 +98,9 @@
             <div class="flex-1 min-w-0">
                 <!-- 1. Notification Settings -->
                 <div id="notification-tab" class="tab-content active space-y-6">
-                    <div class="setting-card p-8">
+                    <div class="portal-card p-8">
                         <div class="flex items-center mb-8">
                             <div class="w-12 h-12 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center mr-4 shadow-sm">
-                                <i class="fas fa-bell text-xl"></i>
                             </div>
                             <div>
                                 <h3 class="text-xl font-bold text-gray-900">通知偏好设置</h3>
@@ -144,7 +154,6 @@
                             <div class="flex items-center justify-between p-5 bg-gray-50 rounded-xl border border-gray-100 hover:border-blue-200 transition-colors">
                                 <div class="flex items-center">
                                     <div class="w-12 h-12 rounded-xl bg-white shadow-sm flex items-center justify-center text-blue-600 mr-4">
-                                        <i class="fas fa-key"></i>
                                     </div>
                                     <div>
                                         <p class="font-bold text-gray-900">登录密码</p>
@@ -157,7 +166,6 @@
                             <div class="flex items-center justify-between p-5 bg-gray-50 rounded-xl border border-gray-100 hover:border-blue-200 transition-colors">
                                 <div class="flex items-center">
                                     <div class="w-12 h-12 rounded-xl bg-white shadow-sm flex items-center justify-center text-blue-600 mr-4">
-                                        <i class="fas fa-mobile-alt"></i>
                                     </div>
                                     <div>
                                         <p class="font-bold text-gray-900">手机绑定</p>
@@ -187,13 +195,13 @@
                                 <tbody class="divide-y divide-gray-100 bg-white">
                                     <tr class="hover:bg-gray-50 transition-colors">
                                         <td class="px-6 py-4 text-gray-900">2023-12-28 10:30</td>
-                                        <td class="px-6 py-4 text-gray-600"><i class="fab fa-chrome mr-2 text-blue-500"></i>Chrome / Windows</td>
+                                        <td class="px-6 py-4 text-gray-600">Chrome / Windows</td>
                                         <td class="px-6 py-4 text-gray-500">192.168.1.10</td>
                                         <td class="px-6 py-4"><span class="px-2.5 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">成功</span></td>
                                     </tr>
                                     <tr class="hover:bg-gray-50 transition-colors">
                                         <td class="px-6 py-4 text-gray-900">2023-12-27 15:45</td>
-                                        <td class="px-6 py-4 text-gray-600"><i class="fab fa-safari mr-2 text-blue-400"></i>Safari / MacOS</td>
+                                        <td class="px-6 py-4 text-gray-600">Safari / MacOS</td>
                                         <td class="px-6 py-4 text-gray-500">192.168.1.12</td>
                                         <td class="px-6 py-4"><span class="px-2.5 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">成功</span></td>
                                     </tr>
@@ -205,11 +213,10 @@
 
                 <!-- 3. Resume Import Config -->
                 <div id="import-tab" class="tab-content space-y-6">
-                    <div class="setting-card p-8">
+                    <div class="portal-card p-8">
                         <div class="flex justify-between items-start mb-8">
                             <div class="flex items-center">
                                 <div class="w-12 h-12 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center mr-4 shadow-sm">
-                                    <i class="fas fa-envelope-open-text text-xl"></i>
                                 </div>
                                 <div>
                                     <h3 class="text-xl font-bold text-gray-900">邮箱导入配置</h3>
@@ -217,7 +224,7 @@
                                 </div>
                             </div>
                             <button onclick="testEmailConnection()" class="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm flex items-center">
-                                <i class="fas fa-plug mr-2 text-gray-400"></i>测试连接
+                                测试连接
                             </button>
                         </div>
 
@@ -240,11 +247,9 @@
                                     <div class="relative">
                                         <input type="password" id="conf-password" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-gray-50 focus:bg-white" placeholder="请输入密码或授权码">
                                         <button type="button" onclick="togglePassword('conf-password')" class="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600 p-1">
-                                            <i class="fas fa-eye"></i>
                                         </button>
                                     </div>
                                     <div class="mt-2 flex items-start text-xs text-amber-600 bg-amber-50 p-2 rounded-lg border border-amber-100">
-                                        <i class="fas fa-exclamation-triangle mr-2 mt-0.5"></i>
                                         <span>QQ/163等邮箱请务必使用“授权码”而非登录密码，否则无法连接。</span>
                                     </div>
                                 </div>
@@ -305,7 +310,6 @@
                             <div class="p-6 border border-gray-200 rounded-2xl hover:border-blue-400 hover:bg-blue-50/30 transition-all cursor-pointer group" onclick="backupData()">
                                 <div class="flex items-center mb-4">
                                     <div class="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm">
-                                        <i class="fas fa-cloud-download-alt text-xl"></i>
                                     </div>
                                     <div class="ml-4">
                                         <h4 class="font-bold text-gray-900 text-lg">立即备份</h4>
@@ -318,7 +322,6 @@
                             <div class="p-6 border border-gray-200 rounded-2xl hover:border-blue-400 hover:bg-blue-50/30 transition-all cursor-pointer group" onclick="exportData()">
                                 <div class="flex items-center mb-4">
                                     <div class="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm">
-                                        <i class="fas fa-file-export text-xl"></i>
                                     </div>
                                     <div class="ml-4">
                                         <h4 class="font-bold text-gray-900 text-lg">导出报表</h4>

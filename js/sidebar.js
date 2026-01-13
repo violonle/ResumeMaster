@@ -27,7 +27,7 @@
         location.href = 'librarypool.html';
       }
     }},
-    { icon: 'fas fa-file-alt', label: '简历解析', onClick: () => location.href = 'resume-upload-pc.html' },
+    { icon: 'fas fa-file-alt', label: '简历解析', onClick: () => location.href = 'resume-tools.html' },
   ];
 
   function baseName(url) {
@@ -115,7 +115,11 @@
       const navWrap = this.sidebar.querySelector('#sidebar-nav');
 
       if (qaWrap) {
-        qaWrap.innerHTML = qa.map(q => `<button class="quick-action-button flex items-center px-3 py-2 text-sm text-gray-900 rounded-lg hover:bg-gray-50"><i class="${q.icon} mr-3"></i><span>${q.label}</span></button>`).join('');
+        qaWrap.innerHTML = qa.map(q => `
+          <button class="quick-action-button">
+            <i class="${q.icon}"></i>
+            <div class="item-label item-content sidebar-text">${q.label}</div>
+          </button>`).join('');
         qaWrap.querySelectorAll('.quick-action-button').forEach((btn, i) => {
           btn.addEventListener('click', e => {
             e.preventDefault();
@@ -126,7 +130,14 @@
       }
 
       if (navWrap) {
-        navWrap.innerHTML = items.map(it => `<a href="${it.href}" class="nav-item-modern flex items-center px-4 py-2.5 text-sm rounded-lg hover:bg-gray-50 text-gray-900 mb-1 ${active === it.key ? 'active text-blue-700 bg-blue-50 font-medium' : ''}"><i class="${it.icon} mr-3 w-5 text-center"></i><span>${it.label}</span></a>`).join('');
+        navWrap.innerHTML = items.map(it => `
+          <a href="${it.href}" class="nav-item-modern ${active === it.key ? 'active' : ''}">
+            <i class="${it.icon}"></i>
+            <div class="item-content sidebar-text">
+              <p class="item-label">${it.label}</p>
+              ${it.sub ? `<p class="item-sub">${it.sub}</p>` : ''}
+            </div>
+          </a>`).join('');
       }
 
       if (this.cfg.options && this.cfg.options.hideSubscription) {
@@ -136,9 +147,8 @@
     }
 
     bind() {
-      const innerToggle = this.sidebar.querySelector('#sidebar-toggle-inner');
-      this.topToggle && this.topToggle.addEventListener('click', e => { e.preventDefault(); this.toggle() });
-      innerToggle && innerToggle.addEventListener('click', e => { e.preventDefault(); this.toggle() });
+      const toggleBtn = this.sidebar.querySelector('#sidebar-toggle');
+      toggleBtn && toggleBtn.addEventListener('click', e => { e.preventDefault(); this.toggle() });
       this.ensureOverlay();
       this.overlay.addEventListener('click', () => this.closeMobile());
       document.addEventListener('keydown', e => { if (e.key === 'Escape') this.closeMobile() });
@@ -159,6 +169,24 @@
           location.href = '/pages/login.html';
         });
       }
+
+      const subViewBtn = this.sidebar.querySelector('#sidebar-sub-view-btn');
+      const subUpgradeBtn = this.sidebar.querySelector('#sidebar-sub-upgrade-btn');
+      
+      if (subViewBtn) {
+        subViewBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          location.href = '/pages/subscription.html';
+        });
+      }
+      
+      if (subUpgradeBtn) {
+        subUpgradeBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          location.href = '/pages/subscription.html';
+        });
+      }
+
       this.updateSubscriptionCard();
     }
 
@@ -187,13 +215,13 @@
     collapseDesktop(skip) {
       this.sidebar.classList.add('sidebar-collapsed');
       document.body.classList.add('sidebar-collapsed-root');
-      this.sidebar.classList.remove('w-280');
+      this.sidebar.classList.remove('w-256');
       if (this.main) { this.main.classList.add('main-content-collapsed') }
     }
     openDesktop(skip) {
       this.sidebar.classList.remove('sidebar-collapsed');
       document.body.classList.remove('sidebar-collapsed-root');
-      this.sidebar.classList.add('w-280');
+      this.sidebar.classList.add('w-256');
       if (this.main) { this.main.classList.remove('main-content-collapsed') }
     }
 
@@ -201,48 +229,46 @@
       try{
         const titleEl = this.sidebar.querySelector('#sidebar-sub-title');
         const statusEl = this.sidebar.querySelector('#sidebar-sub-status');
-        const progressEl = this.sidebar.querySelector('#sidebar-sub-progress');
         const renewEl = this.sidebar.querySelector('#sidebar-sub-renew');
-        if (!titleEl || !statusEl || !progressEl || !renewEl) return;
+        if (!titleEl || !statusEl || !renewEl) return;
+        
         const lsToken = (function(){ try{ return (JSON.parse(localStorage.getItem('userInfo')||'{}').token)||null }catch(_){ return null } })();
         const uaToken = (typeof userAuthInstance !== 'undefined' && typeof userAuthInstance.getToken === 'function') ? (userAuthInstance.getToken()||null) : null;
         const token = uaToken || lsToken;
         const headers = token ? { Authorization: 'Bearer '+token } : {};
-        const [cur, usage] = await Promise.all([
-          fetch('/api/subscription/current', { headers }).then(r=>r.json()).catch(()=>null),
-          fetch('/api/subscription/usage', { headers }).then(r=>r.json()).catch(()=>null)
+        
+        const [cur] = await Promise.all([
+          fetch('/api/subscription/current', { headers }).then(r=>r.json()).catch(()=>null)
         ]);
+        
         const data = cur && cur.data ? cur.data : { hasSubscription:false };
+        const subViewBtn = this.sidebar.querySelector('#sidebar-sub-view-btn');
+        const subUpgradeBtn = this.sidebar.querySelector('#sidebar-sub-upgrade-btn');
+
         if (!data.hasSubscription){
-          titleEl.textContent = '订阅专业版';
           statusEl.textContent = '未订阅';
-          statusEl.className = 'text-xs text-gray-600 bg-gray-100 px-2 py-0.5 rounded-full font-medium';
-          progressEl.style.width = '0%';
-          renewEl.innerHTML = '<div class="mt-3"><p class="text-sm text-gray-600 mb-3 text-center">让您的工作轻松，效率加倍</p><a href="/pages/subscription.html" class="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-4 rounded-lg transition-colors">立即订阅</a></div>';
+          statusEl.className = 'text-[10px] font-bold text-gray-400';
+          renewEl.textContent = '开启 AI 招聘提效';
+          if (subViewBtn) subViewBtn.style.display = 'none';
+          if (subUpgradeBtn) {
+            subUpgradeBtn.textContent = '立即升级';
+            subUpgradeBtn.classList.add('w-full');
+          }
           return;
         }
-        const expired = !!data.isExpired;
-        const planName = data.planType && data.planType.includes('pro') ? '专业版订阅' : (data.planType && data.planType.includes('basic') ? '基础版订阅' : '订阅');
-        titleEl.textContent = planName;
-        statusEl.textContent = expired ? '已过期' : '活跃';
-        statusEl.className = expired ? 'text-xs text-gray-600 bg-gray-100 px-2 py-0.5 rounded-full font-medium' : 'text-xs text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full font-medium';
-        const days = typeof data.daysRemaining === 'number' ? Math.max(0, data.daysRemaining) : 0;
-        renewEl.textContent = `距离下次续费还有 ${days} 天`;
-        let pct = 0;
-        const u = usage && usage.data ? usage.data : null;
-        if (u && u.limits && typeof u.limits.total === 'number' && u.limits.total > 0){
-          const used = u.usage && typeof u.usage.totalUsage === 'number' ? u.usage.totalUsage : 0;
-          pct = Math.round(Math.min(100, (used / u.limits.total) * 100));
-        } else {
-          const start = data.startedAt ? new Date(data.startedAt) : null;
-          const end = data.expiresAt ? new Date(data.expiresAt) : null;
-          if (start && end){
-            const totalMs = end - start;
-            const usedMs = Date.now() - start.getTime();
-            if (totalMs > 0) pct = Math.round(Math.max(0, Math.min(100, (usedMs/totalMs)*100)));
-          }
+        
+        if (subViewBtn) subViewBtn.style.display = 'flex';
+        if (subUpgradeBtn) {
+          subUpgradeBtn.textContent = '升级';
+          subUpgradeBtn.classList.remove('w-full');
         }
-        progressEl.style.width = `${pct}%`;
+
+        const expired = !!data.isExpired;
+        statusEl.textContent = expired ? '已过期' : (data.planName || '专业版');
+        statusEl.className = expired ? 'text-[10px] font-bold text-red-500' : 'text-[10px] font-bold text-blue-600';
+        
+        const days = typeof data.daysRemaining === 'number' ? Math.max(0, data.daysRemaining) : 0;
+        renewEl.textContent = expired ? '订阅已到期' : `${days} 天后到期`;
       }catch(_){ }
     }
   }

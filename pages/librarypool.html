@@ -7,31 +7,31 @@
   <link rel="icon" href="/favicon.ico" type="image/x-icon">
   <script src="../js/tailwindcss.js"></script>
   <link rel="stylesheet" href="https://fastly.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="../js/user-auth.js"></script>
   <script src="../js/resume-data.js?v=2"></script>
   <script src="../js/resume-upload-handler.js"></script>
   <link rel="stylesheet" href="/css/sidebar.css">
   <style>
     /* 基础样式 */
-    body { background-color: #f9fafb; }
-    
-
-    /* 新版 Modern UI 样式 */
-    .stat-card {
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    :root {
+      --font-family-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
     }
-    .stat-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.08);
+    body {
+      font-family: var(--font-family-sans);
     }
-    
-    .resume-card {
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    .portal-card {
+      background-color: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+      transition-property: all;
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+      transition-duration: 300ms;
     }
-    .resume-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.1);
-      border-color: #bfdbfe; /* blue-200 */
+    .portal-card:hover {
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      transform: translateY(-2px);
     }
     
     .tag-pill {
@@ -258,32 +258,32 @@
       opacity: 1;
       visibility: visible;
     }
+    .brand-title { white-space: normal !important; }
   </style>
 </head>
-<body class="font-sans text-gray-900 antialiased">
+<body class="bg-gray-50 antialiased text-gray-900 selection:bg-blue-100 selection:text-blue-700">
   
   <!-- Sidebar -->
   <aside id="sidebar" class="fixed left-0 top-0 bottom-0 sidebar-modern z-40"></aside>
   
   <!-- Header -->
-  <header class="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md shadow-sm border-b border-gray-200 z-20">
-    <div class="flex items-center justify-between p-4">
-      <div class="flex items-center space-x-4">
-        <button class="menu-button p-2 rounded-lg hover:bg-gray-100 transition-colors" id="sidebar-toggle"><i class="fas fa-bars text-gray-900"></i></button>
-        <h1 class="brand-title text-lg font-bold text-gray-900">争湃·简历大师</h1>
+  <header class="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md shadow-sm border-b border-gray-200 z-20 h-20">
+    <div class="max-w-[1440px] mx-auto flex items-center justify-between px-4 h-full">
+      <div class="flex items-center space-x-4 pl-8">
+        <div class="brand-title flex flex-col justify-center space-y-1.5">
+          <h1 class="text-lg font-bold text-gray-900 leading-none">人才库</h1>
+          <p class="text-xs text-gray-500 font-medium leading-tight">集中管理您的所有人才资源，高效筛选与跟进。</p>
+        </div>
       </div>
       <div class="flex items-center space-x-4" id="header-right-section"></div>
     </div>
   </header>
 
   <!-- Main Content -->
-  <main class="main-content pt-20 p-6" id="main-content">
-    <div class="max-w-[1600px] mx-auto">
+  <main class="main-content p-6" id="main-content">
+    <div class="max-w-[1440px] mx-auto">
       <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
-        <div>
-          <h1 class="text-3xl font-bold text-gray-900 tracking-tight">人才库</h1>
-          <p class="text-gray-500 mt-2 text-sm">集中管理您的所有人才资源，高效筛选与跟进。</p>
-        </div>
+        <div></div>
         <div class="flex gap-3">
             <button onclick="batchScoring()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-md shadow-blue-200 transition-all hover:shadow-lg flex items-center text-sm font-bold btn-interactive">
               <i class="fas fa-star mr-2"></i> 批量初筛
@@ -301,7 +301,7 @@
       <!-- Stats Cards -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
         <!-- Total -->
-        <div class="stat-card bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden group cursor-pointer" onclick="window.location.reload()">
+        <div class="portal-card p-6 relative overflow-hidden group cursor-pointer" onclick="window.location.reload()">
           <div class="absolute right-0 top-0 w-24 h-24 bg-blue-50 rounded-bl-full -mr-4 -mt-4 opacity-50 transition-transform group-hover:scale-110"></div>
           <div class="relative z-10">
             <div class="flex items-center justify-between mb-4">
@@ -315,7 +315,7 @@
         </div>
 
         <!-- Pending -->
-        <div class="stat-card bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden group">
+        <div class="portal-card p-6 relative overflow-hidden group">
            <div class="absolute right-0 top-0 w-24 h-24 bg-blue-50 rounded-bl-full -mr-4 -mt-4 opacity-50 transition-transform group-hover:scale-110"></div>
            <div class="relative z-10">
             <div class="flex items-center justify-between mb-4">
@@ -329,7 +329,7 @@
         </div>
 
         <!-- Excellent -->
-        <div class="stat-card bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden group">
+        <div class="portal-card p-6 relative overflow-hidden group">
            <div class="absolute right-0 top-0 w-24 h-24 bg-blue-50 rounded-bl-full -mr-4 -mt-4 opacity-50 transition-transform group-hover:scale-110"></div>
            <div class="relative z-10">
             <div class="flex items-center justify-between mb-4">
@@ -343,7 +343,7 @@
         </div>
 
         <!-- Passed Initial Screening -->
-        <div class="stat-card bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden group">
+        <div class="portal-card p-6 relative overflow-hidden group">
            <div class="absolute right-0 top-0 w-24 h-24 bg-blue-50 rounded-bl-full -mr-4 -mt-4 opacity-50 transition-transform group-hover:scale-110"></div>
            <div class="relative z-10">
             <div class="flex items-center justify-between mb-4">
@@ -358,7 +358,7 @@
       </div>
 
       <!-- Main Filter & List Area -->
-      <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+      <div class="portal-card overflow-hidden">
         <!-- Top Filter Bar -->
         <div class="p-6 border-b border-gray-100 bg-gray-50/30">
           <div class="flex flex-col lg:flex-row gap-4 mb-6">

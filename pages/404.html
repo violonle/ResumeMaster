@@ -8,10 +8,13 @@
     <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="/css/sidebar.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         
+        :root {
+            --font-family-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+        }
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: var(--font-family-sans);
         }
 
         /* Adaptive Layout Styles */
@@ -65,10 +68,7 @@
         <header class="bg-white shadow-sm border-b border-gray-200 z-20">
             <div class="flex items-center justify-between p-4">
                 <div class="flex items-center space-x-4">
-                    <button class="menu-button p-2 rounded-lg hover:bg-gray-100" id="sidebar-toggle">
-                        <i class="fas fa-bars text-gray-900"></i>
-                    </button>
-                    <h1 class="brand-title text-lg font-bold text-gray-900">页面未找到</h1>
+                    <h1 class="brand-title text-lg font-bold text-gray-900">404 错误</h1>
                 </div>
                 <div class="flex items-center space-x-4" id="header-right-section"></div>
             </div>
@@ -99,7 +99,7 @@
                             class="search-box w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         >
                         <div class="absolute left-4 top-1/2 transform -translate-y-1/2">
-                            <i class="fas fa-search text-gray-400"></i>
+                            <span class="text-gray-400">🔍</span>
                         </div>
                         <button class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-600 text-white px-4 py-1.5 rounded-md hover:bg-blue-700 transition-colors">
                             搜索

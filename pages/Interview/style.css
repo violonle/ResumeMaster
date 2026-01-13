@@ -3,9 +3,9 @@
 @tailwind utilities;
 
 :root {
-  --primary-500: #3b82f6;
-  --primary-600: #2563eb;
-  --primary-700: #1d4ed8;
+  --primary-500: #2563eb;
+  --primary-600: #1d4ed8;
+  --primary-700: #1e40af;
 }
 
 .bg-primary-500 { background-color: var(--primary-500); }

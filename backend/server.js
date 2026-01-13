@@ -59,9 +59,33 @@ if (!process.env.JWT_SECRET) {
 }
 
 // 中间件
-// 极其宽松的 CORS 配置，确保部署阶段不被拦截
+// CORS 配置
+const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : [];
+if (process.env.PORTAL_URL) {
+  allowedOrigins.push(process.env.PORTAL_URL);
+}
+
 app.use(cors({
-  origin: true, // 反映请求的 Origin，允许所有来源但支持 Credentials
+  origin: function(origin, callback) {
+    // 允许无 origin 的请求（如移动端 APP、Postman、curl）
+    if (!origin) return callback(null, true);
+    
+    // 开发环境或配置了通配符允许所有
+    if (process.env.NODE_ENV === 'development' || allowedOrigins.includes('*')) {
+      return callback(null, true);
+    }
+    
+    // 检查 Origin 是否在白名单中
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      // 如果未配置白名单，默认允许（兼容旧配置），否则拒绝
+      if (allowedOrigins.length === 0) {
+        return callback(null, true);
+      }
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   credentials: true,

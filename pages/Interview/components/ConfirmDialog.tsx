@@ -31,9 +31,9 @@ export default function ConfirmDialog({
   if (!open) return null;
 
   const variantStyles = {
-    danger: 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700',
-    primary: 'bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700',
-    warning: 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600'
+    danger: 'bg-red-600 shadow-red-600/20 hover:bg-red-700',
+    primary: 'bg-blue-600 shadow-blue-600/20 hover:bg-blue-700',
+    warning: 'bg-orange-500 shadow-orange-500/20 hover:bg-orange-600'
   };
 
   return (
@@ -46,7 +46,7 @@ export default function ConfirmDialog({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onCancel}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
+            className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-50"
           />
           
           {/* 对话框 */}
@@ -56,15 +56,15 @@ export default function ConfirmDialog({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-5 sm:p-6"
+              className="bg-white rounded-[2.5rem] shadow-2xl max-w-md w-full p-8 sm:p-10"
             >
               {/* 标题 */}
-              <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-3 sm:mb-4">
+              <h3 className="text-xl sm:text-2xl font-black text-gray-900 mb-4 tracking-tight">
                 {title}
               </h3>
               
               {/* 内容 */}
-              <div className="text-sm sm:text-base text-slate-600 mb-5 sm:mb-6">
+              <div className="text-sm sm:text-base text-gray-500 font-medium mb-8 leading-relaxed">
                 {typeof message === 'string' ? (
                   message && <p className="whitespace-pre-line">{message}</p>
                 ) : (
@@ -75,22 +75,18 @@ export default function ConfirmDialog({
 
               {/* 按钮 */}
               {!hideButtons && (
-                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-end">
-                  <motion.button
+                <div className="flex flex-col sm:flex-row gap-3 justify-end">
+                  <button
                     onClick={onCancel}
                     disabled={loading}
-                    className="w-full sm:w-auto order-2 sm:order-1 px-5 py-2.5 border border-slate-200 text-slate-600 rounded-xl font-medium hover:bg-slate-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                    className="w-full sm:w-auto order-2 sm:order-1 px-8 py-4 bg-white text-gray-600 border-2 border-gray-100 rounded-2xl font-black hover:bg-gray-50 transition-all disabled:opacity-50 text-sm sm:text-base"
                   >
                     {cancelText}
-                  </motion.button>
-                  <motion.button
+                  </button>
+                  <button
                     onClick={onConfirm}
                     disabled={loading}
-                    className={`w-full sm:w-auto order-1 sm:order-2 px-5 py-2.5 text-white rounded-xl font-semibold shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base ${variantStyles[confirmVariant]}`}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                    className={`w-full sm:w-auto order-1 sm:order-2 px-8 py-4 text-white rounded-2xl font-black shadow-xl transition-all disabled:opacity-50 text-sm sm:text-base ${variantStyles[confirmVariant]}`}
                   >
                     {loading ? (
                       <span className="flex items-center justify-center gap-2">
@@ -104,7 +100,7 @@ export default function ConfirmDialog({
                     ) : (
                       confirmText
                     )}
-                  </motion.button>
+                  </button>
                 </div>
               )}
             </motion.div>

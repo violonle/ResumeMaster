@@ -206,7 +206,24 @@ async function sendVerificationCode(phone, code, ip = null){
 }
 
 async function sendText(phone, content){
-  return sendAliyunSms(phone, null, null, { code: content })
+  let params = {};
+  if (typeof content === 'object' && content !== null) {
+    params = content;
+  } else if (typeof content === 'string') {
+    try {
+      // Try to parse if it looks like JSON
+      if (content.trim().startsWith('{')) {
+        params = JSON.parse(content);
+      } else {
+        params = { code: content };
+      }
+    } catch (e) {
+      params = { code: content };
+    }
+  } else {
+    params = { code: String(content) };
+  }
+  return sendAliyunSms(phone, null, null, params)
 }
 
 async function createAliyunTemplate(name, content, type = 0, remark = '系统自动创建'){

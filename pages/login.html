@@ -3,110 +3,135 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>登录 - 争湃·简历大师</title>
+    <title>登录 - 智聘云</title>
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="../js/tailwindcss.js"></script>
     <script src="../js/ui-components.js"></script>
-    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../css/responsive.css">
     <style>
-        body{ background:#f5f7fa; }
-        .auth-shell{ display:grid; grid-template-columns: 420px 1fr; width:100%; max-width:1000px; background:#fff; border:1px solid #e5e7eb; border-radius:12px; overflow:hidden; box-shadow:0 12px 32px rgba(17,24,39,.08) }
-        .brand-pane{ padding:32px; background:#f9fafb; border-right:1px solid #e5e7eb }
-        .brand-logo-img{ width:96px; height:auto; border-radius:12px; margin-bottom:0 }
-        .brand-logo{ width:48px; height:48px; border-radius:12px; background:#111827; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700 }
-        .brand-pane .brand-title{ margin-top:0; font-size:28px; font-weight:700; color:#0f172a }
-        .brand-desc{ margin-top:4px; color:#64748b; font-size:12px }
-        .feature-list{ margin-top:24px; color:#334155; font-size:13px }
-        .feature-item{ display:flex; align-items:center; gap:8px; padding:8px 0 }
-        .form-pane{ padding:32px; background:#fff }
-        .form-title{ font-size:18px; font-weight:600; color:#0f172a; margin-bottom:16px }
-        .input{ width:100%; padding:12px 14px; border:1px solid #d1d5db; border-radius:10px; outline:none; transition:.2s; font-size:14px; background:#fff }
-        .input:focus{ border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.12) }
-        .btn{ display:inline-flex; align-items:center; justify-content:center; padding:12px 16px; border-radius:10px; font-weight:600; transition:.2s }
-        .btn-primary{ background:#2563eb; color:#fff }
-        .btn-primary:hover{ background:#1d4ed8 }
-        .btn-secondary{ background:#eef2f7; color:#334155 }
-        .btn-secondary:hover{ background:#e5e7eb }
-        .hint{ font-size:12px; color:#64748b }
-        .row{ display:flex; gap:12px }
-        @media (max-width: 960px){ .auth-shell{ grid-template-columns: 1fr } }
+        :root {
+            --font-family-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+        }
+        body { font-family: var(--font-family-sans); }
     </style>
 </head>
-<body class="bg-gray-50 flex flex-col h-screen overflow-hidden">
+<body class="min-h-screen flex bg-white font-sans selection:bg-blue-100 selection:text-blue-700 overflow-hidden">
 
-    <main class="flex-1 flex items-center justify-center p-4 min-h-0" id="main-content">
-        <div class="auth-shell">
-          <div class="brand-pane">
-            <div class="flex items-end mb-8">
-              <img src="/public/logo.png" alt="争湃·简历大师" class="brand-logo-img mr-4">
-              <div class="flex flex-col">
-                <div class="brand-title leading-tight">争湃·简历大师</div>
-                <div class="brand-desc leading-none mt-4">AI驱动，精准识才</div>
-              </div>
+    <!-- Left Panel (Portal Style) -->
+    <div class="hidden lg:flex lg:w-3/5 bg-gray-50 items-center justify-center p-24 relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-100/30 rounded-full -mr-32 -mt-32 blur-3xl"></div>
+        <div class="z-10 w-full max-w-xl">
+            <div class="flex items-center space-x-4 mb-6">
+                <img src="/logo.png" alt="智聘云" class="h-12 w-auto">
+                <h1 class="text-3xl font-black text-gray-900 tracking-tight">争湃·智聘云</h1>
             </div>
-            <div class="feature-list">
-              <div class="feature-item"><span>• 智能解析与结构化</span></div>
-              <div class="feature-item"><span>• 多维对比与评估</span></div>
-              <div class="feature-item"><span>• 岗位与流程管理</span></div>
+            <h2 class="text-5xl font-black text-gray-900 leading-[1.1] mb-8">
+                争湃·<span class="text-blue-600">简历大师</span>
+            </h2>
+            <div class="space-y-6">
+                <div class="flex items-start space-x-4 bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm transition-all hover:shadow-lg">
+                    <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-microchip"></i>
+                    </div>
+                    <div>
+                        <p class="font-black text-gray-900 text-sm">简历智能解析</p>
+                        <p class="text-xs font-bold text-gray-400 mt-0.5">基于大模型的简历深度解析与对比</p>
+                    </div>
+                </div>
+                <div class="flex items-start space-x-4 bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm transition-all hover:shadow-lg">
+                    <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-tower-observation"></i>
+                    </div>
+                    <div>
+                        <p class="font-black text-gray-900 text-sm">招聘流程管理</p>
+                        <p class="text-xs font-bold text-gray-400 mt-0.5">全自动的面试流程管理</p>
+                    </div>
+                </div>
+                <div class="flex items-start space-x-4 bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm transition-all hover:shadow-lg">
+                    <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    </div>
+                    <div>
+                        <p class="font-black text-gray-900 text-sm">AI面试</p>
+                        <p class="text-xs font-bold text-gray-400 mt-0.5">用AI分析简历，并基于此出面试题库</p>
+                    </div>
+                </div>
             </div>
-          </div>
-          <div class="form-pane">
-            <div class="form-title">
-              <div class="flex border-b border-gray-200 mb-6">
-                <button id="phoneLoginTab" class="flex-1 pb-3 text-sm font-medium text-blue-600 border-b-2 border-blue-600 focus:outline-none transition-colors">手机号登录</button>
-                <button id="passwordLoginTab" class="flex-1 pb-3 text-sm font-medium text-gray-500 border-b-2 border-transparent hover:text-gray-700 hover:border-gray-300 focus:outline-none transition-colors">密码登录</button>
-              </div>
-            </div>
-            <div id="phoneLoginForm">
-              <div class="space-y-4">
-                <div>
-                  <label class="hint">手机号码</label>
-                  <input id="phoneInput" type="tel" maxlength="11" placeholder="请输入手机号码" class="input">
-                </div>
-                <div>
-                  <label class="hint">验证码</label>
-                  <div class="row">
-                    <input id="codeInput" type="text" maxlength="6" placeholder="请输入验证码" class="input" style="flex:1">
-                    <button id="sendCodeBtn" class="btn btn-secondary" type="button">发送验证码</button>
-                  </div>
-                </div>
-                <div>
-                  <button id="submitBtn" class="btn btn-primary w-full" type="button">继续</button>
-                </div>
-              </div>
-            </div>
-            <div id="passwordLoginForm" class="hidden">
-              <div class="space-y-4">
-                <div>
-                  <label class="hint">邮箱/手机号</label>
-                  <input id="emailPhoneInput" type="text" placeholder="请输入邮箱或手机号" class="input">
-                </div>
-                <div>
-                  <label class="hint">密码</label>
-                  <input id="passwordInput" type="password" placeholder="请输入密码" class="input">
-                </div>
-                <div>
-                  <button id="passwordLoginBtn" class="btn btn-primary w-full" type="button">登录</button>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
-    </main>
+    </div>
 
-    <!-- 全局页脚 -->
-    <footer class="py-4 text-center text-gray-400 text-xs flex-shrink-0">
-        <div class="container mx-auto px-4">
-            <p>云璞网科 © 2018-2025  <a href="https://beian.miit.gov.cn/" target="_blank" class="hover:text-blue-500 transition-colors">鲁ICP备2023016452号</a></p>
+    <!-- Right Panel (Login Form) -->
+    <div class="w-full lg:w-2/5 flex items-center justify-center p-8 lg:p-16 bg-white overflow-y-auto">
+        <div class="w-full max-w-sm space-y-8">
+            <div>
+                <h2 class="text-3xl font-black text-gray-900 tracking-tight">欢迎登录</h2>
+            </div>
+
+            <!-- Login Tabs -->
+            <div class="flex border-b border-gray-100">
+                <button id="phoneLoginTab" class="flex-1 pb-4 text-sm font-black text-blue-600 border-b-2 border-blue-600 focus:outline-none transition-colors">手机号登录</button>
+                <button id="passwordLoginTab" class="flex-1 pb-4 text-sm font-black text-gray-400 border-b-2 border-transparent hover:text-gray-600 focus:outline-none transition-colors">密码登录</button>
+            </div>
+
+            <!-- Phone Login Form -->
+            <div id="phoneLoginForm" class="space-y-6">
+                <div class="space-y-4">
+                    <div class="relative group">
+                        <i class="fa-solid fa-mobile-screen absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-blue-600 transition-colors"></i>
+                        <input id="phoneInput" type="tel" maxlength="11" placeholder="请输入手机号码" class="w-full pl-12 pr-4 py-4 bg-gray-50 border-none rounded-2xl font-bold text-sm placeholder:text-gray-300 focus:ring-2 focus:ring-blue-100 transition-all outline-none">
+                    </div>
+                    <div class="flex gap-3">
+                        <div class="relative group flex-1">
+                            <i class="fa-solid fa-shield-halved absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-blue-600 transition-colors"></i>
+                            <input id="codeInput" type="text" maxlength="6" placeholder="验证码" class="w-full pl-12 pr-4 py-4 bg-gray-50 border-none rounded-2xl font-bold text-sm placeholder:text-gray-300 focus:ring-2 focus:ring-blue-100 transition-all outline-none">
+                        </div>
+                        <button id="sendCodeBtn" type="button" class="px-4 py-4 bg-blue-50 text-blue-600 font-bold text-sm rounded-2xl hover:bg-blue-100 transition-colors whitespace-nowrap">发送验证码</button>
+                    </div>
+                </div>
+                <button id="submitBtn" type="button" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-black text-sm shadow-xl shadow-blue-100 hover:bg-blue-700 active:scale-[0.99] transition-all transform-gpu flex items-center justify-center">
+                    继续
+                </button>
+            </div>
+
+            <!-- Password Login Form -->
+            <div id="passwordLoginForm" class="hidden space-y-6">
+                <div class="space-y-4">
+                    <div class="relative group">
+                        <i class="fa-solid fa-user absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-blue-600 transition-colors"></i>
+                        <input id="emailPhoneInput" type="text" placeholder="ID / 邮箱 / 手机号" class="w-full pl-12 pr-4 py-4 bg-gray-50 border-none rounded-2xl font-bold text-sm placeholder:text-gray-300 focus:ring-2 focus:ring-blue-100 transition-all outline-none">
+                    </div>
+                    <div class="relative group">
+                        <i class="fa-solid fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-blue-600 transition-colors"></i>
+                        <input id="passwordInput" type="password" placeholder="访问密码" class="w-full pl-12 pr-4 py-4 bg-gray-50 border-none rounded-2xl font-bold text-sm placeholder:text-gray-300 focus:ring-2 focus:ring-blue-100 transition-all outline-none">
+                    </div>
+                </div>
+                <div class="flex items-center justify-between px-1">
+                    <label class="flex items-center space-x-2 cursor-pointer group">
+                        <input type="checkbox" class="w-4 h-4 rounded border-gray-200 text-blue-600 focus:ring-blue-100">
+                        <span class="text-xs font-black text-gray-500 group-hover:text-gray-900 transition-colors">记住我</span>
+                    </label>
+                    <a href="#" class="text-xs font-black text-blue-600 hover:underline">忘记密码？</a>
+                </div>
+                <button id="passwordLoginBtn" type="button" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-black text-sm shadow-xl shadow-blue-100 hover:bg-blue-700 active:scale-[0.99] transition-all transform-gpu flex items-center justify-center">
+                    登录
+                </button>
+            </div>
+
+            <div class="text-center pt-8 border-t border-gray-50">
+                <p class="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em]">智聘云统一身份验证中心</p>
+                <p class="text-[10px] text-gray-300 mt-2">© 2025 云璞网科 · 鲁ICP备2023016452号</p>
+            </div>
         </div>
-    </footer>
+        </div>
+    </div>
 
     <!-- 加载提示 -->
     <div id="loadingModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
-        <div class="bg-white rounded-lg p-6 flex items-center space-x-3">
+        <div class="bg-white rounded-2xl p-6 flex items-center space-x-3 shadow-2xl">
             <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-            <span class="text-gray-700">验证中...</span>
+            <span class="text-gray-700 font-bold">验证中...</span>
         </div>
     </div>
 
@@ -128,7 +153,7 @@
 
         const userAuth = (typeof userAuthInstance !== 'undefined' ? userAuthInstance : new UserAuth());
 
-        function startCountdown(button){ let n=60; button.disabled=true; const tick=()=>{ button.textContent=`${n}秒后重发`; if(n<=0){ button.disabled=false; button.textContent='发送验证码'; return;} n--; setTimeout(tick,1000)}; tick(); }
+        function startCountdown(button){ let n=60; button.disabled=true; const originalText = button.textContent; const tick=()=>{ button.textContent=`${n}秒后重发`; if(n<=0){ button.disabled=false; button.textContent=originalText; return;} n--; setTimeout(tick,1000)}; tick(); }
 
         // 切换登录方式
         phoneLoginTab.addEventListener('click', () => {
@@ -137,10 +162,10 @@
             
             // Activate Phone Tab
             phoneLoginTab.classList.add('text-blue-600', 'border-blue-600');
-            phoneLoginTab.classList.remove('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
+            phoneLoginTab.classList.remove('text-gray-400', 'border-transparent', 'hover:text-gray-600');
             
             // Deactivate Password Tab
-            passwordLoginTab.classList.add('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
+            passwordLoginTab.classList.add('text-gray-400', 'border-transparent', 'hover:text-gray-600');
             passwordLoginTab.classList.remove('text-blue-600', 'border-blue-600');
         });
 
@@ -150,97 +175,116 @@
             
             // Activate Password Tab
             passwordLoginTab.classList.add('text-blue-600', 'border-blue-600');
-            passwordLoginTab.classList.remove('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
+            passwordLoginTab.classList.remove('text-gray-400', 'border-transparent', 'hover:text-gray-600');
             
             // Deactivate Phone Tab
-            phoneLoginTab.classList.add('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
+            phoneLoginTab.classList.add('text-gray-400', 'border-transparent', 'hover:text-gray-600');
             phoneLoginTab.classList.remove('text-blue-600', 'border-blue-600');
         });
 
-        sendCodeBtn.addEventListener('click', async ()=>{
-          const phone = phoneInput.value.trim();
-          if(!/^1[3-9]\d{9}$/.test(phone)){ ui.showNotification('请输入正确的手机号码', 'warning'); return }
-          try{
-            const result = await userAuth.sendVerificationCode(phone);
-            if (result.success && result.data && result.data.sent) {
-                startCountdown(sendCodeBtn);
-                ui.showNotification('验证码已发送', 'success');
-            } else if (result.success && result.data && !result.data.sent) {
-                // 发送失败但返回成功（通常是配置缺失，开发模式下）
-                if (result.data.devHint) {
-                    console.log('Dev Hint:', result.data.devHint);
-                    // 开发环境验证码: result.data.devHint - 使用prompt或者notification显示
-                    ui.showNotification('开发环境验证码: ' + result.data.devHint, 'info', 5000); 
-                    startCountdown(sendCodeBtn); // 既然有了验证码，也倒计时
-                } else {
-                    ui.showNotification(result.message || '短信发送失败', 'error');
-                }
-            } else {
-                ui.showNotification(result.message || '发送失败，请稍后重试', 'error');
+        // 发送验证码逻辑
+        sendCodeBtn.addEventListener('click', async () => {
+            const phone = phoneInput.value.trim();
+            if (!phone) {
+                if(typeof ui !== 'undefined') ui.showNotification('请输入手机号码', 'warning');
+                else alert('请输入手机号码');
+                return;
             }
-          }catch(e){ ui.showNotification('发送失败，请稍后重试', 'error') }
-        });
+            if (!/^1[3-9]\d{9}$/.test(phone)) {
+                if(typeof ui !== 'undefined') ui.showNotification('手机号码格式不正确', 'warning');
+                else alert('手机号码格式不正确');
+                return;
+            }
 
-        submitBtn.addEventListener('click', async ()=>{
-          const phone = phoneInput.value.trim();
-          const code = codeInput.value.trim();
-          if(!/^1[3-9]\d{9}$/.test(phone)){ ui.showNotification('请输入正确的手机号码', 'warning'); return }
-          if(code.length!==6){ ui.showNotification('请输入6位验证码', 'warning'); return }
-          loadingModal.classList.remove('hidden');
-          try{
-            const result = await userAuth.loginWithPhone(phone, code);
-            loadingModal.classList.add('hidden');
-            if(!result.success){ ui.showNotification(result.message || '验证失败', 'error'); return }
-            // 统一进入仪表盘并触发展示引导
             try {
-                const info = result.data && result.data.user ? result.data.user : {};
-                const need = (!info || !info.username || !info.avatar);
-                if (result.data && result.data.action === 'registered') localStorage.setItem('firstSetupRequired','1');
-                else if (need) localStorage.setItem('firstSetupRequired','1');
-            } catch(e){}
-            window.location.href = 'dashboard.html';
-          }catch(e){ loadingModal.classList.add('hidden'); ui.showNotification('请求失败，请稍后重试', 'error') }
+                sendCodeBtn.disabled = true;
+                const result = await userAuth.sendVerificationCode(phone);
+                if (result.success) {
+                    if(typeof ui !== 'undefined') ui.showNotification('验证码已发送', 'success');
+                    else alert('验证码已发送: ' + (result.code || '')); // Dev mode hint
+                    startCountdown(sendCodeBtn);
+                } else {
+                    if(typeof ui !== 'undefined') ui.showNotification(result.message || '发送失败', 'error');
+                    else alert(result.message || '发送失败');
+                    sendCodeBtn.disabled = false;
+                }
+            } catch (error) {
+                console.error(error);
+                if(typeof ui !== 'undefined') ui.showNotification('发送失败，请稍后重试', 'error');
+                else alert('发送失败');
+                sendCodeBtn.disabled = false;
+            }
         });
 
+        // 手机号登录提交
+        submitBtn.addEventListener('click', async () => {
+            const phone = phoneInput.value.trim();
+            const code = codeInput.value.trim();
+
+            if (!phone || !code) {
+                if(typeof ui !== 'undefined') ui.showNotification('请填写手机号和验证码', 'warning');
+                else alert('请填写手机号和验证码');
+                return;
+            }
+
+            loadingModal.classList.remove('hidden');
+
+            try {
+                const result = await userAuth.loginWithPhone(phone, code);
+                loadingModal.classList.add('hidden');
+
+                if (result.success) {
+                    if(typeof ui !== 'undefined') ui.showNotification('登录成功', 'success');
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 500);
+                } else {
+                    if(typeof ui !== 'undefined') ui.showNotification(result.message || '登录失败', 'error');
+                    else alert(result.message || '登录失败');
+                }
+            } catch (e) {
+                loadingModal.classList.add('hidden');
+                console.error(e);
+                if(typeof ui !== 'undefined') ui.showNotification('请求失败，请稍后重试', 'error');
+                else alert('请求失败');
+            }
+        });
+
+        // 密码登录提交
         passwordLoginBtn.addEventListener('click', async () => {
             const identifier = emailPhoneInput.value.trim();
             const password = passwordInput.value.trim();
 
-            if (!identifier) { ui.showNotification('请输入邮箱或手机号', 'warning'); return; }
-            if (!password) { ui.showNotification('请输入密码', 'warning'); return; }
+            if (!identifier || !password) {
+                if(typeof ui !== 'undefined') ui.showNotification('请输入账号和密码', 'warning');
+                else alert('请输入账号和密码');
+                return;
+            }
 
             loadingModal.classList.remove('hidden');
+            
             try {
                 const result = await userAuth.login(identifier, password);
                 loadingModal.classList.add('hidden');
-                if (result.success) {
-                    const idf = identifier;
-                    const u = result.user || (result.data && result.data.user) || {};
-                    const isEmail = /@/.test(idf);
-                    const matched = isEmail ? (u.email === idf) : (u.phone === idf || u.username === idf);
 
-                    if (!matched) {
-                        ui.showNotification('您还不是注册用户，请注册', 'warning');
-                        return;
-                    }
-                    try {
-                        const u = result.user || (result.data && result.data.user) || {};
-                        const need = (!u || !u.username || !u.avatar);
-                        if (need) localStorage.setItem('firstSetupRequired','1');
-                    } catch(_){}
-                    window.location.href = 'dashboard.html';
+                if (result.success) {
+                    if(typeof ui !== 'undefined') ui.showNotification('登录成功', 'success');
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 500);
                 } else {
                     const msg = result.message || '登录失败';
                     const finalMsg = (/未注册|不存在/.test(msg)) ? '您还不是注册用户，请注册' : '密码错误，请重试';
-                    ui.showNotification(finalMsg, 'error');
+                    if(typeof ui !== 'undefined') ui.showNotification(finalMsg, 'error');
+                    else alert(finalMsg);
                 }
             } catch (e) {
                 loadingModal.classList.add('hidden');
-                ui.showNotification('请求失败，请稍后重试', 'error');
+                console.error(e);
+                if(typeof ui !== 'undefined') ui.showNotification('请求失败，请稍后重试', 'error');
+                else alert('请求失败');
             }
         });
-
-        window.addEventListener('load', function(){ document.body.style.opacity='0'; document.body.style.transition='opacity .3s ease-in-out'; setTimeout(()=>{ document.body.style.opacity='1'; },100) });
     </script>
 </body>
 </html>

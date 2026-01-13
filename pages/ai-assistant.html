@@ -7,16 +7,26 @@
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <script src="../js/tailwindcss.js"></script>
     <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/design-system.css">
     <link rel="stylesheet" href="/css/sidebar.css">
     <script src="/js/user-auth.js"></script>
     <script src="/js/header-profile.js"></script>
     <script src="/js/sidebar.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-        
-        body {
-            font-family: 'Inter', sans-serif;
+        :root { --font-sans: 'Plus Jakarta Sans', sans-serif; }
+        body { font-family: var(--font-sans); }
+        .portal-card {
+            background: white;
+            border-radius: 16px;
+            border: 1px solid rgba(229, 231, 235, 0.5);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .portal-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.12), 0 4px 8px -4px rgba(0, 0, 0, 0.08);
+            border-color: rgba(59, 130, 246, 0.3);
         }
         
         /* 聊天气泡动画 */
@@ -99,14 +109,16 @@
         }
     </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50 text-gray-900 font-sans antialiased selection:bg-blue-100 selection:text-blue-700">
     <aside id="sidebar" class="fixed left-0 top-0 bottom-0 sidebar-modern z-40"></aside>
 
-    <header class="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20">
-        <div class="flex items-center justify-between p-4">
-            <div class="flex items-center space-x-4"><button class="menu-button p-2 rounded-lg hover:bg-gray-100"
-                    id="sidebar-toggle"><i class="fas fa-bars text-gray-600"></i></button>
-                <h1 class="brand-title text-lg font-bold text-gray-900">AI助理</h1>
+    <header class="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20 h-20">
+        <div class="flex items-center justify-between px-6 h-full">
+            <div class="flex items-center space-x-4 pl-8">
+                <div class="brand-title flex flex-col justify-center space-y-1.5">
+                    <h1 class="text-lg font-bold text-gray-900 leading-none">AI 助理</h1>
+                    <p class="text-xs text-gray-500 font-medium leading-tight">您的专属智能招聘专家，提供简历优化与面试评估建议</p>
+                </div>
             </div>
             <div class="flex items-center space-x-4" id="header-right-section">
                 <!-- User Profile will be rendered here -->
@@ -114,10 +126,10 @@
         </div>
     </header>
 
-    <main class="main-content pt-20" id="main-content">
-        <div class="max-w-4xl mx-auto p-6">
+    <main class="main-content p-6" id="main-content">
+        <div class="max-w-[1440px] mx-auto p-6">
         <!-- AI助理介绍卡片 -->
-        <div class="bg-blue-600 rounded-2xl p-8 text-white mb-8">
+        <div class="bg-blue-600 rounded-[16px] p-8 text-white mb-8">
             <div class="flex items-center space-x-4 mb-4">
                 <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
                     <i class="fas fa-robot text-2xl"></i>
@@ -133,9 +145,9 @@
             <!-- 聊天区域 -->
             <div class="lg:col-span-2">
                 <!-- 聊天容器 -->
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 h-96 flex flex-col">
+                <div class="portal-card h-96 flex flex-col">
                     <!-- 聊天头部 -->
-                    <div class="p-4 border-b border-gray-200 bg-gray-50 rounded-t-2xl">
+                    <div class="p-4 border-b border-gray-200 bg-gray-50 rounded-t-[16px]">
                         <div class="flex items-center space-x-3">
                             <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
                                 <i class="fas fa-robot text-white"></i>
@@ -188,7 +200,7 @@
                 <div class="mt-6">
                     <h3 class="text-lg font-semibold text-gray-900 mb-4">快速提问</h3>
                     <div class="grid grid-cols-2 gap-3">
-                        <button class="suggestion-card bg-white p-4 rounded-xl border border-gray-200 text-left hover:border-blue-300 group">
+                        <button class="portal-card p-4 text-left hover:border-blue-300 group">
                             <div class="flex items-center space-x-3">
                                 <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center group-hover:bg-blue-100 transition-colors">
                                     <i class="fas fa-file-alt text-blue-600"></i>
@@ -200,7 +212,7 @@
                             </div>
                         </button>
                         
-                        <button class="suggestion-card bg-white p-4 rounded-xl border border-gray-200 text-left hover:border-blue-300 group">
+                        <button class="portal-card p-4 text-left hover:border-blue-300 group">
                             <div class="flex items-center space-x-3">
                                 <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center group-hover:bg-blue-100 transition-colors">
                                     <i class="fas fa-target text-blue-600"></i>
@@ -212,7 +224,7 @@
                             </div>
                         </button>
                         
-                        <button class="suggestion-card bg-white p-4 rounded-xl border border-gray-200 text-left hover:border-blue-300 group">
+                        <button class="portal-card p-4 text-left hover:border-blue-300 group">
                             <div class="flex items-center space-x-3">
                                 <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center group-hover:bg-blue-100 transition-colors">
                                     <i class="fas fa-comments text-blue-600"></i>
@@ -224,7 +236,7 @@
                             </div>
                         </button>
                         
-                        <button class="suggestion-card bg-white p-4 rounded-xl border border-gray-200 text-left hover:border-blue-300 group">
+                        <button class="portal-card p-4 text-left hover:border-blue-300 group">
                             <div class="flex items-center space-x-3">
                                 <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center group-hover:bg-blue-100 transition-colors">
                                     <i class="fas fa-chart-line text-blue-600"></i>
@@ -297,7 +309,7 @@
                 </div>
 
                 <!-- 帮助信息 -->
-                <div class="bg-blue-50 rounded-2xl p-6 border border-blue-100">
+                <div class="bg-blue-50 rounded-[16px] p-6 border border-blue-100">
                     <div class="flex items-center space-x-2 mb-3">
                         <i class="fas fa-lightbulb text-blue-600"></i>
                         <h3 class="font-semibold text-blue-900">使用提示</h3>

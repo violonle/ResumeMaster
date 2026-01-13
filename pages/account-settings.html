@@ -11,19 +11,42 @@
     <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="/js/user-auth.js"></script>
     <link rel="stylesheet" href="/css/sidebar.css">
-    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        
+        body { 
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif; 
+            background-color: #fdfdfd;
+        }
+
+        .portal-card {
+            background: #ffffff;
+            border: 1px solid #f1f3f5;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            border-radius: 0.75rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .portal-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+            border-color: #e5e7eb;
+        }
+
+        .brand-title { white-space: normal !important; }
+    </style>
 </head>
 
-<body class="bg-gray-50">
+<body class="antialiased text-gray-900 selection:bg-blue-100 selection:text-blue-700">
     <aside id="sidebar" class="fixed left-0 top-0 bottom-0 sidebar-modern z-40"></aside>
 
-    <header class="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20">
-        <div class="flex items-center justify-between p-4">
-            <div class="flex items-center space-x-4">
-                <button class="menu-button p-2 rounded-lg hover:bg-gray-100" id="sidebar-toggle">
-                    <i class="fas fa-bars text-gray-900"></i>
-                </button>
-                <h1 class="brand-title text-lg font-bold text-gray-900">账号设置</h1>
+    <header class="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20 h-20">
+        <div class="flex items-center justify-between px-6 h-full">
+            <div class="flex items-center space-x-4 pl-8">
+                <div class="brand-title flex flex-col justify-center space-y-1.5">
+                    <h1 class="text-lg font-bold text-gray-900 leading-none">账号设置</h1>
+                    <p class="text-xs text-gray-500 font-medium leading-tight">管理您的个人资料、账号安全及隐私设置</p>
+                </div>
             </div>
             <div class="flex items-center space-x-4" id="header-right-section">
                 <!-- User Profile rendered by HeaderProfile -->
@@ -31,20 +54,20 @@
         </div>
     </header>
     <main id="main" class="main-content pt-20 p-6">
-        <div class="max-w-7xl mx-auto py-8">
+        <div class="max-w-[1440px] mx-auto py-8">
             <div class="flex flex-col md:flex-row gap-6">
                 <!-- Settings Sidebar -->
                 <aside class="w-full md:w-64 flex-shrink-0">
                     <div class="bg-white rounded-xl shadow-sm overflow-hidden sticky top-24">
                         <nav class="flex flex-col space-y-1 py-2">
                             <a href="#basic" id="nav-basic" class="flex items-center px-6 py-4 bg-blue-50 text-blue-600 border-l-4 border-blue-600 font-medium transition-colors">
-                                <i class="fas fa-user-circle w-6"></i> 个人信息
+                                <span class="w-6">👤</span> 个人信息
                             </a>
                             <a href="#security" id="nav-security" class="flex items-center px-6 py-4 text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-l-4 border-transparent transition-colors">
-                                <i class="fas fa-shield-alt w-6"></i> 账号安全
+                                <span class="w-6">🛡️</span> 账号安全
                             </a>
                             <a href="#privacy" id="nav-privacy" class="flex items-center px-6 py-4 text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-l-4 border-transparent transition-colors">
-                                <i class="fas fa-lock w-6"></i> 隐私设置
+                                <span class="w-6">🔒</span> 隐私设置
                             </a>
                         </nav>
                     </div>
@@ -60,7 +83,7 @@
                                 <p class="text-sm text-gray-500 mt-1">管理您的个人资料和联系方式</p>
                             </div>
                             <button onclick="openPersonalEditModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shadow-sm">
-                                <i class="fas fa-edit mr-2"></i>编辑
+                                <span class="mr-2">📝</span>编辑
                             </button>
                         </div>
                         
@@ -169,7 +192,7 @@
                     </div>
 
                     <!-- Privacy Section -->
-                    <div id="privacy-section" class="bg-white rounded-xl shadow-sm p-6 md:p-8 hidden">
+                    <div id="privacy-section" class="portal-card p-6 md:p-8 hidden">
                         <div class="mb-6">
                             <h2 class="text-xl font-bold text-gray-900">隐私设置</h2>
                             <p class="text-sm text-gray-500 mt-1">管理您的数据隐私和可见性</p>

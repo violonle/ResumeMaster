@@ -7,11 +7,23 @@
     <script src="../js/tailwindcss.js"></script>
     <script src="../js/ui-components.js"></script>
     <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/sidebar.css">
     <style>
-        .card-hover { transition: all 0.3s ease; }
-        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
-        .setting-section { background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px; }
+        :root { --font-sans: 'Plus Jakarta Sans', sans-serif; }
+        body { font-family: var(--font-sans); }
+        .portal-card {
+            background: white;
+            border-radius: 16px;
+            border: 1px solid rgba(229, 231, 235, 0.5);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .portal-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.12), 0 4px 8px -4px rgba(0, 0, 0, 0.08);
+            border-color: rgba(59, 130, 246, 0.3);
+        }
         .toggle-switch { position: relative; display: inline-block; width: 48px; height: 24px; }
         .toggle-switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
@@ -21,36 +33,26 @@
         .main-content { padding: 0 24px; }
     </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50 text-gray-900 font-sans antialiased selection:bg-blue-100 selection:text-blue-700">
     <!-- 侧边栏占位 -->
     <aside id="sidebar" class="fixed left-0 top-0 bottom-0 sidebar-modern z-40"></aside>
     
-    <!-- 移动端顶部导航 -->
-    <div class="lg:hidden bg-white shadow-sm border-b border-gray-200 sticky top-0 z-30">
-        <div class="flex items-center justify-between px-4 py-3">
-            <button id="mobile-sidebar-toggle" class="text-gray-600 hover:text-gray-900">
-                <i class="fas fa-bars text-xl"></i>
-            </button>
-            <h1 class="text-lg font-semibold text-gray-900">安全与备份</h1>
-            <div class="flex items-center space-x-2">
-                <!-- User Profile Placeholder -->
-                <div id="mobile-header-profile"></div>
-            </div>
-        </div>
-    </div>
-
     <!-- 主要内容 -->
-    <main class="main-content pt-0 lg:pt-0 pt-16" id="main-content">
-        <div class="p-6 lg:pl-12">
-            <!-- 顶部标题栏 -->
-            <div class="flex items-center justify-between mb-6">
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900">安全与备份</h1>
-                    <p class="text-gray-600 mt-1">管理您的账户安全和数据备份</p>
+    <main class="main-content min-h-screen" id="main-content">
+        <!-- Header -->
+        <header class="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20 h-20">
+            <div class="flex items-center justify-between px-6 h-full">
+                <div class="flex items-center space-x-4 pl-8">
+                    <div class="brand-title flex flex-col justify-center space-y-1.5">
+                        <h1 class="text-lg font-bold text-gray-900 leading-none">安全与备份</h1>
+                        <p class="text-xs text-gray-500 font-medium leading-tight">管理您的账户安全、登录权限及数据备份恢复</p>
+                    </div>
                 </div>
-                <!-- Desktop Header Profile Placeholder -->
-                <div id="desktop-header-profile" class="hidden lg:block"></div>
+                <div id="header-right-section" class="flex items-center space-x-4"></div>
             </div>
+        </header>
+
+        <div class="p-6 lg:pl-12 pt-24">
 
             <!-- 设置内容 -->
             <div class="max-w-4xl">
@@ -58,7 +60,7 @@
                 <div class="setting-section">
                     <div class="p-6 border-b border-gray-200">
                         <h3 class="text-lg font-semibold text-gray-900 flex items-center">
-                            <i class="fas fa-shield-alt text-red-600 mr-3"></i>
+                            <span class="mr-3">🛡️</span>
                             安全设置
                         </h3>
                         <p class="text-sm text-gray-600 mt-1">账户安全和权限管理</p>
@@ -70,7 +72,7 @@
                                 <div class="space-y-3">
                                     <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                                         <div class="flex items-center">
-                                            <i class="fas fa-key text-gray-400 mr-3"></i>
+                                            <span class="text-gray-400 mr-3">🔑</span>
                                             <div>
                                                 <p class="text-sm font-medium text-gray-900">登录密码</p>
                                                 <p class="text-xs text-gray-500">上次修改：3个月前</p>
@@ -80,7 +82,7 @@
                                     </div>
                                     <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                                         <div class="flex items-center">
-                                            <i class="fas fa-mobile-alt text-gray-400 mr-3"></i>
+                                            <span class="text-gray-400 mr-3">📱</span>
                                             <div>
                                                 <p class="text-sm font-medium text-gray-900">手机验证</p>
                                                 <p class="text-xs text-gray-500">已绑定：139****8888</p>

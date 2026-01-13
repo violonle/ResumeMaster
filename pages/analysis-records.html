@@ -7,6 +7,7 @@
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <script src="../js/tailwindcss.js"></script>
     <link rel="stylesheet" href="https://fastly.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Shared Utils -->
     <script src="../js/user-auth.js"></script>
@@ -19,6 +20,26 @@
     <link rel="stylesheet" href="../css/responsive.css">
 
     <style>
+        :root {
+            --font-family-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+        }
+        body {
+            font-family: var(--font-family-sans);
+        }
+        .portal-card {
+            background-color: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+            transition-property: all;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 300ms;
+        }
+        .portal-card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transform: translateY(-2px);
+        }
+        .brand-title { white-space: normal !important; }
         .main-content-area {
             flex: 1;
             background: #f9fafb;
@@ -28,15 +49,6 @@
         }
         .main-content {
             padding: 64px 0 0 0 !important;
-        }
-        .record-card {
-            transition: all 0.2s;
-            border: 1px solid #f3f4f6;
-        }
-        .record-card:hover {
-            border-color: #2563eb;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.05);
-            transform: translateY(-2px);
         }
         .score-badge {
             padding: 4px 12px;
@@ -53,15 +65,18 @@
         }
     </style>
 </head>
-<body class="bg-gray-50 font-sans antialiased text-gray-900">
+<body class="bg-gray-50 antialiased text-gray-900 selection:bg-blue-100 selection:text-blue-700">
     <!-- Header -->
-    <header class="fixed top-0 left-0 right-0 h-16 bg-white shadow-sm border-b border-gray-200 z-50">
-        <div class="max-w-[1600px] mx-auto h-full px-6 flex items-center justify-between">
-            <div class="flex items-center space-x-4">
-                <button onclick="history.back()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500">
-                    <i class="fas fa-arrow-left"></i>
+    <header class="fixed top-0 left-0 right-0 h-20 bg-white shadow-sm border-b border-gray-200 z-50">
+        <div class="max-w-[1440px] mx-auto h-full px-6 flex items-center justify-between">
+            <div class="flex items-center space-x-4 pl-8">
+                <button onclick="history.back()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500 flex items-center justify-center">
+                    <span class="text-xl">⬅️</span>
                 </button>
-                <h1 class="text-xl font-bold text-gray-900">解析记录</h1>
+                <div class="brand-title flex flex-col justify-center space-y-1.5">
+                    <h1 class="text-lg font-bold text-gray-900 leading-none">解析记录</h1>
+                    <p class="text-xs text-gray-500 font-medium leading-tight">查看所有已完成的单人深度解析和多人对比解析结果</p>
+                </div>
             </div>
             <div class="flex items-center space-x-4" id="header-right-section"></div>
         </div>
@@ -72,12 +87,9 @@
         <aside id="sidebar" class="sidebar-modern"></aside>
 
         <div class="main-content-area">
-            <div class="max-w-6xl mx-auto">
+            <div class="max-w-[1440px] mx-auto">
                 <div class="flex items-center justify-between mb-8">
-                    <div>
-                        <h2 class="text-2xl font-bold text-gray-900">历史解析记录</h2>
-                        <p class="text-gray-500 mt-1">查看所有已完成的单人深度解析和多人对比解析结果。</p>
-                    </div>
+                    <div></div>
                     <div class="flex space-x-3">
                         <div class="relative">
                             <select id="job-filter" class="pl-4 pr-10 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-white appearance-none min-w-[160px]">
@@ -233,7 +245,7 @@
                     }).join('');
 
                     return `
-                        <div class="record-card bg-white rounded-xl p-5 flex items-center justify-between shadow-sm">
+                        <div class="portal-card p-5 flex items-center justify-between">
                             <div class="flex items-center space-x-4 flex-1">
                                 <div class="w-12 h-12 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400">
                                     <i class="fas fa-file-alt text-xl"></i>
@@ -268,7 +280,7 @@
 
             function showError(msg) {
                 recordsList.innerHTML = `
-                    <div class="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-red-100 shadow-sm">
+                    <div class="portal-card flex flex-col items-center justify-center py-20 border-red-100">
                         <i class="fas fa-exclamation-circle text-4xl text-red-500 mb-4"></i>
                         <p class="text-gray-700 font-medium">${msg}</p>
                         <button onclick="location.reload()" class="mt-4 text-blue-600 hover:underline">点击重试</button>

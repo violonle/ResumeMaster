@@ -155,12 +155,6 @@ class HeaderProfile {
 
         return `
             <div class="flex items-center space-x-4 ml-4">
-                <!-- Notifications -->
-                <a href="/pages/settings.html" class="p-2 rounded-lg hover:bg-gray-100 relative group transition-colors" title="通知">
-                    <i class="fas fa-bell text-gray-600 text-lg"></i>
-                    <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-                </a>
-                
                 <!-- User Profile Dropdown -->
                 <div class="relative z-50">
                     <button id="header-user-btn" class="flex items-center space-x-3 p-1.5 rounded-lg hover:bg-gray-50 transition-colors focus:outline-none border border-transparent hover:border-gray-200">

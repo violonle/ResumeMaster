@@ -1,4 +1,5 @@
 const { Job, User } = require('../models');
+const { Op } = require('sequelize');
 const jobImportService = require('../services/jobImportService');
 
 // 获取所有职位
@@ -230,11 +231,94 @@ const importJobFromUrl = async (req, res) => {
   }
 };
 
+// 获取公开职位列表（供Portal使用）
+const getPublicJobs = async (req, res) => {
+  try {
+    const { keyword, location, experience } = req.query;
+    let whereClause = { status: 'published' }; // 只显示已发布的职位
+
+    if (keyword) {
+      whereClause[Op.or] = [
+        { title: { [Op.like]: `%${keyword}%` } },
+        { description: { [Op.like]: `%${keyword}%` } }
+      ];
+    }
+    
+    if (location) {
+      whereClause.location = { [Op.like]: `%${location}%` };
+    }
+
+    if (experience) {
+      whereClause.experience_required = experience;
+    }
+
+    const jobs = await Job.findAll({
+      where: whereClause,
+      order: [['created_at', 'DESC']],
+      include: [
+        { model: User, attributes: ['id', 'username', 'avatar'] }
+      ]
+    });
+
+    res.json({
+      success: true,
+      data: jobs
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'JOB_ERROR',
+        message: error.message
+      }
+    });
+  }
+};
+
+// 获取公开职位详情（供Portal使用）
+const getPublicJobById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const job = await Job.findOne({
+      where: { id, status: 'published' },
+      include: [
+        { model: User, attributes: ['id', 'username', 'avatar'] }
+      ]
+    });
+
+    if (!job) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'JOB_NOT_FOUND',
+          message: '职位不存在或已下架'
+        }
+      });
+    }
+
+    res.json({
+      success: true,
+      data: job
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'JOB_ERROR',
+        message: error.message
+      }
+    });
+  }
+};
+
 module.exports = {
   getAllJobs,
   getJobById,
   createJob,
   updateJob,
   deleteJob,
-  importJobFromUrl
+  importJobFromUrl,
+  getPublicJobs,
+  getPublicJobById
 };

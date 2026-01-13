@@ -161,29 +161,35 @@ const register = async (req, res) => {
 // 用户登录
 const login = async (req, res) => {
   try {
-    const { email, phone, username, password } = req.body;
+    const { email, phone, username, identifier, password } = req.body;
 
     // 检查是否提供了登录凭据
-    if (!email && !phone && !username) {
+    if (!email && !phone && !username && !identifier) {
       return res.status(400).json({
         success: false,
         error: {
           code: 'MISSING_CREDENTIALS',
-          message: '请提供邮箱、手机号或用户名'
+          message: '请提供登录账号'
         }
       });
     }
 
     // 构建查询条件
-    const whereConditions = {};
-    if (email) whereConditions.email = email;
-    if (phone) whereConditions.phone = phone;
-    if (username) whereConditions.username = username;
+    let whereConditions = [];
+    if (identifier) {
+      whereConditions.push({ username: identifier });
+      whereConditions.push({ email: identifier });
+      whereConditions.push({ phone: identifier });
+    } else {
+      if (email) whereConditions.push({ email: email });
+      if (phone) whereConditions.push({ phone: phone });
+      if (username) whereConditions.push({ username: username });
+    }
 
     // 根据邮箱、手机或用户名查找用户
     const user = await User.findOne({
       where: {
-        [Op.or]: Object.keys(whereConditions).map(key => ({ [key]: whereConditions[key] }))
+        [Op.or]: whereConditions
       }
     });
 

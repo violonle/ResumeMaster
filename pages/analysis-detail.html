@@ -45,13 +45,16 @@
 </head>
 <body class="bg-gray-50 font-sans antialiased text-gray-900">
     <!-- Header -->
-    <header class="fixed top-0 left-0 right-0 h-16 bg-white shadow-sm border-b border-gray-200 z-50">
+    <header class="fixed top-0 left-0 right-0 h-20 bg-white shadow-sm border-b border-gray-200 z-50">
         <div class="max-w-[1600px] mx-auto h-full px-6 flex items-center justify-between">
-            <div class="flex items-center space-x-4">
-                <button onclick="history.back()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500">
-                    <i class="fas fa-arrow-left"></i>
+            <div class="flex items-center space-x-4 pl-8">
+                <button onclick="history.back()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500 flex items-center justify-center">
+                    <span class="text-xl">⬅️</span>
                 </button>
-                <h1 id="header-title" class="text-xl font-bold text-gray-900">解析详情</h1>
+                <div class="brand-title flex flex-col justify-center space-y-1.5">
+                    <h1 id="header-title" class="text-lg font-bold text-gray-900 leading-none">解析详情</h1>
+                    <p class="text-xs text-gray-500 font-medium leading-tight">查看详细的 AI 简历评估报告与能力维度分析</p>
+                </div>
             </div>
             <div class="flex items-center space-x-4" id="header-right-section"></div>
         </div>
@@ -62,7 +65,7 @@
         <aside id="sidebar" class="sidebar-modern"></aside>
 
         <div class="main-content-area">
-            <div class="max-w-6xl mx-auto">
+            <div class="max-w-[1440px] mx-auto">
                 <!-- Loading State -->
                 <div id="loading-state" class="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-gray-100 shadow-sm">
                     <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
@@ -77,7 +80,7 @@
                     </div>
                     
                     <!-- Basic Info Card -->
-                    <div class="bg-white rounded-xl p-6 border border-gray-100 shadow-sm flex items-center justify-between">
+                    <div class="portal-card p-6 flex items-center justify-between">
                         <div class="flex items-center space-x-6">
                             <div class="w-16 h-16 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 text-2xl font-bold border border-blue-100">
                                 <i class="fas fa-user-tie"></i>
@@ -105,7 +108,7 @@
                     </div>
 
                     <!-- Unified Analysis Card -->
-                    <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-6 md:p-8">
+                    <div class="portal-card p-6 md:p-8">
                         <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
                             <h4 class="text-lg font-bold text-gray-900 flex items-center">
                                 <i class="fas fa-chart-line mr-2 text-blue-600"></i>
@@ -131,7 +134,7 @@
                     </div>
 
                     <!-- AI Analysis Report -->
-                    <div class="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
+                    <div class="portal-card p-6">
                         <div class="flex items-center justify-between mb-5">
                             <h4 class="text-base font-bold text-gray-900 flex items-center">
                                 <i class="fas fa-file-invoice mr-2 text-blue-600"></i>

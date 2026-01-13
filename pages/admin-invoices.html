@@ -20,18 +20,31 @@
         <div id="sidebar-overlay" class="sidebar-overlay"></div>
 
         <div class="flex flex-col w-0 flex-1 overflow-hidden">
-            <main class="flex-1 relative overflow-y-auto focus:outline-none" id="main-content">
-                <div class="py-6">
+            <header class="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20 h-20">
+                <div class="flex items-center justify-between px-6 h-full">
+                    <div class="flex items-center space-x-4 pl-8">
+                        <div class="brand-title flex flex-col justify-center space-y-1.5">
+                            <h1 class="text-lg font-bold text-gray-900 leading-none">发票管理</h1>
+                            <p class="text-xs text-gray-500 font-medium leading-tight">审核企业开票申请、管理发票抬头信息并跟踪发票开具状态</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4" id="header-right-section">
+                        <!-- User Profile rendered by HeaderProfile -->
+                    </div>
+                </div>
+            </header>
+
+            <main class="flex-1 relative overflow-y-auto focus:outline-none main-content" id="main-content">
+                <div class="py-6 pt-24">
                     <div class="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 flex justify-between items-center">
-                        <h1 class="text-2xl font-semibold text-gray-900">发票管理</h1>
+                        <h1 class="text-2xl font-semibold text-gray-900 invisible">发票管理</h1>
                         <div class="flex items-center">
                             <div class="flex space-x-3">
                                 <button
                                     class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-                                    <i class="fas fa-cog mr-2"></i>发票设置
+                                    <span class="mr-2">⚙️</span>发票设置
                                 </button>
                             </div>
-                            <div id="header-right-section" class="ml-4"></div>
                         </div>
                     </div>
 
@@ -105,7 +118,7 @@
                         </div>
 
                         <!-- 发票列表 -->
-                        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+                        <div class="portal-card overflow-hidden">
                             <table class="min-w-full divide-y divide-gray-200">
                                 <thead class="bg-gray-50">
                                     <tr>

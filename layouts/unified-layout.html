@@ -97,7 +97,7 @@
 <body class="bg-gray-50">
     <!-- 移动端导航切换按钮 -->
     <button class="nav-toggle fixed top-4 left-4 z-50 bg-white p-3 rounded-lg shadow-lg md:hidden" onclick="toggleSidebar()">
-        <i class="fas fa-bars text-gray-600"></i>
+    </button>
     </button>
 
     <!-- 左侧导航栏 -->
@@ -247,22 +247,18 @@
                 <div class="flex items-center space-x-4">
                     <!-- 通知铃铛 -->
                     <button class="relative p-2 text-gray-600 hover:text-gray-800 transition-colors" onclick="showNotifications()">
-                        <i class="fas fa-bell text-lg"></i>
                         <span class="absolute -top-1 -right-1 w-3 h-3 bg-blue-600 rounded-full" id="notification-dot"></span>
                     </button>
                     
                     <!-- 帮助按钮 -->
                     <button class="p-2 text-gray-600 hover:text-gray-800 transition-colors" onclick="showHelp()">
-                        <i class="fas fa-question-circle text-lg"></i>
                     </button>
                     
                     <!-- 用户菜单 -->
                     <div class="relative">
                         <button class="flex items-center space-x-2 p-2 hover:bg-gray-100 rounded-lg transition-colors" onclick="toggleUserMenu()">
                             <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                                <i class="fas fa-user text-sm text-white"></i>
                             </div>
-                            <i class="fas fa-chevron-down text-gray-600"></i>
                         </button>
                         <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border hidden" id="user-menu-dropdown">
                             <a href="/pages/account-settings.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">个人资料</a>

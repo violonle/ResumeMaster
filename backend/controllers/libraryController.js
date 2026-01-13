@@ -28,6 +28,9 @@ async function getTalentPoolResumes(req, res){
     const rows = await Resume.findAll({ 
         where: whereClause, 
         order:[['upload_date','DESC']],
+        attributes: { 
+            exclude: ['raw_text', 'work_experience', 'education', 'skills', 'projects', 'summary'] 
+        },
         include: [{
             model: Job,
             through: { attributes: [] }, // 不返回中间表数据

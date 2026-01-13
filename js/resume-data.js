@@ -57,7 +57,18 @@ class ResumeDataManager {
 
         const tryRequest = async (base) => {
             const response = await fetch(`${base}${endpoint}`, options);
-            const result = await response.json();
+            const text = await response.text();
+            let result;
+            try {
+                result = text ? JSON.parse(text) : {};
+            } catch (e) {
+                console.error('JSON解析失败:', e, 'Response:', text.substring(0, 200));
+                // 如果是404/500且返回HTML，这里会捕获
+                const err = new Error(response.ok ? '服务器返回了非JSON格式的数据' : `请求失败 (${response.status})`);
+                err.status = response.status;
+                throw err;
+            }
+
             if (response.status === 401) {
                 try { window.dispatchEvent(new CustomEvent('apiUnauthorized', { detail: { source: 'resume-data', endpoint } })); } catch (_) { }
                 const err = new Error('Unauthorized');

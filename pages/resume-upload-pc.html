@@ -18,8 +18,30 @@
     <script src="../js/resume-upload-handler.js"></script>
     <link rel="stylesheet" href="/css/design-system.css">
     <link rel="stylesheet" href="/css/sidebar.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --font-family-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+        }
+        body {
+            font-family: var(--font-family-sans);
+        }
+        .portal-card {
+            background-color: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+            transition-property: all;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 300ms;
+        }
+        .portal-card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transform: translateY(-2px);
+        }
+    </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50 antialiased text-gray-900 selection:bg-blue-100 selection:text-blue-700">
     <aside id="sidebar" class="fixed left-0 top-0 bottom-0 sidebar-modern z-40"></aside>
     <div id="sidebar-overlay" class="sidebar-overlay"></div>
 
@@ -80,27 +102,20 @@
     
 
     <!-- 头部 -->
-    <header>
-        <div class="header-content">
-            <div class="flex items-center space-x-4">
-                <button class="menu-button p-2 rounded-lg hover:bg-gray-100" id="sidebar-toggle">
-                    <i class="fas fa-bars text-gray-900"></i>
-                </button>
-                <h1 class="text-lg font-bold text-gray-900">简历解析</h1>
+    <header class="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20 h-20">
+        <div class="flex items-center justify-between px-6 h-full max-w-[1440px] mx-auto w-full">
+            <div class="flex items-center space-x-4 pl-8">
+                <div class="brand-title flex flex-col justify-center space-y-1.5">
+                    <h1 class="text-lg font-bold text-gray-900 leading-none">简历解析</h1>
+                    <p class="text-xs text-gray-500 font-medium leading-tight">AI智能解析简历，自动提取信息并进行深度分析</p>
+                </div>
             </div>
-            <div class="flex items-center space-x-4">
-                <button class="p-2 rounded-lg hover:bg-gray-100">
-                    <i class="fas fa-upload text-gray-900"></i>
-                </button>
-                <button class="p-2 rounded-lg hover:bg-gray-100">
-                    <i class="fas fa-user-circle text-gray-900"></i>
-                </button>
-            </div>
+            <div class="flex items-center space-x-4" id="header-right-section"></div>
         </div>
     </header>
 
     <!-- 主要内容 -->
-    <main class="main-content" id="main-content">
+    <main class="main-content pt-24" id="main-content">
         <div class="p-6">
 
     <div class="max-w-7xl mx-auto p-6">
@@ -112,19 +127,19 @@
             <!-- 功能特色 -->
             <div class="flex justify-center space-x-8 text-sm text-gray-500">
                 <div class="flex items-center space-x-2">
-                    <i class="fas fa-check-circle text-green-500"></i>
+                    <span class="text-green-500">✅</span>
                     <span>支持多种格式</span>
                 </div>
                 <div class="flex items-center space-x-2">
-                    <i class="fas fa-check-circle text-green-500"></i>
+                    <span class="text-green-500">✅</span>
                     <span>AI智能分析</span>
                 </div>
                 <div class="flex items-center space-x-2">
-                    <i class="fas fa-check-circle text-green-500"></i>
+                    <span class="text-green-500">✅</span>
                     <span>专业优化建议</span>
                 </div>
                 <div class="flex items-center space-x-2">
-                    <i class="fas fa-check-circle text-green-500"></i>
+                    <span class="text-green-500">✅</span>
                     <span>安全隐私保护</span>
                 </div>
             </div>
@@ -141,7 +156,7 @@
                         <h2 class="text-2xl font-semibold text-gray-900">已选择简历</h2>
                         <div class="flex items-center space-x-4">
                             <button id="upload-resume-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center">
-                                <i class="fas fa-upload mr-2"></i>
+                                <span class="mr-2">📤</span>
                                 选择解析的简历
                             </button>
                             <span class="text-sm text-gray-500" id="selected-resume-count">已选择 0 份简历</span>
@@ -157,7 +172,7 @@
                                     <input type="text" id="library-search-input" placeholder="搜索简历名称或姓名..." 
                                            class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                                     <div class="absolute left-3 top-1/2 transform -translate-y-1/2">
-                                        <i class="fas fa-search text-gray-400"></i>
+                                        <span class="text-gray-400">🔍</span>
                                     </div>
                                 </div>
                             </div>
@@ -199,13 +214,13 @@
                             </div>
                             <div class="flex items-center space-x-2">
                                 <button id="library-select-all-btn" class="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                                    <i class="fas fa-check-square mr-1"></i>全选
+                                    <span class="mr-1">☑️</span>全选
                                 </button>
                                 <button id="library-clear-selection-btn" class="text-gray-600 hover:text-gray-700 text-sm font-medium">
-                                    <i class="fas fa-times mr-1"></i>清空选择
+                                    <span class="mr-1">✖️</span>清空选择
                                 </button>
                                 <button id="add-to-list-btn" class="text-green-600 hover:text-green-700 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                                    <i class="fas fa-plus mr-1"></i>加入清单 (<span id="add-to-list-count">0</span>)
+                                    <span class="mr-1">➕</span>加入清单 (<span id="add-to-list-count">0</span>)
                                 </button>
                             </div>
                         </div>
@@ -227,19 +242,19 @@
                                 </div>
                                 <div class="flex items-center space-x-2">
                                     <button id="library-first-page-btn" class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                                        <i class="fas fa-angle-double-left mr-1"></i>首页
+                                        <span class="mr-1">⏪</span>首页
                                     </button>
                                     <button id="library-prev-page-btn" class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                                        <i class="fas fa-angle-left mr-1"></i>上一页
+                                        <span class="mr-1">◀️</span>上一页
                                     </button>
                                     <div class="flex items-center space-x-1" id="library-page-numbers">
                                         <!-- 页码按钮将由JavaScript动态生成 -->
                                     </div>
                                     <button id="library-next-page-btn" class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">
-                                        下一页<i class="fas fa-angle-right ml-1"></i>
+                                        下一页<span class="ml-1">▶️</span>
                                     </button>
                                     <button id="library-last-page-btn" class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">
-                                        尾页<i class="fas fa-angle-double-right ml-1"></i>
+                                        尾页<span class="ml-1">⏩</span>
                                     </button>
                                 </div>
                             </div>
@@ -251,11 +266,11 @@
                         <div class="text-center">
                             <div class="flex items-center justify-center space-x-4">
                                 <button id="add-to-analysis-list-btn" class="bg-white border-2 border-blue-600 text-blue-600 py-4 px-8 rounded-xl font-medium hover:bg-blue-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-lg inline-flex items-center" disabled>
-                                    <i class="fas fa-plus mr-2"></i>
+                                    <span class="mr-2">➕</span>
                                     加入分析清单 (<span id="analysis-list-count">0</span>)
                                 </button>
                                 <button id="analyze-btn" type="button" class="bg-blue-600 text-white py-4 px-8 rounded-xl font-medium hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-lg inline-flex items-center" disabled>
-                                    <i class="fas fa-cog mr-2"></i>
+                                    <span class="mr-2">⚙️</span>
                                     开始解析 (<span id="library-analyze-count">0</span>)
                                 </button>
                             </div>
@@ -265,7 +280,7 @@
                 </div>
 
                 <!-- 文件列表 -->
-                <div id="file-list-container" class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hidden">
+                <div id="file-list-container" class="portal-card p-6 hidden">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-lg font-semibold text-gray-900">待分析文件</h3>
                         <button class="text-sm text-gray-500 hover:text-gray-700">清空列表</button>
@@ -274,32 +289,32 @@
                 </div>
                 
                 <!-- 分析结果预览 -->
-                <div id="analysis-preview" class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hidden">
+                <div id="analysis-preview" class="portal-card p-6 hidden border-dashed">
                     <h3 class="text-lg font-semibold text-gray-900 mb-4">分析进度</h3>
                     <div class="space-y-4">
                         <div class="flex items-center justify-between">
                             <span class="text-sm text-gray-600">解析文档结构</span>
                             <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
-                                <i class="fas fa-check text-green-600 text-xs"></i>
+                                <span class="text-green-600 text-xs">✅</span>
                             </div>
                         </div>
                         <div class="flex items-center justify-between">
                             <span class="text-sm text-gray-600">提取个人信息</span>
                             <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
-                                <i class="fas fa-check text-green-600 text-xs"></i>
+                                <span class="text-green-600 text-xs">✅</span>
                             </div>
                         </div>
                         <div class="flex items-center justify-between">
                             <span class="text-sm text-gray-600">AI智能分析</span>
                             <div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center analysis-progress">
-                                <i class="fas fa-spinner fa-spin text-blue-600 text-xs"></i>
+                                <span class="text-blue-600 text-xs animate-spin">⏳</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- 单人分析结果 -->
-                <div id="single-analysis-result" class="bg-white rounded-2xl shadow-lg p-6 hidden">
+                <div id="single-analysis-result" class="portal-card p-6 hidden">
                     <div class="flex items-center justify-between mb-6">
                         <div>
                             <h2 id="sar-name" class="text-2xl font-bold text-gray-900">候选人</h2>
@@ -309,14 +324,14 @@
                             <div id="sar-score-badge" class="hidden px-4 py-2 bg-blue-100 text-blue-800 rounded-lg font-bold text-lg">
                                 综合评分 <span id="sar-score-val">0</span>
                             </div>
-                            <button id="sar-download-pdf" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"><i class="fas fa-file-pdf mr-2"></i>导出PDF</button>
+                            <button id="sar-download-pdf" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"><span class="mr-2">📄</span>导出PDF</button>
                         </div>
                     </div>
                     
                     <!-- Row 1: Basic Info & Radar Chart -->
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
                         <!-- Basic Info (1 col) -->
-                        <div class="bg-white rounded-2xl p-6 border shadow-sm">
+                        <div class="portal-card p-6">
                             <h3 class="text-lg font-bold text-gray-900 mb-4">基本信息</h3>
                             <div id="sar-basic" class="space-y-3 text-sm text-gray-700"></div>
                         </div>

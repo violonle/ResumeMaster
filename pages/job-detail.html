@@ -7,8 +7,28 @@
     <script src="../js/tailwindcss.js"></script>
     <script src="../js/ui-components.js"></script>
     <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/sidebar.css">
     <style>
+        :root {
+            --font-family-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+        }
+        body {
+            font-family: var(--font-family-sans);
+        }
+        .portal-card {
+            background-color: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+            transition-property: all;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 300ms;
+        }
+        .portal-card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transform: translateY(-2px);
+        }
         /* CSS Grid 布局 */
         body {
             display: grid;
@@ -110,51 +130,40 @@
         @media (max-width:768px){ .main-content{ margin-left:0 !important; padding:24px } }
     </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50 antialiased text-gray-900 selection:bg-blue-100 selection:text-blue-700">
     <aside id="sidebar" class="fixed left-0 top-0 bottom-0 sidebar-modern z-40"></aside>
 
     
 
-    <!-- 顶部导航栏（移动端） -->
-    <div class="lg:hidden fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20">
-        <div class="flex items-center justify-between p-4">
-            <button class="p-2 rounded-lg hover:bg-gray-100" id="sidebar-toggle">
-                <i class="fas fa-bars text-gray-600"></i>
-            </button>
-            <h1 class="text-lg font-bold text-gray-900">职位详情</h1>
-            <button class="p-2 rounded-lg hover:bg-gray-100">
-                <i class="fas fa-bell text-gray-600"></i>
-            </button>
+    <!-- Header -->
+    <header class="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20 h-20">
+        <div class="flex items-center justify-between px-6 h-full max-w-[1440px] mx-auto w-full">
+            <div class="flex items-center space-x-4 pl-8">
+                <div class="brand-title flex flex-col justify-center space-y-1.5">
+                    <h1 class="text-lg font-bold text-gray-900 leading-none">职位详情</h1>
+                    <p class="text-xs text-gray-500 font-medium leading-tight">查看职位的详细描述、候选人列表及招聘进度</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4" id="header-right-section"></div>
         </div>
-    </div>
+    </header>
 
     <!-- 主要内容 -->
-    <div id="main-content" class="main-content flex flex-col min-h-screen">
-        <header class="hidden lg:block bg-white shadow-sm border-b border-gray-200 z-20 sticky top-0">
-            <div class="flex items-center justify-between p-4">
-                <div class="flex items-center space-x-4">
-                    <button class="menu-button p-2 rounded-lg hover:bg-gray-100" id="sidebar-toggle">
-                        <i class="fas fa-bars text-gray-900"></i>
-                    </button>
-                    <h1 class="brand-title text-lg font-bold text-gray-900">职位详情</h1>
-                </div>
-                <div class="flex items-center space-x-4" id="header-right-section"></div>
-            </div>
-        </header>
-
+    <div id="main-content" class="main-content flex flex-col min-h-screen pt-24">
         <main class="flex-grow p-6 lg:pl-12">
+            <div class="max-w-[1440px] mx-auto">
             <!-- 面包屑导航 -->
             <nav class="flex mb-6" aria-label="Breadcrumb">
                 <ol class="inline-flex items-center space-x-1 md:space-x-3">
                     <li class="inline-flex items-center">
                         <a href="job-management.html" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
-                            <i class="fas fa-briefcase mr-2"></i>
+                            <span class="mr-2">💼</span>
                             职位管理
                         </a>
                     </li>
                     <li>
                         <div class="flex items-center">
-                            <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
+                            <span class="text-gray-400 mx-2">/</span>
                             <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2" id="job-title-breadcrumb">高级前端开发工程师</span>
                         </div>
                     </li>
@@ -162,20 +171,20 @@
             </nav>
 
             <!-- 职位基本信息 -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+            <div class="portal-card mb-6">
                 <div class="p-6">
                     <div class="flex items-start justify-between">
                         <div class="flex items-start space-x-4">
                             <div class="flex-shrink-0">
                                 <div class="w-16 h-16 bg-blue-100 rounded-lg flex items-center justify-center">
-                                    <i class="fas fa-code text-blue-600 text-2xl"></i>
+                                    <span class="text-blue-600 text-2xl">💻</span>
                                 </div>
                             </div>
                             <div class="flex-1">
                                 <div class="flex items-center space-x-3 mb-2">
                                     <h1 class="text-2xl font-bold text-gray-900" id="job-title">高级前端开发工程师</h1>
                                     <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                                        <i class="fas fa-circle text-blue-400 text-xs mr-1"></i>
+                                        <span class="text-blue-400 text-xs mr-1">●</span>
                                         招聘中
                                     </span>
                                     <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
@@ -184,19 +193,19 @@
                                 </div>
                                 <div class="flex items-center space-x-6 text-gray-600 mb-3">
                                     <span class="flex items-center">
-                                        <i class="fas fa-map-marker-alt mr-2"></i>
+                                        <span class="mr-2">📍</span>
                                         北京·朝阳区
                                     </span>
                                     <span class="flex items-center">
-                                        <i class="fas fa-dollar-sign mr-2"></i>
+                                        <span class="mr-2">💰</span>
                                         20K-35K
                                     </span>
                                     <span class="flex items-center">
-                                        <i class="fas fa-calendar mr-2"></i>
+                                        <span class="mr-2">📅</span>
                                         3-5年经验
                                     </span>
                                     <span class="flex items-center">
-                                        <i class="fas fa-graduation-cap mr-2"></i>
+                                        <span class="mr-2">🎓</span>
                                         本科及以上
                                     </span>
                                 </div>
@@ -207,11 +216,11 @@
                         </div>
                         <div class="flex items-center space-x-3">
                             <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                                <i class="fas fa-edit mr-2"></i>
+                                <span class="mr-2">📝</span>
                                 编辑职位
                             </button>
                             <button class="bg-white text-blue-600 border border-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors" onclick="importFromEmail()">
-                                <i class="fas fa-envelope mr-2"></i>
+                                <span class="mr-2">📧</span>
                                 从邮箱导入
                             </button>
                         </div>
@@ -221,14 +230,14 @@
 
             <!-- 统计数据 -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 card-hover">
+                <div class="portal-card p-6">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-gray-600">收到简历</p>
                             <p class="text-3xl font-bold text-blue-600 mt-2">23</p>
                         </div>
                         <div class="text-blue-600">
-                            <i class="fas fa-file-alt text-2xl"></i>
+                            <span class="text-2xl">📄</span>
                         </div>
                     </div>
                     <div class="mt-4">
@@ -237,14 +246,14 @@
                     </div>
                 </div>
 
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 card-hover">
+                <div class="portal-card p-6">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-gray-600">待筛选</p>
                             <p class="text-3xl font-bold text-blue-600 mt-2">12</p>
                         </div>
                         <div class="text-blue-600">
-                            <i class="fas fa-filter text-2xl"></i>
+                            <span class="text-2xl">🔍</span>
                         </div>
                     </div>
                     <div class="mt-4">
@@ -252,14 +261,14 @@
                     </div>
                 </div>
 
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 card-hover">
+                <div class="portal-card p-6">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-gray-600">面试中</p>
                             <p class="text-3xl font-bold text-blue-600 mt-2">5</p>
                         </div>
                         <div class="text-blue-600">
-                            <i class="fas fa-users text-2xl"></i>
+                            <span class="text-2xl">👥</span>
                         </div>
                     </div>
                     <div class="mt-4">
@@ -267,14 +276,14 @@
                     </div>
                 </div>
 
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 card-hover">
+                <div class="portal-card p-6">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-gray-600">已录用</p>
                             <p class="text-3xl font-bold text-blue-600 mt-2">2</p>
                         </div>
                         <div class="text-blue-600">
-                            <i class="fas fa-check-circle text-2xl"></i>
+                            <span class="text-2xl">✅</span>
                         </div>
                     </div>
                     <div class="mt-4">
@@ -284,7 +293,7 @@
             </div>
 
             <!-- 标签页导航 -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+            <div class="portal-card mb-6">
                 <div class="border-b border-gray-200">
                     <nav class="-mb-px flex space-x-8 px-6">
                         <button class="tab-button border-blue-500 text-blue-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="description">
@@ -338,27 +347,27 @@
                             <h3 class="text-lg font-medium text-gray-900 mb-3">福利待遇</h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div class="flex items-center space-x-3">
-                                    <i class="fas fa-dollar-sign text-blue-600"></i>
+                                    <span class="text-blue-600">💰</span>
                                     <span>具有竞争力的薪资待遇</span>
                                 </div>
                                 <div class="flex items-center space-x-3">
-                                    <i class="fas fa-umbrella text-blue-600"></i>
+                                    <span class="text-blue-600">☂️</span>
                                     <span>五险一金 + 补充商业保险</span>
                                 </div>
                                 <div class="flex items-center space-x-3">
-                                    <i class="fas fa-calendar-alt text-blue-600"></i>
+                                    <span class="text-blue-600">📅</span>
                                     <span>弹性工作时间</span>
                                 </div>
                                 <div class="flex items-center space-x-3">
-                                    <i class="fas fa-home text-blue-600"></i>
+                                    <span class="text-blue-600">🏠</span>
                                     <span>远程办公支持</span>
                                 </div>
                                 <div class="flex items-center space-x-3">
-                                    <i class="fas fa-graduation-cap text-blue-600"></i>
+                                    <span class="text-blue-600">🎓</span>
                                     <span>培训学习机会</span>
                                 </div>
                                 <div class="flex items-center space-x-3">
-                                    <i class="fas fa-gift text-blue-600"></i>
+                                    <span class="text-blue-600">🎁</span>
                                     <span>节日福利 + 团建活动</span>
                                 </div>
                             </div>
@@ -384,11 +393,11 @@
                             </div>
                             <div class="flex items-center space-x-2">
                                 <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                                    <i class="fas fa-download mr-2"></i>
+                                    <span class="mr-2">📥</span>
                                     导出简历
                                 </button>
                                 <button class="bg-white text-blue-600 border border-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors">
-                                    <i class="fas fa-users mr-2"></i>
+                                    <span class="mr-2">👥</span>
                                     批量操作
                                 </button>
                             </div>
@@ -397,7 +406,7 @@
                         <!-- 简历列表 -->
                         <div class="space-y-4">
                             <!-- 简历项目 -->
-                            <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                            <div class="portal-card p-4 hover:shadow-md transition-shadow">
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center space-x-4">
                                         <input type="checkbox" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">

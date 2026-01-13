@@ -10,9 +10,29 @@
   <script src="../js/user-auth.js"></script>
   <script src="../js/resume-data.js?v=2"></script>
   <link rel="stylesheet" href="/css/sidebar.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    }
+    body { font-family: var(--font-sans); }
+    .portal-card {
+        background-color: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+        transition-property: all;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        transition-duration: 300ms;
+        margin-bottom: 1.5rem;
+        padding: 1.5rem;
+    }
+    .portal-card:hover {
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        transform: translateY(-2px);
+    }
+
     .tag {display:inline-block;padding:2px 8px;background:#f3f4f6;color:#6b7280;border-radius:12px;font-size:.75rem;margin-right:4px;margin-bottom:4px}
-    .section-card {background:white;border-radius:1rem;padding:1.5rem;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1);margin-bottom:1.5rem}
     .info-label {font-size:0.875rem;color:#6b7280;margin-bottom:0.25rem}
     .info-value {font-size:1rem;color:#111827;font-weight:500}
     .timeline-item {position:relative;padding-left:2rem;padding-bottom:1.5rem;border-left:2px solid #e5e7eb}
@@ -20,39 +40,41 @@
     .timeline-dot {position:absolute;left:-9px;top:0;width:16px;height:16px;border-radius:50%;background:#3b82f6;border:4px solid #fff;box-shadow:0 0 0 2px #e5e7eb}
   </style>
 </head>
-<body class="font-sans bg-gray-50 min-h-screen">
+<body class="bg-gray-50 antialiased text-gray-900 selection:bg-blue-100 selection:text-blue-700">
   <!-- Sidebar -->
   <aside id="sidebar" class="fixed left-0 top-0 bottom-0 sidebar-modern z-40"></aside>
   <div id="sidebar-overlay" class="sidebar-overlay"></div>
   
   <!-- Header -->
-  <header class="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20">
-    <div class="flex items-center justify-between p-4">
-      <div class="flex items-center space-x-4">
-        <button class="menu-button p-2 rounded-lg hover:bg-gray-100" id="sidebar-toggle"><i class="fas fa-bars text-gray-600"></i></button>
-        <h1 class="brand-title text-lg font-bold text-gray-900">争湃·简历大师</h1>
+  <header class="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20 h-20">
+    <div class="flex items-center justify-between px-6 h-full">
+      <div class="flex items-center space-x-4 pl-8">
+        <div class="brand-title flex flex-col justify-center space-y-1.5">
+          <h1 class="text-lg font-bold text-gray-900 leading-none">简历详情</h1>
+          <p class="text-xs text-gray-500 font-medium leading-tight">查看简历的详细内容、匹配度分析及候选人信息</p>
+        </div>
       </div>
       <div id="header-right-section" class="flex items-center space-x-4"></div>
     </div>
   </header>
 
   <!-- Main Content -->
-  <main class="main-content pt-20 p-6" id="main-content">
-    <div class="max-w-6xl mx-auto">
+  <main class="main-content p-6" id="main-content">
+    <div class="max-w-[1440px] mx-auto">
       <!-- Breadcrumb & Back -->
       <div class="mb-6 flex items-center justify-between">
         <a id="back-link" href="librarypool.html" class="text-gray-500 hover:text-blue-600 flex items-center transition-colors">
-          <i class="fas fa-arrow-left mr-2"></i><span id="back-text">返回人才库</span>
+          <span class="text-xl mr-2">⬅️</span><span id="back-text">返回人才库</span>
         </a>
         <div class="flex items-center space-x-3">
           <button id="export-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center">
-            <i class="fas fa-download mr-2"></i>导出
+            导出
           </button>
           <button id="analyze-btn" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 flex items-center">
-            <i class="fas fa-chart-line mr-2"></i>分析
+            分析
           </button>
           <button id="pass-btn" class="px-4 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-800 flex items-center">
-            <i class="fas fa-check mr-2"></i>通过初筛
+            通过初筛
           </button>
           <a id="reject-link" class="text-gray-500 hover:text-red-600 flex items-center transition-colors">
             暂不考虑
@@ -77,7 +99,7 @@
       <!-- Resume Content -->
       <div id="resume-content" class="hidden fade-in-up">
         <!-- Header Card -->
-        <div class="section-card flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+        <div class="portal-card flex flex-col md:flex-row md:items-start md:justify-between gap-6">
           <div class="flex items-start gap-6">
             <div class="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center text-3xl text-gray-400 overflow-hidden flex-shrink-0">
               <span id="avatar-text"></span>
@@ -106,7 +128,7 @@
           <!-- Left Column -->
           <div class="space-y-6">
             <!-- Basic Info -->
-            <div class="section-card">
+            <div class="portal-card">
               <h3 class="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-100">基本信息</h3>
               <div class="space-y-4">
                 <div>
@@ -132,7 +154,7 @@
           <!-- Right Column -->
           <div class="lg:col-span-2 space-y-6">
             <!-- Attachment Preview -->
-            <div class="section-card" id="attachment-section">
+            <div class="portal-card" id="attachment-section">
               <h3 class="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-100">简历附件</h3>
               <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
                 <div class="flex items-center">
@@ -151,13 +173,13 @@
             </div>
 
              <!-- Summary -->
-             <div class="section-card">
+             <div class="portal-card">
               <h3 class="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-100">个人优势</h3>
               <p class="text-gray-700 leading-relaxed" id="resume-summary">暂无描述</p>
             </div>
 
             <!-- Experience -->
-            <div class="section-card">
+            <div class="portal-card">
               <h3 class="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-100">工作经历</h3>
               <div class="space-y-6" id="experience-container">
                 <!-- Experience Items -->
@@ -165,7 +187,7 @@
             </div>
 
             <!-- Education -->
-            <div class="section-card">
+            <div class="portal-card">
               <h3 class="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-100">教育经历</h3>
               <div class="space-y-6" id="education-container">
                 <!-- Education Items -->
@@ -173,7 +195,7 @@
             </div>
             
              <!-- Projects -->
-             <div class="section-card">
+             <div class="portal-card">
               <h3 class="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-100">项目经历</h3>
               <div class="space-y-6" id="project-container">
                 <!-- Project Items -->

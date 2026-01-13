@@ -14,11 +14,21 @@
     <script src="https://fastly.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://fastly.jsdelivr.net/npm/flatpickr/dist/l10n/zh.js"></script>
     <style>
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+        .brand-title { white-space: normal !important; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #d1d5db; }
+        
         .kanban-column { min-height: 200px; }
+
+        @keyframes slideInFromBottom {
+            0% { transform: translateY(1rem); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+        .animate-in {
+            animation: slideInFromBottom 0.5s ease-out forwards;
+        }
 
         /* Horizontal scroll without visible scrollbar */
         .hide-x-scrollbar { overflow-x: auto; overflow-y: hidden; }
@@ -33,13 +43,13 @@
     <div id="sidebar-overlay" class="sidebar-overlay"></div>
 
     <!-- Standard Header -->
-    <header class="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20">
-        <div class="flex items-center justify-between p-4">
-            <div class="flex items-center space-x-4">
-                <button class="menu-button p-2 rounded-lg hover:bg-gray-100" id="sidebar-toggle">
-                    <i class="fas fa-bars text-gray-900"></i>
-                </button>
-                <h1 class="brand-title text-lg font-bold text-gray-900">招聘流程管理</h1>
+    <header class="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md border-b border-gray-100 z-20">
+        <div class="flex items-center justify-between p-4 px-6">
+            <div class="flex items-center space-x-4 pl-8">
+                <div class="brand-title flex flex-col justify-center space-y-1.5">
+                    <h1 class="text-lg font-bold text-gray-900 leading-none">招聘流程</h1>
+                    <p class="text-xs text-gray-500 font-medium leading-tight">支持候选人卡片拖拽调整状态，全流程实时同步</p>
+                </div>
             </div>
             <div class="flex items-center space-x-4" id="header-right-section">
                 <!-- User Profile rendered by HeaderProfile -->
@@ -48,41 +58,29 @@
     </header>
 
     <!-- Main Content Wrapper -->
-    <main id="main-content" class="main-content h-full flex flex-col pt-20 p-6">
-        
-        <!-- Controls Section (Styled like Dashboard) -->
-        <section class="pt-6 pb-4">
-             <div class="bg-white rounded-lg shadow p-4 mb-6">
-                <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
-                    <!-- Left: Job Selector -->
+    <main id="main-content" class="main-content h-full flex flex-col p-8">
+            <section class="pb-8 animate-in">
+                <div class="flex flex-col gap-6">
                     <div class="flex items-center gap-4 flex-wrap">
-                        <div id="process-stats" class="hidden lg:block bg-blue-50 px-4 py-2 rounded-lg text-blue-700 border border-blue-100">
+                        <div id="process-stats" class="bg-white border border-gray-100 rounded-2xl px-6 py-3 shadow-sm flex items-center gap-6">
                             <!-- Stats populated by JS -->
                         </div>
-                        <span class="text-gray-600 font-medium">筛选职位:</span>
-                        <select id="jobSelect" class="border-gray-300 rounded-lg shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500 min-w-[200px] max-w-[300px] py-2">
-                            <!-- Options populated by JS -->
-                        </select>
-                        <!-- Moved Search here -->
-                        <div class="relative flex-1 group">
-                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <i class="fas fa-search text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
-                            </div>
-                            <input type="text" id="search-box" placeholder="搜索候选人姓名、职位..." 
-                                   class="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all text-sm shadow-sm">
+                        <div class="flex items-center bg-white border border-gray-100 rounded-2xl px-4 py-2 shadow-sm">
+                            <span class="text-xs font-black text-gray-400 mr-3 flex items-center">
+                                <i class="fa-solid fa-filter mr-2 text-blue-600"></i>
+                                筛选职位
+                            </span>
+                            <select id="jobSelect" class="text-xs font-black text-blue-700 bg-blue-50/50 px-3 py-1.5 rounded-xl border-none focus:ring-0 cursor-pointer min-w-[150px]">
+                                <!-- Options populated by JS -->
+                            </select>
                         </div>
                     </div>
-
-                    <!-- Right: Actions & Stats -->
-                    <div class="flex items-center gap-4 flex-wrap">
-                    </div>
                 </div>
-            </div>
-        </section>
+            </section>
 
         <!-- Kanban Board Area -->
-        <section class="flex-1 hide-x-scrollbar pb-6 relative">
-            <div id="kanban-board" class="flex gap-4 h-full min-w-max pb-4">
+        <section class="flex-1 overflow-x-auto pb-8 custom-scrollbar">
+            <div id="kanban-board" class="flex space-x-6 h-full min-w-max">
                 <!-- Columns populated by JS -->
             </div>
         </section>
@@ -175,47 +173,123 @@
         <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity bg-black/50" aria-hidden="true"></div>
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
-                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                    <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">发送 Offer</h3>
-                    <form id="offerForm" class="space-y-4">
-                        <div class="grid grid-cols-2 gap-4">
+            <div class="inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
+                <div class="bg-white px-8 pt-8 pb-8">
+                    <div class="flex items-center justify-between mb-8">
+                        <h3 class="text-xl font-black text-gray-900 flex items-center gap-3" id="modal-title">
+                            <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                                <i class="fas fa-file-signature text-sm"></i>
+                            </div>
+                            发送 Offer
+                        </h3>
+                        <button type="button" class="text-gray-400 hover:text-gray-600 modal-close">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+
+                    <form id="offerForm" class="space-y-6">
+                        <div class="grid grid-cols-2 gap-6">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700">薪资 (月薪)</label>
-                                <div class="mt-1 relative rounded-md shadow-sm">
-                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <span class="text-gray-500 sm:text-sm">¥</span>
+                                <label class="block text-xs font-black text-gray-400 uppercase tracking-wider mb-2">薪资 (月薪)</label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+                                        <span class="text-sm">¥</span>
                                     </div>
-                                    <input type="number" name="salary" class="focus:ring-blue-500 focus:border-blue-500 block w-full pl-7 sm:text-sm border-gray-300 rounded-md" placeholder="20000">
+                                    <input type="number" name="salary" class="block w-full bg-gray-50 border-none rounded-2xl pl-8 pr-4 py-3 text-sm font-black text-gray-700 focus:ring-2 focus:ring-amber-100 transition-all" placeholder="20000">
                                 </div>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700">年终奖 (月数)</label>
-                                <input type="number" name="bonus" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="14">
+                                <label class="block text-xs font-black text-gray-400 uppercase tracking-wider mb-2">年终奖 (月数)</label>
+                                <input type="number" name="bonus" class="block w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-black text-gray-700 focus:ring-2 focus:ring-amber-100 transition-all" placeholder="14">
                             </div>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">入职日期</label>
-                            <input type="date" name="startDate" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" required>
+                            <label class="block text-xs font-black text-gray-400 uppercase tracking-wider mb-2">入职日期</label>
+                            <input type="date" name="startDate" class="block w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-black text-gray-700 focus:ring-2 focus:ring-amber-100 transition-all" required>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">试用期 (月)</label>
-                            <select name="probation" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <label class="block text-xs font-black text-gray-400 uppercase tracking-wider mb-2">试用期 (月)</label>
+                            <select name="probation" class="block w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-black text-gray-700 focus:ring-2 focus:ring-amber-100 transition-all appearance-none cursor-pointer">
                                 <option value="3">3个月</option>
                                 <option value="6">6个月</option>
                                 <option value="0">无</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">附加说明</label>
-                            <textarea name="content" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"></textarea>
+                            <label class="block text-xs font-black text-gray-400 uppercase tracking-wider mb-2">附加说明</label>
+                            <textarea name="content" rows="3" class="block w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-black text-gray-700 focus:ring-2 focus:ring-amber-100 transition-all" placeholder="请输入附加说明..."></textarea>
                         </div>
-                        <div class="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
-                            <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:col-start-2 sm:text-sm">
+                        <div class="flex gap-4 pt-4">
+                            <button type="button" class="flex-1 px-6 py-3 bg-gray-50 text-gray-500 font-black rounded-2xl hover:bg-gray-100 transition-all modal-close">
+                                取消
+                            </button>
+                            <button type="submit" class="flex-1 px-6 py-3 bg-amber-600 text-white font-black rounded-2xl hover:bg-amber-700 shadow-lg shadow-amber-200 transition-all">
                                 发送 Offer
                             </button>
-                            <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:col-start-1 sm:text-sm modal-close">
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Candidate Modal -->
+    <div id="addCandidateModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity bg-black/50" aria-hidden="true"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
+                <div class="bg-white px-8 pt-8 pb-8">
+                    <div class="flex items-center justify-between mb-8">
+                        <h3 class="text-xl font-black text-gray-900 flex items-center gap-3" id="modal-title">
+                            <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                                <i class="fas fa-user-plus text-sm"></i>
+                            </div>
+                            添加候选人
+                        </h3>
+                        <button type="button" class="text-gray-400 hover:text-gray-600 modal-close">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+
+                    <form id="addCandidateForm" class="space-y-6">
+                        <div>
+                            <label class="block text-xs font-black text-gray-400 uppercase tracking-wider mb-2">第一步：选择职位</label>
+                            <div class="relative">
+                                <select id="modalJobSelect" class="block w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-black text-gray-700 focus:ring-2 focus:ring-blue-100 transition-all appearance-none cursor-pointer">
+                                    <option value="">请选择目标职位...</option>
+                                </select>
+                                <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-400">
+                                    <i class="fas fa-chevron-down text-xs"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-black text-gray-400 uppercase tracking-wider mb-2">第二步：选择候选人</label>
+                            <div class="relative">
+                                <select id="modalCandidateSelect" class="block w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-black text-gray-700 focus:ring-2 focus:ring-blue-100 transition-all appearance-none cursor-pointer">
+                                    <option value="">请先选择职位...</option>
+                                </select>
+                                <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-400">
+                                    <i class="fas fa-chevron-down text-xs"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-blue-50 rounded-2xl p-4 flex items-start gap-4">
+                            <i class="fas fa-info-circle text-blue-500 mt-1"></i>
+                            <div class="text-xs text-blue-700 font-bold leading-relaxed">
+                                添加后，该候选人将出现在“新投递”栏目中，您可以开始进行初筛。
+                            </div>
+                        </div>
+
+                        <div class="flex gap-4 pt-4">
+                            <button type="button" class="flex-1 px-6 py-3 bg-gray-50 text-gray-500 font-black rounded-2xl hover:bg-gray-100 transition-all modal-close">
                                 取消
+                            </button>
+                            <button type="submit" class="flex-1 px-6 py-3 bg-blue-600 text-white font-black rounded-2xl hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all">
+                                确认添加
                             </button>
                         </div>
                     </form>
