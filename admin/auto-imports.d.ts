@@ -51,6 +51,7 @@ declare global {
   const initializeApp: typeof import('./src/utils/app.js')['initializeApp']
   const inject: typeof import('vue')['inject']
   const injectLocal: typeof import('@vueuse/core')['injectLocal']
+  const interviewAPI: typeof import('./src/api/index.js')['interviewAPI']
   const invoiceAPI: typeof import('./src/api/index.js')['invoiceAPI']
   const isDefined: typeof import('@vueuse/core')['isDefined']
   const isProxy: typeof import('vue')['isProxy']
@@ -383,6 +384,7 @@ declare module 'vue' {
     readonly initializeApp: UnwrapRef<typeof import('./src/utils/app.js')['initializeApp']>
     readonly inject: UnwrapRef<typeof import('vue')['inject']>
     readonly injectLocal: UnwrapRef<typeof import('@vueuse/core')['injectLocal']>
+    readonly interviewAPI: UnwrapRef<typeof import('./src/api/index.js')['interviewAPI']>
     readonly invoiceAPI: UnwrapRef<typeof import('./src/api/index.js')['invoiceAPI']>
     readonly isDefined: UnwrapRef<typeof import('@vueuse/core')['isDefined']>
     readonly isProxy: UnwrapRef<typeof import('vue')['isProxy']>

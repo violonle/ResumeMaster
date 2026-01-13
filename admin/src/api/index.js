@@ -90,6 +90,12 @@ export const promptAPI = {
   update: (key, data) => apiClient.put(`/admin/prompts/${key}`, data),
 }
 
+export const interviewAPI = {
+  createSession: (data) => apiClient.post('/interview/sessions', data),
+  findUnfinishedSession: (resumeId) => apiClient.get(`/interview/sessions/unfinished/${resumeId}`),
+  getSession: (sessionId) => apiClient.get(`/interview/sessions/${sessionId}`),
+}
+
 export const systemAPI = {
   // 系统设置
   getSettings: () => apiClient.get('/admin/system/settings'),

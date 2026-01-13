@@ -173,6 +173,21 @@ class InterviewController {
 
         if (existingSession) {
           logger.info(`找到已有活跃会话: ${existingSession.id}`);
+          
+          // 获取简历详情用于返回
+          let candidateName = '';
+          let candidatePhone = '';
+          try {
+            const resume = await Resume.findByPk(existingSession.resume_id);
+            if (resume) {
+              const data = resume.parsed_data || {};
+              candidateName = resume.name || data.name || '';
+              candidatePhone = resume.phone || data.phone || '';
+            }
+          } catch (e) {
+            logger.warn('获取候选人信息失败:', e);
+          }
+
           return res.json({
             success: true,
             data: {
@@ -187,7 +202,9 @@ class InterviewController {
               status: existingSession.status,
               report: existingSession.report,
               createdAt: existingSession.created_at,
-              updatedAt: existingSession.updated_at
+              updatedAt: existingSession.updated_at,
+              candidateName,
+              candidatePhone
             }
           });
         }
@@ -232,6 +249,21 @@ class InterviewController {
 
       // 成功返回
       const sessionData = session.toJSON();
+      
+      // 获取简历详情用于返回
+      let candidateName = '';
+      let candidatePhone = '';
+      try {
+        const resume = await Resume.findByPk(finalResumeId);
+        if (resume) {
+          const data = resume.parsed_data || {};
+          candidateName = resume.name || data.name || '';
+          candidatePhone = resume.phone || data.phone || '';
+        }
+      } catch (e) {
+        logger.warn('获取候选人信息失败:', e);
+      }
+
       return res.json({
         success: true,
         data: {
@@ -246,7 +278,9 @@ class InterviewController {
           status: session.status,
           report: session.report,
           createdAt: session.created_at,
-          updatedAt: session.updated_at
+          updatedAt: session.updated_at,
+          candidateName,
+          candidatePhone
         }
       });
 
@@ -336,6 +370,20 @@ class InterviewController {
         return res.status(404).json({ success: false, error: '面试会话不存在' });
       }
 
+      // 获取简历详情用于返回
+      let candidateName = '';
+      let candidatePhone = '';
+      try {
+        const resume = await Resume.findByPk(session.resume_id);
+        if (resume) {
+          const data = resume.parsed_data || {};
+          candidateName = resume.name || data.name || '';
+          candidatePhone = resume.phone || data.phone || '';
+        }
+      } catch (e) {
+        logger.warn('获取候选人信息失败:', e);
+      }
+
       return res.json({
         success: true,
         data: {
@@ -350,7 +398,9 @@ class InterviewController {
           status: session.status,
           report: session.report,
           createdAt: session.created_at,
-          updatedAt: session.updated_at
+          updatedAt: session.updated_at,
+          candidateName,
+          candidatePhone
         }
       });
     } catch (error) {
@@ -447,6 +497,20 @@ class InterviewController {
         return res.json({ success: true, data: null });
       }
 
+      // 获取简历详情用于返回
+      let candidateName = '';
+      let candidatePhone = '';
+      try {
+        const resume = await Resume.findByPk(session.resume_id);
+        if (resume) {
+          const data = resume.parsed_data || {};
+          candidateName = resume.name || data.name || '';
+          candidatePhone = resume.phone || data.phone || '';
+        }
+      } catch (e) {
+        logger.warn('获取候选人信息失败:', e);
+      }
+
       return res.json({
         success: true,
         data: {
@@ -461,7 +525,9 @@ class InterviewController {
           status: session.status,
           report: session.report,
           createdAt: session.created_at,
-          updatedAt: session.updated_at
+          updatedAt: session.updated_at,
+          candidateName,
+          candidatePhone
         }
       });
     } catch (error) {

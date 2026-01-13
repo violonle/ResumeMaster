@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {AnimatePresence, motion} from 'framer-motion';
+import { ChevronLeft, AlertCircle, AlertTriangle } from 'lucide-react';
 import {interviewApi} from './interview-api';
 import ConfirmDialog from './components/ConfirmDialog';
 import InterviewChatPanel from './components/InterviewChatPanel';
@@ -220,7 +221,7 @@ export default function InterviewRunner({ resumeText, resumeId, resumeJobId, ses
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
-          className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] shadow-2xl shadow-blue-500/5 border border-gray-100 overflow-hidden flex flex-col"
+          className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] shadow-2xl shadow-blue-500/5 border border-gray-100 overflow-hidden flex flex-col h-[calc(100vh-2rem)] sm:h-[calc(100vh-4rem)]"
         >
           {/* Header */}
           <div className="px-6 py-5 sm:px-10 sm:py-8 border-b border-gray-100 bg-white/80 backdrop-blur-md sticky top-0 z-10">
@@ -230,7 +231,7 @@ export default function InterviewRunner({ resumeText, resumeId, resumeJobId, ses
                   onClick={onBack}
                   className="w-10 h-10 flex items-center justify-center hover:bg-gray-100 rounded-xl transition-all sm:hidden"
                 >
-                  <i className="fas fa-chevron-left text-gray-600"></i>
+                  <ChevronLeft className="text-gray-600 w-5 h-5" />
                 </button>
                 <div>
                   <h1 className="text-xl sm:text-2xl font-black bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent tracking-tight">
@@ -265,9 +266,7 @@ export default function InterviewRunner({ resumeText, resumeId, resumeJobId, ses
           {/* Error Message */}
           {error && (
             <div className="mx-4 mt-4 p-3 bg-red-50 border border-red-100 text-red-600 text-sm rounded-lg flex items-center gap-2">
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-              </svg>
+              <AlertCircle className="w-4 h-4" />
               {error}
               <button onClick={startInterview} className="ml-auto underline font-medium">重试</button>
             </div>
@@ -296,9 +295,7 @@ export default function InterviewRunner({ resumeText, resumeId, resumeJobId, ses
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
               <div className="text-gray-400 mb-4">
-                <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 9.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+                <AlertTriangle className="w-16 h-16 mx-auto" />
               </div>
               <h3 className="text-lg font-medium text-gray-900">无法开始面试</h3>
               <p className="text-sm text-gray-500 mt-2">{error || '请刷新页面或检查您的网络连接'}</p>

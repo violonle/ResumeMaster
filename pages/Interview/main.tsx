@@ -2,12 +2,23 @@ import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import InterviewRunner from './index';
 import { interviewApi } from './interview-api';
-import './style.css'; // 我们稍后创建
+import { AlertTriangle, CheckCircle, ArrowRight } from 'lucide-react';
+import './style.css'; 
+import '@css/design-system.css';
+import '@js/user-auth.js';
 
 const App = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [resumeData, setResumeData] = useState<{ text: string; id?: number; rjId?: number; sessionId?: string } | null>(null);
+  const [resumeData, setResumeData] = useState<{ 
+    text: string; 
+    id?: number; 
+    rjId?: number; 
+    sessionId?: string;
+    candidateName?: string;
+    candidatePhone?: string;
+  } | null>(null);
+  const [confirmed, setConfirmed] = useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -55,7 +66,9 @@ const App = () => {
           text: session.resumeText,
           id: session.resumeId,
           rjId: session.resumeJobId,
-          sessionId: session.sessionId
+          sessionId: session.sessionId,
+          candidateName: session.candidateName,
+          candidatePhone: session.candidatePhone
         });
         setLoading(false);
       } catch (err: any) {
@@ -87,7 +100,7 @@ const App = () => {
       <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4">
         <div className="max-w-md w-full bg-white rounded-[2.5rem] shadow-2xl p-10 text-center border border-gray-100">
           <div className="w-20 h-20 bg-red-50 rounded-[2rem] flex items-center justify-center mx-auto mb-8 text-red-500">
-            <i className="fas fa-exclamation-triangle text-4xl"></i>
+            <AlertTriangle className="w-10 h-10" />
           </div>
           <h2 className="text-2xl font-black text-gray-900 mb-3 tracking-tight">初始化失败</h2>
           <p className="text-gray-500 mb-10 font-medium leading-relaxed">{error || '无法加载简历数据'}</p>
@@ -98,41 +111,71 @@ const App = () => {
             >
               重试一次
             </button>
-            <button 
-              onClick={() => window.history.back()}
-              className="w-full bg-white text-gray-600 py-4 px-6 rounded-2xl font-black border-2 border-gray-100 hover:bg-gray-50 transition-all"
-            >
-              返回上一页
-            </button>
           </div>
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <InterviewRunner
-        resumeText={resumeData.text}
-        resumeId={resumeData.id}
-        resumeJobId={resumeData.rjId}
-        sessionId={resumeData.sessionId}
-        onBack={() => window.history.back()}
-        onComplete={() => {
-          console.log('面试结束');
-          // 可以在这里跳转到完成页面或显示成功提示
-        }}
-      />
-    </div>
-  );
+  // 确认信息页面
+  if (!confirmed) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4">
+        <div className="max-w-2xl w-full bg-white rounded-[2.5rem] shadow-2xl p-8 sm:p-12 border border-gray-100">
+          <div className="text-center mb-10">
+            <div className="w-20 h-20 bg-blue-50 rounded-[2rem] flex items-center justify-center mx-auto mb-6 text-blue-600">
+              <CheckCircle className="w-10 h-10" />
+            </div>
+            <h1 className="text-3xl font-black text-gray-900 mb-3 tracking-tight">请确认您的信息</h1>
+            <p className="text-gray-500 font-medium">开始面试前，请核对以下信息是否准确</p>
+          </div>
+
+          <div className="bg-gray-50 rounded-3xl p-8 mb-10 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 pb-6 border-b border-gray-200/60">
+              <span className="text-gray-400 font-medium min-w-[5rem]">姓名</span>
+              <span className="text-xl font-bold text-gray-900">{resumeData.candidateName || '未填写'}</span>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 pb-6 border-b border-gray-200/60">
+              <span className="text-gray-400 font-medium min-w-[5rem]">联系电话</span>
+              <span className="text-xl font-bold text-gray-900">{resumeData.candidatePhone || '未填写'}</span>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <span className="text-gray-400 font-medium">简历摘要</span>
+              <div className="bg-white p-4 rounded-2xl border border-gray-200 text-gray-600 text-sm leading-relaxed max-h-40 overflow-y-auto">
+                {resumeData.text.slice(0, 300)}...
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-4">
+            <button 
+              onClick={() => setConfirmed(true)}
+              className="w-full bg-blue-600 text-white py-5 px-6 rounded-2xl font-black text-lg shadow-xl shadow-blue-600/20 hover:bg-blue-700 hover:translate-y-[-2px] transition-all active:translate-y-[1px] flex items-center justify-center gap-2"
+            >
+              <span>确认无误，开始面试</span>
+              <ArrowRight className="w-5 h-5" />
+            </button>
+            <p className="text-center text-sm text-gray-400 font-medium">
+              如信息有误，请联系招聘负责人更新简历
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return <InterviewRunner 
+    resumeText={resumeData.text} 
+    sessionId={resumeData.sessionId!} 
+    onBack={() => window.history.back()}
+    onComplete={() => console.log('面试结束')}
+  />;
 };
 
 const container = document.getElementById('root');
 if (container) {
   const root = createRoot(container);
-  root.render(
-    <React.StrictMode>
-      <App />
-    </React.StrictMode>
-  );
+  root.render(<App />);
 }

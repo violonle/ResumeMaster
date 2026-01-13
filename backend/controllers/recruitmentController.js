@@ -85,7 +85,8 @@ exports.scheduleInterview = async (req, res) => {
       // 生成面试链接
       const protocol = req.protocol || 'http';
       const host = req.get('host') || 'localhost:3000';
-      const interviewLink = `${protocol}://${host}/pages/interview/index.html?id=${rj.id}`;
+      // 修改：使用 resumeJobId 参数明确指代申请记录ID，避免前端误将其识别为 resumeId 或 sessionId
+      const interviewLink = `${protocol}://${host}/pages/interview/index.html?resumeJobId=${rj.id}`;
 
       const content = `【面试通知】${name}您好，您的${typeStr}已安排在 ${timeStr}。请点击链接进行在线面试：${interviewLink} 。${location ? `地点/链接：${location}` : ''}。请准时参加。`;
 

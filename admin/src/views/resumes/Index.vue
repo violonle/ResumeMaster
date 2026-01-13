@@ -181,6 +181,17 @@
               variant="text"
               size="small"
               icon
+              color="info"
+              class="me-1"
+              @click="generateLink(item)"
+            >
+              <VIcon icon="mdi-link-variant" size="20" />
+              <VTooltip activator="parent" location="top">生成面试链接</VTooltip>
+            </VBtn>
+            <VBtn
+              variant="text"
+              size="small"
+              icon
               color="primary"
               @click="viewDetail(item)"
             >
@@ -191,13 +202,32 @@
         </template>
       </VDataTableServer>
     </VCard>
+    <!-- 链接生成弹窗 -->
+    <VDialog v-model="showLinkDialog" max-width="500">
+      <VCard>
+        <VCardTitle class="pa-4">AI面试链接生成</VCardTitle>
+        <VCardText class="pa-4">
+          <div class="text-body-2 mb-4">请复制以下链接发送给候选人：</div>
+          <VTextField
+            v-model="generatedLink"
+            readonly
+            variant="outlined"
+            append-inner-icon="mdi-content-copy"
+            @click:append-inner="copyLink"
+          />
+        </VCardText>
+        <VCardActions class="pa-4 pt-0 justify-end">
+          <VBtn color="primary" @click="showLinkDialog = false">关闭</VBtn>
+        </VCardActions>
+      </VCard>
+    </VDialog>
   </StandardPage>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { resumeAPI, companyAPI } from '@/api'
+import { resumeAPI, companyAPI, interviewAPI } from '@/api'
 import StandardPage from '@/components/StandardPage.vue'
 import { format } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
@@ -207,6 +237,7 @@ const router = useRouter()
 
 // 状态
 const loading = ref(false)
+const generatingLink = ref(false)
 const items = ref([])
 const total = ref(0)
 const companies = ref([])
@@ -215,6 +246,8 @@ const stats = ref({
   month: 0,
   week: 0
 })
+const showLinkDialog = ref(false)
+const generatedLink = ref('')
 
 const filters = reactive({
   page: 1,
@@ -295,6 +328,64 @@ const openAttachment = (item) => {
     window.open(url, '_blank')
   } else {
     alert('附件路径不存在')
+  }
+}
+
+const generateLink = async (item) => {
+  generatingLink.value = true
+  try {
+    // 假设 AI 面试页面运行在 5173 端口
+    const baseUrl = window.location.hostname === 'localhost' 
+      ? 'http://localhost:5173'
+      : `${window.location.protocol}//${window.location.hostname}:5173`
+      
+    // 优先尝试获取已存在的未完成会话 (UUID)
+    try {
+      const { data } = await interviewAPI.findUnfinishedSession(item.id)
+      if (data && data.data && data.data.id) {
+        generatedLink.value = `${baseUrl}/?id=${data.data.id}`
+      } else {
+        // 如果没有未完成会话，尝试创建一个新会话以获取 UUID
+        try {
+          // 创建会话需要 resumeId，这里我们只提供 resumeId，让后端处理默认值
+          const createRes = await interviewAPI.createSession({ 
+            resumeId: item.id,
+            // 可选：如果不希望立即生成题目，可以传递一个标志，但目前的 createSession 逻辑会生成题目
+            // 这里我们接受预生成的行为，以确保获得 UUID
+          })
+          
+          if (createRes.data && createRes.data.success && createRes.data.data.sessionId) {
+            generatedLink.value = `${baseUrl}/?id=${createRes.data.data.sessionId}`
+          } else {
+            // 创建失败，回退到 resumeId
+            console.warn('Create session returned no ID:', createRes)
+            generatedLink.value = `${baseUrl}/?resumeId=${item.id}`
+          }
+        } catch (createError) {
+          console.error('Failed to create session for link:', createError)
+          // 创建出错，回退到 resumeId
+          generatedLink.value = `${baseUrl}/?resumeId=${item.id}`
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to fetch session:', e)
+      // 降级：使用 resumeId
+      generatedLink.value = `${baseUrl}/?resumeId=${item.id}`
+    }
+
+    showLinkDialog.value = true
+  } finally {
+    generatingLink.value = false
+  }
+}
+
+const copyLink = async () => {
+  try {
+    await navigator.clipboard.writeText(generatedLink.value)
+    // 这里可以使用 toast 提示，但为了简单直接 alert 或不做处理(用户已看到复制图标)
+    alert('链接已复制到剪贴板')
+  } catch (err) {
+    console.error('Failed to copy:', err)
   }
 }
 

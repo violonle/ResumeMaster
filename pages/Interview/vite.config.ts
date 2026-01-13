@@ -8,6 +8,8 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, '../../'),
+      '@css': path.resolve(__dirname, '../../css'),
+      '@js': path.resolve(__dirname, '../../js'),
     },
   },
   build: {
@@ -20,6 +22,9 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    fs: {
+      allow: ['../..'],
+    },
     proxy: {
       '/api': {
         target: 'http://localhost:3000',

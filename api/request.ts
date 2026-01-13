@@ -1,4 +1,4 @@
-import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
+import axios, { AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 
 const API_BASE_URL = '/api';
 
@@ -12,21 +12,21 @@ const instance = axios.create({
 
 // 请求拦截器
 instance.interceptors.request.use(
-  (config) => {
+  (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => {
+  (error: any) => {
     return Promise.reject(error);
   }
 );
 
 // 响应拦截器
 instance.interceptors.response.use(
-  (response) => {
+  (response: AxiosResponse) => {
     // 后端返回的结构通常是 { success: true, data: ... } 或 { success: false, error: ... }
     const res = response.data;
     if (res.success) {
@@ -36,7 +36,7 @@ instance.interceptors.response.use(
       return Promise.reject(new Error(errorMsg));
     }
   },
-  (error) => {
+  (error: any) => {
     let message = '网络错误';
     if (error.response?.data?.error) {
       const apiError = error.response.data.error;

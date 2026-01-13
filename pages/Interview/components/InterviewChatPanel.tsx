@@ -3,7 +3,9 @@ import {motion} from 'framer-motion';
 import type {InterviewQuestion, InterviewSession} from '../types';
 import {
   Send,
-  User
+  User,
+  Bot,
+  Info
 } from 'lucide-react';
 
 interface Message {
@@ -61,7 +63,7 @@ export default function InterviewChatPanel({
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-280px)] min-h-[500px] w-full">
+    <div className="flex flex-col flex-1 h-full w-full overflow-hidden">
       {/* 聊天区域 */}
       <div className="flex-1 overflow-y-auto p-4 sm:p-10 space-y-8 scroll-smooth custom-scrollbar" ref={chatContainerRef}>
         {messages.map((msg, idx) => (
@@ -75,7 +77,7 @@ export default function InterviewChatPanel({
           >
             <div className="flex gap-4 flex-row">
               <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-white border border-gray-100 text-blue-600 flex items-center justify-center shadow-sm">
-                <i className="fas fa-robot"></i>
+                <Bot className="w-5 h-5" />
               </div>
               <div className="p-5 bg-white border border-gray-100 rounded-[1.5rem] rounded-tl-none shadow-sm">
                 <div className="flex gap-1.5">
@@ -98,14 +100,14 @@ export default function InterviewChatPanel({
               onChange={(e) => onAnswerChange(e.target.value)}
               onKeyDown={handleKeyPress}
               placeholder="请输入您的回答... (Ctrl/Cmd + Enter 发送)"
-              className="w-full pl-6 pr-16 py-5 bg-white border-2 border-transparent rounded-[1.5rem] shadow-sm transition-all focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 focus:bg-white resize-none text-gray-800 placeholder:text-gray-400 font-medium"
+              className="w-full pl-6 pr-32 py-5 bg-white border-2 border-transparent rounded-[1.5rem] shadow-sm transition-all focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 focus:bg-white resize-none text-gray-800 placeholder:text-gray-400 font-medium"
               rows={2}
               disabled={isSubmitting}
             />
             <button
               onClick={onSubmit}
               disabled={!answer.trim() || isSubmitting}
-              className={`absolute right-3 bottom-3 w-12 h-12 flex items-center justify-center rounded-2xl transition-all ${
+              className={`absolute right-3 top-1/2 -translate-y-1/2 h-11 px-6 flex items-center justify-center gap-2 rounded-xl transition-all font-bold tracking-wide ${
                 answer.trim() && !isSubmitting
                   ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20 hover:scale-105 active:scale-95'
                   : 'bg-gray-100 text-gray-400'
@@ -118,14 +120,17 @@ export default function InterviewChatPanel({
                   transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                 />
               ) : (
-                <Send className="w-5 h-5" />
+                <>
+                  <span>发送</span>
+                  <Send className="w-4 h-4" />
+                </>
               )}
             </button>
           </div>
           
           <div className="flex items-center justify-between">
             <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest flex items-center gap-1.5">
-              <i className="fas fa-info-circle"></i>
+              <Info className="w-3 h-3" />
               Ctrl/Cmd + Enter 发送
             </p>
             <button
@@ -158,7 +163,7 @@ function MessageBubble({ message }: { message: Message }) {
             ? 'bg-white border border-gray-100 text-blue-600' 
             : 'bg-blue-600 text-white'
         }`}>
-          {isInterviewer ? <i className="fas fa-robot"></i> : <User className="w-5 h-5" />}
+          {isInterviewer ? <Bot className="w-5 h-5" /> : <User className="w-5 h-5" />}
         </div>
         <div className={`group relative p-5 sm:p-6 rounded-[1.5rem] shadow-sm transition-all hover:shadow-md ${
           isInterviewer

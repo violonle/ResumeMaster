@@ -9,6 +9,8 @@ export interface InterviewSession {
   currentQuestionIndex: number;
   questions: InterviewQuestion[];
   status: 'CREATED' | 'IN_PROGRESS' | 'COMPLETED' | 'EVALUATED';
+  candidateName?: string;
+  candidatePhone?: string;
 }
 
 export interface InterviewQuestion {

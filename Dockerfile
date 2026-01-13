@@ -22,10 +22,14 @@ RUN mvn clean package -DskipTests && \
 
 # --- Stage 3: Build Interview ---
 FROM --platform=$BUILDPLATFORM node:20-alpine AS interview-builder
-WORKDIR /app/interview
+WORKDIR /app
 COPY pages/Interview/package*.json ./
 RUN npm install
+# 按照用户要求，将 api 放在 /api，依赖在 /app/node_modules
+COPY api/ /api/
 COPY pages/Interview/ .
+# 创建软链接，确保 /api/request.ts 能找到 /app/node_modules
+RUN ln -s /app/node_modules /node_modules
 RUN npm run build
 
 # --- Stage 4: Final Image ---
@@ -54,7 +58,7 @@ COPY pages/ ./pages/
 COPY --from=admin-builder /app/admin/dist ./admin/dist
 # 将 JAR 包复制到 tikaService 期望的路径
 COPY --from=tika-builder /app/tika/target/docparser.jar ./backend/docparser/docparser.jar
-COPY --from=interview-builder /app/interview/dist ./pages/Interview/dist
+COPY --from=interview-builder /app/dist ./pages/Interview/dist
 
 # 5. 设置权限
 RUN mkdir -p backend/uploads && \

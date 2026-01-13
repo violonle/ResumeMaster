@@ -37,8 +37,10 @@ echo "🚚 Step 2: 正在导出并压缩镜像..."
 docker save "${FULL_IMAGE}" | gzip > image_tmp.tar.gz
 
 # 3. 传输到服务器
-echo "📤 Step 3: 正在将镜像传输到服务器 (通过 SSH 隧道)..."
+echo "📤 Step 3: 正在将镜像及配置文件传输到服务器 (通过 SSH 隧道)..."
 scp image_tmp.tar.gz ${SERVER_USER}@${SERVER_IP}:${PROJECT_PATH}/
+scp docker-compose.prod.yml ${SERVER_USER}@${SERVER_IP}:${PROJECT_PATH}/
+scp backend/.env.example ${SERVER_USER}@${SERVER_IP}:${PROJECT_PATH}/.env.example
 
 # 4. 远程加载镜像
 echo "📥 Step 4: 正在远程加载镜像并清理临时文件..."
@@ -52,6 +54,9 @@ ssh ${SERVER_USER}@${SERVER_IP} << EOF
     docker tag ${FULL_IMAGE} ${LATEST_IMAGE}
     
     echo "🔄 正在重启服务..."
+    # 确保网络存在
+    docker network create srm-network || true
+    
     docker-compose -f docker-compose.prod.yml up -d --force-recreate
     
     echo "🧹 清理服务器旧镜像..."
