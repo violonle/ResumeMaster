@@ -20,6 +20,6 @@
       "@/*": ["../../*"]
     }
   },
-  "include": ["src", "index.tsx", "main.tsx", "interview-api.ts", "types.ts", "components", "../../api/request.ts"],
+  "include": ["index.tsx", "main.tsx", "interview-api.ts", "types.ts", "components", "../../api/request.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

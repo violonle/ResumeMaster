@@ -22,7 +22,6 @@ services:
     image: letuyang/super-resume-master:latest
     container_name: srm-app
     restart: always
-    pull_policy: never
     env_file:
       - .env
     ports:

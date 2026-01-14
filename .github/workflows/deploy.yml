@@ -41,8 +41,16 @@ jobs:
           username: root
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: 22
+          debug: true
           script: |
+            mkdir -p /www/wwwroot/ResumeMaster
             cd /www/wwwroot/ResumeMaster
-            docker-compose pull
-            docker-compose up -d
+            # 尝试使用 docker compose (V2) 或 docker-compose (V1)
+            if command -v docker-compose >/dev/null 2>&1; then
+              docker-compose pull
+              docker-compose up -d
+            else
+              docker compose pull
+              docker compose up -d
+            fi
             docker image prune -f
