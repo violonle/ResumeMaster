@@ -101,10 +101,22 @@ const routes = [
         meta: { title: '大模型管理', breadcrumb: '大模型管理', permission: 'ai_models.view' }
       },
       {
+        path: 'sms-config',
+        name: 'sms-config',
+        component: () => import('@/views/system/Settings.vue'),
+        meta: { title: '短信配置', breadcrumb: '短信配置', permission: 'system.settings', defaultTab: 'sms' }
+      },
+      {
+        path: 'email-config',
+        name: 'email-config',
+        component: () => import('@/views/system/Settings.vue'),
+        meta: { title: '邮件配置', breadcrumb: '邮件配置', permission: 'system.settings', defaultTab: 'email' }
+      },
+      {
         path: 'system-settings',
         name: 'system-settings',
-        component: () => import('@/views/system/CleanSettings.vue'),
-        meta: { title: '系统设置', breadcrumb: '系统设置', permission: 'system.settings' }
+        component: () => import('@/views/system/Settings.vue'),
+        meta: { title: '系统设置', breadcrumb: '系统设置', permission: 'system.settings', defaultTab: 'basic' }
       },
       {
         path: 'subscription-plans',

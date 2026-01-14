@@ -296,8 +296,24 @@ router.get('/system/sms', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const SystemConfig = sequelize.models.SystemConfig
     const { Op } = require('sequelize')
-    const rows = await SystemConfig.findAll({ where: { key: { [Op.in]: ['sms.provider', 'sms.accessKeyId', 'sms.accessKeySecret', 'sms.signName', 'sms.templateCode', 'sms.enabled'] } } })
-    const data = { provider: 'aliyun', accessKeyId: '', accessKeySecret: '', signName: '', templateCode: '', enabled: false }
+    const keys = [
+      'sms.provider', 'sms.accessKeyId', 'sms.accessKeySecret', 'sms.signName', 'sms.templateCode', 'sms.enabled',
+      'sms.auth.signName', 'sms.auth.templateCode',
+      'sms.interview.signName', 'sms.interview.templateCode'
+    ]
+    const rows = await SystemConfig.findAll({ where: { key: { [Op.in]: keys } } })
+    const data = { 
+      provider: 'aliyun', 
+      accessKeyId: '', 
+      accessKeySecret: '', 
+      signName: '', 
+      templateCode: '', 
+      enabled: false,
+      scenarios: {
+        auth: { signName: '', templateCode: '' },
+        interview: { signName: '', templateCode: '' }
+      }
+    }
     for (const r of rows) {
       if (r.key === 'sms.provider') data.provider = r.value || data.provider
       if (r.key === 'sms.accessKeyId') data.accessKeyId = r.value || data.accessKeyId
@@ -305,8 +321,22 @@ router.get('/system/sms', authenticateToken, requireAdmin, async (req, res) => {
       if (r.key === 'sms.signName') data.signName = r.value || data.signName
       if (r.key === 'sms.templateCode') data.templateCode = r.value || data.templateCode
       if (r.key === 'sms.enabled') data.enabled = r.value === 'true'
+      
+      // Scenarios
+      if (r.key === 'sms.auth.signName') data.scenarios.auth.signName = r.value || ''
+      if (r.key === 'sms.auth.templateCode') data.scenarios.auth.templateCode = r.value || ''
+      if (r.key === 'sms.interview.signName') data.scenarios.interview.signName = r.value || ''
+      if (r.key === 'sms.interview.templateCode') data.scenarios.interview.templateCode = r.value || ''
     }
-    res.json({ provider: data.provider, accessKeyId: data.accessKeyId ? '***' : '', accessKeySecret: data.accessKeySecret ? '***' : '', signName: data.signName, templateCode: data.templateCode, enabled: !!data.enabled })
+    res.json({ 
+      provider: data.provider, 
+      accessKeyId: data.accessKeyId ? '***' : '', 
+      accessKeySecret: data.accessKeySecret ? '***' : '', 
+      signName: data.signName, 
+      templateCode: data.templateCode, 
+      enabled: !!data.enabled,
+      scenarios: data.scenarios
+    })
   } catch (e) {
     res.status(500).json({ message: '获取短信设置失败' })
   }
@@ -331,19 +361,39 @@ router.put('/system/sms', authenticateToken, requireAdmin, async (req, res) => {
     if (ak && String(ak).trim() !== '***') await set('sms.accessKeyId', String(ak).trim())
     if (sk && String(sk).trim() !== '***') await set('sms.accessKeySecret', String(sk).trim())
     
-    // Handle SignName and TemplateCode
-    // Note: We use specific keys to avoid ambiguity
+    // Handle Global SignName and TemplateCode
     const signName = req.body.smsSignName || req.body.signName;
     const templateCode = req.body.templateCode || req.body.smsTemplateCode;
     
     if (signName !== undefined) await set('sms.signName', signName)
     if (templateCode !== undefined) await set('sms.templateCode', templateCode)
     
+    // Handle Scenario-specific settings
+    if (req.body.scenarios) {
+      const { auth, interview } = req.body.scenarios
+      if (auth) {
+        if (auth.signName !== undefined) await set('sms.auth.signName', auth.signName)
+        if (auth.templateCode !== undefined) await set('sms.auth.templateCode', auth.templateCode)
+      }
+      if (interview) {
+        if (interview.signName !== undefined) await set('sms.interview.signName', interview.signName)
+        if (interview.templateCode !== undefined) await set('sms.interview.templateCode', interview.templateCode)
+      }
+    }
+    
     // Handle enabled
     if (req.body.enabled !== undefined) await set('sms.enabled', String(req.body.enabled) === 'true' || req.body.enabled === true ? 'true' : 'false')
     
     const cfg = await smsService.getConfig()
-    res.json({ provider: cfg.provider, accessKeyId: cfg.accessKeyId ? '***' : '', accessKeySecret: cfg.accessKeySecret ? '***' : '', signName: cfg.signName, templateCode: cfg.templateCode, enabled: cfg.enabled === true || req.body.enabled === true })
+    res.json({ 
+      provider: cfg.provider, 
+      accessKeyId: cfg.accessKeyId ? '***' : '', 
+      accessKeySecret: cfg.accessKeySecret ? '***' : '', 
+      signName: cfg.signName, 
+      templateCode: cfg.templateCode, 
+      enabled: cfg.enabled === true || req.body.enabled === true,
+      scenarios: cfg.scenarios
+    })
   } catch (e) {
     console.error('[Admin] Save SMS settings failed:', e);
     res.status(500).json({ message: '保存短信设置失败' })
@@ -352,13 +402,21 @@ router.put('/system/sms', authenticateToken, requireAdmin, async (req, res) => {
 
 router.post('/system/sms/test', authenticateToken, requireAdmin, async (req, res) => {
   try {
-    const phone = req.body.phone
-    const content = req.body.content || '测试短信'
+    const { phone, content, templateCode, scenario } = req.body
     if (!phone) return res.status(400).json({ message: '缺少手机号' })
-    const r = await smsService.sendText(String(phone), content)
+    
+    // 如果提供了 templateCode，则直接调用 sendAliyunSms
+    let r;
+    if (templateCode) {
+      r = await smsService.sendAliyunSms(String(phone), templateCode, content)
+    } else {
+      r = await smsService.sendText(String(phone), content, scenario)
+    }
+    
     if (r.success) return res.json({ success: true })
     return res.status(400).json({ success: false, error: r.error || '发送失败' })
   } catch (e) {
+    console.error('[Admin] Test SMS error:', e)
     res.status(500).json({ message: '测试短信发送失败' })
   }
 })
@@ -408,6 +466,61 @@ router.post('/system/sms/template/init', authenticateToken, requireAdmin, async 
     res.status(500).json({ message: '创建模板失败', error: e.message })
   }
 })
+
+// 邮件设置
+router.get('/system/email', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const SystemConfig = sequelize.models.SystemConfig;
+    const cfg = await SystemConfig.findOne({ where: { key: 'email' } });
+    const defaultCfg = {
+      host: 'smtp.qq.com',
+      port: 465,
+      secure: true,
+      user: '',
+      pass: '',
+      fromName: '争湃·简历大师',
+      enabled: false
+    };
+    
+    if (cfg && cfg.value) {
+      const val = typeof cfg.value === 'string' ? JSON.parse(cfg.value) : cfg.value;
+      return res.json({ success: true, data: { ...defaultCfg, ...val } });
+    }
+    
+    res.json({ success: true, data: defaultCfg });
+  } catch (e) {
+    res.status(500).json({ message: '获取邮件设置失败' });
+  }
+});
+
+router.put('/system/email', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const SystemConfig = sequelize.models.SystemConfig;
+    const [cfg] = await SystemConfig.findOrCreate({ 
+      where: { key: 'email' }, 
+      defaults: { value: JSON.stringify(req.body || {}) } 
+    });
+    await cfg.update({ value: JSON.stringify(req.body || {}) });
+    res.json({ success: true, data: req.body });
+  } catch (e) {
+    res.status(500).json({ message: '保存邮件设置失败' });
+  }
+});
+
+router.post('/system/email/test', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { to, subject, content } = req.body;
+    if (!to) return res.status(400).json({ message: '请输入接收邮箱' });
+    
+    const emailService = require('../services/emailService');
+    await emailService.sendMail(to, subject || '测试邮件', content || '这是一封来自简历大师系统的测试邮件。');
+    
+    res.json({ success: true, message: '测试邮件已发送' });
+  } catch (e) {
+    console.error('Test email error:', e);
+    res.status(500).json({ message: '发送测试邮件失败: ' + e.message });
+  }
+});
 
 // 企业管理
 router.get('/companies', authenticateToken, requireAdmin, async (req, res) => {

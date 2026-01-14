@@ -67,18 +67,6 @@
           <span class="text-xl mr-2">⬅️</span><span id="back-text">返回人才库</span>
         </a>
         <div class="flex items-center space-x-3">
-          <button id="export-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center">
-            导出
-          </button>
-          <button id="analyze-btn" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 flex items-center">
-            分析
-          </button>
-          <button id="pass-btn" class="px-4 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-800 flex items-center">
-            通过初筛
-          </button>
-          <a id="reject-link" class="text-gray-500 hover:text-red-600 flex items-center transition-colors">
-            暂不考虑
-          </a>
         </div>
       </div>
 
@@ -294,24 +282,6 @@
         alert('更新状态失败，请稍后重试');
       }
     }
-
-    document.getElementById('pass-btn').addEventListener('click', () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const resumeId = urlParams.get('id');
-      if (resumeId) {
-        updateRecruitmentStatus(resumeId, '初筛');
-      }
-    });
-
-    document.getElementById('reject-link').addEventListener('click', () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const resumeId = urlParams.get('id');
-      if (resumeId) {
-        if (confirm('确定要暂不考虑此候选人吗？')) {
-          updateRecruitmentStatus(resumeId, '放弃');
-        }
-      }
-    });
 
     function renderResume(data) {
       document.getElementById('loading-indicator').classList.add('hidden');

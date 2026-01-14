@@ -105,6 +105,24 @@
         class="mb-1"
       />
       <VListItem
+        v-if="can('system.settings')"
+        prepend-icon="mdi-message-text-outline"
+        title="短信配置"
+        :to="{ name: 'sms-config' }"
+        color="primary"
+        rounded="lg"
+        class="mb-1"
+      />
+      <VListItem
+        v-if="can('system.settings')"
+        prepend-icon="mdi-email-outline"
+        title="邮件配置"
+        :to="{ name: 'email-config' }"
+        color="primary"
+        rounded="lg"
+        class="mb-1"
+      />
+      <VListItem
         v-if="can('subscriptions.view')"
         prepend-icon="mdi-format-list-bulleted"
         title="订阅计划"

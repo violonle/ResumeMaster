@@ -613,19 +613,26 @@ const recruitmentFlowController = {
                 const modal = document.getElementById('interviewModal');
                 const id = modal.dataset.candidateId;
                 
-                // Collect form data
-                const formData = new FormData(e.target);
-                const data = Object.fromEntries(formData.entries());
+                console.log('[Frontend] Submitting interview form for id:', id);
+                const formData = new FormData(interviewForm);
+                const data = {
+                datetime: formData.get('datetime'),
+                channel: formData.get('channel') || formData.get('type') || 'offline',
+                location: formData.get('location') || '',
+                note: formData.get('note') || formData.get('notes') || '',
+                aiQuestionCount: parseInt(formData.get('aiQuestionCount') || '8', 10)
+            };
+                console.log('[Frontend] Interview data:', data);
                 
                 try {
                     if (typeof ErrorHandler !== 'undefined') ErrorHandler.showLoading(true);
                     
                     await resumeDataManager.scheduleInterview(id, {
                         datetime: data.datetime,
-                        channel: data.type,
-                        aiQuestionCount: data.aiQuestionCount, // 新增：传递题目数量
+                        channel: data.channel,
+                        aiQuestionCount: data.aiQuestionCount,
                         location: data.location || '',
-                        note: (data.interviewer ? `面试官: ${data.interviewer}\n` : '') + (data.notes || '')
+                        note: (data.interviewer ? `面试官: ${data.interviewer}\n` : '') + (data.note || '')
                     });
                     
                     if (typeof window !== 'undefined' && window.ui && window.ui.showAlert) {

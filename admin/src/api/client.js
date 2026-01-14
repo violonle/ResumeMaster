@@ -40,7 +40,11 @@ apiClient.interceptors.response.use(
     console.error('[api:error]', status, url, msg)
     if (status === 401 || status === 403) {
       localStorage.removeItem('admin-token')
-      window.location.href = '/admin/login'
+      // Only redirect if not already on login page
+      // Use window.location for now if we want to be safe, or get router instance dynamically
+      if (!window.location.pathname.endsWith('/login')) {
+        window.location.href = '/admin/login'
+      }
     }
     return Promise.reject(error)
   }

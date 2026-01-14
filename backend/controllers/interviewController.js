@@ -135,6 +135,13 @@ class InterviewController {
           logger.info(`找到 Resume: ${resume.id}`);
           finalResumeText = this._extractResumeText(resume);
           logger.info(`获取到 Resume 文本，长度: ${finalResumeText?.length || 0}`);
+
+          // 尝试从简历数据中获取预设的面试配置
+          const pd = resume.parsed_data || {};
+          if (pd.interview && pd.interview.aiQuestionCount) {
+            finalQuestionCount = parseInt(pd.interview.aiQuestionCount);
+            logger.info(`从简历解析数据中获取到面试题目数量: ${finalQuestionCount}`);
+          }
           
           const rj = await ResumeJob.findOne({
             where: { resume_id: finalResumeId },

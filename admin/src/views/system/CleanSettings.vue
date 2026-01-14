@@ -6,7 +6,6 @@
     <!-- 设置标签页 -->
     <VTabs v-model="activeTab" class="mb-6" color="primary">
       <VTab value="basic" prepend-icon="mdi-cog">基础设置</VTab>
-      <VTab value="sms" prepend-icon="mdi-message-text">短信设置</VTab>
       <VTab value="notifications" prepend-icon="mdi-bell">通知设置</VTab>
       <VTab value="roles" prepend-icon="mdi-shield-account">角色权限</VTab>
     </VTabs>
@@ -97,116 +96,6 @@
                     prepend-icon="mdi-content-save"
                   >
                     保存基础设置
-                  </VBtn>
-                </VCol>
-              </VRow>
-            </VForm>
-          </VCardText>
-        </VCard>
-      </VWindowItem>
-
-      <!-- 短信设置 -->
-      <VWindowItem value="sms">
-        <VCard elevation="0" border>
-          <VCardText>
-            <VForm ref="smsForm" @submit.prevent="saveSMSSettings">
-              <VRow>
-                <VCol cols="12" md="6">
-                  <VSelect
-                    v-model="systemStore.smsSettings.provider"
-                    :items="smsProviders"
-                    label="短信服务商"
-                    variant="outlined"
-                    density="compact"
-                    prepend-inner-icon="mdi-server"
-                  />
-                </VCol>
-                <VCol cols="12" md="6">
-                  <VTextField
-                    v-model="systemStore.smsSettings.accessKeyId"
-                    label="Access Key"
-                    :type="showSmsKey ? 'text' : 'password'"
-                    :append-inner-icon="showSmsKey ? 'mdi-eye-off' : 'mdi-eye'"
-                    @click:append-inner="showSmsKey = !showSmsKey"
-                    variant="outlined"
-                    density="compact"
-                    prepend-inner-icon="mdi-key"
-                  />
-                </VCol>
-                <VCol cols="12" md="6">
-                  <VTextField
-                    v-model="systemStore.smsSettings.accessKeySecret"
-                    label="Secret Key"
-                    :type="showSmsSecret ? 'text' : 'password'"
-                    :append-inner-icon="showSmsSecret ? 'mdi-eye-off' : 'mdi-eye'"
-                    @click:append-inner="showSmsSecret = !showSmsSecret"
-                    variant="outlined"
-                    density="compact"
-                    prepend-inner-icon="mdi-lock"
-                  />
-                </VCol>
-                <VCol cols="12" md="6">
-                  <VTextField
-                    v-model="systemStore.smsSettings.signName"
-                    label="短信签名"
-                    variant="outlined"
-                    density="compact"
-                    prepend-inner-icon="mdi-pen"
-                  />
-                </VCol>
-                
-                <VCol cols="12">
-                  <VDivider class="my-4" />
-                  <div class="text-subtitle-1 mb-4">测试发送</div>
-                </VCol>
-                
-                <VCol cols="12" md="6">
-                  <VTextField 
-                    v-model="testSmsPhone" 
-                    label="测试手机号" 
-                    variant="outlined"
-                    density="compact"
-                    prepend-inner-icon="mdi-cellphone"
-                  />
-                </VCol>
-                <VCol cols="12" md="6">
-                  <VTextField 
-                    v-model="systemStore.smsSettings.templateCode" 
-                    label="模板Code" 
-                    variant="outlined"
-                    density="compact"
-                    prepend-inner-icon="mdi-code-tags"
-                  />
-                </VCol>
-                <VCol cols="12">
-                  <VTextField 
-                    v-model="testSmsContent" 
-                    label="测试参数 (JSON格式)" 
-                    variant="outlined"
-                    density="compact"
-                    prepend-inner-icon="mdi-code-json"
-                    placeholder='{"code":"123456"}'
-                  />
-                </VCol>
-
-                <VCol cols="12" class="d-flex justify-end gap-2">
-                  <VBtn 
-                    color="info" 
-                    variant="tonal"
-                    :loading="saving.sms" 
-                    @click="testSMS"
-                    prepend-icon="mdi-send"
-                    class="me-2"
-                  >
-                    发送测试短信
-                  </VBtn>
-                  <VBtn 
-                    type="submit" 
-                    color="primary" 
-                    :loading="saving.sms"
-                    prepend-icon="mdi-content-save"
-                  >
-                    保存短信设置
                   </VBtn>
                 </VCol>
               </VRow>
@@ -470,6 +359,7 @@ const loading = reactive({
 const showSmsKey = ref(false)
 const showSmsSecret = ref(false)
 const testSmsPhone = ref('')
+const testTemplateCode = ref('')
 const testSmsContent = ref('')
 const roleSearch = ref('')
 
@@ -525,6 +415,7 @@ const testSMS = async () => {
   try {
     const resp = await systemStore.testSms({
       phone: testSmsPhone.value,
+      templateCode: testTemplateCode.value || systemStore.smsSettings.templateCode,
       content: testSmsContent.value || '测试短信'
     })
     ui.showNotification('测试短信发送成功', 'success')
@@ -611,14 +502,21 @@ const deleteRole = (role) => {
 
 onMounted(async () => {
   // 初始化数据
+  loading.roles = true
   try {
     await Promise.all([
       systemStore.fetchSettings(),
+      systemStore.fetchSmsSettings(),
       systemStore.fetchRoles(),
       systemStore.fetchPermissions()
     ])
+
+    // 初始化测试模板
+    testTemplateCode.value = systemStore.smsSettings.templateCode
   } catch (error) {
     console.error('Failed to initialize system settings:', error)
+  } finally {
+    loading.roles = false
   }
 })
 </script>

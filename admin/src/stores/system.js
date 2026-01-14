@@ -11,6 +11,7 @@ export const useSystemStore = defineStore('system', () => {
     contactPhone: '',
     icpNumber: '',
     analyticsCode: '',
+    portalUrl: '',
   })
   
   const smsSettings = ref({
@@ -19,6 +20,20 @@ export const useSystemStore = defineStore('system', () => {
     accessKeySecret: '',
     signName: '',
     templateCode: '',
+    enabled: false,
+    scenarios: {
+      auth: { signName: '', templateCode: '' },
+      interview: { signName: '', templateCode: '' }
+    },
+  })
+  
+  const emailSettings = ref({
+    host: 'smtp.qq.com',
+    port: 465,
+    secure: true,
+    user: '',
+    pass: '',
+    fromName: '争湃·简历大师',
     enabled: false,
   })
   
@@ -107,6 +122,37 @@ export const useSystemStore = defineStore('system', () => {
       return response.data
     } catch (error) {
       console.error('Failed to check SMS:', error)
+      throw error
+    }
+  }
+
+  const fetchEmailSettings = async () => {
+    try {
+      const response = await systemAPI.getEmailSettings()
+      emailSettings.value = response.data
+      return response.data
+    } catch (error) {
+      console.error('Failed to fetch Email settings:', error)
+      throw error
+    }
+  }
+
+  const updateEmailSettings = async (data) => {
+    try {
+      const response = await systemAPI.updateEmailSettings(data)
+      emailSettings.value = response.data
+      return response.data
+    } catch (error) {
+      console.error('Failed to update Email settings:', error)
+      throw error
+    }
+  }
+
+  const testEmail = async (data) => {
+    try {
+      return await systemAPI.testEmail(data)
+    } catch (error) {
+      console.error('Failed to test Email:', error)
       throw error
     }
   }
@@ -229,6 +275,7 @@ export const useSystemStore = defineStore('system', () => {
   return {
     settings,
     smsSettings,
+    emailSettings,
     notificationSettings,
     roles,
     permissions,
@@ -242,6 +289,9 @@ export const useSystemStore = defineStore('system', () => {
     updateSmsSettings,
     testSms,
     checkSms,
+    fetchEmailSettings,
+    updateEmailSettings,
+    testEmail,
     fetchNotificationSettings,
     updateNotificationSettings,
     fetchRoles,

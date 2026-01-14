@@ -1,15 +1,15 @@
 <template>
   <StandardPage
-    title="系统设置"
-    subtitle="配置系统基础参数和功能"
+    :title="pageTitle"
+    :subtitle="pageSubtitle"
   >
 
-    <VTabs v-model="activeTab" class="mb-6">
+    <VTabs v-model="activeTab" class="mb-6" v-if="showTabs">
       <VTab value="basic">基础设置</VTab>
-      <VTab value="sms">短信设置</VTab>
+      <VTab value="sms" v-if="activeTab === 'sms'">短信设置</VTab>
+      <VTab value="email" v-if="activeTab === 'email'">邮件配置</VTab>
       <VTab value="notifications">通知设置</VTab>
       <VTab value="roles">角色权限</VTab>
-      
     </VTabs>
 
     <!-- 基础设置 -->
@@ -58,6 +58,15 @@
                   <VTextField
                     v-model="systemStore.settings.icpNumber"
                     label="ICP备案号"
+                  />
+                </VCol>
+                <VCol cols="12" md="6">
+                  <VTextField
+                    v-model="systemStore.settings.portalUrl"
+                    label="面试门户地址"
+                    placeholder="例如: https://master.cloujade.com"
+                    hint="用于生成面试邀请链接，请确保包含 http:// 或 https://"
+                    persistent-hint
                   />
                 </VCol>
                 <VCol cols="12">
@@ -134,6 +143,49 @@
                     :rules="systemStore.smsSettings.enabled ? [v => !!v || '请输入模板代码'] : []"
                   />
                 </VCol>
+
+                <!-- Scenario-specific settings -->
+                <VCol cols="12">
+                  <VDivider class="my-4" />
+                  <div class="text-subtitle-1 mb-2 font-weight-bold">场景化短信配置</div>
+                  <div class="text-caption text-grey mb-4">您可以为不同场景设置独立的短信签名和模板。如果未设置，将使用上方全局配置。</div>
+                </VCol>
+
+                <!-- Auth Scenario -->
+                <VCol cols="12" md="6">
+                  <VTextField
+                    v-model="systemStore.smsSettings.scenarios.auth.signName"
+                    label="登录/注册 - 短信签名"
+                    placeholder="留空则使用全局配置"
+                    :disabled="!systemStore.smsSettings.enabled"
+                  />
+                </VCol>
+                <VCol cols="12" md="6">
+                  <VTextField
+                    v-model="systemStore.smsSettings.scenarios.auth.templateCode"
+                    label="登录/注册 - 模板代码"
+                    placeholder="留空则使用全局配置"
+                    :disabled="!systemStore.smsSettings.enabled"
+                  />
+                </VCol>
+
+                <!-- Interview Scenario -->
+                <VCol cols="12" md="6">
+                  <VTextField
+                    v-model="systemStore.smsSettings.scenarios.interview.signName"
+                    label="面试邀请 - 短信签名"
+                    placeholder="留空则使用全局配置"
+                    :disabled="!systemStore.smsSettings.enabled"
+                  />
+                </VCol>
+                <VCol cols="12" md="6">
+                  <VTextField
+                    v-model="systemStore.smsSettings.scenarios.interview.templateCode"
+                    label="面试邀请 - 模板代码"
+                    placeholder="留空则使用全局配置"
+                    :disabled="!systemStore.smsSettings.enabled"
+                  />
+                </VCol>
                 <VCol cols="12">
                   <VTextarea
                     v-model="smsTestPhone"
@@ -161,6 +213,100 @@
             </div>
             <VSpacer />
             <VBtn color="primary" @click="saveSmsSettings" :loading="saving.sms">保存短信设置</VBtn>
+          </VCardActions>
+        </VCard>
+      </VWindowItem>
+
+      <!-- 邮件设置 -->
+      <VWindowItem value="email">
+        <VCard>
+          <VCardText>
+            <VForm ref="emailForm" @submit.prevent="saveEmailSettings">
+              <VRow>
+                <VCol cols="12" md="6">
+                  <VSwitch
+                    v-model="systemStore.emailSettings.enabled"
+                    label="启用邮件服务"
+                    color="primary"
+                  />
+                </VCol>
+                <VCol cols="12" md="6">
+                  <VTextField
+                    v-model="systemStore.emailSettings.fromName"
+                    label="发件人名称"
+                    placeholder="例如: 争湃·简历大师"
+                    :disabled="!systemStore.emailSettings.enabled"
+                  />
+                </VCol>
+                <VCol cols="12" md="8">
+                  <VTextField
+                    v-model="systemStore.emailSettings.host"
+                    label="SMTP 服务器"
+                    placeholder="例如: smtp.qq.com"
+                    :disabled="!systemStore.emailSettings.enabled"
+                    :rules="systemStore.emailSettings.enabled ? [v => !!v || '请输入SMTP服务器地址'] : []"
+                  />
+                </VCol>
+                <VCol cols="12" md="4">
+                  <VTextField
+                    v-model.number="systemStore.emailSettings.port"
+                    label="端口"
+                    type="number"
+                    placeholder="通常为 465 或 587"
+                    :disabled="!systemStore.emailSettings.enabled"
+                    :rules="systemStore.emailSettings.enabled ? [v => !!v || '请输入端口'] : []"
+                  />
+                </VCol>
+                <VCol cols="12" md="6">
+                  <VSwitch
+                    v-model="systemStore.emailSettings.secure"
+                    label="启用 SSL/TLS"
+                    color="primary"
+                    :disabled="!systemStore.emailSettings.enabled"
+                  />
+                </VCol>
+                <VCol cols="12" md="6">
+                  <VTextField
+                    v-model="systemStore.emailSettings.user"
+                    label="SMTP 账号"
+                    placeholder="通常是您的邮箱地址"
+                    :disabled="!systemStore.emailSettings.enabled"
+                    :rules="systemStore.emailSettings.enabled ? [v => !!v || '请输入SMTP账号'] : []"
+                  />
+                </VCol>
+                <VCol cols="12" md="6">
+                  <VTextField
+                    v-model="systemStore.emailSettings.pass"
+                    label="SMTP 密码/授权码"
+                    :type="showEmailSecret ? 'text' : 'password'"
+                    :append-inner-icon="showEmailSecret ? 'mdi-eye-off' : 'mdi-eye'"
+                    @click:append-inner="showEmailSecret = !showEmailSecret"
+                    placeholder="请输入邮箱密码或授权码"
+                    :disabled="!systemStore.emailSettings.enabled"
+                    :rules="systemStore.emailSettings.enabled ? [v => !!v || '请输入SMTP密码'] : []"
+                  />
+                </VCol>
+                <VCol cols="12">
+                  <VDivider class="my-4" />
+                  <div class="text-subtitle-1 mb-2 font-weight-bold">邮件测试</div>
+                </VCol>
+                <VCol cols="12" md="6">
+                  <VTextField
+                    v-model="emailTestAddress"
+                    label="测试收件邮箱"
+                    placeholder="请输入接收测试邮件的邮箱"
+                    :disabled="!systemStore.emailSettings.enabled"
+                  />
+                </VCol>
+              </VRow>
+            </VForm>
+          </VCardText>
+          <VCardActions>
+            <VBtn color="info" @click="testEmail" :disabled="!systemStore.emailSettings.enabled || !emailTestAddress" :loading="testing.email">
+              测试邮件
+            </VBtn>
+            <VSpacer />
+            <VBtn color="primary" @click="saveEmailSettings" :loading="saving.email">保存邮件设置</VBtn>
           </VCardActions>
         </VCard>
       </VWindowItem>
@@ -487,7 +633,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import StandardPage from '@/components/StandardPage.vue'
 import { useSystemStore } from '@/stores/system'
@@ -497,21 +643,49 @@ import ui from '@/utils/ui-components.js'
 const router = useRouter()
 const systemStore = useSystemStore()
 
-const activeTab = ref('basic')
+const activeTab = ref(router.currentRoute.value.query.tab || router.currentRoute.value.meta.defaultTab || 'basic')
+  
+  const pageTitle = computed(() => {
+    if (activeTab.value === 'sms') return '短信配置'
+    if (activeTab.value === 'email') return '邮件配置'
+    return '系统设置'
+  })
+
+  const pageSubtitle = computed(() => {
+    if (activeTab.value === 'sms') return '配置系统短信发送服务'
+    if (activeTab.value === 'email') return '配置系统邮件发送服务'
+    return '配置系统基础参数和功能'
+  })
+
+  const showTabs = computed(() => {
+    return !['sms', 'email'].includes(activeTab.value)
+  })
+
+  // 监听路由变化以切换标签
+watch(() => [router.currentRoute.value.query.tab, router.currentRoute.value.meta.defaultTab], ([newTab, defaultTab]) => {
+  const tab = newTab || defaultTab
+  if (tab && ['basic', 'sms', 'email', 'notifications', 'roles'].includes(tab)) {
+    activeTab.value = tab
+  }
+}, { immediate: true })
+
 const showRoleDialog = ref(false)
 const showPermissionDialog = ref(false)
 const showSmsSecret = ref(false)
+const showEmailSecret = ref(false)
 const roleSearch = ref('')
 const smsTestPhone = ref('')
+const emailTestAddress = ref('')
 
 const saving = reactive({
   basic: false,
   sms: false,
+  email: false,
   notifications: false,
   role: false,
 })
 
-const testing = reactive({ sms: false, check: false })
+const testing = reactive({ sms: false, email: false, check: false })
 
 const loading = reactive({
   roles: false,
@@ -522,6 +696,7 @@ const exporting = ref(false)
 
 const basicForm = ref()
 const smsForm = ref()
+const emailForm = ref()
 const notificationForm = ref()
 const roleForm = ref()
 
@@ -681,6 +856,36 @@ const checkSms = async () => {
   }
 }
 
+const saveEmailSettings = async () => {
+  const { valid } = await emailForm.value.validate()
+  if (!valid) return
+
+  saving.email = true
+  try {
+    await systemStore.updateEmailSettings(systemStore.emailSettings)
+    ui.showNotification('邮件设置保存成功', 'success')
+  } catch (error) {
+    console.error('Failed to save email settings:', error)
+    ui.showNotification('保存邮件设置失败', 'error')
+  } finally {
+    saving.email = false
+  }
+}
+
+const testEmail = async () => {
+  if (!emailTestAddress.value) return
+
+  testing.email = true
+  try {
+    await systemStore.testEmail({ to: emailTestAddress.value, ...systemStore.emailSettings })
+    ui.showNotification('测试邮件已发送，请检查收件箱', 'success')
+  } catch (error) {
+    ui.showNotification('测试邮件发送失败：' + (error.response?.data?.message || error.message), 'error')
+  } finally {
+    testing.email = false
+  }
+}
+
 const saveNotificationSettings = async () => {
   saving.notifications = true
   try {
@@ -831,6 +1036,7 @@ onMounted(async () => {
   await Promise.all([
     systemStore.fetchSettings(),
     systemStore.fetchSmsSettings(),
+    systemStore.fetchEmailSettings(),
     systemStore.fetchNotificationSettings(),
     systemStore.fetchRoles(),
     systemStore.fetchPermissions(),

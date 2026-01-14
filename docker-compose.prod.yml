@@ -1,41 +1,38 @@
+version: '3.8'
+
 services:
-  # 数据库服务
   db:
     image: mysql:8.0
+    container_name: srm-mysql-prod
     command: --default-authentication-plugin=mysql_native_password
     restart: always
     environment:
       MYSQL_DATABASE: ${DB_NAME:-superresumemaster}
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-letuyang}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-YourStrongPassword}
     volumes:
       - ./mysql_data:/var/lib/mysql
     networks:
       - srm-network
 
-  # 后端 + 前端服务
   app:
-    # 替换为你的 Docker Hub 用户名或私有仓库地址
+    build:
+      context: .
+      dockerfile: Dockerfile
     image: letuyang/super-resume-master:latest
+    container_name: super-resume-master
     restart: always
-    env_file:
-      - .env
-    environment:
-      - TIKA_SERVER_URL=http://tika:9998
+    # 移除 build 字段，直接从镜像运行
     ports:
       - "3000:3000"
+    env_file:
+      - .env
     volumes:
       - ./uploads:/app/backend/uploads
+      - ./logs:/app/backend/logs
     depends_on:
       - db
-    networks:
-      - srm-network
-
-  # Apache Tika 解析服务
-  tika:
-    image: apache/tika:latest
-    restart: always
-    ports:
-      - "9998:9998"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - srm-network
 

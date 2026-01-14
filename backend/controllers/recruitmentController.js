@@ -83,16 +83,23 @@ exports.scheduleInterview = async (req, res) => {
       const typeStr = channel === 'video' ? '视频面试' : (channel === 'phone' ? '线上面试' : '现场面试');
       
       // 生成面试链接
-      const protocol = req.protocol || 'http';
-      const host = req.get('host') || 'localhost:3000';
-      // 修改：使用 resumeJobId 参数明确指代申请记录ID，避免前端误将其识别为 resumeId 或 sessionId
-      const interviewLink = `${protocol}://${host}/pages/interview/index.html?resumeJobId=${rj.id}`;
+      const smsCfg = await sms.getConfig();
+      const portalUrl = (smsCfg.portalUrl || 'https://master.cloujade.com').replace(/\/$/, '');
+      const interviewLink = `${portalUrl}?resumeJobId=${rj.id}`;
 
-      const content = `【面试通知】${name}您好，您的${typeStr}已安排在 ${timeStr}。请点击链接进行在线面试：${interviewLink} 。${location ? `地点/链接：${location}` : ''}。请准时参加。`;
+      // 准备短信模板变量 (对应阿里云最终模板: ${name}, ${time}, ${jobId})
+      const smsParams = {
+        name: name,
+        time: timeStr,
+        jobId: rj.id,
+        link: interviewLink // 增加 link 参数，以防模板支持
+      };
 
       // 1. 发送短信
       if (phone) {
-        await sms.sendText(String(phone), content);
+        // 如果后台配置了模板，则发送 JSON 格式的变量；如果没有模板，sendText 会降级发送 content
+        const fallbackContent = `【争湃简历大师】${name}您好，您的AI线上面试安排在 ${timeStr}。面试链接：${interviewLink} 。请点击后进行线上答题面试。`;
+        await sms.sendText(String(phone), JSON.stringify(smsParams), sms.SCENARIOS.INTERVIEW);
       }
 
       // 2. 发送邮件
@@ -170,7 +177,8 @@ exports.sendOffer = async (req, res) => {
     // 先尝试短信
     let smsRes = null
     if (phone) {
-      smsRes = await sms.sendText(String(phone), rn.offer.message)
+      // 使用面试邀请场景的配置（或者如果有必要可以增加 OFFER 场景）
+      smsRes = await sms.sendText(String(phone), rn.offer.message, sms.SCENARIOS.INTERVIEW)
     }
     rn.offer.sms = smsRes || { success:false }
     // 邮件发送占位：可后续接入 nodemailer

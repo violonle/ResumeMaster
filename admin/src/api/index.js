@@ -107,6 +107,11 @@ export const systemAPI = {
   testSms: (data) => apiClient.post('/admin/system/sms/test', data),
   checkSms: () => apiClient.get('/admin/system/sms/check'),
 
+  // 邮件设置
+  getEmailSettings: () => apiClient.get('/admin/system/email'),
+  updateEmailSettings: (data) => apiClient.put('/admin/system/email', data),
+  testEmail: (data) => apiClient.post('/admin/system/email/test', data),
+
   // 通知设置
   getNotificationSettings: () => apiClient.get('/admin/system/notifications'),
   updateNotificationSettings: (data) => apiClient.put('/admin/system/notifications', data),

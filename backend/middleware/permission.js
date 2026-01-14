@@ -5,6 +5,7 @@ const moment = require('moment');
 class PermissionMiddleware {
   // 检查用户是否已认证
   static requireAuth(req, res, next) {
+    console.log(`[Permission] requireAuth: User=${req.user?.id}`);
     if (!req.user) {
       return res.status(401).json({
         success: false,
@@ -19,6 +20,7 @@ class PermissionMiddleware {
 
   // 检查用户是否有有效订阅
   static async requireSubscription(req, res, next) {
+    console.log(`[Permission] requireSubscription: User=${req.user?.id}`);
     try {
       const userId = req.user.id;
       
@@ -413,6 +415,7 @@ class PermissionMiddleware {
 
     return (req, res, next) => {
       const userId = req.user?.id || req.ip;
+      console.log(`[Permission] rateLimit check: User=${userId}, Path=${req.path}`);
       const now = Date.now();
       const windowStart = now - windowMs;
 

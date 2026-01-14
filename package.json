@@ -4,6 +4,9 @@
   "description": "争湃·简历大师是一个AI驱动的简历解析与优化专家系统，旨在帮助用户深度分析简历，提供专业评估与建议，助力用户在竞争激烈的职场中脱颖而出。",
   "main": "check-resume-import.js",
   "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

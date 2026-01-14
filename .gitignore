@@ -29,8 +29,10 @@ mysql_data/
 
 # Temporary & Large Files
 *.tar
+*.tar.gz
 *.zip
 resume_image.tar
+image_tmp.tar.gz
 
 # IDEs
 .vercel/

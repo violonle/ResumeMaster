@@ -4,6 +4,8 @@ const { authenticate } = require('../middleware/auth');
 const Permission = require('../middleware/permission');
 const { Resume } = require('../models');
 const { Op } = require('sequelize');
+const sms = require('../services/smsService');
+const emailService = require('../services/emailService');
 
 const router = express.Router();
 
@@ -203,9 +205,10 @@ router.post('/search', authenticate, Permission.rateLimit(500, 60*60*1000), asyn
 
 // 安排面试
 router.post('/:id/interview', authenticate, Permission.requireSubscription, Permission.rateLimit(300, 60*60*1000), async (req, res) => {
+    console.log(`[面试通知] 收到请求: ID=${req.params.id}, Body=`, JSON.stringify(req.body));
     try {
         const { id } = req.params;
-        const { datetime, channel, location, note } = req.body || {};
+        const { datetime, channel, location, note, aiQuestionCount } = req.body || {};
         
         if (!datetime) {
             return res.status(400).json({
@@ -236,13 +239,92 @@ router.post('/:id/interview', authenticate, Permission.requireSubscription, Perm
             datetime,
             channel: channel || 'offline',
             location: location || '',
-            note: note || ''
+            note: note || '',
+            aiQuestionCount: aiQuestionCount || 8
         };
 
         await resume.update({
             recruitment_status: '面试',
             parsed_data: parsedData
         });
+
+        // 发送面试通知（短信 + 邮件）
+        try {
+            // 更鲁棒的电话号码提取
+            let phone = resume.phone || parsedData.phone || (parsedData.basic_info && parsedData.basic_info.phone);
+            
+            // 如果上述方式都没找到合法的 11 位手机号，尝试从原始文本中匹配
+            if (!phone || !/1\d{10}/.test(String(phone))) {
+                const rawText = resume.raw_text || '';
+                const phoneMatch = rawText.match(/1\d{10}/);
+                if (phoneMatch) {
+                    phone = phoneMatch[0];
+                    console.log(`[面试通知] 从原始文本中提取到手机号: ${phone}`);
+                }
+            }
+
+            const email = resume.email || parsedData.email || (parsedData.basic_info && parsedData.basic_info.email);
+            const name = resume.name || parsedData.name || (parsedData.basic_info && parsedData.basic_info.name) || '候选人';
+
+            console.log(`[面试通知] 准备发送通知: 姓名=${name}, 电话=${phone}, 邮箱=${email}, 简历ID=${resume.id}`);
+
+            const dt = new Date(datetime);
+            const timeStr = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')} ${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`;
+            
+            const smsCfg = await sms.getConfig();
+            const portalUrl = (smsCfg.portalUrl || 'https://master.cloujade.com').replace(/\/$/, '');
+            const interviewLink = `${portalUrl}?resumeId=${resume.id}`;
+
+            // 准备短信模板变量
+            const smsParams = {
+                name: name,
+                time: timeStr,
+                jobId: String(resume.id), // 显式转为字符串
+                link: interviewLink // 增加 link 参数，以防模板支持
+            };
+
+            // 1. 发送短信
+            if (phone) {
+                console.log(`[面试通知] 正在发送短信给 ${phone}, 参数:`, JSON.stringify(smsParams));
+                const smsResult = await sms.sendText(String(phone), smsParams, sms.SCENARIOS.INTERVIEW);
+                console.log(`[面试通知] 短信发送结果:`, JSON.stringify(smsResult));
+            } else {
+                console.log(`[面试通知] 未找到电话号码，跳过短信发送`);
+            }
+
+            // 2. 发送邮件
+            if (email) {
+                console.log(`[面试通知] 正在发送邮件给 ${email}`);
+                const typeStr = channel === 'video' ? '视频面试' : (channel === 'phone' ? '线上面试' : '现场面试');
+                const subject = `【面试邀请】${typeStr}安排 - 争湃·简历大师`;
+                const html = `
+                    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                        <h2 style="color: #2563eb;">面试邀请通知</h2>
+                        <p>${name} 您好：</p>
+                        <p>我们已为您安排了 <strong>${typeStr}</strong>，具体安排如下：</p>
+                        <div style="background-color: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                            <p style="margin: 5px 0;"><strong>面试时间：</strong> ${timeStr}</p>
+                            ${location ? `<p style="margin: 5px 0;"><strong>面试地点/链接：</strong> ${location}</p>` : ''}
+                            <p style="margin: 5px 0;"><strong>面试题量：</strong> ${aiQuestionCount || 8} 题</p>
+                        </div>
+                        <p>请点击下方按钮进入在线面试界面进行答题：</p>
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="${interviewLink}" style="background-color: #2563eb; color: white; padding: 12px 25px; text-decoration: none; border-radius: 6px; font-weight: bold;">立即开始面试</a>
+                        </div>
+                        <p style="color: #64748b; font-size: 0.9em;">(如无法点击按钮，请复制此链接到浏览器：${interviewLink})</p>
+                        <p style="margin-top: 30px;">祝您面试顺利！</p>
+                        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+                        <p style="color: #94a3b8; font-size: 0.8em; text-align: center;">此邮件由 争湃·简历大师 系统自动发送，请勿直接回复。</p>
+                    </div>
+                `;
+                await emailService.sendMail(email, subject, html);
+                console.log(`[面试通知] 邮件发送成功`);
+            } else {
+                console.log(`[面试通知] 未找到邮箱地址，跳过邮件发送`);
+            }
+        } catch (notifyError) {
+            console.error('[面试通知] 发送面试通知过程中出现错误:', notifyError);
+        }
 
         res.json({
             success: true,

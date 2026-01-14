@@ -7,6 +7,13 @@ function enc(v){return encodeURIComponent(v).replace(/\+/g,'%20').replace(/\*/g,
 function nonce(){return crypto.randomBytes(16).toString('hex')}
 function iso(){return new Date().toISOString().replace(/\.(\d{3})Z$/,'Z')}
 
+// 短信发送场景
+const SCENARIOS = {
+  AUTH: 'auth',           // 登录/注册验证码
+  INTERVIEW: 'interview', // 面试邀请
+  REMINDER: 'reminder'    // 面试提醒
+}
+
 async function getConfig(){
   const cfg = {
     provider: process.env.SMS_PROVIDER || 'aliyun',
@@ -14,7 +21,13 @@ async function getConfig(){
     accessKeySecret: process.env.ALIYUN_SMS_SECRET_KEY || process.env.ALIYUN_ACCESS_KEY_SECRET || '',
     signName: process.env.ALIYUN_SMS_SIGN_NAME || '',
     templateCode: process.env.ALIYUN_SMS_TEMPLATE_CODE || '',
-    enabled: String(process.env.SMS_ENABLED || '').toLowerCase() === 'true'
+    enabled: String(process.env.SMS_ENABLED || '').toLowerCase() === 'true',
+    scenarios: {
+      auth: { signName: '', templateCode: '' },
+      interview: { signName: '', templateCode: '' },
+      reminder: { signName: '', templateCode: '' }
+    },
+    portalUrl: process.env.PORTAL_URL || 'https://master.cloujade.com'
   }
   try{
     const SystemConfig = sequelize.models.SystemConfig
@@ -29,16 +42,26 @@ async function getConfig(){
           if(v.accessKeySecret) cfg.accessKeySecret = v.accessKeySecret;
           if(v.signName) cfg.signName = v.signName;
           if(v.templateCode) cfg.templateCode = v.templateCode;
+          if(v.scenarios) cfg.scenarios = { ...cfg.scenarios, ...v.scenarios };
         }catch(_){/* ignore */}
       }
       
       // 2. Check individual keys (priority)
-      const rows = await SystemConfig.findAll({ where: { key: { [Op.in]: ['sms.provider','sms.accessKeyId','sms.accessKeySecret','sms.signName','sms.templateCode','sms.enabled', 'settings'] } } })
+      const keys = [
+        'sms.provider','sms.accessKeyId','sms.accessKeySecret','sms.signName','sms.templateCode','sms.enabled', 'settings',
+        'sms.auth.signName', 'sms.auth.templateCode',
+        'sms.interview.signName', 'sms.interview.templateCode',
+        'sms.reminder.signName', 'sms.reminder.templateCode'
+      ]
+      const rows = await SystemConfig.findAll({ where: { key: { [Op.in]: keys } } })
       
-      let siteName = '';
       for(const r of rows){
         if (r.key === 'settings' && r.value) {
-           try { const v = JSON.parse(r.value); if(v.siteName) siteName = v.siteName; } catch(_) {}
+           try { 
+             const v = JSON.parse(r.value); 
+             if(v.siteName) cfg.siteName = v.siteName; 
+             if(v.portalUrl) cfg.portalUrl = v.portalUrl;
+           } catch(_) {}
         }
         const val = typeof r.value === 'string' ? r.value.trim() : ''
         if (r.key==='sms.provider' && val) cfg.provider = val
@@ -47,6 +70,14 @@ async function getConfig(){
         if (r.key==='sms.signName' && val) cfg.signName = val
         if (r.key==='sms.templateCode' && val) cfg.templateCode = val
         if (r.key==='sms.enabled') cfg.enabled = val === 'true'
+        
+        // Scenario specific
+        if (r.key==='sms.auth.signName' && val) cfg.scenarios.auth.signName = val
+        if (r.key==='sms.auth.templateCode' && val) cfg.scenarios.auth.templateCode = val
+        if (r.key==='sms.interview.signName' && val) cfg.scenarios.interview.signName = val
+        if (r.key==='sms.interview.templateCode' && val) cfg.scenarios.interview.templateCode = val
+        if (r.key==='sms.reminder.signName' && val) cfg.scenarios.reminder.signName = val
+        if (r.key==='sms.reminder.templateCode' && val) cfg.scenarios.reminder.templateCode = val
       }
 
       // Smart correction for common user mistakes
@@ -58,9 +89,9 @@ async function getConfig(){
       }
       
       // Mistake 2: Missing SignName, try to use Site Name
-      if (!cfg.signName && siteName) {
-        console.log('[SMS] SignName missing, using SiteName:', siteName);
-        cfg.signName = siteName;
+      if (!cfg.signName && cfg.siteName) {
+        console.log('[SMS] SignName missing, using SiteName:', cfg.siteName);
+        cfg.signName = cfg.siteName;
       }
     }
   }catch(e){
@@ -74,18 +105,30 @@ async function getConfig(){
     hasSecret: !!cfg.accessKeySecret, 
     signName: cfg.signName, 
     templateCode: cfg.templateCode,
-    enabled: cfg.enabled
+    enabled: cfg.enabled,
+    scenarios: cfg.scenarios
   })
   
   return cfg
 }
 
-async function sendAliyunSms(phone, signName, templateCode, templateParam){
+async function sendAliyunSms(phone, signName, templateCode, templateParam, scenario = null){
   const cfg = await getConfig()
   const id = cfg.accessKeyId
   const secret = cfg.accessKeySecret
-  const sign = signName || cfg.signName
-  let tpl = templateCode || cfg.templateCode
+  
+  // Determine sign and template based on scenario
+  let sign = signName
+  let tpl = templateCode
+  
+  if (scenario && cfg.scenarios[scenario]) {
+    if (!sign) sign = cfg.scenarios[scenario].signName
+    if (!tpl) tpl = cfg.scenarios[scenario].templateCode
+  }
+  
+  // Fallback to global defaults
+  if (!sign) sign = cfg.signName
+  if (!tpl) tpl = cfg.templateCode
   
   if (!id || !secret) {
     console.warn('[SMS] Config missing (AccessKeyId/Secret). Using MOCK mode.');
@@ -93,6 +136,10 @@ async function sendAliyunSms(phone, signName, templateCode, templateParam){
     console.log(`[SMS MOCK] Template: ${tpl || 'DEFAULT'}`);
     console.log(`[SMS MOCK] Params: ${JSON.stringify(templateParam)}`);
     return { success: true, mock: true };
+  }
+  if (!cfg.enabled) {
+    console.warn('[SMS] Service is DISABLED in settings.');
+    return { success: false, error: 'DISABLED', message: '短信服务未开启' };
   }
   if (!sign) return { success:false, error:'CONFIG_MISSING_SIGN' }
   
@@ -202,10 +249,10 @@ async function sendVerificationCode(phone, code, ip = null){
   }
 
   // Try to cover common template variable names
-  return sendAliyunSms(phone, null, null, { code, number: code, verifyCode: code, content: code })
+  return sendAliyunSms(phone, null, null, { code, number: code, verifyCode: code, content: code }, SCENARIOS.AUTH)
 }
 
-async function sendText(phone, content){
+async function sendText(phone, content, scenario = null){
   let params = {};
   if (typeof content === 'object' && content !== null) {
     params = content;
@@ -215,15 +262,15 @@ async function sendText(phone, content){
       if (content.trim().startsWith('{')) {
         params = JSON.parse(content);
       } else {
-        params = { code: content };
+        params = { code: content, content: content }; // Add content mapping for non-code templates
       }
     } catch (e) {
-      params = { code: content };
+      params = { code: content, content: content };
     }
   } else {
-    params = { code: String(content) };
+    params = { code: String(content), content: String(content) };
   }
-  return sendAliyunSms(phone, null, null, params)
+  return sendAliyunSms(phone, null, null, params, scenario)
 }
 
 async function createAliyunTemplate(name, content, type = 0, remark = '系统自动创建'){
@@ -253,4 +300,4 @@ async function createAliyunTemplate(name, content, type = 0, remark = '系统自
   }
 }
 
-module.exports = { getConfig, sendVerificationCode, sendText, createAliyunTemplate }
+module.exports = { SCENARIOS, getConfig, sendVerificationCode, sendText, createAliyunTemplate }

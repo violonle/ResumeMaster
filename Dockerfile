@@ -27,6 +27,10 @@ COPY pages/Interview/package*.json ./
 RUN npm install
 # 按照用户要求，将 api 放在 /api，依赖在 /app/node_modules
 COPY api/ /api/
+# 修复构建依赖：复制 js 和 css 目录到容器根路径，满足 vite alias 解析
+COPY js/ /js/
+COPY css/ /css/
+
 COPY pages/Interview/ .
 # 创建软链接，确保 /api/request.ts 能找到 /app/node_modules
 RUN ln -s /app/node_modules /node_modules

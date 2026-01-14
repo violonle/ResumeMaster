@@ -479,7 +479,7 @@ const startServer = async () => {
               const user = await User.findOne({ where: { id: rj.user_id } })
               const msg = `提醒：候选人(${resume && resume.file_name})的面试时间已到。`
               console.log('[Interview Notify]', msg)
-              if (user && user.phone) { await smsService.sendText(String(user.phone), msg) }
+              if (user && user.phone) { await smsService.sendText(String(user.phone), msg, smsService.SCENARIOS.REMINDER) }
               rn.interview = rn.interview || {}
               rn.interview.notified = true
               await rj.update({ recruiter_notes: JSON.stringify(rn) })

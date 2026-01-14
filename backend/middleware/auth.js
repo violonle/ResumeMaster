@@ -18,6 +18,7 @@ const verifyToken = (token) => {
 
 // 认证中间件
 const authenticate = async (req, res, next) => {
+  console.log(`[Auth] authenticate check: Path=${req.path}`);
   try {
     const token = req.headers.authorization?.split(' ')[1];
     
