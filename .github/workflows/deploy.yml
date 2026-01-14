@@ -1,5 +1,6 @@
 name: Deploy SuperResumeMaster
 
+# 强制触发重新构建: 2026-01-14
 on:
   push:
     branches:
