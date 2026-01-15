@@ -1,6 +1,5 @@
 name: Deploy SuperResumeMaster
-
-# 强制触发重新构建: 2026-01-14
+# 强制触发重新构建: 2026-01-15 08:20
 on:
   push:
     branches:
@@ -31,7 +30,7 @@ jobs:
           context: .
           platforms: linux/arm64
           push: true
-          tags: letuyang/super-resume-master:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/super-resume-master:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -46,12 +45,19 @@ jobs:
           script: |
             mkdir -p /www/wwwroot/ResumeMaster
             cd /www/wwwroot/ResumeMaster
-            # 尝试使用 docker compose (V2) 或 docker-compose (V1)
-            if command -v docker-compose >/dev/null 2>&1; then
-              docker-compose pull
-              docker-compose up -d
-            else
-              docker compose pull
-              docker compose up -d
-            fi
+            
+            echo "Starting deployment..."
+            # 停止并移除旧容器，强制删除旧镜像以确保拉取最新
+            docker compose stop app || true
+            docker compose rm -f app || true
+            docker rmi ${{ secrets.DOCKERHUB_USERNAME }}/super-resume-master:latest || true
+            
+            echo "Pulling latest image..."
+            docker compose pull app
+            
+            echo "Starting new container..."
+            docker compose up -d app
+            
+            echo "Cleaning up..."
             docker image prune -f
+            echo "Deployment finished successfully!"
