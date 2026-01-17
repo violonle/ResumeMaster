@@ -15,9 +15,6 @@ services:
       - srm-network
 
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
     image: letuyang/super-resume-master:latest
     container_name: super-resume-master
     restart: always
