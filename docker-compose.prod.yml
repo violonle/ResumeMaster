@@ -21,6 +21,10 @@ services:
     # 移除 build 字段，直接从镜像运行
     ports:
       - "3000:3000"
+    environment:
+      - PORT=3000
+      - DB_HOST=db
+      - NODE_ENV=production
     env_file:
       - .env
     volumes:

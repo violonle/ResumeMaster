@@ -346,7 +346,7 @@ app.use('/api/test', testRoutes);
 app.get('/', (req, res) => {
   res.json({
     message: 'SuperResumeMaster API',
-    version: '1.0.0',
+    version: require('./package.json').version,
     timestamp: new Date().toISOString()
   });
 });
