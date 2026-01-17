@@ -15,7 +15,7 @@ services:
       - srm-network
 
   app:
-    image: letuyang/super-resume-master:latest
+    image: letuyang/super-resume-master:${IMAGE_TAG:-latest}
     container_name: super-resume-master
     restart: always
     # 移除 build 字段，直接从镜像运行
