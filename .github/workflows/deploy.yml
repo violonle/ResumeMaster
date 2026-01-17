@@ -31,8 +31,9 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/super-resume-master:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # 禁用缓存以强制重新构建
+          # cache-from: type=gha
+          # cache-to: type=gha,mode=max
 
       - name: Copy Compose File to Server
         uses: appleboy/scp-action@v0.1.7
@@ -81,6 +82,10 @@ jobs:
             echo "Pulling latest image..."
             $DC_CMD pull app
             
+            # 打印当前使用的镜像 ID
+            echo "Current Image ID:"
+            docker images ${{ secrets.DOCKERHUB_USERNAME }}/super-resume-master:latest --format "{{.ID}}"
+
             echo "Starting new container..."
             $DC_CMD up -d app
             

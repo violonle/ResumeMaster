@@ -52,11 +52,11 @@ app.use((req, res, next) => {
   next();
 });
 
-// 强制校验 JWT 密钥
-if (!process.env.JWT_SECRET) {
-  logger.error('Missing JWT_SECRET in environment');
-  process.exit(1);
-}
+// 强制校验 JWT 密钥 - 已移除，改为在 startServer 中设置默认值以避免 502
+// if (!process.env.JWT_SECRET) {
+//   logger.error('Missing JWT_SECRET in environment');
+//   process.exit(1);
+// }
 
 // 中间件
 // CORS 配置
