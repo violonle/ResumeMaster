@@ -19,11 +19,11 @@ export const useSystemStore = defineStore('system', () => {
     accessKeyId: '',
     accessKeySecret: '',
     signName: '',
-    templateCode: '',
     enabled: false,
     scenarios: {
-      auth: { signName: '', templateCode: '' },
-      interview: { signName: '', templateCode: '' }
+      auth: { templateCode: '' },
+      interview: { templateCode: '' },
+      reminder: { templateCode: '' }
     },
   })
   

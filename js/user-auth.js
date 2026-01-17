@@ -613,6 +613,10 @@ if (typeof module !== 'undefined' && module.exports) {
 
 // 页面权限检查工具函数
 function requireAuth(redirectUrl = '/pages/login.html') {
+    // 如果是面试页面，跳过自动重定向
+    if (window.location.pathname.includes('interview.html') || window.location.pathname.includes('Interview')) {
+        return true;
+    }
     if (!userAuthInstance.isLoggedIn()) {
         window.location.href = redirectUrl;
         return false;
@@ -655,6 +659,13 @@ window.addEventListener('userRestore', function (e) {
 // 监听未授权事件
 window.addEventListener('apiUnauthorized', function (e) {
     if (window.__authRedirecting) return;
+    
+    // 如果是面试页面，不要自动重定向到登录页
+    if (window.location.pathname.includes('interview.html') || window.location.pathname.includes('Interview')) {
+        console.warn('Interview page received 401, but skipping redirect to login.');
+        return;
+    }
+
     window.__authRedirecting = true;
     userAuthInstance.logout();
     if (!window.location.pathname.includes('login.html')) {

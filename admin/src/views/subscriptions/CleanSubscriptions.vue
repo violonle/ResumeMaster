@@ -4,10 +4,20 @@
     subtitle="管理企业订阅计划与到期信息"
   >
     <!-- 搜索与筛选（统一样式） -->
-    <VCard class="mb-6" elevation="0" border>
+    <VCard
+      class="mb-6"
+      elevation="0"
+      border
+    >
       <VCardText class="pa-4">
-        <VRow dense align="center">
-          <VCol cols="12" md="4">
+        <VRow
+          dense
+          align="center"
+        >
+          <VCol
+            cols="12"
+            md="4"
+          >
             <VTextField
               v-model="search"
               label="搜索订阅"
@@ -20,7 +30,13 @@
           </VCol>
           <VSpacer />
           <VCol cols="auto">
-            <VBtn color="primary" variant="tonal" prepend-icon="mdi-refresh" @click="handleRefresh" :loading="loading">
+            <VBtn
+              color="primary"
+              variant="tonal"
+              prepend-icon="mdi-refresh"
+              :loading="loading"
+              @click="handleRefresh"
+            >
               刷新
             </VBtn>
           </VCol>
@@ -38,7 +54,10 @@
     </template>
 
     <!-- 数据表格 -->
-    <VCard elevation="0" border>
+    <VCard
+      elevation="0"
+      border
+    >
       <VCardText class="pa-0">
         <VDataTable
           :headers="headers"
@@ -49,7 +68,6 @@
           class="clean-table"
           hover
         >
-
           <template #item.status="{ item }">
             <VChip
               :color="getStatusColor(item.status)"
@@ -125,9 +143,15 @@
         </VCardTitle>
         
         <VCardText>
-          <VForm ref="form" v-model="valid">
+          <VForm
+            ref="form"
+            v-model="valid"
+          >
             <VRow>
-              <VCol cols="12" sm="6">
+              <VCol
+                cols="12"
+                sm="6"
+              >
                 <VSelect
                   v-model="editedItem.companyId"
                   :items="companyItems"
@@ -138,7 +162,10 @@
                   required
                 />
               </VCol>
-              <VCol cols="12" sm="6">
+              <VCol
+                cols="12"
+                sm="6"
+              >
                 <VSelect
                   v-model="editedItem.plan_name"
                   :items="planItems"
@@ -147,7 +174,10 @@
                   required
                 />
               </VCol>
-              <VCol cols="12" sm="6">
+              <VCol
+                cols="12"
+                sm="6"
+              >
                 <VTextField
                   v-model.number="editedItem.price"
                   label="价格"
@@ -157,7 +187,10 @@
                   required
                 />
               </VCol>
-              <VCol cols="12" sm="6">
+              <VCol
+                cols="12"
+                sm="6"
+              >
                 <VSelect
                   v-model="editedItem.status"
                   :items="statusItems"
@@ -166,7 +199,10 @@
                   item-value="value"
                 />
               </VCol>
-              <VCol cols="12" sm="6">
+              <VCol
+                cols="12"
+                sm="6"
+              >
                 <VTextField
                   v-model="editedItem.start_date"
                   label="开始日期"
@@ -175,7 +211,10 @@
                   required
                 />
               </VCol>
-              <VCol cols="12" sm="6">
+              <VCol
+                cols="12"
+                sm="6"
+              >
                 <VTextField
                   v-model="editedItem.end_date"
                   label="结束日期"

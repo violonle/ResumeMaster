@@ -15,7 +15,11 @@
 
     <!-- 统计卡片 -->
     <VRow class="mb-6">
-      <VCol cols="12" md="3" sm="6">
+      <VCol
+        cols="12"
+        md="3"
+        sm="6"
+      >
         <VCard>
           <VCardText class="d-flex align-center pa-4">
             <VAvatar
@@ -25,17 +29,28 @@
               class="me-4"
               size="48"
             >
-              <VIcon icon="mdi-credit-card" size="24" />
+              <VIcon
+                icon="mdi-credit-card"
+                size="24"
+              />
             </VAvatar>
             <div>
-              <div class="text-h4 font-weight-bold">{{ subscriptionStore.totalItems }}</div>
-              <div class="text-caption text-medium-emphasis">总订阅数</div>
+              <div class="text-h4 font-weight-bold">
+                {{ subscriptionStore.totalItems }}
+              </div>
+              <div class="text-caption text-medium-emphasis">
+                总订阅数
+              </div>
             </div>
           </VCardText>
         </VCard>
       </VCol>
 
-      <VCol cols="12" md="3" sm="6">
+      <VCol
+        cols="12"
+        md="3"
+        sm="6"
+      >
         <VCard>
           <VCardText class="d-flex align-center pa-4">
             <VAvatar
@@ -45,17 +60,28 @@
               class="me-4"
               size="48"
             >
-              <VIcon icon="mdi-check-circle" size="24" />
+              <VIcon
+                icon="mdi-check-circle"
+                size="24"
+              />
             </VAvatar>
             <div>
-              <div class="text-h4 font-weight-bold">{{ activeSubscriptions }}</div>
-              <div class="text-caption text-medium-emphasis">活跃订阅</div>
+              <div class="text-h4 font-weight-bold">
+                {{ activeSubscriptions }}
+              </div>
+              <div class="text-caption text-medium-emphasis">
+                活跃订阅
+              </div>
             </div>
           </VCardText>
         </VCard>
       </VCol>
 
-      <VCol cols="12" md="3" sm="6">
+      <VCol
+        cols="12"
+        md="3"
+        sm="6"
+      >
         <VCard>
           <VCardText class="d-flex align-center pa-4">
             <VAvatar
@@ -65,17 +91,28 @@
               class="me-4"
               size="48"
             >
-              <VIcon icon="mdi-clock-alert" size="24" />
+              <VIcon
+                icon="mdi-clock-alert"
+                size="24"
+              />
             </VAvatar>
             <div>
-              <div class="text-h4 font-weight-bold">{{ expiringSubscriptions }}</div>
-              <div class="text-caption text-medium-emphasis">即将到期</div>
+              <div class="text-h4 font-weight-bold">
+                {{ expiringSubscriptions }}
+              </div>
+              <div class="text-caption text-medium-emphasis">
+                即将到期
+              </div>
             </div>
           </VCardText>
         </VCard>
       </VCol>
 
-      <VCol cols="12" md="3" sm="6">
+      <VCol
+        cols="12"
+        md="3"
+        sm="6"
+      >
         <VCard>
           <VCardText class="d-flex align-center pa-4">
             <VAvatar
@@ -85,11 +122,18 @@
               class="me-4"
               size="48"
             >
-              <VIcon icon="mdi-cancel" size="24" />
+              <VIcon
+                icon="mdi-cancel"
+                size="24"
+              />
             </VAvatar>
             <div>
-              <div class="text-h4 font-weight-bold">{{ expiredSubscriptions }}</div>
-              <div class="text-caption text-medium-emphasis">已过期</div>
+              <div class="text-h4 font-weight-bold">
+                {{ expiredSubscriptions }}
+              </div>
+              <div class="text-caption text-medium-emphasis">
+                已过期
+              </div>
             </div>
           </VCardText>
         </VCard>
@@ -97,10 +141,20 @@
     </VRow>
 
     <!-- 搜索和筛选 -->
-    <VCard class="mb-6" elevation="0" border>
+    <VCard
+      class="mb-6"
+      elevation="0"
+      border
+    >
       <VCardText class="pa-4">
-        <VRow dense align="center">
-          <VCol cols="12" md="3">
+        <VRow
+          dense
+          align="center"
+        >
+          <VCol
+            cols="12"
+            md="3"
+          >
             <VTextField
               v-model="searchQuery"
               placeholder="输入公司ID筛选"
@@ -112,7 +166,10 @@
               @input="handleSearch"
             />
           </VCol>
-          <VCol cols="12" md="3">
+          <VCol
+            cols="12"
+            md="3"
+          >
             <VSelect 
               v-model="planFilter" 
               :items="planOptions" 
@@ -124,7 +181,10 @@
               @update:model-value="handleFilter" 
             />
           </VCol>
-          <VCol cols="12" md="3">
+          <VCol
+            cols="12"
+            md="3"
+          >
             <VSelect 
               v-model="statusFilter" 
               :items="statusOptions" 
@@ -137,13 +197,16 @@
             />
           </VCol>
           <VSpacer />
-          <VCol cols="12" md="auto">
+          <VCol
+            cols="12"
+            md="auto"
+          >
             <VBtn
               color="primary"
               variant="tonal"
               prepend-icon="mdi-refresh"
-              @click="handleRefresh"
               :loading="subscriptionStore.loading"
+              @click="handleRefresh"
             >
               刷新
             </VBtn>
@@ -153,19 +216,22 @@
     </VCard>
 
     <!-- 订阅列表 -->
-    <VCard elevation="0" border>
+    <VCard
+      elevation="0"
+      border
+    >
       <VCardText class="pa-0">
         <VDataTable
+          v-model:page="currentPage"
           :headers="headers"
           :items="subscriptionStore.subscriptions"
           :loading="subscriptionStore.loading"
           :items-per-page="subscriptionStore.filters.itemsPerPage"
           :items-length="subscriptionStore.totalItems"
-          v-model:page="currentPage"
-          @update:page="handlePageChange"
-          @update:items-per-page="handleItemsPerPageChange"
           hover
           class="clean-table"
+          @update:page="handlePageChange"
+          @update:items-per-page="handleItemsPerPageChange"
         >
           <!-- 订阅类型列 -->
           <template #item.plan="{ item }">
@@ -175,7 +241,11 @@
               variant="tonal"
               label
             >
-              <VIcon :icon="getPlanIcon((item.raw || item).plan)" start size="small" />
+              <VIcon
+                :icon="getPlanIcon((item.raw || item).plan)"
+                start
+                size="small"
+              />
               {{ getPlanText((item.raw || item).plan) }}
             </VChip>
           </template>
@@ -219,8 +289,16 @@
                 class="me-1"
                 @click="viewSubscription(item.raw || item)"
               >
-                <VIcon icon="mdi-eye-outline" size="20" />
-                <VTooltip activator="parent" location="top">查看详情</VTooltip>
+                <VIcon
+                  icon="mdi-eye-outline"
+                  size="20"
+                />
+                <VTooltip
+                  activator="parent"
+                  location="top"
+                >
+                  查看详情
+                </VTooltip>
               </VBtn>
               
               <VBtn
@@ -232,8 +310,16 @@
                 class="me-1"
                 @click="renewSubscription(item.raw || item)"
               >
-                <VIcon icon="mdi-refresh" size="20" />
-                <VTooltip activator="parent" location="top">续费</VTooltip>
+                <VIcon
+                  icon="mdi-refresh"
+                  size="20"
+                />
+                <VTooltip
+                  activator="parent"
+                  location="top"
+                >
+                  续费
+                </VTooltip>
               </VBtn>
               
               <VBtn
@@ -245,8 +331,16 @@
                 class="me-1"
                 @click="cancelSubscription(item.raw || item)"
               >
-                <VIcon icon="mdi-cancel" size="20" />
-                <VTooltip activator="parent" location="top">取消订阅</VTooltip>
+                <VIcon
+                  icon="mdi-cancel"
+                  size="20"
+                />
+                <VTooltip
+                  activator="parent"
+                  location="top"
+                >
+                  取消订阅
+                </VTooltip>
               </VBtn>
               
               <VBtn
@@ -257,8 +351,16 @@
                 class="me-1"
                 @click="editSubscription(item.raw || item)"
               >
-                <VIcon icon="mdi-pencil-outline" size="20" />
-                <VTooltip activator="parent" location="top">编辑</VTooltip>
+                <VIcon
+                  icon="mdi-pencil-outline"
+                  size="20"
+                />
+                <VTooltip
+                  activator="parent"
+                  location="top"
+                >
+                  编辑
+                </VTooltip>
               </VBtn>
               
               <VBtn
@@ -268,8 +370,16 @@
                 variant="text"
                 @click="confirmDelete(item.raw || item)"
               >
-                <VIcon icon="mdi-delete-outline" size="20" />
-                <VTooltip activator="parent" location="top">删除</VTooltip>
+                <VIcon
+                  icon="mdi-delete-outline"
+                  size="20"
+                />
+                <VTooltip
+                  activator="parent"
+                  location="top"
+                >
+                  删除
+                </VTooltip>
               </VBtn>
             </div>
           </template>
@@ -277,10 +387,19 @@
           <!-- 空状态 -->
           <template #no-data>
             <div class="text-center pa-8">
-              <VAvatar color="surface-variant" size="64" class="mb-4">
-                <VIcon icon="mdi-credit-card-off" size="32" />
+              <VAvatar
+                color="surface-variant"
+                size="64"
+                class="mb-4"
+              >
+                <VIcon
+                  icon="mdi-credit-card-off"
+                  size="32"
+                />
               </VAvatar>
-              <div class="text-h6 text-medium-emphasis">暂无订阅数据</div>
+              <div class="text-h6 text-medium-emphasis">
+                暂无订阅数据
+              </div>
               <div class="text-body-2 text-medium-emphasis mt-1">
                 请点击右上角“变更订阅”以创建新的订阅记录
               </div>
@@ -291,18 +410,31 @@
     </VCard>
 
     <!-- 创建/编辑对话框 -->
-    <VDialog v-model="showCreateDialog" max-width="600px">
+    <VDialog
+      v-model="showCreateDialog"
+      max-width="600px"
+    >
       <VCard>
         <VCardTitle class="d-flex align-center pa-4">
           <span class="text-h6">{{ editingSubscription ? '编辑订阅' : '变更订阅' }}</span>
           <VSpacer />
-          <VBtn icon="mdi-close" variant="text" @click="closeDialog" />
+          <VBtn
+            icon="mdi-close"
+            variant="text"
+            @click="closeDialog"
+          />
         </VCardTitle>
         <VDivider />
         <VCardText class="pa-4">
-          <VForm ref="subscriptionForm" @submit.prevent="handleSubmit">
+          <VForm
+            ref="subscriptionForm"
+            @submit.prevent="handleSubmit"
+          >
             <VRow>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <VTextField 
                   v-model="subscriptionFormData.companyId" 
                   label="公司ID" 
@@ -311,7 +443,10 @@
                   required 
                 />
               </VCol>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <VSelect 
                   v-model="subscriptionFormData.plan" 
                   :items="planOptions" 
@@ -321,7 +456,10 @@
                   required 
                 />
               </VCol>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <VSelect 
                   v-model="subscriptionFormData.billing_cycle" 
                   :items="cycleOptions" 
@@ -343,53 +481,116 @@
         <VDivider />
         <VCardActions class="pa-4">
           <VSpacer />
-          <VBtn color="grey-darken-1" variant="text" @click="closeDialog">取消</VBtn>
-          <VBtn color="primary" @click="handleSubmit" :loading="saving">保存</VBtn>
+          <VBtn
+            color="grey-darken-1"
+            variant="text"
+            @click="closeDialog"
+          >
+            取消
+          </VBtn>
+          <VBtn
+            color="primary"
+            :loading="saving"
+            @click="handleSubmit"
+          >
+            保存
+          </VBtn>
         </VCardActions>
       </VCard>
     </VDialog>
 
     <!-- 续订对话框 -->
-    <VDialog v-model="showRenewDialog" max-width="400px">
+    <VDialog
+      v-model="showRenewDialog"
+      max-width="400px"
+    >
       <VCard>
-        <VCardTitle class="pa-4">续订订阅</VCardTitle>
+        <VCardTitle class="pa-4">
+          续订订阅
+        </VCardTitle>
         <VCardText class="pa-4">
           确定要为公司ID "{{ renewingSubscription?.company_id }}" 续订 {{ getPlanText(renewingSubscription?.plan) }} 吗？
         </VCardText>
         <VCardActions class="pa-4">
           <VSpacer />
-          <VBtn color="grey-darken-1" variant="text" @click="showRenewDialog = false">取消</VBtn>
-          <VBtn color="success" @click="handleRenew" :loading="renewing">续订</VBtn>
+          <VBtn
+            color="grey-darken-1"
+            variant="text"
+            @click="showRenewDialog = false"
+          >
+            取消
+          </VBtn>
+          <VBtn
+            color="success"
+            :loading="renewing"
+            @click="handleRenew"
+          >
+            续订
+          </VBtn>
         </VCardActions>
       </VCard>
     </VDialog>
 
     <!-- 取消订阅对话框 -->
-    <VDialog v-model="showCancelDialog" max-width="400px">
+    <VDialog
+      v-model="showCancelDialog"
+      max-width="400px"
+    >
       <VCard>
-        <VCardTitle class="pa-4">取消订阅</VCardTitle>
+        <VCardTitle class="pa-4">
+          取消订阅
+        </VCardTitle>
         <VCardText class="pa-4">
           确定要取消公司ID "{{ cancelingSubscription?.company_id }}" 的 {{ getPlanText(cancelingSubscription?.plan) }} 订阅吗？
         </VCardText>
         <VCardActions class="pa-4">
           <VSpacer />
-          <VBtn color="grey-darken-1" variant="text" @click="showCancelDialog = false">取消</VBtn>
-          <VBtn color="warning" @click="handleCancel" :loading="canceling">确认取消</VBtn>
+          <VBtn
+            color="grey-darken-1"
+            variant="text"
+            @click="showCancelDialog = false"
+          >
+            取消
+          </VBtn>
+          <VBtn
+            color="warning"
+            :loading="canceling"
+            @click="handleCancel"
+          >
+            确认取消
+          </VBtn>
         </VCardActions>
       </VCard>
     </VDialog>
 
     <!-- 删除确认对话框 -->
-    <VDialog v-model="showDeleteDialog" max-width="400px">
+    <VDialog
+      v-model="showDeleteDialog"
+      max-width="400px"
+    >
       <VCard>
-        <VCardTitle class="pa-4">确认删除</VCardTitle>
+        <VCardTitle class="pa-4">
+          确认删除
+        </VCardTitle>
         <VCardText class="pa-4">
           确定要删除订阅 "公司ID {{ deletingSubscription?.company_id }} - {{ getPlanText(deletingSubscription?.plan) }}" 吗？此操作不可恢复。
         </VCardText>
         <VCardActions class="pa-4">
           <VSpacer />
-          <VBtn color="grey-darken-1" variant="text" @click="showDeleteDialog = false">取消</VBtn>
-          <VBtn color="error" @click="handleDelete" :loading="deleting">删除</VBtn>
+          <VBtn
+            color="grey-darken-1"
+            variant="text"
+            @click="showDeleteDialog = false"
+          >
+            取消
+          </VBtn>
+          <VBtn
+            color="error"
+            :loading="deleting"
+            @click="handleDelete"
+          >
+            删除
+          </VBtn>
         </VCardActions>
       </VCard>
     </VDialog>

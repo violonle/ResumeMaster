@@ -1,51 +1,128 @@
 <template>
-  <StandardPage title="角色管理" subtitle="管理系统角色与权限矩阵">
+  <StandardPage
+    title="角色管理"
+    subtitle="管理系统角色与权限矩阵"
+  >
     <template #actions>
-      <VBtn color="primary" prepend-icon="mdi-plus" @click="openCreateRole">新建管理账号</VBtn>
+      <VBtn
+        color="primary"
+        prepend-icon="mdi-plus"
+        @click="openCreateRole"
+      >
+        新建管理账号
+      </VBtn>
     </template>
 
     <VCard>
       <VCardText>
-        <VDataTable :headers="headers" :items="roles" :loading="loading" item-value="id">
+        <VDataTable
+          :headers="headers"
+          :items="roles"
+          :loading="loading"
+          item-value="id"
+        >
           <template #item.permissions="{ item }">
-            <VChip v-for="p in (item.permissions||[])" :key="p.permission_key" class="ma-1" size="small">{{ p.permission_key }}</VChip>
+            <VChip
+              v-for="p in (item.permissions||[])"
+              :key="p.permission_key"
+              class="ma-1"
+              size="small"
+            >
+              {{ p.permission_key }}
+            </VChip>
           </template>
           <template #item.actions="{ item }">
-            <VBtn icon="mdi-pencil" variant="text" color="primary" @click="openEditRole(item)" title="编辑" />
-            <VBtn icon="mdi-shield-check" variant="text" color="info" @click="openEditPermissions(item)" title="权限" />
+            <VBtn
+              icon="mdi-pencil"
+              variant="text"
+              color="primary"
+              title="编辑"
+              @click="openEditRole(item)"
+            />
+            <VBtn
+              icon="mdi-shield-check"
+              variant="text"
+              color="info"
+              title="权限"
+              @click="openEditPermissions(item)"
+            />
           </template>
         </VDataTable>
       </VCardText>
     </VCard>
 
-    <VDialog v-model="roleDialog" max-width="560px">
+    <VDialog
+      v-model="roleDialog"
+      max-width="560px"
+    >
       <VCard>
         <VCardTitle>新建管理账号</VCardTitle>
         <VCardText>
           <VForm v-model="validRole">
-            <VSelect v-model="selectedRoleType" :items="adminRoleItems" label="角色类型（仅限平台）" @update:model-value="applySelectedAdminRole" />
-            <VTextField v-model="adminAccountId" label="账号ID" />
-            <VTextField v-model="adminPassword" label="密码" type="password" />
+            <VSelect
+              v-model="selectedRoleType"
+              :items="adminRoleItems"
+              label="角色类型（仅限平台）"
+              @update:model-value="applySelectedAdminRole"
+            />
+            <VTextField
+              v-model="adminAccountId"
+              label="账号ID"
+            />
+            <VTextField
+              v-model="adminPassword"
+              label="密码"
+              type="password"
+            />
           </VForm>
         </VCardText>
         <VCardActions>
           <VSpacer />
-          <VBtn variant="text" @click="roleDialog=false">取消</VBtn>
-          <VBtn color="primary" variant="text" :loading="saving" @click="saveAdminAccount">保存</VBtn>
+          <VBtn
+            variant="text"
+            @click="roleDialog=false"
+          >
+            取消
+          </VBtn>
+          <VBtn
+            color="primary"
+            variant="text"
+            :loading="saving"
+            @click="saveAdminAccount"
+          >
+            保存
+          </VBtn>
         </VCardActions>
       </VCard>
     </VDialog>
 
-    <VDialog v-model="permDialog" max-width="720px">
+    <VDialog
+      v-model="permDialog"
+      max-width="720px"
+    >
       <VCard>
         <VCardTitle>权限矩阵</VCardTitle>
         <VCardText>
           <VRow>
-            <VCol cols="12" sm="4">
-              <VSelect v-model="permFilter" :items="permGroups" label="权限分组" />
+            <VCol
+              cols="12"
+              sm="4"
+            >
+              <VSelect
+                v-model="permFilter"
+                :items="permGroups"
+                label="权限分组"
+              />
             </VCol>
-            <VCol cols="12" sm="8">
-              <VTextField v-model="permSearch" label="搜索权限键" append-icon="mdi-magnify" />
+            <VCol
+              cols="12"
+              sm="8"
+            >
+              <VTextField
+                v-model="permSearch"
+                label="搜索权限键"
+                append-icon="mdi-magnify"
+              />
             </VCol>
           </VRow>
           <div>
@@ -61,8 +138,20 @@
         </VCardText>
         <VCardActions>
           <VSpacer />
-          <VBtn variant="text" @click="permDialog=false">取消</VBtn>
-          <VBtn color="primary" variant="text" :loading="saving" @click="savePermissions">保存</VBtn>
+          <VBtn
+            variant="text"
+            @click="permDialog=false"
+          >
+            取消
+          </VBtn>
+          <VBtn
+            color="primary"
+            variant="text"
+            :loading="saving"
+            @click="savePermissions"
+          >
+            保存
+          </VBtn>
         </VCardActions>
       </VCard>
     </VDialog>

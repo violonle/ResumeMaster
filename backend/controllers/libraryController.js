@@ -7,6 +7,7 @@ const ResumeParseService = require('../services/resumeParseService')
 const EnhancedResumeParseService = require('../services/enhancedResumeParseService')
 const OptimizedResumeParseService = require('../services/optimizedResumeParseService')
 const { extractTextFromFile } = require('../services/textExtractor')
+const aiController = require('./aiController')
 
 const aiAnalysisService = new AIAnalysisService()
 const resumeParseService = new ResumeParseService()
@@ -83,6 +84,7 @@ async function getTalentPoolResumes(req, res){
           const r = resume.toJSON();
           const parsedData = r.parsed_data || {};
           const associatedJobTitle = (resume.Jobs && resume.Jobs.length > 0) ? resume.Jobs[0].title : null;
+          const associatedJobId = (resume.Jobs && resume.Jobs.length > 0) ? resume.Jobs[0].id : null;
           
           // 统一字段映射，确保前端展示正常
           return {
@@ -97,6 +99,7 @@ async function getTalentPoolResumes(req, res){
               lastUpdated: r.updated_at ? new Date(r.updated_at).toLocaleDateString() : (r.upload_date ? new Date(r.upload_date).toLocaleDateString() : '未知'),
               status: r.recruitment_status || '投递',
               associated_job_title: associatedJobTitle,
+              associated_job_id: associatedJobId,
               isAssociated: !!associatedJobTitle
           };
       });
@@ -278,6 +281,18 @@ async function createResumeRecord(req, res, { file_name, file_size, file_type, f
             console.error('Failed to associate resume with job:', assocError);
             // 不阻断主流程，仅记录错误
         }
+    }
+
+    // 触发后台AI深度解析 (如果rawText存在且parsedData可能不完整)
+    // 即使regex解析成功，也运行AI分析以获取更好的结构化数据
+    if (rawText && rawText.length > 50) {
+        // 使用 processAnalysisBackground 进行异步分析
+        // 这里的 req.user 需要确保包含 id
+        setTimeout(() => {
+            console.log(`[LibraryController] Triggering background AI analysis for resume ${resume.id}`);
+            aiController.processAnalysisBackground(resume.id, rawText, '', req.user)
+                .catch(err => console.error(`[LibraryController] Background AI analysis failed for resume ${resume.id}:`, err));
+        }, 100); // 稍微延迟，确保主事务提交
     }
 
     return res.status(201).json({ success:true, data: resume, message:'已加入人才库' + (jobId ? '并关联职位' : '') })

@@ -64,9 +64,12 @@
       <!-- Breadcrumb & Back -->
       <div class="mb-6 flex items-center justify-between">
         <a id="back-link" href="librarypool.html" class="text-gray-500 hover:text-blue-600 flex items-center transition-colors">
-          <span class="text-xl mr-2">⬅️</span><span id="back-text">返回人才库</span>
+          <i class="fas fa-arrow-left text-xl mr-2"></i><span id="back-text">返回人才库</span>
         </a>
         <div class="flex items-center space-x-3">
+          <button id="reanalyze-btn" class="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors font-medium flex items-center">
+            <i class="fas fa-sync-alt mr-2"></i>重新解析
+          </button>
         </div>
       </div>
 
@@ -102,6 +105,8 @@
                 <span class="flex items-center"><i class="fas fa-map-marker-alt mr-2"></i><span id="resume-location">城市</span></span>
               </div>
             </div>
+
+
           </div>
           <div class="flex flex-col items-end">
             <div class="text-center bg-blue-50 p-4 rounded-xl">
@@ -137,28 +142,27 @@
                 </div>
               </div>
             </div>
+
+            <!-- Attachment Preview -->
+            <div class="portal-card" id="attachment-section">
+              <h3 class="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-100">原始附件</h3>
+              <div class="flex items-center p-3 bg-gray-50 rounded-lg border border-gray-100">
+                <div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center shadow-sm text-blue-500 mr-3">
+                  <i id="attachment-icon" class="fas fa-file-alt text-xl"></i>
+                </div>
+                <div class="flex-1 min-w-0 mr-3">
+                  <p id="attachment-name" class="text-sm font-medium text-gray-900 truncate">loading...</p>
+                  <p id="attachment-size" class="text-xs text-gray-500">0 KB</p>
+                </div>
+                <a id="preview-attachment-btn" href="#" target="_blank" class="text-blue-600 hover:text-blue-700 p-2" title="预览附件">
+                  <i class="fas fa-eye"></i>
+                </a>
+              </div>
+            </div>
           </div>
 
           <!-- Right Column -->
           <div class="lg:col-span-2 space-y-6">
-            <!-- Attachment Preview -->
-            <div class="portal-card" id="attachment-section">
-              <h3 class="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-100">简历附件</h3>
-              <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <div class="flex items-center">
-                  <div class="w-10 h-10 rounded bg-blue-100 text-blue-600 flex items-center justify-center mr-4">
-                    <i class="fas fa-file-alt text-xl" id="attachment-icon"></i>
-                  </div>
-                  <div>
-                    <p class="font-medium text-gray-900" id="attachment-name">resume.pdf</p>
-                    <p class="text-sm text-gray-500" id="attachment-size">未知大小</p>
-                  </div>
-                </div>
-                <a id="preview-attachment-btn" href="#" target="_blank" class="px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors font-medium flex items-center">
-                  <i class="fas fa-eye mr-2"></i>预览
-                </a>
-              </div>
-            </div>
 
              <!-- Summary -->
              <div class="portal-card">
@@ -189,6 +193,14 @@
                 <!-- Project Items -->
               </div>
             </div>
+
+            <!-- Raw Text Preview -->
+            <div class="portal-card" id="raw-text-section">
+              <h3 class="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-100">解析内容预览</h3>
+              <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                <pre id="resume-raw-text" class="text-sm text-gray-600 whitespace-pre-wrap font-sans leading-relaxed max-h-[500px] overflow-y-auto"></pre>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -199,6 +211,8 @@
   <script src="../js/header-profile.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
+        console.log('DOMContentLoaded fired');
+        
         // Initialize sidebar
         if (typeof Sidebar !== 'undefined') {
             await Sidebar.init({ mount: '#sidebar', active: 'librarypool' });
@@ -228,9 +242,113 @@
           showError('未提供简历ID');
           return;
         }
+        
+        // Bind reanalyze button
+        const reanalyzeBtn = document.getElementById('reanalyze-btn');
+        console.log('Reanalyze button found:', reanalyzeBtn);
+        
+        if (reanalyzeBtn) {
+          reanalyzeBtn.onclick = async () => {
+            console.log('Reanalyze button clicked via onclick');
+            // Remove confirm temporarily to debug interaction issues
+            // if (!confirm('确定要重新解析该简历吗？当前已保存的修改可能会被覆盖。')) return;
+            
+            reanalyzeBtn.disabled = true;
+            // Update text immediately
+            reanalyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>提交中...';
+            console.log('Button state updated to loading');
+            
+            try {
+              console.log('Sending reanalyze request...');
+              const response = await fetch('/api/ai/analyze', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({ resumeId: resumeId })
+              });
+              
+              const result = await response.json();
+              console.log('Reanalyze response:', result);
+              
+              if (result.success) {
+                // 如果是异步处理，开始轮询状态
+                if (result.status === 'processing') {
+                    reanalyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>分析中...';
+                    showToast('分析请求已提交，正在后台处理...', 'info');
+                    pollAnalysisStatus(resumeId, reanalyzeBtn);
+                } else {
+                    alert('解析完成');
+                    window.location.reload();
+                }
+              } else {
+                throw new Error(result.error || '解析失败');
+              }
+            } catch (error) {
+              console.error('重新解析出错:', error);
+              alert('重新解析失败: ' + error.message);
+              reanalyzeBtn.disabled = false;
+              reanalyzeBtn.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>重新解析';
+            }
+          };
+        } else {
+            console.error('Reanalyze button NOT found in DOM');
+        }
 
         initResumeDetails();
     });
+
+    async function pollAnalysisStatus(resumeId, btn) {
+        let attempts = 0;
+        const maxAttempts = 30; // 60 seconds timeout
+        
+        const interval = setInterval(async () => {
+            attempts++;
+            try {
+                const response = await fetch(`/api/ai/status/${resumeId}`, {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                const res = await response.json();
+                
+                if (res.success) {
+                    const status = res.data.status;
+                    if (status === 'analyzed') {
+                        clearInterval(interval);
+                        btn.innerHTML = '<i class="fas fa-check mr-2"></i>完成';
+                        showToast('简历分析完成，即将刷新页面', 'success');
+                        setTimeout(() => window.location.reload(), 1000);
+                    } else if (status === 'failed') {
+                        clearInterval(interval);
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>重试';
+                        alert('分析失败，请稍后重试');
+                    }
+                }
+            } catch (e) {
+                console.error('Poll status error:', e);
+            }
+            
+            if (attempts >= maxAttempts) {
+                clearInterval(interval);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>刷新查看';
+                alert('分析时间较长，请稍后手动刷新页面查看结果');
+            }
+        }, 2000);
+    }
+
+    function showToast(message, type = 'info') {
+        // Simple toast implementation
+        const toast = document.createElement('div');
+        toast.className = `fixed bottom-4 right-4 px-6 py-3 rounded-lg text-white shadow-lg z-50 ${type === 'success' ? 'bg-green-600' : 'bg-blue-600'} transition-opacity duration-300`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
 
     function navigateToJobPosting(){window.location.href='job-posting.html'}
     function navigateToResumeUpload(){window.location.href='resume-upload-pc.html'}
@@ -284,25 +402,96 @@
     }
 
     function renderResume(data) {
+      console.log('Rendering Resume Data:', data);
       document.getElementById('loading-indicator').classList.add('hidden');
       document.getElementById('resume-content').classList.remove('hidden');
       
-      const pd = data.parsed_data || {};
+      function parseMaybeJson(value) {
+        if (typeof value !== 'string') return value;
+        const trimmed = value.trim();
+        if (!trimmed) return value;
+        const looksLikeJson =
+          (trimmed.startsWith('[') && trimmed.endsWith(']')) ||
+          (trimmed.startsWith('{') && trimmed.endsWith('}'));
+        if (!looksLikeJson) return value;
+        try {
+          return JSON.parse(trimmed);
+        } catch (e) {
+          return value;
+        }
+      }
+
+      function asArray(value) {
+        const parsed = parseMaybeJson(value);
+        return Array.isArray(parsed) ? parsed : [];
+      }
+
+      let pd = data.parsed_data || {};
+      if (typeof pd === 'string') {
+        try {
+          pd = JSON.parse(pd);
+        } catch (e) {
+          console.error('解析 parsed_data 失败:', e);
+          pd = {};
+        }
+      }
       
-      const name = data.name || pd.name || data.file_name || '未命名简历';
+      // 增强数据提取逻辑，适配多种数据结构
+      const basicInfo = pd.basic_info || pd.personalInfo || pd;
+      const rawText = data.raw_text || pd.rawText || '';
+      
+      let name = data.name || basicInfo.name || pd.name || '';
+      // 如果没有名字，尝试从 rawText 提取
+      if ((!name || name === '未命名简历') && rawText) {
+          const nameMatch = rawText.match(/(?:^|\n)\s*(?:-\s*)?(?:姓名|Name|候选人)[:：]\s*([^\n\r]+)/i) || 
+                            rawText.match(/^\s*([^\n\r]{2,4})(?:\s+|$)/) || 
+                            rawText.match(/([^\n\r]{2,4})\s+(?:1[3-9]\d{9})/); 
+          if (nameMatch) name = nameMatch[1].trim();
+      }
+      if (!name) name = data.file_name || '未命名简历';
+      
       document.getElementById('resume-name').textContent = name;
       document.getElementById('avatar-text').textContent = name.charAt(0);
-      document.getElementById('resume-position').textContent = data.job_title || pd.job_title || pd.position || '未填写职位';
-      document.getElementById('resume-email').textContent = data.email || pd.email || '未填写邮箱';
-      document.getElementById('resume-phone').textContent = data.phone || pd.phone || '未填写电话';
       
-      let location = data.location || pd.location || pd.city || pd.expectCity || '未填写城市';
+      let jobTitle = data.job_title || basicInfo.job_title || basicInfo.current_position || basicInfo.target_position || pd.job_title || pd.position || '';
+      if (!jobTitle && rawText) {
+          const jobMatch = rawText.match(/(?:职位|应聘|目标|Position|Job Title|求职意向|期望职位)[:：]\s*([^\n\r]+)/i);
+          if (jobMatch) jobTitle = jobMatch[1].trim();
+      }
+      if (!jobTitle) jobTitle = '未填写职位';
+      document.getElementById('resume-position').textContent = jobTitle;
+      
+      let email = data.email || basicInfo.email || pd.email || '';
+      if (!email && rawText) {
+          const emailMatch = rawText.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
+          if (emailMatch) email = emailMatch[1];
+      }
+      if (!email) email = '未填写邮箱';
+      document.getElementById('resume-email').textContent = email;
+      
+      let phone = data.phone || basicInfo.phone || pd.phone || '';
+      if (!phone && rawText) {
+          const phoneMatch = rawText.match(/(?:1[3-9][0-9\-\s]{9,13})|(?:\d{3,4}[-\s]\d{3,4}[-\s]\d{3,4})/);
+          if (phoneMatch) phone = phoneMatch[0].replace(/[^\d-]/g, '');
+      }
+      if (!phone) phone = '未填写电话';
+      document.getElementById('resume-phone').textContent = phone;
+      
+      let location = data.location || basicInfo.location || pd.location || pd.city || pd.expectCity || '';
+      if (!location && rawText) {
+           const locMatch = rawText.match(/(?:地址|城市|Location|City|现居地|所在地|居住地)[:：]\s*([^\n\r]+)/i);
+           if (locMatch) location = locMatch[1].trim();
+      }
       location = location.replace(/期望薪资.*?\d+.*?K/gi, '').replace(/薪资.*?\d+.*?K/gi, '').replace(/资.*?\d+.*?K/gi, '').replace(/期望城市/gi, '').replace(/所在城市/gi, '').trim();
       if (!location || location === '资' || location === '资8-12K') {
         location = '未填写城市';
       }
       document.getElementById('resume-location').textContent = location;
-      document.getElementById('resume-score').textContent = data.overall_score || 0;
+      
+      // 适配不同的分数路径
+      let score = data.overall_score || data.score || pd.overall_score || 0;
+      if (!score && pd.scores && pd.scores.overall) score = pd.scores.overall;
+      document.getElementById('resume-score').textContent = score;
       
       const date = data.upload_date ? new Date(data.upload_date).toLocaleDateString() : new Date().toLocaleDateString();
       document.getElementById('resume-updated').textContent = date;
@@ -337,23 +526,47 @@
           previewBtn.style.display = 'none';
       }
 
-      document.getElementById('info-exp').textContent = (data.experience_years || pd.experience_years || 0) + '年';
-      document.getElementById('info-edu').textContent = data.highest_education || (pd.education && pd.education[0] && pd.education[0].degree) || '未填写';
-      document.getElementById('info-status').textContent = data.job_status || '未填写';
-      document.getElementById('info-salary').textContent = data.expected_salary || '面议';
+      document.getElementById('info-exp').textContent = (data.experience_years || basicInfo.work_years || basicInfo.experience || pd.experience_years || 0) + '年';
+      const normalizedEducation = asArray(data.education || pd.education || pd.education_background);
+      document.getElementById('info-edu').textContent = data.highest_education || basicInfo.education || basicInfo.degree || (normalizedEducation[0] && normalizedEducation[0].degree) || '未填写';
+      document.getElementById('info-status').textContent = data.job_status || basicInfo.job_status || basicInfo.status || '未填写';
+      document.getElementById('info-salary').textContent = data.expected_salary || basicInfo.expected_salary || basicInfo.salary || '面议';
       
-      document.getElementById('resume-summary').textContent = data.summary || pd.summary || '暂无个人优势描述';
+      // Populate Raw Text
+      const rawTextContainer = document.getElementById('resume-raw-text');
+      if (data.raw_text) {
+        rawTextContainer.textContent = data.raw_text;
+        document.getElementById('raw-text-section').style.display = 'block';
+      } else {
+        document.getElementById('raw-text-section').style.display = 'none';
+      }
+      
+      // 适配 Summary 路径
+      let summaryText = data.summary || pd.summary || '暂无个人优势描述';
+      if (summaryText === '暂无个人优势描述' && pd.evaluation_report && pd.evaluation_report.summary) {
+        summaryText = pd.evaluation_report.summary;
+      }
+      document.getElementById('resume-summary').textContent = summaryText;
 
       const expContainer = document.getElementById('experience-container');
-      let experience = data.work_experience || pd.work_experience || pd.workExperience || pd.experience || [];
+      const experience = asArray(data.work_experience || pd.work_experience || pd.workExperience || pd.experience);
       
       if (experience.length > 0) {
         expContainer.innerHTML = experience.map((exp, index) => {
-          const startDate = exp.startDate || exp.startYear || exp.start_date || '';
-          const endDate = exp.endDate || exp.endYear || exp.end_date || '至今';
+          // 智能解析时间段
+          let startDate = exp.startDate || exp.startYear || exp.start_date || '';
+          let endDate = exp.endDate || exp.endYear || exp.end_date || '至今';
+          
+          // 如果有 period 字段 (如 "2020.01-2022.01")，尝试解析
+          if ((!startDate || !endDate) && exp.period) {
+             const parts = exp.period.split(/[-至]/);
+             if (parts.length >= 1) startDate = parts[0].trim();
+             if (parts.length >= 2) endDate = parts[1].trim();
+          }
+
           const position = exp.position || exp.jobTitle || exp.role || exp.title || '';
           const company = exp.company || exp.name || '未知公司';
-          const description = exp.description || exp.responsibilities || '';
+          const description = exp.description || exp.responsibilities || exp.achievements || '';
           
           return `
           <div class="timeline-item">
@@ -372,11 +585,18 @@
 
       // Education - 使用数据库字段
       const eduContainer = document.getElementById('education-container');
-      const education = data.education || pd.education || [];
+      const education = normalizedEducation.length ? normalizedEducation : asArray(pd.education_background);
       if (education.length > 0) {
         eduContainer.innerHTML = education.map(edu => {
-          const startDate = edu.startDate || edu.startYear || edu.start_date || '';
-          const endDate = edu.endDate || edu.endYear || edu.end_date || '至今';
+          let startDate = edu.startDate || edu.startYear || edu.start_date || '';
+          let endDate = edu.endDate || edu.endYear || edu.end_date || '至今';
+          
+          if ((!startDate || !endDate) && edu.period) {
+             const parts = edu.period.split(/[-至]/);
+             if (parts.length >= 1) startDate = parts[0].trim();
+             if (parts.length >= 2) endDate = parts[1].trim();
+          }
+
           const school = edu.school || edu.name || '未知学校';
           const degree = edu.degree || '';
           const major = edu.major || '';
@@ -397,14 +617,21 @@
       
       // Projects - 使用数据库字段
       const projContainer = document.getElementById('project-container');
-      const projects = data.projects || pd.projects || [];
+      const projects = asArray(data.projects || pd.projects || pd.project_experience);
       if (projects.length > 0) {
         projContainer.innerHTML = projects.map(proj => {
-          const startDate = proj.startDate || proj.startYear || proj.start_date || '';
-          const endDate = proj.endDate || proj.endYear || proj.end_date || '至今';
+          let startDate = proj.startDate || proj.startYear || proj.start_date || '';
+          let endDate = proj.endDate || proj.endYear || proj.end_date || '至今';
+          
+          if ((!startDate || !endDate) && proj.period) {
+             const parts = proj.period.split(/[-至]/);
+             if (parts.length >= 1) startDate = parts[0].trim();
+             if (parts.length >= 2) endDate = parts[1].trim();
+          }
+
           const name = proj.name || proj.title || '未知项目';
           const role = proj.role || proj.position || '';
-          const description = proj.description || proj.responsibilities || '';
+          const description = proj.description || proj.responsibilities || proj.performance || '';
           
           return `
           <div class="timeline-item">

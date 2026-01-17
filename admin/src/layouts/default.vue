@@ -3,17 +3,35 @@
     <!-- 调试信息 -->
     
     
-    <SidebarMenu v-model:drawer="drawer" v-model:rail="rail" @logout="handleLogout" />
+    <SidebarMenu
+      v-model:drawer="drawer"
+      v-model:rail="rail"
+      @logout="handleLogout"
+    />
 
     
 
     <VMain>
       <div class="page-header">
-        <VBtn icon variant="text" @click="toggleMenu"><VIcon :icon="rail ? 'mdi-menu-open' : 'mdi-menu'" /></VBtn>
-        <div class="page-title">{{ $route.meta.title || '后台管理' }}</div>
+        <VBtn
+          icon
+          variant="text"
+          @click="toggleMenu"
+        >
+          <VIcon :icon="rail ? 'mdi-menu-open' : 'mdi-menu'" />
+        </VBtn>
+        <div class="page-title">
+          {{ $route.meta.title || '后台管理' }}
+        </div>
         <div class="page-actions">
-          <VBtn icon="mdi-bell-outline" variant="text" />
-          <VBtn icon="mdi-help-circle-outline" variant="text" />
+          <VBtn
+            icon="mdi-bell-outline"
+            variant="text"
+          />
+          <VBtn
+            icon="mdi-help-circle-outline"
+            variant="text"
+          />
         </div>
       </div>
       <div class="page-content">
@@ -21,7 +39,13 @@
       </div>
 
       <VFooter class="justify-center py-4 text-grey-darken-1 text-caption border-t">
-        <div>云璞网科 © 2018-2025  <a href="https://beian.miit.gov.cn/" target="_blank" class="text-grey-darken-1 text-decoration-none hover-blue">鲁ICP备2023016452号</a></div>
+        <div>
+          云璞网科 © 2018-2025  <a
+            href="https://beian.miit.gov.cn/"
+            target="_blank"
+            class="text-grey-darken-1 text-decoration-none hover-blue"
+          >鲁ICP备2023016452号</a>
+        </div>
       </VFooter>
     </VMain>
   </VApp>

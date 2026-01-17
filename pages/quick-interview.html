@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>快速AI面试 - 争湃·简历大师</title>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <script src="../js/tailwindcss.js"></script>
+    <link href="https://cdn.staticfile.org/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/design-system.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <!-- Flatpickr -->
+    <link rel="stylesheet" href="https://fastly.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://fastly.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://fastly.jsdelivr.net/npm/flatpickr/dist/l10n/zh.js"></script>
+    <script src="../js/user-auth.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        .brand-title { white-space: normal !important; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #d1d5db; }
+        
+        @keyframes slideInFromBottom {
+            0% { transform: translateY(1rem); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+        .animate-in {
+            animation: slideInFromBottom 0.5s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 h-screen overflow-hidden">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar-modern"></aside>
+    <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+    <!-- Header -->
+    <header class="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md border-b border-gray-100 z-20">
+        <div class="flex items-center justify-between p-4 px-6">
+            <div class="flex items-center space-x-4 pl-8">
+                <div class="brand-title flex flex-col justify-center space-y-1.5">
+                    <h1 class="text-lg font-bold text-gray-900 leading-none">快速AI面试</h1>
+                    <p class="text-xs text-gray-500 font-medium leading-tight">创建面试任务并自动发送通知</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4" id="header-right-section">
+                <!-- User Profile rendered by HeaderProfile -->
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main id="main-content" class="main-content h-full flex flex-col p-8 overflow-y-auto custom-scrollbar">
+        <div class="max-w-3xl mx-auto w-full animate-in pb-20">
+             <div class="bg-white border border-gray-100 rounded-2xl px-8 py-8 shadow-sm">
+                <div class="mb-8 border-b border-gray-100 pb-4">
+                    <h2 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                        <i class="fas fa-rocket text-blue-600"></i>
+                        创建面试任务
+                    </h2>
+                    <p class="text-sm text-gray-500 mt-1 ml-7">填写下方信息，系统将自动通知候选人</p>
+                </div>
+
+                <form id="interview-form" class="space-y-6">
+                    <!-- Job & Candidate Row -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="job-select" class="block text-sm font-semibold text-gray-700 mb-1">选择职位 <span class="text-red-500">*</span></label>
+                            <select id="job-select" name="jobId" required class="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all py-2.5">
+                                <option value="">请选择职位...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="candidate-select" class="block text-sm font-semibold text-gray-700 mb-1">选择候选人 <span class="text-red-500">*</span></label>
+                            <select id="candidate-select" name="resumeId" required class="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all py-2.5">
+                                <option value="">请选择候选人...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Interview Type -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">面试类型 <span class="text-red-500">*</span></label>
+                        <div class="grid grid-cols-2 gap-4">
+                             <label class="relative flex items-center justify-center p-4 border rounded-xl cursor-pointer transition-all border-blue-200 bg-blue-50 ring-2 ring-blue-500" id="type-online-label">
+                                <input type="radio" name="interviewType" value="online" checked class="sr-only">
+                                <div class="flex flex-col items-center gap-2">
+                                    <i class="fas fa-robot text-2xl text-blue-600" id="icon-online"></i>
+                                    <span class="font-bold text-blue-900" id="text-online">线上面试</span>
+                                </div>
+                                <div class="absolute top-2 right-2 text-blue-600" id="check-online">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                            </label>
+
+                            <label class="relative flex items-center justify-center p-4 border rounded-xl cursor-pointer hover:bg-gray-50 transition-all border-gray-200" id="type-onsite-label">
+                                <input type="radio" name="interviewType" value="onsite" class="sr-only">
+                                <div class="flex flex-col items-center gap-2">
+                                    <i class="fas fa-building text-2xl text-gray-400" id="icon-onsite"></i>
+                                    <span class="font-bold text-gray-600" id="text-onsite">现场面试</span>
+                                </div>
+                                <div class="absolute top-2 right-2 text-blue-600 hidden" id="check-onsite">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Date Selection -->
+                    <div>
+                        <label id="date-label" for="interview-date" class="block text-sm font-semibold text-gray-700 mb-1">截止日期 <span class="text-red-500">*</span></label>
+                        <div class="relative group">
+                            <input type="text" id="interview-date" name="interviewDate" class="flatpickr block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm pl-10 py-2.5 transition-all cursor-pointer bg-blue-50/30 hover:bg-blue-50/50" placeholder="点击选择日期和时间" required>
+                            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                <i class="fas fa-calendar-alt text-blue-500 group-focus-within:text-blue-600 transition-colors"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Address Input -->
+                    <div>
+                        <label for="address-input" class="block text-sm font-semibold text-gray-700 mb-1">面试地址/链接 <span class="text-red-500">*</span></label>
+                        <div class="relative group">
+                             <input type="text" id="address-input" name="address" required placeholder="请输入面试地址或链接" class="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm pl-10 py-2.5 transition-all">
+                             <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                <i class="fas fa-map-marker-alt text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Remarks -->
+                    <div>
+                        <label for="remarks-input" class="block text-sm font-semibold text-gray-700 mb-1">备注</label>
+                        <textarea id="remarks-input" name="remarks" rows="3" placeholder="请输入面试注意事项或其他备注信息..." class="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all py-2.5"></textarea>
+                    </div>
+
+                    <!-- Info Box -->
+                     <div class="bg-blue-50 border border-blue-100 rounded-lg p-3 flex items-start gap-3">
+                        <i class="fas fa-info-circle text-blue-500 mt-0.5"></i>
+                        <div class="text-xs text-blue-700">
+                            <p class="font-bold mb-0.5">通知服务</p>
+                            <p>确认安排后，系统将自动向候选人发送短信和邮件通知。</p>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="pt-2">
+                        <button type="submit" id="submit-btn" class="w-full inline-flex justify-center items-center rounded-lg border border-transparent shadow-sm px-4 py-3 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all">
+                            <i class="fas fa-paper-plane mr-2"></i> 确认发送面试通知
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script src="/js/sidebar.js"></script>
+    <script src="../js/header-profile.js"></script>
+    <script>
+        // Setup Axios interceptors
+        axios.interceptors.request.use(function (config) {
+            const token = localStorage.getItem('token');
+            if (token) {
+                config.headers.Authorization = `Bearer ${token}`;
+            }
+            return config;
+        });
+
+        // Initialize UI
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Init components
+            if (typeof Sidebar !== 'undefined') await Sidebar.init({ mount: '#sidebar', active: 'quick-interview' });
+            if (typeof HeaderProfile !== 'undefined') HeaderProfile.init('#header-right-section');
+
+            // Init Flatpickr
+            const fp = flatpickr("#interview-date", {
+                enableTime: true,
+                dateFormat: "Y-m-d H:i",
+                locale: "zh",
+                defaultDate: new Date().fp_incr(3),
+                minDate: "today",
+                time_24hr: true
+            });
+
+            // Handle interview type change
+            const typeRadios = document.getElementsByName('interviewType');
+            const dateLabel = document.getElementById('date-label');
+            const addressInput = document.getElementById('address-input');
+            const labelOnline = document.getElementById('type-online-label');
+            const labelOnsite = document.getElementById('type-onsite-label');
+            
+            // Helper to update radio styles
+            const updateRadioStyles = (type) => {
+                const isOnline = type === 'online';
+                
+                // Online Label
+                if (isOnline) {
+                    labelOnline.className = "relative flex items-center justify-center p-4 border rounded-xl cursor-pointer transition-all border-blue-200 bg-blue-50 ring-2 ring-blue-500";
+                    document.getElementById('icon-online').className = "fas fa-robot text-2xl text-blue-600";
+                    document.getElementById('text-online').className = "font-bold text-blue-900";
+                    document.getElementById('check-online').classList.remove('hidden');
+                    
+                    // Onsite Label Reset
+                    labelOnsite.className = "relative flex items-center justify-center p-4 border rounded-xl cursor-pointer hover:bg-gray-50 transition-all border-gray-200";
+                    document.getElementById('icon-onsite').className = "fas fa-building text-2xl text-gray-400";
+                    document.getElementById('text-onsite').className = "font-bold text-gray-600";
+                    document.getElementById('check-onsite').classList.add('hidden');
+                } else {
+                    // Onsite Label Active
+                    labelOnsite.className = "relative flex items-center justify-center p-4 border rounded-xl cursor-pointer transition-all border-blue-200 bg-blue-50 ring-2 ring-blue-500";
+                    document.getElementById('icon-onsite').className = "fas fa-building text-2xl text-blue-600";
+                    document.getElementById('text-onsite').className = "font-bold text-blue-900";
+                    document.getElementById('check-onsite').classList.remove('hidden');
+
+                    // Online Label Reset
+                    labelOnline.className = "relative flex items-center justify-center p-4 border rounded-xl cursor-pointer hover:bg-gray-50 transition-all border-gray-200";
+                    document.getElementById('icon-online').className = "fas fa-robot text-2xl text-gray-400";
+                    document.getElementById('text-online').className = "font-bold text-gray-600";
+                    document.getElementById('check-online').classList.add('hidden');
+                }
+            };
+
+            typeRadios.forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    const type = e.target.value;
+                    updateRadioStyles(type);
+
+                    if (type === 'online') {
+                        dateLabel.textContent = '截止日期';
+                        addressInput.value = '线上AI面试';
+                        addressInput.readOnly = true;
+                        addressInput.classList.add('bg-gray-50');
+                    } else {
+                        dateLabel.textContent = '面试时间';
+                        addressInput.value = '';
+                        addressInput.readOnly = false;
+                        addressInput.classList.remove('bg-gray-50');
+                    }
+                });
+            });
+
+            // Trigger default state
+            const currentType = document.querySelector('input[name="interviewType"]:checked').value;
+            updateRadioStyles(currentType);
+            if (currentType === 'online') {
+                addressInput.value = '线上AI面试';
+                addressInput.readOnly = true;
+                addressInput.classList.add('bg-gray-50');
+            }
+
+            // Load data
+            loadJobs();
+            // loadCandidates(); // Don't load candidates initially, wait for job selection
+
+            // Handle submission
+            document.getElementById('interview-form').addEventListener('submit', handleFormSubmit);
+            
+            // Handle job selection
+            document.getElementById('job-select').addEventListener('change', function() {
+                loadCandidates(this.value);
+            });
+        });
+
+        async function loadJobs() {
+            try {
+                const response = await axios.get('/api/jobs');
+                const select = document.getElementById('job-select');
+                if (response.data.success) {
+                    response.data.data.forEach(job => {
+                        const option = document.createElement('option');
+                        option.value = job.id;
+                        option.textContent = `${job.title} (${job.location || '未知地点'})`;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to load jobs:', error);
+                alert('加载职位列表失败');
+            }
+        }
+
+        async function loadCandidates(jobId = null) {
+            const select = document.getElementById('candidate-select');
+            
+            // Clear existing options
+            select.innerHTML = '<option value="">请选择候选人...</option>';
+            
+            if (!jobId) {
+                return; // If no job selected, don't load candidates
+            }
+            
+            try {
+                // Use library/resumes API to get candidates with job association info
+                const response = await axios.get('/api/library/resumes');
+                if (response.data.success) {
+                    let resumes = response.data.data.rows || response.data.data;
+                    
+                    // Filter candidates by job ID
+                    if (jobId) {
+                        resumes = resumes.filter(r => r.associated_job_id == jobId);
+                    }
+                    
+                    if (resumes.length === 0) {
+                         const option = document.createElement('option');
+                         option.disabled = true;
+                         option.textContent = '该职位下暂无候选人';
+                         select.appendChild(option);
+                         return;
+                    }
+
+                    resumes.forEach(resume => {
+                        const option = document.createElement('option');
+                        option.value = resume.id;
+                        option.textContent = `${resume.name || '未命名'} - ${resume.job_title || '未知职位'}`;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to load candidates:', error);
+                alert('加载候选人列表失败');
+            }
+        }
+
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submit-btn');
+            const originalText = btn.innerHTML;
+            
+            // Basic validation
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            
+            try {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> 发送中...';
+                
+                const response = await axios.post('/api/interview/quick-schedule', data);
+                
+                if (response.data.success) {
+                    alert('面试通知已发送！');
+                    e.target.reset();
+                    // Reset UI state to default (online)
+                    document.querySelector('input[name="interviewType"][value="online"]').checked = true;
+                    // Trigger change event to reset styles/inputs
+                    const event = new Event('change');
+                    document.querySelector('input[name="interviewType"][value="online"]').dispatchEvent(event);
+                } else {
+                    alert('发送失败: ' + (response.data.error || '未知错误'));
+                }
+            } catch (error) {
+                console.error('Submit error:', error);
+                alert('系统错误: ' + (error.response?.data?.error || error.message));
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+    </script>
+</body>
+</html>

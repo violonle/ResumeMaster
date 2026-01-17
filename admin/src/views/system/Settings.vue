@@ -3,13 +3,32 @@
     :title="pageTitle"
     :subtitle="pageSubtitle"
   >
-
-    <VTabs v-model="activeTab" class="mb-6" v-if="showTabs">
-      <VTab value="basic">基础设置</VTab>
-      <VTab value="sms" v-if="activeTab === 'sms'">短信设置</VTab>
-      <VTab value="email" v-if="activeTab === 'email'">邮件配置</VTab>
-      <VTab value="notifications">通知设置</VTab>
-      <VTab value="roles">角色权限</VTab>
+    <VTabs
+      v-if="showTabs"
+      v-model="activeTab"
+      class="mb-6"
+    >
+      <VTab value="basic">
+        基础设置
+      </VTab>
+      <VTab
+        v-if="activeTab === 'sms'"
+        value="sms"
+      >
+        短信设置
+      </VTab>
+      <VTab
+        v-if="activeTab === 'email'"
+        value="email"
+      >
+        邮件配置
+      </VTab>
+      <VTab value="notifications">
+        通知设置
+      </VTab>
+      <VTab value="roles">
+        角色权限
+      </VTab>
     </VTabs>
 
     <!-- 基础设置 -->
@@ -17,9 +36,15 @@
       <VWindowItem value="basic">
         <VCard>
           <VCardText>
-            <VForm ref="basicForm" @submit.prevent="saveBasicSettings">
+            <VForm
+              ref="basicForm"
+              @submit.prevent="saveBasicSettings"
+            >
               <VRow>
-                <VCol cols="12" md="6">
+                <VCol
+                  cols="12"
+                  md="6"
+                >
                   <VTextField
                     v-model="systemStore.settings.siteName"
                     label="网站名称"
@@ -27,7 +52,10 @@
                     required
                   />
                 </VCol>
-                <VCol cols="12" md="6">
+                <VCol
+                  cols="12"
+                  md="6"
+                >
                   <VTextField
                     v-model="systemStore.settings.siteLogo"
                     label="网站Logo"
@@ -41,26 +69,38 @@
                     rows="3"
                   />
                 </VCol>
-                <VCol cols="12" md="6">
+                <VCol
+                  cols="12"
+                  md="6"
+                >
                   <VTextField
                     v-model="systemStore.settings.contactEmail"
                     label="联系邮箱"
                     type="email"
                   />
                 </VCol>
-                <VCol cols="12" md="6">
+                <VCol
+                  cols="12"
+                  md="6"
+                >
                   <VTextField
                     v-model="systemStore.settings.contactPhone"
                     label="联系电话"
                   />
                 </VCol>
-                <VCol cols="12" md="6">
+                <VCol
+                  cols="12"
+                  md="6"
+                >
                   <VTextField
                     v-model="systemStore.settings.icpNumber"
                     label="ICP备案号"
                   />
                 </VCol>
-                <VCol cols="12" md="6">
+                <VCol
+                  cols="12"
+                  md="6"
+                >
                   <VTextField
                     v-model="systemStore.settings.portalUrl"
                     label="面试门户地址"
@@ -82,7 +122,13 @@
           </VCardText>
           <VCardActions>
             <VSpacer />
-            <VBtn color="primary" @click="saveBasicSettings" :loading="saving.basic">保存基础设置</VBtn>
+            <VBtn
+              color="primary"
+              :loading="saving.basic"
+              @click="saveBasicSettings"
+            >
+              保存基础设置
+            </VBtn>
           </VCardActions>
         </VCard>
       </VWindowItem>
@@ -91,16 +137,25 @@
       <VWindowItem value="sms">
         <VCard>
           <VCardText>
-            <VForm ref="smsForm" @submit.prevent="saveSmsSettings">
+            <VForm
+              ref="smsForm"
+              @submit.prevent="saveSmsSettings"
+            >
               <VRow>
-                <VCol cols="12" md="6">
+                <VCol
+                  cols="12"
+                  md="6"
+                >
                   <VSwitch
                     v-model="systemStore.smsSettings.enabled"
                     label="启用短信服务"
                     color="primary"
                   />
                 </VCol>
-                <VCol cols="12" md="6">
+                <VCol
+                  cols="12"
+                  md="6"
+                >
                   <VSelect
                     v-model="systemStore.smsSettings.provider"
                     :items="smsProviders"
@@ -108,7 +163,10 @@
                     :disabled="!systemStore.smsSettings.enabled"
                   />
                 </VCol>
-                <VCol cols="12" md="6">
+                <VCol
+                  cols="12"
+                  md="6"
+                >
                   <VTextField
                     v-model="systemStore.smsSettings.accessKeyId"
                     label="AccessKey ID"
@@ -116,18 +174,24 @@
                     :rules="systemStore.smsSettings.enabled ? [v => !!v || '请输入AccessKey ID'] : []"
                   />
                 </VCol>
-                <VCol cols="12" md="6">
+                <VCol
+                  cols="12"
+                  md="6"
+                >
                   <VTextField
                     v-model="systemStore.smsSettings.accessKeySecret"
                     label="AccessKey Secret"
                     :type="showSmsSecret ? 'text' : 'password'"
                     :append-inner-icon="showSmsSecret ? 'mdi-eye-off' : 'mdi-eye'"
-                    @click:append-inner="showSmsSecret = !showSmsSecret"
                     :disabled="!systemStore.smsSettings.enabled"
                     :rules="systemStore.smsSettings.enabled ? [v => !!v || '请输入AccessKey Secret'] : []"
+                    @click:append-inner="showSmsSecret = !showSmsSecret"
                   />
                 </VCol>
-                <VCol cols="12" md="6">
+                <VCol
+                  cols="12"
+                  md="6"
+                >
                   <VTextField
                     v-model="systemStore.smsSettings.signName"
                     label="短信签名"
@@ -135,63 +199,158 @@
                     :rules="systemStore.smsSettings.enabled ? [v => !!v || '请输入短信签名'] : []"
                   />
                 </VCol>
-                <VCol cols="12" md="6">
-                  <VTextField
-                    v-model="systemStore.smsSettings.templateCode"
-                    label="模板代码"
-                    :disabled="!systemStore.smsSettings.enabled"
-                    :rules="systemStore.smsSettings.enabled ? [v => !!v || '请输入模板代码'] : []"
-                  />
-                </VCol>
 
                 <!-- Scenario-specific settings -->
                 <VCol cols="12">
                   <VDivider class="my-4" />
-                  <div class="text-subtitle-1 mb-2 font-weight-bold">场景化短信配置</div>
-                  <div class="text-caption text-grey mb-4">您可以为不同场景设置独立的短信签名和模板。如果未设置，将使用上方全局配置。</div>
+                  <div class="text-subtitle-1 mb-2 font-weight-bold">
+                    场景化短信配置
+                  </div>
+                  <div class="text-caption text-grey mb-4">
+                    您可以为不同业务场景设置独立的模板代码。
+                  </div>
                 </VCol>
 
-                <!-- Auth Scenario -->
-                <VCol cols="12" md="6">
-                  <VTextField
-                    v-model="systemStore.smsSettings.scenarios.auth.signName"
-                    label="登录/注册 - 短信签名"
-                    placeholder="留空则使用全局配置"
-                    :disabled="!systemStore.smsSettings.enabled"
-                  />
-                </VCol>
-                <VCol cols="12" md="6">
-                  <VTextField
-                    v-model="systemStore.smsSettings.scenarios.auth.templateCode"
-                    label="登录/注册 - 模板代码"
-                    placeholder="留空则使用全局配置"
-                    :disabled="!systemStore.smsSettings.enabled"
-                  />
-                </VCol>
-
-                <!-- Interview Scenario -->
-                <VCol cols="12" md="6">
-                  <VTextField
-                    v-model="systemStore.smsSettings.scenarios.interview.signName"
-                    label="面试邀请 - 短信签名"
-                    placeholder="留空则使用全局配置"
-                    :disabled="!systemStore.smsSettings.enabled"
-                  />
-                </VCol>
-                <VCol cols="12" md="6">
-                  <VTextField
-                    v-model="systemStore.smsSettings.scenarios.interview.templateCode"
-                    label="面试邀请 - 模板代码"
-                    placeholder="留空则使用全局配置"
-                    :disabled="!systemStore.smsSettings.enabled"
-                  />
-                </VCol>
+                <!-- Scenarios Grid -->
                 <VCol cols="12">
-                  <VTextarea
+                  <VRow>
+                    <!-- Auth Scenario -->
+                    <VCol
+                      cols="12"
+                      md="4"
+                    >
+                      <VCard
+                        variant="outlined"
+                        class="pa-4"
+                      >
+                        <div class="d-flex align-center mb-3">
+                          <VIcon
+                            icon="mdi-shield-check-outline"
+                            class="me-2"
+                            color="primary"
+                          />
+                          <span class="text-subtitle-2 font-weight-bold">登录/注册验证码</span>
+                        </div>
+                        <VTextField
+                          v-model="systemStore.smsSettings.scenarios.auth.templateCode"
+                          label="模板代码"
+                          placeholder="例如: SMS_12345678"
+                          variant="underlined"
+                          hide-details
+                          :disabled="!systemStore.smsSettings.enabled"
+                        />
+                        <div class="text-caption text-grey mt-2">
+                          用于用户登录、注册时的身份验证。
+                        </div>
+                      </VCard>
+                    </VCol>
+
+                    <!-- Interview Scenario -->
+                    <VCol
+                      cols="12"
+                      md="4"
+                    >
+                      <VCard
+                        variant="outlined"
+                        class="pa-4"
+                      >
+                        <div class="d-flex align-center mb-3">
+                          <VIcon
+                            icon="mdi-calendar-check"
+                            class="me-2"
+                            color="success"
+                          />
+                          <span class="text-subtitle-2 font-weight-bold">面试邀请通知</span>
+                        </div>
+                        <VTextField
+                          v-model="systemStore.smsSettings.scenarios.interview.templateCode"
+                          label="模板代码"
+                          placeholder="例如: SMS_87654321"
+                          variant="underlined"
+                          hide-details
+                          :disabled="!systemStore.smsSettings.enabled"
+                        />
+                        <div class="text-caption text-grey mt-2">
+                          当企业发送面试邀请给候选人时触发。
+                        </div>
+                      </VCard>
+                    </VCol>
+
+                    <!-- Reminder Scenario -->
+                    <VCol
+                      cols="12"
+                      md="4"
+                    >
+                      <VCard
+                        variant="outlined"
+                        class="pa-4"
+                      >
+                        <div class="d-flex align-center mb-3">
+                          <VIcon
+                            icon="mdi-alarm"
+                            class="me-2"
+                            color="warning"
+                          />
+                          <span class="text-subtitle-2 font-weight-bold">面试提醒通知</span>
+                        </div>
+                        <VTextField
+                          v-model="systemStore.smsSettings.scenarios.reminder.templateCode"
+                          label="模板代码"
+                          placeholder="例如: SMS_11223344"
+                          variant="underlined"
+                          hide-details
+                          :disabled="!systemStore.smsSettings.enabled"
+                        />
+                        <div class="text-caption text-grey mt-2">
+                          在面试开始前提醒候选人和面试官。
+                        </div>
+                      </VCard>
+                    </VCol>
+                  </VRow>
+                </VCol>
+
+                <!-- SMS Test Section -->
+                <VCol cols="12">
+                  <VDivider class="my-4" />
+                  <div class="text-subtitle-1 mb-2 font-weight-bold">
+                    短信发送测试
+                  </div>
+                </VCol>
+                
+                <VCol
+                  cols="12"
+                  md="6"
+                >
+                  <VSelect
+                    v-model="smsTestScenario"
+                    :items="smsScenarioOptions"
+                    label="选择测试场景"
+                    placeholder="请选择要测试的场景"
+                    :disabled="!systemStore.smsSettings.enabled"
+                  />
+                </VCol>
+
+                <VCol
+                  cols="12"
+                  md="6"
+                >
+                  <VTextField
                     v-model="smsTestPhone"
                     label="测试手机号"
-                    placeholder="请输入测试手机号，多个号码用逗号分隔"
-                    rows="2"
+                    placeholder="请输入接收测试短信的手机号"
+                    :disabled="!systemStore.smsSettings.enabled"
+                  />
+                </VCol>
+
+                <VCol cols="12">
+                  <VTextarea
+                    v-model="smsTestParams"
+                    label="测试参数 (JSON)"
+                    placeholder="请输入符合阿里云模板的变量参数"
+                    rows="4"
+                    persistent-placeholder
+                    hint="请确保 JSON 键名与阿里云短信模板中的变量名 (${key}) 完全一致"
+                    persistent-hint
                     :disabled="!systemStore.smsSettings.enabled"
                   />
                 </VCol>
@@ -199,20 +358,51 @@
             </VForm>
           </VCardText>
           <VCardActions>
-            <VBtn color="info" @click="testSms" :disabled="!systemStore.smsSettings.enabled || !smsTestPhone" :loading="testing.sms">
-              测试短信
+            <VBtn 
+              color="info" 
+              variant="elevated"
+              :disabled="!systemStore.smsSettings.enabled || !smsTestPhone || !smsTestScenario" 
+              :loading="testing.sms" 
+              @click="testSms"
+            >
+              <VIcon
+                icon="mdi-send-outline"
+                class="me-2"
+              />
+              发送测试短信
             </VBtn>
-            <VBtn variant="tonal" color="secondary" class="ml-2" @click="checkSms" :loading="testing.check">
+            <VBtn
+              variant="tonal"
+              color="secondary"
+              class="ml-2"
+              :loading="testing.check"
+              @click="checkSms"
+            >
               检查配置
             </VBtn>
             <VSpacer />
-            <div v-if="smsDiag" class="mr-4">
-              <VAlert :type="smsDiag.status==='ok' ? 'success' : 'warning'" density="comfortable">
-                <div class="text-sm">{{ smsDiag.status==='ok' ? '配置完整' : '缺少: ' + (smsDiag.missing||[]).join(', ') }}</div>
+            <div
+              v-if="smsDiag"
+              class="mr-4"
+            >
+              <VAlert
+                :type="smsDiag.status==='ok' ? 'success' : 'warning'"
+                density="comfortable"
+              >
+                <div class="text-sm">
+                  {{ smsDiag.status==='ok' ? '配置完整' : '缺少: ' + (smsDiag.missing||[]).join(', ') }}
+                </div>
               </VAlert>
             </div>
             <VSpacer />
-            <VBtn color="primary" @click="saveSmsSettings" :loading="saving.sms">保存短信设置</VBtn>
+            <VBtn
+              color="primary"
+              variant="flat"
+              :loading="saving.sms"
+              @click="saveSmsSettings"
+            >
+              保存短信设置
+            </VBtn>
           </VCardActions>
         </VCard>
       </VWindowItem>
@@ -221,16 +411,25 @@
       <VWindowItem value="email">
         <VCard>
           <VCardText>
-            <VForm ref="emailForm" @submit.prevent="saveEmailSettings">
+            <VForm
+              ref="emailForm"
+              @submit.prevent="saveEmailSettings"
+            >
               <VRow>
-                <VCol cols="12" md="6">
+                <VCol
+                  cols="12"
+                  md="6"
+                >
                   <VSwitch
                     v-model="systemStore.emailSettings.enabled"
                     label="启用邮件服务"
                     color="primary"
                   />
                 </VCol>
-                <VCol cols="12" md="6">
+                <VCol
+                  cols="12"
+                  md="6"
+                >
                   <VTextField
                     v-model="systemStore.emailSettings.fromName"
                     label="发件人名称"
@@ -238,7 +437,10 @@
                     :disabled="!systemStore.emailSettings.enabled"
                   />
                 </VCol>
-                <VCol cols="12" md="8">
+                <VCol
+                  cols="12"
+                  md="8"
+                >
                   <VTextField
                     v-model="systemStore.emailSettings.host"
                     label="SMTP 服务器"
@@ -247,7 +449,10 @@
                     :rules="systemStore.emailSettings.enabled ? [v => !!v || '请输入SMTP服务器地址'] : []"
                   />
                 </VCol>
-                <VCol cols="12" md="4">
+                <VCol
+                  cols="12"
+                  md="4"
+                >
                   <VTextField
                     v-model.number="systemStore.emailSettings.port"
                     label="端口"
@@ -257,7 +462,10 @@
                     :rules="systemStore.emailSettings.enabled ? [v => !!v || '请输入端口'] : []"
                   />
                 </VCol>
-                <VCol cols="12" md="6">
+                <VCol
+                  cols="12"
+                  md="6"
+                >
                   <VSwitch
                     v-model="systemStore.emailSettings.secure"
                     label="启用 SSL/TLS"
@@ -265,7 +473,10 @@
                     :disabled="!systemStore.emailSettings.enabled"
                   />
                 </VCol>
-                <VCol cols="12" md="6">
+                <VCol
+                  cols="12"
+                  md="6"
+                >
                   <VTextField
                     v-model="systemStore.emailSettings.user"
                     label="SMTP 账号"
@@ -274,23 +485,31 @@
                     :rules="systemStore.emailSettings.enabled ? [v => !!v || '请输入SMTP账号'] : []"
                   />
                 </VCol>
-                <VCol cols="12" md="6">
+                <VCol
+                  cols="12"
+                  md="6"
+                >
                   <VTextField
                     v-model="systemStore.emailSettings.pass"
                     label="SMTP 密码/授权码"
                     :type="showEmailSecret ? 'text' : 'password'"
                     :append-inner-icon="showEmailSecret ? 'mdi-eye-off' : 'mdi-eye'"
-                    @click:append-inner="showEmailSecret = !showEmailSecret"
                     placeholder="请输入邮箱密码或授权码"
                     :disabled="!systemStore.emailSettings.enabled"
                     :rules="systemStore.emailSettings.enabled ? [v => !!v || '请输入SMTP密码'] : []"
+                    @click:append-inner="showEmailSecret = !showEmailSecret"
                   />
                 </VCol>
                 <VCol cols="12">
                   <VDivider class="my-4" />
-                  <div class="text-subtitle-1 mb-2 font-weight-bold">邮件测试</div>
+                  <div class="text-subtitle-1 mb-2 font-weight-bold">
+                    邮件测试
+                  </div>
                 </VCol>
-                <VCol cols="12" md="6">
+                <VCol
+                  cols="12"
+                  md="6"
+                >
                   <VTextField
                     v-model="emailTestAddress"
                     label="测试收件邮箱"
@@ -302,11 +521,22 @@
             </VForm>
           </VCardText>
           <VCardActions>
-            <VBtn color="info" @click="testEmail" :disabled="!systemStore.emailSettings.enabled || !emailTestAddress" :loading="testing.email">
+            <VBtn
+              color="info"
+              :disabled="!systemStore.emailSettings.enabled || !emailTestAddress"
+              :loading="testing.email"
+              @click="testEmail"
+            >
               测试邮件
             </VBtn>
             <VSpacer />
-            <VBtn color="primary" @click="saveEmailSettings" :loading="saving.email">保存邮件设置</VBtn>
+            <VBtn
+              color="primary"
+              :loading="saving.email"
+              @click="saveEmailSettings"
+            >
+              保存邮件设置
+            </VBtn>
           </VCardActions>
         </VCard>
       </VWindowItem>
@@ -315,16 +545,25 @@
       <VWindowItem value="notifications">
         <VCard>
           <VCardText>
-            <VForm ref="notificationForm" @submit.prevent="saveNotificationSettings">
+            <VForm
+              ref="notificationForm"
+              @submit.prevent="saveNotificationSettings"
+            >
               <VRow>
-                <VCol cols="12" md="6">
+                <VCol
+                  cols="12"
+                  md="6"
+                >
                   <VSwitch
                     v-model="systemStore.notificationSettings.emailNotifications"
                     label="启用邮件通知"
                     color="primary"
                   />
                 </VCol>
-                <VCol cols="12" md="6">
+                <VCol
+                  cols="12"
+                  md="6"
+                >
                   <VSwitch
                     v-model="systemStore.notificationSettings.smsNotifications"
                     label="启用短信通知"
@@ -332,14 +571,20 @@
                     :disabled="!systemStore.smsSettings.enabled"
                   />
                 </VCol>
-                <VCol cols="12" md="6">
+                <VCol
+                  cols="12"
+                  md="6"
+                >
                   <VSwitch
                     v-model="systemStore.notificationSettings.pushNotifications"
                     label="启用推送通知"
                     color="primary"
                   />
                 </VCol>
-                <VCol cols="12" md="6">
+                <VCol
+                  cols="12"
+                  md="6"
+                >
                   <VSwitch
                     v-model="systemStore.notificationSettings.systemNotifications"
                     label="启用系统通知"
@@ -351,7 +596,13 @@
           </VCardText>
           <VCardActions>
             <VSpacer />
-            <VBtn color="primary" @click="saveNotificationSettings" :loading="saving.notifications">保存通知设置</VBtn>
+            <VBtn
+              color="primary"
+              :loading="saving.notifications"
+              @click="saveNotificationSettings"
+            >
+              保存通知设置
+            </VBtn>
           </VCardActions>
         </VCard>
       </VWindowItem>
@@ -359,11 +610,17 @@
       <!-- 角色权限 -->
       <VWindowItem value="roles">
         <VRow>
-          <VCol cols="12" lg="8">
+          <VCol
+            cols="12"
+            lg="8"
+          >
             <VCard>
               <VCardTitle>
                 <VRow align="center">
-                  <VCol cols="12" md="8">
+                  <VCol
+                    cols="12"
+                    md="8"
+                  >
                     <VTextField
                       v-model="roleSearch"
                       placeholder="搜索角色"
@@ -372,9 +629,19 @@
                       hide-details
                     />
                   </VCol>
-                  <VCol cols="12" md="4" class="text-md-right">
-                    <VBtn color="primary" @click="showRoleDialog = true">
-                      <VIcon icon="mdi-plus" class="me-2" />
+                  <VCol
+                    cols="12"
+                    md="4"
+                    class="text-md-right"
+                  >
+                    <VBtn
+                      color="primary"
+                      @click="showRoleDialog = true"
+                    >
+                      <VIcon
+                        icon="mdi-plus"
+                        class="me-2"
+                      />
                       新建角色
                     </VBtn>
                   </VCol>
@@ -394,18 +661,30 @@
                         :color="getRoleColor(item.name)"
                         class="me-3"
                       >
-                        <VIcon icon="mdi-shield-account" size="18" />
+                        <VIcon
+                          icon="mdi-shield-account"
+                          size="18"
+                        />
                       </VAvatar>
                       <div>
-                        <div class="text-subtitle-2">{{ item.name }}</div>
-                        <div class="text-caption text-medium-emphasis">{{ item.description }}</div>
+                        <div class="text-subtitle-2">
+                          {{ item.name }}
+                        </div>
+                        <div class="text-caption text-medium-emphasis">
+                          {{ item.description }}
+                        </div>
                       </div>
                     </div>
                   </template>
                   
                   <template #item.permissions="{ item }">
                     <div v-if="item.permissions.includes('*')">
-                      <VChip color="primary" size="small">所有权限</VChip>
+                      <VChip
+                        color="primary"
+                        size="small"
+                      >
+                        所有权限
+                      </VChip>
                     </div>
                     <div v-else>
                       <VChip
@@ -442,32 +721,41 @@
                         size="small"
                         color="info"
                         variant="text"
-                        @click="viewRolePermissions(item)"
                         title="查看权限详情"
+                        @click="viewRolePermissions(item)"
                       >
-                        <VIcon icon="mdi-eye" size="18" />
+                        <VIcon
+                          icon="mdi-eye"
+                          size="18"
+                        />
                       </VBtn>
                       <VBtn
                         icon
                         size="small"
                         color="primary"
                         variant="text"
-                        @click="editRole(item)"
                         :disabled="item.isSystem"
                         title="编辑角色"
+                        @click="editRole(item)"
                       >
-                        <VIcon icon="mdi-pencil" size="18" />
+                        <VIcon
+                          icon="mdi-pencil"
+                          size="18"
+                        />
                       </VBtn>
                       <VBtn
                         icon
                         size="small"
                         color="error"
                         variant="text"
-                        @click="deleteRole(item)"
                         :disabled="item.isSystem"
                         title="删除角色"
+                        @click="deleteRole(item)"
                       >
-                        <VIcon icon="mdi-delete" size="18" />
+                        <VIcon
+                          icon="mdi-delete"
+                          size="18"
+                        />
                       </VBtn>
                     </div>
                   </template>
@@ -476,7 +764,10 @@
             </VCard>
           </VCol>
           
-          <VCol cols="12" lg="4">
+          <VCol
+            cols="12"
+            lg="4"
+          >
             <VCard>
               <VCardTitle>权限说明</VCardTitle>
               <VCardText>
@@ -486,7 +777,10 @@
                     :key="category.category"
                   >
                     <VExpansionPanelTitle>
-                      <VIcon :icon="getCategoryIcon(category.category)" class="me-2" />
+                      <VIcon
+                        :icon="getCategoryIcon(category.category)"
+                        class="me-2"
+                      />
                       {{ category.category }}
                     </VExpansionPanelTitle>
                     <VExpansionPanelText>
@@ -511,17 +805,22 @@
           </VCol>
         </VRow>
       </VWindowItem>
-
     </VWindow>
 
     <!-- 角色编辑对话框 -->
-    <VDialog v-model="showRoleDialog" max-width="600px">
+    <VDialog
+      v-model="showRoleDialog"
+      max-width="600px"
+    >
       <VCard>
         <VCardTitle>
           <span>{{ editingRole ? '编辑角色' : '新建角色' }}</span>
         </VCardTitle>
         <VCardText>
-          <VForm ref="roleForm" @submit.prevent="saveRole">
+          <VForm
+            ref="roleForm"
+            @submit.prevent="saveRole"
+          >
             <VRow>
               <VCol cols="12">
                 <VTextField
@@ -539,14 +838,20 @@
                 />
               </VCol>
               <VCol cols="12">
-                <div class="text-subtitle-2 mb-2">权限设置</div>
+                <div class="text-subtitle-2 mb-2">
+                  权限设置
+                </div>
                 <VExpansionPanels>
                   <VExpansionPanel
                     v-for="category in systemStore.permissions"
                     :key="category.category"
                   >
                     <VExpansionPanelTitle>
-                      <VIcon :icon="getCategoryIcon(category.category)" class="me-2" size="18" />
+                      <VIcon
+                        :icon="getCategoryIcon(category.category)"
+                        class="me-2"
+                        size="18"
+                      />
                       {{ category.category }}
                     </VExpansionPanelTitle>
                     <VExpansionPanelText>
@@ -561,8 +866,12 @@
                       >
                         <template #label>
                           <div>
-                            <div class="text-body-2">{{ permission.title }}</div>
-                            <div class="text-caption text-medium-emphasis">{{ permission.description }}</div>
+                            <div class="text-body-2">
+                              {{ permission.title }}
+                            </div>
+                            <div class="text-caption text-medium-emphasis">
+                              {{ permission.description }}
+                            </div>
                           </div>
                         </template>
                       </VCheckbox>
@@ -575,14 +884,29 @@
         </VCardText>
         <VCardActions>
           <VSpacer />
-          <VBtn color="grey" variant="text" @click="closeRoleDialog">取消</VBtn>
-          <VBtn color="primary" @click="saveRole" :loading="saving.role">保存</VBtn>
+          <VBtn
+            color="grey"
+            variant="text"
+            @click="closeRoleDialog"
+          >
+            取消
+          </VBtn>
+          <VBtn
+            color="primary"
+            :loading="saving.role"
+            @click="saveRole"
+          >
+            保存
+          </VBtn>
         </VCardActions>
       </VCard>
     </VDialog>
 
     <!-- 权限详情对话框 -->
-    <VDialog v-model="showPermissionDialog" max-width="600px">
+    <VDialog
+      v-model="showPermissionDialog"
+      max-width="600px"
+    >
       <VCard>
         <VCardTitle>
           <VRow align="center">
@@ -591,24 +915,37 @@
                 size="40"
                 :color="getRoleColor(viewingRole?.name)"
               >
-                <VIcon icon="mdi-shield-account" size="24" />
+                <VIcon
+                  icon="mdi-shield-account"
+                  size="24"
+                />
               </VAvatar>
             </VCol>
             <VCol>
-              <div class="text-h6">{{ viewingRole?.name }}</div>
-              <div class="text-caption text-medium-emphasis">{{ viewingRole?.description }}</div>
+              <div class="text-h6">
+                {{ viewingRole?.name }}
+              </div>
+              <div class="text-caption text-medium-emphasis">
+                {{ viewingRole?.description }}
+              </div>
             </VCol>
           </VRow>
         </VCardTitle>
         <VCardText>
-          <div class="text-subtitle-2 mb-3">权限详情</div>
+          <div class="text-subtitle-2 mb-3">
+            权限详情
+          </div>
           <VList density="compact">
             <VListItem
               v-for="permission in viewingRole?.permissions || []"
               :key="permission"
             >
               <VListItemIcon>
-                <VIcon icon="mdi-check-circle" color="success" size="16" />
+                <VIcon
+                  icon="mdi-check-circle"
+                  color="success"
+                  size="16"
+                />
               </VListItemIcon>
               <VListItemContent>
                 <VListItemTitle class="text-body-2">
@@ -623,7 +960,11 @@
         </VCardText>
         <VCardActions>
           <VSpacer />
-          <VBtn color="primary" variant="text" @click="showPermissionDialog = false">
+          <VBtn
+            color="primary"
+            variant="text"
+            @click="showPermissionDialog = false"
+          >
             关闭
           </VBtn>
         </VCardActions>
@@ -675,6 +1016,35 @@ const showSmsSecret = ref(false)
 const showEmailSecret = ref(false)
 const roleSearch = ref('')
 const smsTestPhone = ref('')
+const smsTestScenario = ref('auth')
+const smsTestParams = ref('')
+
+const defaultTestParams = {
+  auth: { code: '123456' },
+  interview: { 
+    name: '张三', 
+    time: '2026-01-20 10:00', 
+    jobId: '12345'
+  },
+  reminder: { 
+    time: '15分钟后', 
+    url: 'https://m.cloujade.com/i/123' 
+  }
+}
+
+// Watch scenario change to update default params
+watch(smsTestScenario, (newVal) => {
+  if (newVal && defaultTestParams[newVal]) {
+    smsTestParams.value = JSON.stringify(defaultTestParams[newVal], null, 2)
+  }
+}, { immediate: true })
+
+const smsScenarioOptions = [
+  { title: '登录/注册验证码', value: 'auth' },
+  { title: '面试邀请通知', value: 'interview' },
+  { title: '面试提醒通知', value: 'reminder' },
+]
+
 const emailTestAddress = ref('')
 
 const saving = reactive({
@@ -828,14 +1198,33 @@ const saveSmsSettings = async () => {
 }
 
 const testSms = async () => {
-  if (!smsTestPhone.value) return
+  if (!smsTestPhone.value || !smsTestScenario.value) return
 
   testing.sms = true
   try {
-    await systemStore.testSms({ phone: smsTestPhone.value })
-    ui.showNotification('短信发送成功！', 'success')
+    let params = null
+    try {
+      if (smsTestParams.value) {
+        params = JSON.parse(smsTestParams.value)
+      }
+    } catch (e) {
+      ui.showNotification('测试参数格式错误，请输入有效的 JSON', 'error')
+      testing.sms = false
+      return
+    }
+
+    const currentTemplateCode = systemStore.smsSettings.scenarios[smsTestScenario.value]?.templateCode
+
+    await systemStore.testSms({ 
+      phone: smsTestPhone.value,
+      scenario: smsTestScenario.value,
+      templateCode: currentTemplateCode,
+      content: params
+    })
+    ui.showNotification('短信测试发送成功！', 'success')
   } catch (error) {
-    ui.showNotification('短信发送失败：' + error.message, 'error')
+    const msg = error.response?.data?.error || error.response?.data?.message || error.message
+    ui.showNotification('短信发送失败：' + msg, 'error')
   } finally {
     testing.sms = false
   }

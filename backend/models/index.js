@@ -1199,6 +1199,10 @@ const InterviewSession = sequelize.define('InterviewSession', {
     type: DataTypes.ENUM('CREATED', 'IN_PROGRESS', 'COMPLETED', 'EVALUATED'),
     defaultValue: 'CREATED'
   },
+  expires_at: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
   report: {
     type: DataTypes.JSON,
     allowNull: true

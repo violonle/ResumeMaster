@@ -10,16 +10,19 @@
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "module": "ESNext",
-    "moduleResolution": "Node",
+    "moduleResolution": "Bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["../../*"]
+      "@/*": ["../../*"],
+      "@css/*": ["../../css/*"],
+      "@js/*": ["../../js/*"],
+      "@client-api/*": ["../../client-api/*"]
     }
   },
-  "include": ["index.tsx", "main.tsx", "interview-api.ts", "types.ts", "components", "../../api/request.ts"],
+  "include": ["index.tsx", "main.tsx", "interview-api.ts", "types.ts", "components", "../../client-api/request.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

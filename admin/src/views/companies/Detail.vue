@@ -27,10 +27,17 @@
 
     <VRow>
       <!-- Basic Info -->
-      <VCol cols="12" md="8">
+      <VCol
+        cols="12"
+        md="8"
+      >
         <VCard>
           <VCardTitle class="d-flex align-center pa-4">
-            <VIcon icon="mdi-office-building" class="me-2" color="primary" />
+            <VIcon
+              icon="mdi-office-building"
+              class="me-2"
+              color="primary"
+            />
             <span class="font-weight-bold">基本信息</span>
             <VSpacer />
             <VChip
@@ -52,84 +59,178 @@
           <VDivider />
           <VCardText class="pa-4">
             <VRow>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <div class="mb-4">
-                  <div class="text-caption text-medium-emphasis mb-1">企业名称</div>
-                  <div class="text-h6 font-weight-bold">{{ company?.name || '-' }}</div>
+                  <div class="text-caption text-medium-emphasis mb-1">
+                    企业名称
+                  </div>
+                  <div class="text-h6 font-weight-bold">
+                    {{ company?.name || '-' }}
+                  </div>
                 </div>
                 <div class="mb-4">
-                  <div class="text-caption text-medium-emphasis mb-1">联系人</div>
-                  <div class="text-body-1">{{ company?.contactPerson || '-' }}</div>
+                  <div class="text-caption text-medium-emphasis mb-1">
+                    联系人
+                  </div>
+                  <div class="text-body-1">
+                    {{ company?.contactPerson || '-' }}
+                  </div>
                 </div>
                 <div class="mb-4">
-                  <div class="text-caption text-medium-emphasis mb-1">联系电话</div>
-                  <div class="text-body-1">{{ company?.contactPhone || '-' }}</div>
+                  <div class="text-caption text-medium-emphasis mb-1">
+                    联系电话
+                  </div>
+                  <div class="text-body-1">
+                    {{ company?.contactPhone || '-' }}
+                  </div>
                 </div>
                 <div class="mb-4">
-                  <div class="text-caption text-medium-emphasis mb-1">企业邮箱</div>
-                  <div class="text-body-1">{{ company?.email || '-' }}</div>
+                  <div class="text-caption text-medium-emphasis mb-1">
+                    企业邮箱
+                  </div>
+                  <div class="text-body-1">
+                    {{ company?.email || '-' }}
+                  </div>
                 </div>
               </VCol>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <div class="mb-4">
-                  <div class="text-caption text-medium-emphasis mb-1">企业规模</div>
-                  <div class="text-body-1">{{ getCompanySizeText(company?.companySize) || '-' }}</div>
+                  <div class="text-caption text-medium-emphasis mb-1">
+                    企业规模
+                  </div>
+                  <div class="text-body-1">
+                    {{ getCompanySizeText(company?.companySize) || '-' }}
+                  </div>
                 </div>
                 <div class="mb-4">
-                  <div class="text-caption text-medium-emphasis mb-1">行业类型</div>
-                  <div class="text-body-1">{{ company?.industry || '-' }}</div>
+                  <div class="text-caption text-medium-emphasis mb-1">
+                    行业类型
+                  </div>
+                  <div class="text-body-1">
+                    {{ company?.industry || '-' }}
+                  </div>
                 </div>
                 <div class="mb-4">
-                  <div class="text-caption text-medium-emphasis mb-1">注册时间</div>
-                  <div class="text-body-1">{{ formatDate(company?.createdAt) }}</div>
+                  <div class="text-caption text-medium-emphasis mb-1">
+                    注册时间
+                  </div>
+                  <div class="text-body-1">
+                    {{ formatDate(company?.createdAt) }}
+                  </div>
                 </div>
                 <div class="mb-4">
-                  <div class="text-caption text-medium-emphasis mb-1">认证时间</div>
-                  <div class="text-body-1">{{ formatDate(company?.verifiedAt) || '未认证' }}</div>
+                  <div class="text-caption text-medium-emphasis mb-1">
+                    认证时间
+                  </div>
+                  <div class="text-body-1">
+                    {{ formatDate(company?.verifiedAt) || '未认证' }}
+                  </div>
                 </div>
               </VCol>
             </VRow>
-            <div class="mb-4" v-if="company?.address">
-              <div class="text-caption text-medium-emphasis mb-1">企业地址</div>
-              <div class="text-body-1">{{ company.address }}</div>
+            <div
+              v-if="company?.address"
+              class="mb-4"
+            >
+              <div class="text-caption text-medium-emphasis mb-1">
+                企业地址
+              </div>
+              <div class="text-body-1">
+                {{ company.address }}
+              </div>
             </div>
-            <div class="mb-4" v-if="company?.description">
-              <div class="text-caption text-medium-emphasis mb-1">企业简介</div>
-              <div class="text-body-1">{{ company.description }}</div>
+            <div
+              v-if="company?.description"
+              class="mb-4"
+            >
+              <div class="text-caption text-medium-emphasis mb-1">
+                企业简介
+              </div>
+              <div class="text-body-1">
+                {{ company.description }}
+              </div>
             </div>
-            <div class="mb-0" v-if="company?.remark">
-              <div class="text-caption text-medium-emphasis mb-1">备注</div>
-              <div class="text-body-1">{{ company.remark }}</div>
+            <div
+              v-if="company?.remark"
+              class="mb-0"
+            >
+              <div class="text-caption text-medium-emphasis mb-1">
+                备注
+              </div>
+              <div class="text-body-1">
+                {{ company.remark }}
+              </div>
             </div>
           </VCardText>
         </VCard>
       </VCol>
 
       <!-- Stats -->
-      <VCol cols="12" md="4">
+      <VCol
+        cols="12"
+        md="4"
+      >
         <VCard class="h-100">
           <VCardTitle class="d-flex align-center pa-4">
-            <VIcon icon="mdi-chart-pie" class="me-2" color="primary" />
+            <VIcon
+              icon="mdi-chart-pie"
+              class="me-2"
+              color="primary"
+            />
             <span class="font-weight-bold">统计信息</span>
           </VCardTitle>
           <VDivider />
           <VCardText class="pa-4">
             <VRow>
-              <VCol cols="6" class="text-center">
-                <div class="text-h4 text-primary font-weight-bold mb-1">{{ companyStats?.totalEmployees || 0 }}</div>
-                <div class="text-caption text-medium-emphasis">员工数量</div>
+              <VCol
+                cols="6"
+                class="text-center"
+              >
+                <div class="text-h4 text-primary font-weight-bold mb-1">
+                  {{ companyStats?.totalEmployees || 0 }}
+                </div>
+                <div class="text-caption text-medium-emphasis">
+                  员工数量
+                </div>
               </VCol>
-              <VCol cols="6" class="text-center">
-                <div class="text-h4 text-success font-weight-bold mb-1">{{ companyStats?.totalResumes || 0 }}</div>
-                <div class="text-caption text-medium-emphasis">总简历数</div>
+              <VCol
+                cols="6"
+                class="text-center"
+              >
+                <div class="text-h4 text-success font-weight-bold mb-1">
+                  {{ companyStats?.totalResumes || 0 }}
+                </div>
+                <div class="text-caption text-medium-emphasis">
+                  总简历数
+                </div>
               </VCol>
-              <VCol cols="6" class="text-center mt-4">
-                <div class="text-h4 text-info font-weight-bold mb-1">{{ companyStats?.totalJobs || 0 }}</div>
-                <div class="text-caption text-medium-emphasis">总职位数</div>
+              <VCol
+                cols="6"
+                class="text-center mt-4"
+              >
+                <div class="text-h4 text-info font-weight-bold mb-1">
+                  {{ companyStats?.totalJobs || 0 }}
+                </div>
+                <div class="text-caption text-medium-emphasis">
+                  总职位数
+                </div>
               </VCol>
-              <VCol cols="6" class="text-center mt-4">
-                <div class="text-h4 text-warning font-weight-bold mb-1">{{ companyStats?.activeSubscriptions || 0 }}</div>
-                <div class="text-caption text-medium-emphasis">活跃订阅</div>
+              <VCol
+                cols="6"
+                class="text-center mt-4"
+              >
+                <div class="text-h4 text-warning font-weight-bold mb-1">
+                  {{ companyStats?.activeSubscriptions || 0 }}
+                </div>
+                <div class="text-caption text-medium-emphasis">
+                  活跃订阅
+                </div>
               </VCol>
             </VRow>
           </VCardText>
@@ -140,7 +241,11 @@
       <VCol cols="12">
         <VCard>
           <VCardTitle class="d-flex align-center pa-4">
-            <VIcon icon="mdi-account-multiple" class="me-2" color="primary" />
+            <VIcon
+              icon="mdi-account-multiple"
+              class="me-2"
+              color="primary"
+            />
             <span class="font-weight-bold">团队成员</span>
             <VSpacer />
             <VBtn
@@ -186,7 +291,10 @@
             </template>
             <template #item.actions="{ item }">
               <div class="d-flex ga-1">
-                <VTooltip text="编辑成员" location="top">
+                <VTooltip
+                  text="编辑成员"
+                  location="top"
+                >
                   <template #activator="{ props }">
                     <VBtn
                       v-bind="props"
@@ -198,7 +306,11 @@
                     />
                   </template>
                 </VTooltip>
-                <VTooltip v-if="item.status === 'active'" text="禁用成员" location="top">
+                <VTooltip
+                  v-if="item.status === 'active'"
+                  text="禁用成员"
+                  location="top"
+                >
                   <template #activator="{ props }">
                     <VBtn
                       v-bind="props"
@@ -210,7 +322,11 @@
                     />
                   </template>
                 </VTooltip>
-                <VTooltip v-if="item.status === 'inactive'" text="启用成员" location="top">
+                <VTooltip
+                  v-if="item.status === 'inactive'"
+                  text="启用成员"
+                  location="top"
+                >
                   <template #activator="{ props }">
                     <VBtn
                       v-bind="props"
@@ -226,8 +342,14 @@
             </template>
             <template #no-data>
               <div class="text-center pa-8 text-medium-emphasis">
-                <VIcon icon="mdi-account-off" size="64" class="mb-4" />
-                <div class="text-h6">暂无团队成员</div>
+                <VIcon
+                  icon="mdi-account-off"
+                  size="64"
+                  class="mb-4"
+                />
+                <div class="text-h6">
+                  暂无团队成员
+                </div>
               </div>
             </template>
           </VDataTable>
@@ -238,7 +360,11 @@
       <VCol cols="12">
         <VCard>
           <VCardTitle class="d-flex align-center pa-4">
-            <VIcon icon="mdi-credit-card" class="me-2" color="primary" />
+            <VIcon
+              icon="mdi-credit-card"
+              class="me-2"
+              color="primary"
+            />
             <span class="font-weight-bold">企业订阅</span>
             <VSpacer />
             <VBtn
@@ -289,7 +415,10 @@
             </template>
             <template #item.actions="{ item }">
               <div class="d-flex ga-1">
-                <VTooltip text="编辑订阅" location="top">
+                <VTooltip
+                  text="编辑订阅"
+                  location="top"
+                >
                   <template #activator="{ props }">
                     <VBtn
                       v-bind="props"
@@ -301,7 +430,10 @@
                     />
                   </template>
                 </VTooltip>
-                <VTooltip text="取消订阅" location="top">
+                <VTooltip
+                  text="取消订阅"
+                  location="top"
+                >
                   <template #activator="{ props }">
                     <VBtn
                       v-bind="props"
@@ -317,8 +449,14 @@
             </template>
             <template #no-data>
               <div class="text-center pa-8 text-medium-emphasis">
-                <VIcon icon="mdi-credit-card-off" size="64" class="mb-4" />
-                <div class="text-h6">暂无订阅记录</div>
+                <VIcon
+                  icon="mdi-credit-card-off"
+                  size="64"
+                  class="mb-4"
+                />
+                <div class="text-h6">
+                  暂无订阅记录
+                </div>
               </div>
             </template>
           </VDataTable>
@@ -329,12 +467,22 @@
       <VCol cols="12">
         <VCard>
           <VCardTitle class="d-flex align-center pa-4">
-            <VIcon icon="mdi-history" class="me-2" color="primary" />
+            <VIcon
+              icon="mdi-history"
+              class="me-2"
+              color="primary"
+            />
             <span class="font-weight-bold">最近活动</span>
           </VCardTitle>
           <VDivider />
-          <VList lines="two" class="pa-2">
-            <template v-for="(activity, index) in recentActivities" :key="activity.id">
+          <VList
+            lines="two"
+            class="pa-2"
+          >
+            <template
+              v-for="(activity, index) in recentActivities"
+              :key="activity.id"
+            >
               <VListItem class="rounded-lg mb-1">
                 <template #prepend>
                   <VAvatar
@@ -346,19 +494,35 @@
                   </VAvatar>
                 </template>
                 
-                <VListItemTitle class="font-weight-medium">{{ activity.title }}</VListItemTitle>
+                <VListItemTitle class="font-weight-medium">
+                  {{ activity.title }}
+                </VListItemTitle>
                 <VListItemSubtitle>
-                  <div class="text-body-2">{{ activity.description }}</div>
+                  <div class="text-body-2">
+                    {{ activity.description }}
+                  </div>
                   <div class="text-caption text-medium-emphasis mt-1">
                     {{ formatTime(activity.createdAt) }}
                   </div>
                 </VListItemSubtitle>
               </VListItem>
-              <VDivider v-if="index < recentActivities.length - 1" class="my-1" />
+              <VDivider
+                v-if="index < recentActivities.length - 1"
+                class="my-1"
+              />
             </template>
-            <div v-if="!recentActivities.length" class="text-center pa-8 text-medium-emphasis">
-              <VIcon icon="mdi-history" size="64" class="mb-4" />
-              <div class="text-h6">暂无活动记录</div>
+            <div
+              v-if="!recentActivities.length"
+              class="text-center pa-8 text-medium-emphasis"
+            >
+              <VIcon
+                icon="mdi-history"
+                size="64"
+                class="mb-4"
+              />
+              <div class="text-h6">
+                暂无活动记录
+              </div>
             </div>
           </VList>
         </VCard>
@@ -367,14 +531,25 @@
 
     <!-- Dialogs -->
     <!-- Edit Company Dialog -->
-    <VDialog v-model="editDialog" max-width="700">
+    <VDialog
+      v-model="editDialog"
+      max-width="700"
+    >
       <VCard>
-        <VCardTitle class="pa-4">编辑企业信息</VCardTitle>
+        <VCardTitle class="pa-4">
+          编辑企业信息
+        </VCardTitle>
         <VDivider />
         <VCardText class="pa-4">
-          <VForm ref="editForm" v-model="editFormValid">
+          <VForm
+            ref="editForm"
+            v-model="editFormValid"
+          >
             <VRow>
-              <VCol cols="12" md="8">
+              <VCol
+                cols="12"
+                md="8"
+              >
                 <VTextField
                   v-model="editFormData.name"
                   label="企业名称"
@@ -384,7 +559,10 @@
                   required
                 />
               </VCol>
-              <VCol cols="12" md="4">
+              <VCol
+                cols="12"
+                md="4"
+              >
                 <VSelect
                   v-model="editFormData.companySize"
                   label="企业规模"
@@ -395,7 +573,10 @@
                   density="compact"
                 />
               </VCol>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <VTextField
                   v-model="editFormData.contactPerson"
                   label="联系人"
@@ -405,7 +586,10 @@
                   required
                 />
               </VCol>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <VTextField
                   v-model="editFormData.contactPhone"
                   label="联系电话"
@@ -415,7 +599,10 @@
                   required
                 />
               </VCol>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <VTextField
                   v-model="editFormData.email"
                   label="企业邮箱"
@@ -426,7 +613,10 @@
                   required
                 />
               </VCol>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <VTextField
                   v-model="editFormData.industry"
                   label="行业类型"
@@ -467,21 +657,43 @@
         <VDivider />
         <VCardActions class="pa-4">
           <VSpacer />
-          <VBtn variant="text" @click="editDialog = false">取消</VBtn>
-          <VBtn color="primary" @click="saveEdit" :loading="loading">保存</VBtn>
+          <VBtn
+            variant="text"
+            @click="editDialog = false"
+          >
+            取消
+          </VBtn>
+          <VBtn
+            color="primary"
+            :loading="loading"
+            @click="saveEdit"
+          >
+            保存
+          </VBtn>
         </VCardActions>
       </VCard>
     </VDialog>
 
     <!-- Verify Company Dialog -->
-    <VDialog v-model="showVerifyDialog" max-width="700">
+    <VDialog
+      v-model="showVerifyDialog"
+      max-width="700"
+    >
       <VCard>
-        <VCardTitle class="pa-4">企业认证</VCardTitle>
+        <VCardTitle class="pa-4">
+          企业认证
+        </VCardTitle>
         <VDivider />
         <VCardText class="pa-4">
-          <VForm ref="verifyForm" v-model="verifyFormValid">
+          <VForm
+            ref="verifyForm"
+            v-model="verifyFormValid"
+          >
             <VRow>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <VTextField 
                   v-model="verifyFormData.license" 
                   label="营业执照号" 
@@ -489,7 +701,10 @@
                   density="compact"
                 />
               </VCol>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <VTextField 
                   v-model="verifyFormData.legal_person" 
                   label="法人代表" 
@@ -497,7 +712,10 @@
                   density="compact"
                 />
               </VCol>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <VTextField 
                   v-model="verifyFormData.credit_code" 
                   label="统一社会信用代码" 
@@ -520,19 +738,38 @@
         <VDivider />
         <VCardActions class="pa-4">
           <VSpacer />
-          <VBtn variant="text" @click="showVerifyDialog = false">取消</VBtn>
-          <VBtn color="primary" @click="submitVerify" :loading="verifying">提交认证</VBtn>
+          <VBtn
+            variant="text"
+            @click="showVerifyDialog = false"
+          >
+            取消
+          </VBtn>
+          <VBtn
+            color="primary"
+            :loading="verifying"
+            @click="submitVerify"
+          >
+            提交认证
+          </VBtn>
         </VCardActions>
       </VCard>
     </VDialog>
 
     <!-- Add Member Dialog -->
-    <VDialog v-model="memberDialog" max-width="500">
+    <VDialog
+      v-model="memberDialog"
+      max-width="500"
+    >
       <VCard>
-        <VCardTitle class="pa-4">添加团队成员</VCardTitle>
+        <VCardTitle class="pa-4">
+          添加团队成员
+        </VCardTitle>
         <VDivider />
         <VCardText class="pa-4">
-          <VForm ref="memberForm" v-model="memberFormValid">
+          <VForm
+            ref="memberForm"
+            v-model="memberFormValid"
+          >
             <VRow>
               <VCol cols="12">
                 <VTextField
@@ -574,19 +811,38 @@
         <VDivider />
         <VCardActions class="pa-4">
           <VSpacer />
-          <VBtn variant="text" @click="memberDialog = false">取消</VBtn>
-          <VBtn color="primary" @click="addMember" :loading="loading">添加</VBtn>
+          <VBtn
+            variant="text"
+            @click="memberDialog = false"
+          >
+            取消
+          </VBtn>
+          <VBtn
+            color="primary"
+            :loading="loading"
+            @click="addMember"
+          >
+            添加
+          </VBtn>
         </VCardActions>
       </VCard>
     </VDialog>
 
     <!-- New Subscription Dialog -->
-    <VDialog v-model="subscriptionDialog" max-width="500">
+    <VDialog
+      v-model="subscriptionDialog"
+      max-width="500"
+    >
       <VCard>
-        <VCardTitle class="pa-4">新建企业订阅</VCardTitle>
+        <VCardTitle class="pa-4">
+          新建企业订阅
+        </VCardTitle>
         <VDivider />
         <VCardText class="pa-4">
-          <VForm ref="subscriptionForm" v-model="subscriptionFormValid">
+          <VForm
+            ref="subscriptionForm"
+            v-model="subscriptionFormValid"
+          >
             <VRow>
               <VCol cols="12">
                 <VSelect
@@ -601,7 +857,10 @@
                   required
                 />
               </VCol>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <VTextField
                   v-model="subscriptionFormData.amount"
                   label="金额"
@@ -613,7 +872,10 @@
                   required
                 />
               </VCol>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <VTextField
                   v-model="subscriptionFormData.duration"
                   label="时长（月）"
@@ -639,8 +901,19 @@
         <VDivider />
         <VCardActions class="pa-4">
           <VSpacer />
-          <VBtn variant="text" @click="subscriptionDialog = false">取消</VBtn>
-          <VBtn color="primary" @click="createSubscription" :loading="loading">创建</VBtn>
+          <VBtn
+            variant="text"
+            @click="subscriptionDialog = false"
+          >
+            取消
+          </VBtn>
+          <VBtn
+            color="primary"
+            :loading="loading"
+            @click="createSubscription"
+          >
+            创建
+          </VBtn>
         </VCardActions>
       </VCard>
     </VDialog>

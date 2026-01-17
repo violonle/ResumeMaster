@@ -4,22 +4,49 @@
     subtitle="管理员账号的基础信息与密码"
   >
     <VRow>
-      <VCol cols="12" md="8">
-        <VCard elevation="0" border class="mb-6">
+      <VCol
+        cols="12"
+        md="8"
+      >
+        <VCard
+          elevation="0"
+          border
+          class="mb-6"
+        >
           <VCardTitle class="px-4 pt-4 pb-2">
             <div class="d-flex align-center">
-              <VIcon icon="mdi-account-circle" class="me-2" color="primary" />
+              <VIcon
+                icon="mdi-account-circle"
+                class="me-2"
+                color="primary"
+              />
               <span>账号信息</span>
             </div>
           </VCardTitle>
           <VDivider />
           <VCardText class="pa-4">
             <VRow>
-              <VCol cols="12" class="d-flex justify-center mb-4">
+              <VCol
+                cols="12"
+                class="d-flex justify-center mb-4"
+              >
                 <div class="position-relative">
-                  <VAvatar size="100" color="grey-lighten-2" class="border">
-                    <VImg v-if="avatarPreview" :src="avatarPreview" cover />
-                    <VIcon v-else icon="mdi-account" size="60" color="grey" />
+                  <VAvatar
+                    size="100"
+                    color="grey-lighten-2"
+                    class="border"
+                  >
+                    <VImg
+                      v-if="avatarPreview"
+                      :src="avatarPreview"
+                      cover
+                    />
+                    <VIcon
+                      v-else
+                      icon="mdi-account"
+                      size="60"
+                      color="grey"
+                    />
                   </VAvatar>
                   <VBtn
                     icon="mdi-camera"
@@ -39,7 +66,10 @@
                 </div>
               </VCol>
               
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <VTextField
                   v-model="profileForm.username"
                   label="账号ID"
@@ -49,7 +79,10 @@
                   prepend-inner-icon="mdi-identifier"
                 />
               </VCol>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <VTextField
                   v-model="profileForm.name"
                   label="姓名"
@@ -58,7 +91,10 @@
                   prepend-inner-icon="mdi-account"
                 />
               </VCol>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <VTextField
                   v-model="profileForm.email"
                   label="邮箱"
@@ -68,7 +104,10 @@
                   prepend-inner-icon="mdi-email"
                 />
               </VCol>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <VTextField
                   v-model="profileForm.phone"
                   label="手机号"
@@ -79,12 +118,15 @@
                 />
               </VCol>
               
-              <VCol cols="12" class="d-flex justify-end">
+              <VCol
+                cols="12"
+                class="d-flex justify-end"
+              >
                 <VBtn
                   color="primary"
                   :loading="savingProfile"
-                  @click="saveProfile"
                   prepend-icon="mdi-content-save"
+                  @click="saveProfile"
                 >
                   保存个人资料
                 </VBtn>
@@ -94,16 +136,27 @@
         </VCard>
 
         <!-- 密码修改卡片 -->
-        <VCard elevation="0" border>
+        <VCard
+          elevation="0"
+          border
+        >
           <VCardTitle class="px-4 pt-4 pb-2">
             <div class="d-flex align-center">
-              <VIcon icon="mdi-lock-reset" class="me-2" color="primary" />
+              <VIcon
+                icon="mdi-lock-reset"
+                class="me-2"
+                color="primary"
+              />
               <span>修改密码</span>
             </div>
           </VCardTitle>
           <VDivider />
           <VCardText class="pa-4">
-            <VForm ref="passwordFormRef" v-model="passwordValid" @submit.prevent="savePassword">
+            <VForm
+              ref="passwordFormRef"
+              v-model="passwordValid"
+              @submit.prevent="savePassword"
+            >
               <VRow>
                 <VCol cols="12">
                   <VAlert
@@ -116,35 +169,44 @@
                     为了您的账号安全，建议定期更换密码。新密码必须包含字母和数字，且长度不少于8位。
                   </VAlert>
                 </VCol>
-                <VCol cols="12" md="6">
+                <VCol
+                  cols="12"
+                  md="6"
+                >
                   <VTextField
                     v-model="passwordForm.newPassword"
                     label="新密码"
                     :type="showPassword ? 'text' : 'password'"
                     :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
-                    @click:append-inner="showPassword = !showPassword"
                     :rules="passwordRules"
                     required
                     variant="outlined"
                     density="compact"
                     prepend-inner-icon="mdi-lock"
+                    @click:append-inner="showPassword = !showPassword"
                   />
                 </VCol>
-                <VCol cols="12" md="6">
+                <VCol
+                  cols="12"
+                  md="6"
+                >
                   <VTextField
                     v-model="passwordForm.confirmPassword"
                     label="确认新密码"
                     :type="showConfirmPassword ? 'text' : 'password'"
                     :append-inner-icon="showConfirmPassword ? 'mdi-eye-off' : 'mdi-eye'"
-                    @click:append-inner="showConfirmPassword = !showConfirmPassword"
                     :rules="confirmPasswordRules"
                     required
                     variant="outlined"
                     density="compact"
                     prepend-inner-icon="mdi-lock-check"
+                    @click:append-inner="showConfirmPassword = !showConfirmPassword"
                   />
                 </VCol>
-                <VCol cols="12" class="d-flex justify-end">
+                <VCol
+                  cols="12"
+                  class="d-flex justify-end"
+                >
                   <VBtn
                     type="submit"
                     color="primary"
@@ -161,39 +223,81 @@
         </VCard>
       </VCol>
 
-      <VCol cols="12" md="4">
-        <VCard elevation="0" border color="background">
+      <VCol
+        cols="12"
+        md="4"
+      >
+        <VCard
+          elevation="0"
+          border
+          color="background"
+        >
           <VCardText>
-            <div class="text-subtitle-1 font-weight-bold mb-4">安全设置</div>
+            <div class="text-subtitle-1 font-weight-bold mb-4">
+              安全设置
+            </div>
             
-            <VList bg-color="transparent" density="compact">
+            <VList
+              bg-color="transparent"
+              density="compact"
+            >
               <VListItem class="px-0">
                 <template #prepend>
-                  <VIcon icon="mdi-two-factor-authentication" color="grey" class="me-2" />
+                  <VIcon
+                    icon="mdi-two-factor-authentication"
+                    color="grey"
+                    class="me-2"
+                  />
                 </template>
                 <VListItemTitle>双重认证 (2FA)</VListItemTitle>
                 <template #append>
-                  <VBtn size="small" variant="text" color="primary">去开启</VBtn>
+                  <VBtn
+                    size="small"
+                    variant="text"
+                    color="primary"
+                  >
+                    去开启
+                  </VBtn>
                 </template>
               </VListItem>
               <VDivider class="my-2" />
               <VListItem class="px-0">
                 <template #prepend>
-                  <VIcon icon="mdi-cellphone-link" color="grey" class="me-2" />
+                  <VIcon
+                    icon="mdi-cellphone-link"
+                    color="grey"
+                    class="me-2"
+                  />
                 </template>
                 <VListItemTitle>登录设备管理</VListItemTitle>
                 <template #append>
-                  <VBtn size="small" variant="text" color="primary">查看</VBtn>
+                  <VBtn
+                    size="small"
+                    variant="text"
+                    color="primary"
+                  >
+                    查看
+                  </VBtn>
                 </template>
               </VListItem>
               <VDivider class="my-2" />
               <VListItem class="px-0">
                 <template #prepend>
-                  <VIcon icon="mdi-history" color="grey" class="me-2" />
+                  <VIcon
+                    icon="mdi-history"
+                    color="grey"
+                    class="me-2"
+                  />
                 </template>
                 <VListItemTitle>最近登录记录</VListItemTitle>
                 <template #append>
-                  <VBtn size="small" variant="text" color="primary">查看</VBtn>
+                  <VBtn
+                    size="small"
+                    variant="text"
+                    color="primary"
+                  >
+                    查看
+                  </VBtn>
                 </template>
               </VListItem>
             </VList>

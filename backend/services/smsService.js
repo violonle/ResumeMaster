@@ -23,9 +23,9 @@ async function getConfig(){
     templateCode: process.env.ALIYUN_SMS_TEMPLATE_CODE || '',
     enabled: String(process.env.SMS_ENABLED || '').toLowerCase() === 'true',
     scenarios: {
-      auth: { signName: '', templateCode: '' },
-      interview: { signName: '', templateCode: '' },
-      reminder: { signName: '', templateCode: '' }
+      auth: { templateCode: '' },
+      interview: { templateCode: '' },
+      reminder: { templateCode: '' }
     },
     portalUrl: process.env.PORTAL_URL || 'https://master.cloujade.com'
   }
@@ -48,10 +48,10 @@ async function getConfig(){
       
       // 2. Check individual keys (priority)
       const keys = [
-        'sms.provider','sms.accessKeyId','sms.accessKeySecret','sms.signName','sms.templateCode','sms.enabled', 'settings',
-        'sms.auth.signName', 'sms.auth.templateCode',
-        'sms.interview.signName', 'sms.interview.templateCode',
-        'sms.reminder.signName', 'sms.reminder.templateCode'
+        'sms.provider','sms.accessKeyId','sms.accessKeySecret','sms.signName','sms.enabled', 'settings',
+        'sms.auth.templateCode',
+        'sms.interview.templateCode',
+        'sms.reminder.templateCode'
       ]
       const rows = await SystemConfig.findAll({ where: { key: { [Op.in]: keys } } })
       
@@ -68,15 +68,11 @@ async function getConfig(){
         if (r.key==='sms.accessKeyId' && val && val !== '***') cfg.accessKeyId = val
         if (r.key==='sms.accessKeySecret' && val && val !== '***') cfg.accessKeySecret = val
         if (r.key==='sms.signName' && val) cfg.signName = val
-        if (r.key==='sms.templateCode' && val) cfg.templateCode = val
         if (r.key==='sms.enabled') cfg.enabled = val === 'true'
         
         // Scenario specific
-        if (r.key==='sms.auth.signName' && val) cfg.scenarios.auth.signName = val
         if (r.key==='sms.auth.templateCode' && val) cfg.scenarios.auth.templateCode = val
-        if (r.key==='sms.interview.signName' && val) cfg.scenarios.interview.signName = val
         if (r.key==='sms.interview.templateCode' && val) cfg.scenarios.interview.templateCode = val
-        if (r.key==='sms.reminder.signName' && val) cfg.scenarios.reminder.signName = val
         if (r.key==='sms.reminder.templateCode' && val) cfg.scenarios.reminder.templateCode = val
       }
 
@@ -118,17 +114,15 @@ async function sendAliyunSms(phone, signName, templateCode, templateParam, scena
   const secret = cfg.accessKeySecret
   
   // Determine sign and template based on scenario
-  let sign = signName
+  let sign = cfg.signName // Always use global signName
   let tpl = templateCode
   
   if (scenario && cfg.scenarios[scenario]) {
-    if (!sign) sign = cfg.scenarios[scenario].signName
     if (!tpl) tpl = cfg.scenarios[scenario].templateCode
   }
   
-  // Fallback to global defaults
-  if (!sign) sign = cfg.signName
-  if (!tpl) tpl = cfg.templateCode
+  // If no tpl found, and no scenario provided, it might be a direct call with tpl in templateCode param
+  if (!tpl) tpl = cfg.templateCode // This is just a fallback for legacy support if needed
   
   if (!id || !secret) {
     console.warn('[SMS] Config missing (AccessKeyId/Secret). Using MOCK mode.');
@@ -190,7 +184,7 @@ async function sendAliyunSms(phone, signName, templateCode, templateParam, scena
   const sig = crypto.createHmac('sha1', secret+'&').update(s).digest('base64')
   const url = 'https://dysmsapi.aliyuncs.com/?Signature='+enc(sig)+'&'+q
   try{
-    console.log(`[SMS] Sending to ${phone} with template ${tpl} sign ${sign}`)
+    console.log(`[SMS] Sending to ${phone} with template ${tpl} sign ${sign} params:`, p.TemplateParam)
     const res = await axios.get(url, { timeout:10000 })
     const ok = res.data && res.data.Code === 'OK'
     console.log('[SMS] Aliyun response:', JSON.stringify(res.data));
@@ -300,4 +294,4 @@ async function createAliyunTemplate(name, content, type = 0, remark = '系统自
   }
 }
 
-module.exports = { SCENARIOS, getConfig, sendVerificationCode, sendText, createAliyunTemplate }
+module.exports = { SCENARIOS, getConfig, sendAliyunSms, sendVerificationCode, sendText, createAliyunTemplate }

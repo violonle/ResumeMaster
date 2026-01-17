@@ -5,8 +5,15 @@
   >
     <!-- 统计卡片 -->
     <VRow class="mb-6">
-      <VCol cols="12" md="3" sm="6">
-        <VCard class="h-100" :loading="dashboardStore.loading">
+      <VCol
+        cols="12"
+        md="3"
+        sm="6"
+      >
+        <VCard
+          class="h-100"
+          :loading="dashboardStore.loading"
+        >
           <VCardText class="d-flex align-center pa-6">
             <VAvatar
               rounded="lg"
@@ -15,18 +22,32 @@
               size="56"
               class="me-4"
             >
-              <VIcon icon="mdi-file-document-multiple" size="28" />
+              <VIcon
+                icon="mdi-file-document-multiple"
+                size="28"
+              />
             </VAvatar>
             <div>
-              <div class="text-h4 font-weight-bold mb-1">{{ dashboardStore.stats.totalResumes || 0 }}</div>
-              <div class="text-body-2 text-medium-emphasis font-weight-medium">总简历数</div>
+              <div class="text-h4 font-weight-bold mb-1">
+                {{ dashboardStore.stats.totalResumes || 0 }}
+              </div>
+              <div class="text-body-2 text-medium-emphasis font-weight-medium">
+                总简历数
+              </div>
             </div>
           </VCardText>
         </VCard>
       </VCol>
 
-      <VCol cols="12" md="3" sm="6">
-        <VCard class="h-100" :loading="dashboardStore.loading">
+      <VCol
+        cols="12"
+        md="3"
+        sm="6"
+      >
+        <VCard
+          class="h-100"
+          :loading="dashboardStore.loading"
+        >
           <VCardText class="d-flex align-center pa-6">
             <VAvatar
               rounded="lg"
@@ -35,18 +56,32 @@
               size="56"
               class="me-4"
             >
-              <VIcon icon="mdi-briefcase-variant" size="28" />
+              <VIcon
+                icon="mdi-briefcase-variant"
+                size="28"
+              />
             </VAvatar>
             <div>
-              <div class="text-h4 font-weight-bold mb-1">{{ dashboardStore.stats.totalJobs || 0 }}</div>
-              <div class="text-body-2 text-medium-emphasis font-weight-medium">总职位数</div>
+              <div class="text-h4 font-weight-bold mb-1">
+                {{ dashboardStore.stats.totalJobs || 0 }}
+              </div>
+              <div class="text-body-2 text-medium-emphasis font-weight-medium">
+                总职位数
+              </div>
             </div>
           </VCardText>
         </VCard>
       </VCol>
 
-      <VCol cols="12" md="3" sm="6">
-        <VCard class="h-100" :loading="dashboardStore.loading">
+      <VCol
+        cols="12"
+        md="3"
+        sm="6"
+      >
+        <VCard
+          class="h-100"
+          :loading="dashboardStore.loading"
+        >
           <VCardText class="d-flex align-center pa-6">
             <VAvatar
               rounded="lg"
@@ -55,18 +90,32 @@
               size="56"
               class="me-4"
             >
-              <VIcon icon="mdi-office-building" size="28" />
+              <VIcon
+                icon="mdi-office-building"
+                size="28"
+              />
             </VAvatar>
             <div>
-              <div class="text-h4 font-weight-bold mb-1">{{ dashboardStore.stats.totalCompanies || 0 }}</div>
-              <div class="text-body-2 text-medium-emphasis font-weight-medium">企业数量</div>
+              <div class="text-h4 font-weight-bold mb-1">
+                {{ dashboardStore.stats.totalCompanies || 0 }}
+              </div>
+              <div class="text-body-2 text-medium-emphasis font-weight-medium">
+                企业数量
+              </div>
             </div>
           </VCardText>
         </VCard>
       </VCol>
 
-      <VCol cols="12" md="3" sm="6">
-        <VCard class="h-100" :loading="dashboardStore.loading">
+      <VCol
+        cols="12"
+        md="3"
+        sm="6"
+      >
+        <VCard
+          class="h-100"
+          :loading="dashboardStore.loading"
+        >
           <VCardText class="d-flex align-center pa-6">
             <VAvatar
               rounded="lg"
@@ -75,11 +124,18 @@
               size="56"
               class="me-4"
             >
-              <VIcon icon="mdi-credit-card" size="28" />
+              <VIcon
+                icon="mdi-credit-card"
+                size="28"
+              />
             </VAvatar>
             <div>
-              <div class="text-h4 font-weight-bold mb-1">{{ dashboardStore.stats.activeSubscriptions || 0 }}</div>
-              <div class="text-body-2 text-medium-emphasis font-weight-medium">活跃订阅</div>
+              <div class="text-h4 font-weight-bold mb-1">
+                {{ dashboardStore.stats.activeSubscriptions || 0 }}
+              </div>
+              <div class="text-body-2 text-medium-emphasis font-weight-medium">
+                活跃订阅
+              </div>
             </div>
           </VCardText>
         </VCard>
@@ -89,16 +145,30 @@
     <!-- 图表和活动 -->
     <VRow>
       <!-- 用户增长图表 -->
-      <VCol cols="12" lg="8">
+      <VCol
+        cols="12"
+        lg="8"
+      >
         <VCard class="h-100">
           <VCardItem class="pa-6 pb-2">
-            <VCardTitle class="text-h6 font-weight-bold">用户增长趋势</VCardTitle>
+            <VCardTitle class="text-h6 font-weight-bold">
+              用户增长趋势
+            </VCardTitle>
           </VCardItem>
           <VCardText class="pa-6 pt-2">
-            <div v-if="dashboardStore.loading" class="d-flex justify-center align-center py-10">
-              <VProgressCircular indeterminate color="primary" />
+            <div
+              v-if="dashboardStore.loading"
+              class="d-flex justify-center align-center py-10"
+            >
+              <VProgressCircular
+                indeterminate
+                color="primary"
+              />
             </div>
-            <div v-else-if="!userGrowthSeries.length" class="text-center text-medium-emphasis py-10">
+            <div
+              v-else-if="!userGrowthSeries.length"
+              class="text-center text-medium-emphasis py-10"
+            >
               暂无数据
             </div>
             <VueApexCharts
@@ -113,13 +183,22 @@
       </VCol>
 
       <!-- 最近活动 -->
-      <VCol cols="12" lg="4">
+      <VCol
+        cols="12"
+        lg="4"
+      >
         <VCard class="h-100">
           <VCardItem class="pa-6 pb-2">
-            <VCardTitle class="text-h6 font-weight-bold">最近活动</VCardTitle>
+            <VCardTitle class="text-h6 font-weight-bold">
+              最近活动
+            </VCardTitle>
           </VCardItem>
           <VCardText class="pa-0">
-            <VList lines="two" v-if="dashboardStore.recentActivities && dashboardStore.recentActivities.length" class="pa-2">
+            <VList
+              v-if="dashboardStore.recentActivities && dashboardStore.recentActivities.length"
+              lines="two"
+              class="pa-2"
+            >
               <VListItem
                 v-for="activity in dashboardStore.recentActivities"
                 :key="activity.id"
@@ -133,20 +212,38 @@
                     variant="tonal"
                     rounded="lg"
                   >
-                    <VIcon :icon="getActivityIcon(activity.type)" size="20" />
+                    <VIcon
+                      :icon="getActivityIcon(activity.type)"
+                      size="20"
+                    />
                   </VAvatar>
                 </template>
                 
-                <VListItemTitle class="font-weight-medium text-body-2">{{ activity.title }}</VListItemTitle>
+                <VListItemTitle class="font-weight-medium text-body-2">
+                  {{ activity.title }}
+                </VListItemTitle>
                 <VListItemSubtitle>
-                  <div class="text-caption mt-1">{{ activity.description }}</div>
-                  <div class="text-caption text-medium-emphasis mt-1">{{ formatTime(activity.createdAt) }}</div>
+                  <div class="text-caption mt-1">
+                    {{ activity.description }}
+                  </div>
+                  <div class="text-caption text-medium-emphasis mt-1">
+                    {{ formatTime(activity.createdAt) }}
+                  </div>
                 </VListItemSubtitle>
               </VListItem>
             </VList>
-            <div v-else class="text-center pa-10">
-              <VIcon icon="mdi-information-outline" size="48" class="mb-4 text-disabled" />
-              <div class="text-body-1 text-medium-emphasis">暂无活动记录</div>
+            <div
+              v-else
+              class="text-center pa-10"
+            >
+              <VIcon
+                icon="mdi-information-outline"
+                size="48"
+                class="mb-4 text-disabled"
+              />
+              <div class="text-body-1 text-medium-emphasis">
+                暂无活动记录
+              </div>
             </div>
           </VCardText>
         </VCard>
@@ -155,14 +252,23 @@
 
     <!-- 订阅分布 -->
     <VRow class="mt-6">
-      <VCol cols="12" lg="6">
+      <VCol
+        cols="12"
+        lg="6"
+      >
         <VCard class="h-100">
           <VCardItem class="pa-6 pb-2">
-            <VCardTitle class="text-h6 font-weight-bold">订阅分布</VCardTitle>
+            <VCardTitle class="text-h6 font-weight-bold">
+              订阅分布
+            </VCardTitle>
           </VCardItem>
           <VCardText class="pa-6 pt-2">
-            <div v-if="dashboardStore.loading">图表加载中...</div>
-            <div v-else-if="!subscriptionSeries.length">暂无数据</div>
+            <div v-if="dashboardStore.loading">
+              图表加载中...
+            </div>
+            <div v-else-if="!subscriptionSeries.length">
+              暂无数据
+            </div>
             <VueApexCharts
               v-else
               type="donut"
@@ -174,11 +280,18 @@
         </VCard>
       </VCol>
 
-      <VCol cols="12" lg="6">
+      <VCol
+        cols="12"
+        lg="6"
+      >
         <VCard title="收入趋势">
           <VCardText>
-            <div v-if="dashboardStore.loading">图表加载中...</div>
-            <div v-else-if="!revenueSeries.length">暂无数据</div>
+            <div v-if="dashboardStore.loading">
+              图表加载中...
+            </div>
+            <div v-else-if="!revenueSeries.length">
+              暂无数据
+            </div>
             <VueApexCharts
               v-else
               type="area"
@@ -189,11 +302,18 @@
           </VCardText>
         </VCard>
       </VCol>
-      <VCol cols="12" lg="6">
+      <VCol
+        cols="12"
+        lg="6"
+      >
         <VCard title="AI模型调用量">
           <VCardText>
-            <div v-if="dashboardStore.loading">图表加载中...</div>
-            <div v-else-if="!aiUsageSeries.length">暂无数据</div>
+            <div v-if="dashboardStore.loading">
+              图表加载中...
+            </div>
+            <div v-else-if="!aiUsageSeries.length">
+              暂无数据
+            </div>
             <VueApexCharts
               v-else
               type="bar"
@@ -205,7 +325,8 @@
         </VCard>
       </VCol>
     </VRow>
-  </div>
+    </div>
+  </standardpage>
 </template>
 
 <script setup>

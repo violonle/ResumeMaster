@@ -1,7 +1,7 @@
 const axios = require('axios');
 const FormData = require('form-data');
 
-const BACKEND_URL = 'http://localhost:5000';
+const BACKEND_URL = 'http://localhost:3000';
 
 async function getAuthToken() {
   console.log('=== 获取认证Token ===\n');
@@ -28,13 +28,13 @@ async function getAuthToken() {
 
     const loginResponse = await axios.post(`${BACKEND_URL}/api/auth/login`, loginData);
     console.log('✓ 登录成功');
-    console.log('  Token:', loginResponse.data.token.substring(0, 50) + '...');
-
+    console.log('  Token:', loginResponse.data.data.token.substring(0, 50) + '...');
+    
     console.log('\n=== Token获取完成 ===');
     console.log('\n请使用以下Token进行测试:');
-    console.log(`Bearer ${loginResponse.data.token}`);
+    console.log(`Bearer ${loginResponse.data.data.token}`);
 
-    return loginResponse.data.token;
+    return loginResponse.data.data.token;
 
   } catch (error) {
     console.error('\n✗ 获取Token失败:', error.message);

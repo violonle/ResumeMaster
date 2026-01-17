@@ -14,10 +14,20 @@
     </template>
 
     <!-- 搜索和筛选 -->
-    <VCard class="mb-6" elevation="0" border>
+    <VCard
+      class="mb-6"
+      elevation="0"
+      border
+    >
       <VCardText class="pa-4">
-        <VRow dense align="center">
-          <VCol cols="12" md="4">
+        <VRow
+          dense
+          align="center"
+        >
+          <VCol
+            cols="12"
+            md="4"
+          >
             <VTextField
               v-model="search"
               label="搜索企业"
@@ -28,7 +38,10 @@
               clearable
             />
           </VCol>
-          <VCol cols="12" md="3">
+          <VCol
+            cols="12"
+            md="3"
+          >
             <VSelect
               v-model="statusFilter"
               :items="statusOptions"
@@ -45,8 +58,8 @@
               color="primary"
               variant="tonal"
               prepend-icon="mdi-refresh"
-              @click="companiesStore.fetchCompanies()"
               :loading="loading"
+              @click="companiesStore.fetchCompanies()"
             >
               刷新
             </VBtn>
@@ -56,7 +69,10 @@
     </VCard>
 
     <!-- 数据表格 -->
-    <VCard elevation="0" border>
+    <VCard
+      elevation="0"
+      border
+    >
       <VCardText class="pa-0">
         <VDataTable
           :headers="headers"
@@ -68,13 +84,23 @@
           hover
         >
           <template #item.is_verified="{ item }">
-            <VChip :color="item.is_verified ? 'success' : 'error'" size="small" variant="tonal" label>
+            <VChip
+              :color="item.is_verified ? 'success' : 'error'"
+              size="small"
+              variant="tonal"
+              label
+            >
               {{ item.is_verified ? '已认证' : '未认证' }}
             </VChip>
           </template>
 
           <template #item.status="{ item }">
-            <VChip :color="item.status === 'active' ? 'success' : 'warning'" size="small" variant="tonal" label>
+            <VChip
+              :color="item.status === 'active' ? 'success' : 'warning'"
+              size="small"
+              variant="tonal"
+              label
+            >
               {{ item.status === 'active' ? '正常' : '待审核' }}
             </VChip>
           </template>
@@ -89,8 +115,16 @@
                 class="me-1"
                 @click="router.push(`/companies/${item.id}`)"
               >
-                <VIcon icon="mdi-eye-outline" size="20" />
-                <VTooltip activator="parent" location="top">查看详情</VTooltip>
+                <VIcon
+                  icon="mdi-eye-outline"
+                  size="20"
+                />
+                <VTooltip
+                  activator="parent"
+                  location="top"
+                >
+                  查看详情
+                </VTooltip>
               </VBtn>
               
               <VBtn
@@ -101,33 +135,57 @@
                 class="me-1"
                 @click="editItem(item)"
               >
-                <VIcon icon="mdi-pencil-outline" size="20" />
-                <VTooltip activator="parent" location="top">编辑企业</VTooltip>
+                <VIcon
+                  icon="mdi-pencil-outline"
+                  size="20"
+                />
+                <VTooltip
+                  activator="parent"
+                  location="top"
+                >
+                  编辑企业
+                </VTooltip>
               </VBtn>
 
               <VBtn
-            icon
-            size="small"
-            variant="text"
-            color="primary"
-            class="me-1"
-            @click="router.push(`/companies/${item.id}/resumes`)"
-          >
-            <VIcon icon="mdi-file-document-outline" size="20" />
-            <VTooltip activator="parent" location="top">简历列表</VTooltip>
-          </VBtn>
+                icon
+                size="small"
+                variant="text"
+                color="primary"
+                class="me-1"
+                @click="router.push(`/companies/${item.id}/resumes`)"
+              >
+                <VIcon
+                  icon="mdi-file-document-outline"
+                  size="20"
+                />
+                <VTooltip
+                  activator="parent"
+                  location="top"
+                >
+                  简历列表
+                </VTooltip>
+              </VBtn>
 
               <VBtn
+                v-if="!item.is_verified"
                 icon
                 size="small"
                 variant="text"
                 color="success"
                 class="me-1"
                 @click="companiesStore.verifyCompany(item.id)"
-                v-if="!item.is_verified"
               >
-                <VIcon icon="mdi-check-decagram-outline" size="20" />
-                <VTooltip activator="parent" location="top">认证企业</VTooltip>
+                <VIcon
+                  icon="mdi-check-decagram-outline"
+                  size="20"
+                />
+                <VTooltip
+                  activator="parent"
+                  location="top"
+                >
+                  认证企业
+                </VTooltip>
               </VBtn>
 
               <VBtn
@@ -138,8 +196,16 @@
                 class="me-1"
                 @click="router.push(`/subscriptions?companyId=${item.id}`)"
               >
-                <VIcon icon="mdi-credit-card-outline" size="20" />
-                <VTooltip activator="parent" location="top">订阅管理</VTooltip>
+                <VIcon
+                  icon="mdi-credit-card-outline"
+                  size="20"
+                />
+                <VTooltip
+                  activator="parent"
+                  location="top"
+                >
+                  订阅管理
+                </VTooltip>
               </VBtn>
               
               <VBtn
@@ -149,8 +215,16 @@
                 color="error"
                 @click="deleteItem(item)"
               >
-                <VIcon icon="mdi-trash-can-outline" size="20" />
-                <VTooltip activator="parent" location="top">删除企业</VTooltip>
+                <VIcon
+                  icon="mdi-trash-can-outline"
+                  size="20"
+                />
+                <VTooltip
+                  activator="parent"
+                  location="top"
+                >
+                  删除企业
+                </VTooltip>
               </VBtn>
             </div>
           </template>
@@ -167,13 +241,24 @@
       <VCard>
         <VCardTitle class="d-flex align-center justify-space-between">
           <span class="text-h6">{{ dialogTitle }}</span>
-          <VBtn icon="mdi-close" variant="text" @click="closeDialog" />
+          <VBtn
+            icon="mdi-close"
+            variant="text"
+            @click="closeDialog"
+          />
         </VCardTitle>
         
         <VCardText class="dialog-body">
-          <VForm ref="form" v-model="valid" class="elegant-form">
+          <VForm
+            ref="form"
+            v-model="valid"
+            class="elegant-form"
+          >
             <VRow class="gap-2">
-              <VCol cols="12" sm="6">
+              <VCol
+                cols="12"
+                sm="6"
+              >
                 <VTextField
                   v-model="editedItem.name"
                   label="企业名称"
@@ -182,7 +267,10 @@
                   density="compact"
                 />
               </VCol>
-              <VCol cols="12" sm="6">
+              <VCol
+                cols="12"
+                sm="6"
+              >
                 <VSelect
                   v-model="editedItem.contact_account_id"
                   :items="accountItems"
@@ -193,7 +281,10 @@
                   density="compact"
                 />
               </VCol>
-              <VCol cols="12" sm="6">
+              <VCol
+                cols="12"
+                sm="6"
+              >
                 <VTextField
                   v-model="editedItem.contact_email"
                   label="联系邮箱"
@@ -202,7 +293,10 @@
                   density="compact"
                 />
               </VCol>
-              <VCol cols="12" sm="6">
+              <VCol
+                cols="12"
+                sm="6"
+              >
                 <VTextField
                   v-model="editedItem.contact_phone"
                   label="联系电话"
@@ -219,7 +313,10 @@
                   density="compact"
                 />
               </VCol>
-              <VCol cols="12" sm="4">
+              <VCol
+                cols="12"
+                sm="4"
+              >
                 <VSelect
                   v-model="editedItem.province"
                   :items="provinceItems"
@@ -227,7 +324,10 @@
                   density="compact"
                 />
               </VCol>
-              <VCol cols="12" sm="4">
+              <VCol
+                cols="12"
+                sm="4"
+              >
                 <VSelect
                   v-model="editedItem.city"
                   :items="cityItems"
@@ -235,7 +335,10 @@
                   density="compact"
                 />
               </VCol>
-              <VCol cols="12" sm="4">
+              <VCol
+                cols="12"
+                sm="4"
+              >
                 <VSelect
                   v-model="editedItem.district"
                   :items="districtItems"
@@ -246,30 +349,79 @@
               <VCol cols="12">
                 <div class="d-flex align-center">
                   <span class="me-2">是否认证：</span>
-                  <VChip :color="editedItem.is_verified ? 'success' : 'error'" size="small">
+                  <VChip
+                    :color="editedItem.is_verified ? 'success' : 'error'"
+                    size="small"
+                  >
                     {{ editedItem.is_verified ? '是' : '否' }}
                   </VChip>
-                  <VBtn v-if="!editedItem.is_verified" class="ms-4" variant="text" color="primary" @click="toggleVerifySection">
+                  <VBtn
+                    v-if="!editedItem.is_verified"
+                    class="ms-4"
+                    variant="text"
+                    color="primary"
+                    @click="toggleVerifySection"
+                  >
                     {{ showVerifySection ? '收回' : '帮其认证' }}
                   </VBtn>
                 </div>
               </VCol>
-              <VCol cols="12" v-if="showVerifySection">
+              <VCol
+                v-if="showVerifySection"
+                cols="12"
+              >
                 <VRow>
-                  <VCol cols="12" sm="6">
-                    <VTextField v-model="editedItem.org_code" label="组织机构代码" density="compact" />
+                  <VCol
+                    cols="12"
+                    sm="6"
+                  >
+                    <VTextField
+                      v-model="editedItem.org_code"
+                      label="组织机构代码"
+                      density="compact"
+                    />
                   </VCol>
-                  <VCol cols="12" sm="6">
-                    <VTextField v-model="editedItem.responsible_name" label="负责人" density="compact" />
+                  <VCol
+                    cols="12"
+                    sm="6"
+                  >
+                    <VTextField
+                      v-model="editedItem.responsible_name"
+                      label="负责人"
+                      density="compact"
+                    />
                   </VCol>
-                  <VCol cols="12" sm="6">
-                    <VTextField v-model="editedItem.responsible_phone" label="负责人电话" density="compact" />
+                  <VCol
+                    cols="12"
+                    sm="6"
+                  >
+                    <VTextField
+                      v-model="editedItem.responsible_phone"
+                      label="负责人电话"
+                      density="compact"
+                    />
                   </VCol>
-                  <VCol cols="12" sm="6">
-                    <VFileInput v-model="licenseFile" label="营业执照" accept="image/*,.pdf" density="compact" />
+                  <VCol
+                    cols="12"
+                    sm="6"
+                  >
+                    <VFileInput
+                      v-model="licenseFile"
+                      label="营业执照"
+                      accept="image/*,.pdf"
+                      density="compact"
+                    />
                   </VCol>
-                  <VCol cols="12" sm="6">
-                    <VFileInput v-model="orgCodeCertFile" label="组织机构代码证" accept="image/*,.pdf" density="compact" />
+                  <VCol
+                    cols="12"
+                    sm="6"
+                  >
+                    <VFileInput
+                      v-model="orgCodeCertFile"
+                      label="组织机构代码证"
+                      accept="image/*,.pdf"
+                      density="compact"
+                    />
                   </VCol>
                 </VRow>
               </VCol>
@@ -289,8 +441,21 @@
 
         <VCardActions>
           <VSpacer />
-          <VBtn color="grey" variant="tonal" @click="closeDialog">取消</VBtn>
-          <VBtn color="primary" :loading="saving" :disabled="!valid" @click="saveItem">保存</VBtn>
+          <VBtn
+            color="grey"
+            variant="tonal"
+            @click="closeDialog"
+          >
+            取消
+          </VBtn>
+          <VBtn
+            color="primary"
+            :loading="saving"
+            :disabled="!valid"
+            @click="saveItem"
+          >
+            保存
+          </VBtn>
         </VCardActions>
       </VCard>
     </VDialog>

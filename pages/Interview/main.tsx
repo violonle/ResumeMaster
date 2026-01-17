@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import '../../css/design-system.css';
+import './style.css'; 
+import '../../js/user-auth.js'; 
 import InterviewRunner from './index';
 import { interviewApi } from './interview-api';
-import { AlertTriangle, CheckCircle, ArrowRight } from 'lucide-react';
-import './style.css'; 
-import '@css/design-system.css';
-import '@js/user-auth.js';
+import { AlertTriangle, CheckCircle, ArrowRight, Building2, User, Phone, FileText } from 'lucide-react';
+
+console.log('🚀 CSS Imports:', { style: './style.css', design: '../../css/design-system.css' });
 
 const App = () => {
+  console.log('🚀 App component rendering...');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [resumeData, setResumeData] = useState<{ 
@@ -17,18 +20,23 @@ const App = () => {
     sessionId?: string;
     candidateName?: string;
     candidatePhone?: string;
+    companyName?: string;
   } | null>(null);
   const [confirmed, setConfirmed] = useState(false);
 
   useEffect(() => {
+    console.log('🚀 App useEffect init...');
     const init = async () => {
       try {
         const urlParams = new URLSearchParams(window.location.search);
-        const idParam = urlParams.get('id');
+        const idParam = urlParams.get('id') || urlParams.get('sessionId');
         const rjIdParam = urlParams.get('resumeJobId');
         const resumeIdParam = urlParams.get('resumeId');
 
+        console.log('🔍 URL Params:', { idParam, rjIdParam, resumeIdParam });
+
         if (!idParam && !rjIdParam && !resumeIdParam) {
+          console.error('❌ No valid params found in URL');
           setError('未找到面试信息，请检查链接是否正确');
           setLoading(false);
           return;
@@ -36,13 +44,13 @@ const App = () => {
 
         let session;
         if (idParam && idParam.length > 10) {
-          // 如果 idParam 长度较长，认为是 sessionId (UUID)
+          console.log('📡 Fetching session by sessionId:', idParam);
           session = await interviewApi.getSession(idParam);
         } else {
-          // 否则可能是 resumeId 或 resumeJobId
           const rId = parseInt(resumeIdParam || (idParam && idParam.length <= 10 ? idParam : '0'));
           const rjId = parseInt(rjIdParam || '0');
           
+          console.log('📡 Creating/Fetching session for:', { rId, rjId });
           if (rId > 0) {
             session = await interviewApi.createSession({
               resumeId: rId,
@@ -56,6 +64,8 @@ const App = () => {
           }
         }
 
+        console.log('✅ Session data received:', session);
+
         if (!session) {
           setError('未找到面试会话，请检查链接是否正确');
           setLoading(false);
@@ -68,12 +78,12 @@ const App = () => {
           rjId: session.resumeJobId,
           sessionId: session.sessionId,
           candidateName: session.candidateName,
-          candidatePhone: session.candidatePhone
+          candidatePhone: session.candidatePhone,
+          companyName: session.companyName
         });
         setLoading(false);
       } catch (err: any) {
-        console.error('Failed to init interview:', err);
-        // 优先使用 request.ts 统一处理后的错误消息
+        console.error('❌ Failed to init interview:', err);
         const message = err.message || '初始化面试失败，请稍后重试';
         setError(message);
         setLoading(false);
@@ -84,6 +94,7 @@ const App = () => {
   }, []);
 
   if (loading) {
+    console.log('⏳ Rendering loading state...');
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="text-center p-10 bg-white/50 backdrop-blur-xl rounded-[2.5rem] shadow-2xl shadow-blue-500/5 border border-gray-100 max-w-sm w-full">
@@ -96,6 +107,7 @@ const App = () => {
   }
 
   if (error || !resumeData) {
+    console.log('❌ Rendering error state:', error);
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4">
         <div className="max-w-md w-full bg-white rounded-[2.5rem] shadow-2xl p-10 text-center border border-gray-100">
@@ -119,6 +131,7 @@ const App = () => {
 
   // 确认信息页面
   if (!confirmed) {
+    console.log('📝 Rendering confirmation state...');
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4">
         <div className="max-w-2xl w-full bg-white rounded-[2.5rem] shadow-2xl p-8 sm:p-12 border border-gray-100">
@@ -132,21 +145,51 @@ const App = () => {
 
           <div className="bg-gray-50 rounded-3xl p-8 mb-10 space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 pb-6 border-b border-gray-200/60">
-              <span className="text-gray-400 font-medium min-w-[5rem]">姓名</span>
+              <div className="flex items-center gap-2 text-gray-400 font-medium min-w-[8rem]">
+                <Building2 className="w-4 h-4" />
+                <span>面试单位</span>
+              </div>
+              <span className="text-xl font-bold text-gray-900">{resumeData.companyName || '未设置'}</span>
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 pb-6 border-b border-gray-200/60">
+              <div className="flex items-center gap-2 text-gray-400 font-medium min-w-[8rem]">
+                <User className="w-4 h-4" />
+                <span>候选人姓名</span>
+              </div>
               <span className="text-xl font-bold text-gray-900">{resumeData.candidateName || '未填写'}</span>
             </div>
             
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 pb-6 border-b border-gray-200/60">
-              <span className="text-gray-400 font-medium min-w-[5rem]">联系电话</span>
+              <div className="flex items-center gap-2 text-gray-400 font-medium min-w-[8rem]">
+                <Phone className="w-4 h-4" />
+                <span>联系电话</span>
+              </div>
               <span className="text-xl font-bold text-gray-900">{resumeData.candidatePhone || '未填写'}</span>
             </div>
 
             <div className="flex flex-col gap-3">
-              <span className="text-gray-400 font-medium">简历摘要</span>
-              <div className="bg-white p-4 rounded-2xl border border-gray-200 text-gray-600 text-sm leading-relaxed max-h-40 overflow-y-auto">
-                {resumeData.text.slice(0, 300)}...
+              <div className="flex items-center gap-2 text-gray-400 font-medium">
+                <FileText className="w-4 h-4" />
+                <span>简历核心内容</span>
+              </div>
+              <div className="bg-white p-5 rounded-2xl border border-gray-200 text-gray-600 text-sm leading-relaxed max-h-48 overflow-y-auto custom-scrollbar shadow-inner whitespace-pre-wrap">
+                {resumeData.text}
               </div>
             </div>
+          </div>
+
+          <div className="mb-10 p-6 bg-blue-50/50 rounded-2xl border border-blue-100/50">
+            <h3 className="text-blue-900 font-bold mb-3 flex items-center gap-2">
+              <div className="w-1.5 h-1.5 bg-blue-600 rounded-full"></div>
+              面试说明
+            </h3>
+            <ul className="text-blue-800/70 text-sm space-y-2 font-medium">
+              <li>• 本次面试由 AI 面试官主持，将围绕您的工作经历进行提问</li>
+              <li>• 面试大约需要 15-20 分钟，请确保您有安静的环境</li>
+              <li>• 您的回答将被实时记录并生成评估报告供 HR 参考</li>
+              <li>• 点击下方按钮即表示您同意开始本次 AI 智能面试</li>
+            </ul>
           </div>
 
           <div className="flex flex-col gap-4">
@@ -176,6 +219,7 @@ const App = () => {
 
 const container = document.getElementById('root');
 if (container) {
+  console.log('🚀 Initializing React root with version:', React.version);
   const root = createRoot(container);
   root.render(<App />);
 }

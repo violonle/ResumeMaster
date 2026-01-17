@@ -6,7 +6,13 @@
     <title>登录 - 争湃·简历大师</title>
     <meta http-equiv="refresh" content="0; url=/pages/login.html">
     <script>
-        window.location.replace('/pages/login.html');
+        // 如果 URL 中包含 sessionId 或 resumeJobId，说明是面试邀请链接，跳转到面试页面
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('sessionId') || urlParams.has('resumeJobId')) {
+            window.location.replace('/interview.html' + window.location.search);
+        } else {
+            window.location.replace('/pages/login.html');
+        }
     </script>
 </head>
 <body>

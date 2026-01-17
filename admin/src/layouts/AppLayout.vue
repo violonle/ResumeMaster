@@ -1,32 +1,72 @@
 <template>
   <VApp class="app-layout">
-    <SidebarMenu v-model:drawer="drawer" v-model:rail="rail" :permanent="!isMobile" @logout="handleLogout" />
+    <SidebarMenu
+      v-model:drawer="drawer"
+      v-model:rail="rail"
+      :permanent="!isMobile"
+      @logout="handleLogout"
+    />
 
-    <VAppBar height="64" class="px-4 border-b" flat color="surface">
-      <VBtn icon variant="text" @click="toggleMenu" class="me-4" color="on-surface" v-if="isMobile">
+    <VAppBar
+      height="64"
+      class="px-4 border-b"
+      flat
+      color="surface"
+    >
+      <VBtn
+        v-if="isMobile"
+        icon
+        variant="text"
+        class="me-4"
+        color="on-surface"
+        @click="toggleMenu"
+      >
         <VIcon icon="mdi-menu" />
       </VBtn>
       
-      <div class="text-h6 font-weight-bold text-truncate text-on-surface">{{ pageTitle }}</div>
+      <div class="text-h6 font-weight-bold text-truncate text-on-surface">
+        {{ pageTitle }}
+      </div>
       
       <VSpacer />
       
       <div class="d-flex align-center gap-2">
-        <VBtn icon variant="text" size="small" color="on-surface">
+        <VBtn
+          icon
+          variant="text"
+          size="small"
+          color="on-surface"
+        >
           <VIcon icon="mdi-bell-outline" />
         </VBtn>
-        <VBtn icon variant="text" size="small" color="on-surface">
+        <VBtn
+          icon
+          variant="text"
+          size="small"
+          color="on-surface"
+        >
           <VIcon icon="mdi-help-circle-outline" />
         </VBtn>
-        <VDivider vertical inset class="mx-2" />
-        <VAvatar color="primary" size="32" class="cursor-pointer">
+        <VDivider
+          vertical
+          inset
+          class="mx-2"
+        />
+        <VAvatar
+          color="primary"
+          size="32"
+          class="cursor-pointer"
+        >
           <span class="text-caption text-white font-weight-bold">A</span>
         </VAvatar>
       </div>
     </VAppBar>
 
     <VMain class="bg-background">
-      <VContainer fluid class="pa-6 fill-height align-start app-container">
+      <VContainer
+        fluid
+        class="pa-6 fill-height align-start app-container"
+      >
         <RouterView v-slot="{ Component }">
           <VFadeTransition mode="out-in">
             <component :is="Component" />
@@ -35,7 +75,13 @@
       </VContainer>
 
       <VFooter class="justify-center py-4 text-grey-darken-1 text-caption border-t bg-background">
-        <div>云璞网科 © 2018-2025  <a href="https://beian.miit.gov.cn/" target="_blank" class="text-grey-darken-1 text-decoration-none hover-blue">鲁ICP备2023016452号</a></div>
+        <div>
+          云璞网科 © 2018-2025  <a
+            href="https://beian.miit.gov.cn/"
+            target="_blank"
+            class="text-grey-darken-1 text-decoration-none hover-blue"
+          >鲁ICP备2023016452号</a>
+        </div>
       </VFooter>
     </VMain>
   </VApp>

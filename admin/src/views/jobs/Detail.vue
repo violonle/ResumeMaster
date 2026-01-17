@@ -14,8 +14,15 @@
     </template>
 
     <VRow v-if="job">
-      <VCol cols="12" md="8">
-        <VCard elevation="0" border class="mb-6">
+      <VCol
+        cols="12"
+        md="8"
+      >
+        <VCard
+          elevation="0"
+          border
+          class="mb-6"
+        >
           <VCardTitle class="pa-4 d-flex align-center">
             <span class="text-h5 font-weight-bold">{{ job.title }}</span>
             <VChip
@@ -32,50 +39,94 @@
           <VCardText class="pa-4">
             <div class="d-flex flex-wrap ga-4 mb-6">
               <div class="d-flex align-center">
-                <VIcon icon="mdi-currency-cny" color="warning" class="me-1" />
+                <VIcon
+                  icon="mdi-currency-cny"
+                  color="warning"
+                  class="me-1"
+                />
                 <span class="text-subtitle-1 font-weight-bold text-warning">
                   {{ job.salary_min }}k - {{ job.salary_max }}k
                 </span>
               </div>
               <div class="d-flex align-center">
-                <VIcon icon="mdi-map-marker-outline" color="primary" class="me-1" />
+                <VIcon
+                  icon="mdi-map-marker-outline"
+                  color="primary"
+                  class="me-1"
+                />
                 <span>{{ job.city || '地点不限' }}</span>
               </div>
               <div class="d-flex align-center">
-                <VIcon icon="mdi-briefcase-outline" color="primary" class="me-1" />
+                <VIcon
+                  icon="mdi-briefcase-outline"
+                  color="primary"
+                  class="me-1"
+                />
                 <span>{{ job.experience || '经验不限' }}</span>
               </div>
               <div class="d-flex align-center">
-                <VIcon icon="mdi-school-outline" color="primary" class="me-1" />
+                <VIcon
+                  icon="mdi-school-outline"
+                  color="primary"
+                  class="me-1"
+                />
                 <span>{{ job.education || '学历不限' }}</span>
               </div>
             </div>
 
             <div class="mb-6">
-              <div class="text-h6 font-weight-bold mb-2">职位描述</div>
-              <div class="text-body-1 whitespace-pre-wrap">{{ job.description || '暂无描述' }}</div>
+              <div class="text-h6 font-weight-bold mb-2">
+                职位描述
+              </div>
+              <div class="text-body-1 whitespace-pre-wrap">
+                {{ job.description || '暂无描述' }}
+              </div>
             </div>
 
             <div>
-              <div class="text-h6 font-weight-bold mb-2">职位要求</div>
-              <div class="text-body-1 whitespace-pre-wrap">{{ job.requirement || '暂无要求' }}</div>
+              <div class="text-h6 font-weight-bold mb-2">
+                职位要求
+              </div>
+              <div class="text-body-1 whitespace-pre-wrap">
+                {{ job.requirement || '暂无要求' }}
+              </div>
             </div>
           </VCardText>
         </VCard>
       </VCol>
 
-      <VCol cols="12" md="4">
-        <VCard elevation="0" border class="mb-6">
-          <VCardTitle class="pa-4">所属企业</VCardTitle>
+      <VCol
+        cols="12"
+        md="4"
+      >
+        <VCard
+          elevation="0"
+          border
+          class="mb-6"
+        >
+          <VCardTitle class="pa-4">
+            所属企业
+          </VCardTitle>
           <VDivider />
           <VCardText class="pa-4">
-            <div v-if="job.Company" class="d-flex align-center">
-              <VAvatar color="primary" variant="tonal" class="me-3">
+            <div
+              v-if="job.Company"
+              class="d-flex align-center"
+            >
+              <VAvatar
+                color="primary"
+                variant="tonal"
+                class="me-3"
+              >
                 <VIcon icon="mdi-office-building" />
               </VAvatar>
               <div>
-                <div class="text-subtitle-1 font-weight-bold">{{ job.Company.name }}</div>
-                <div class="text-caption text-medium-emphasis">企业 ID: {{ job.Company.id }}</div>
+                <div class="text-subtitle-1 font-weight-bold">
+                  {{ job.Company.name }}
+                </div>
+                <div class="text-caption text-medium-emphasis">
+                  企业 ID: {{ job.Company.id }}
+                </div>
               </div>
             </div>
             <VBtn
@@ -90,8 +141,13 @@
           </VCardText>
         </VCard>
 
-        <VCard elevation="0" border>
-          <VCardTitle class="pa-4">投递概况</VCardTitle>
+        <VCard
+          elevation="0"
+          border
+        >
+          <VCardTitle class="pa-4">
+            投递概况
+          </VCardTitle>
           <VDivider />
           <VCardText class="pa-4">
             <div class="d-flex justify-space-between align-center mb-4">
@@ -111,8 +167,14 @@
       </VCol>
     </VRow>
 
-    <div v-else-if="loading" class="d-flex justify-center align-center pa-12">
-      <VProgressCircular indeterminate color="primary" />
+    <div
+      v-else-if="loading"
+      class="d-flex justify-center align-center pa-12"
+    >
+      <VProgressCircular
+        indeterminate
+        color="primary"
+      />
     </div>
   </StandardPage>
 </template>

@@ -7,14 +7,17 @@
       <VBtn
         color="primary"
         prepend-icon="mdi-plus"
-        @click="openCreate"
         height="40"
+        @click="openCreate"
       >
         新增计划
       </VBtn>
     </template>
 
-    <VCard elevation="0" border>
+    <VCard
+      elevation="0"
+      border
+    >
       <VDataTable
         :items="plans"
         :headers="headers"
@@ -22,23 +25,50 @@
         hover
       >
         <template #item.name="{ item }">
-          <div class="font-weight-medium">{{ item.name }}</div>
-          <div class="text-caption text-medium-emphasis">{{ item.key }}</div>
+          <div class="font-weight-medium">
+            {{ item.name }}
+          </div>
+          <div class="text-caption text-medium-emphasis">
+            {{ item.key }}
+          </div>
         </template>
 
         <template #item.price="{ item }">
-          <div class="font-weight-bold text-primary">¥{{ item.price }}</div>
+          <div class="font-weight-bold text-primary">
+            ¥{{ item.price }}
+          </div>
         </template>
 
         <template #item.quota="{ item }">
           <div class="d-flex flex-column gap-1 py-2">
-            <VChip size="x-small" variant="tonal" color="info" label class="justify-center" style="width: fit-content">
+            <VChip
+              size="x-small"
+              variant="tonal"
+              color="info"
+              label
+              class="justify-center"
+              style="width: fit-content"
+            >
               解析: {{ item.quota?.resume_parses_per_month ?? 0 }}/月
             </VChip>
-            <VChip size="x-small" variant="tonal" color="warning" label class="justify-center" style="width: fit-content">
+            <VChip
+              size="x-small"
+              variant="tonal"
+              color="warning"
+              label
+              class="justify-center"
+              style="width: fit-content"
+            >
               并发: {{ item.quota?.concurrent ?? 0 }}
             </VChip>
-            <VChip size="x-small" variant="tonal" color="success" label class="justify-center" style="width: fit-content">
+            <VChip
+              size="x-small"
+              variant="tonal"
+              color="success"
+              label
+              class="justify-center"
+              style="width: fit-content"
+            >
               AI: {{ item.quota?.ai_calls ?? 0 }}
             </VChip>
           </div>
@@ -58,7 +88,10 @@
 
         <template #item.actions="{ item }">
           <div class="d-flex">
-            <VTooltip text="编辑计划" location="top">
+            <VTooltip
+              text="编辑计划"
+              location="top"
+            >
               <template #activator="{ props }">
                 <VBtn
                   icon
@@ -69,12 +102,18 @@
                   v-bind="props"
                   @click="openEdit(item)"
                 >
-                  <VIcon icon="mdi-pencil-outline" size="20" />
+                  <VIcon
+                    icon="mdi-pencil-outline"
+                    size="20"
+                  />
                 </VBtn>
               </template>
             </VTooltip>
             
-            <VTooltip text="删除计划" location="top">
+            <VTooltip
+              text="删除计划"
+              location="top"
+            >
               <template #activator="{ props }">
                 <VBtn
                   icon
@@ -84,7 +123,10 @@
                   v-bind="props"
                   @click="remove(item)"
                 >
-                  <VIcon icon="mdi-delete-outline" size="20" />
+                  <VIcon
+                    icon="mdi-delete-outline"
+                    size="20"
+                  />
                 </VBtn>
               </template>
             </VTooltip>
@@ -93,25 +135,45 @@
 
         <template #no-data>
           <div class="text-center pa-8">
-            <VIcon icon="mdi-file-document-remove-outline" size="64" class="mb-4 text-disabled" />
-            <div class="text-h6 text-medium-emphasis">暂无订阅计划</div>
-            <div class="text-body-2 text-disabled mt-2">请点击右上角新增计划</div>
+            <VIcon
+              icon="mdi-file-document-remove-outline"
+              size="64"
+              class="mb-4 text-disabled"
+            />
+            <div class="text-h6 text-medium-emphasis">
+              暂无订阅计划
+            </div>
+            <div class="text-body-2 text-disabled mt-2">
+              请点击右上角新增计划
+            </div>
           </div>
         </template>
       </VDataTable>
     </VCard>
 
-    <VDialog v-model="dialog" max-width="600" persistent>
+    <VDialog
+      v-model="dialog"
+      max-width="600"
+      persistent
+    >
       <VCard>
         <VCardTitle class="d-flex align-center pa-4">
           <span class="text-h6 font-weight-bold">{{ editing ? '编辑订阅计划' : '新增订阅计划' }}</span>
           <VSpacer />
-          <VBtn icon="mdi-close" variant="text" size="small" @click="close" />
+          <VBtn
+            icon="mdi-close"
+            variant="text"
+            size="small"
+            @click="close"
+          />
         </VCardTitle>
         <VDivider />
         <VCardText class="pa-4">
           <VRow>
-            <VCol cols="12" sm="6">
+            <VCol
+              cols="12"
+              sm="6"
+            >
               <VTextField
                 v-model="form.key"
                 label="标识（英文）"
@@ -124,7 +186,10 @@
                 :readonly="editing"
               />
             </VCol>
-            <VCol cols="12" sm="6">
+            <VCol
+              cols="12"
+              sm="6"
+            >
               <VTextField
                 v-model="form.name"
                 label="计划名称"
@@ -136,9 +201,14 @@
             </VCol>
             
             <VCol cols="12">
-              <div class="text-subtitle-2 font-weight-bold mb-2 text-medium-emphasis">多语言名称</div>
+              <div class="text-subtitle-2 font-weight-bold mb-2 text-medium-emphasis">
+                多语言名称
+              </div>
               <VRow dense>
-                <VCol cols="12" sm="6">
+                <VCol
+                  cols="12"
+                  sm="6"
+                >
                   <VTextField
                     v-model="form.i18n_names.zh"
                     label="中文名称"
@@ -148,7 +218,10 @@
                     hide-details="auto"
                   />
                 </VCol>
-                <VCol cols="12" sm="6">
+                <VCol
+                  cols="12"
+                  sm="6"
+                >
                   <VTextField
                     v-model="form.i18n_names.en"
                     label="英文名称"
@@ -161,7 +234,10 @@
               </VRow>
             </VCol>
 
-            <VCol cols="12" sm="6">
+            <VCol
+              cols="12"
+              sm="6"
+            >
               <VTextField
                 v-model.number="form.price"
                 label="价格"
@@ -172,7 +248,10 @@
                 density="compact"
               />
             </VCol>
-            <VCol cols="12" sm="6">
+            <VCol
+              cols="12"
+              sm="6"
+            >
               <VSelect
                 v-model="form.status"
                 :items="[
@@ -187,9 +266,14 @@
 
             <VCol cols="12">
               <VDivider class="mb-4" />
-              <div class="text-subtitle-2 font-weight-bold mb-2 text-medium-emphasis">配额限制</div>
+              <div class="text-subtitle-2 font-weight-bold mb-2 text-medium-emphasis">
+                配额限制
+              </div>
               <VRow dense>
-                <VCol cols="12" sm="4">
+                <VCol
+                  cols="12"
+                  sm="4"
+                >
                   <VTextField
                     v-model.number="form.quota.resume_parses_per_month"
                     type="number"
@@ -200,7 +284,10 @@
                     hide-details="auto"
                   />
                 </VCol>
-                <VCol cols="12" sm="4">
+                <VCol
+                  cols="12"
+                  sm="4"
+                >
                   <VTextField
                     v-model.number="form.quota.concurrent"
                     type="number"
@@ -211,7 +298,10 @@
                     hide-details="auto"
                   />
                 </VCol>
-                <VCol cols="12" sm="4">
+                <VCol
+                  cols="12"
+                  sm="4"
+                >
                   <VTextField
                     v-model.number="form.quota.ai_calls"
                     type="number"
@@ -242,8 +332,22 @@
         <VDivider />
         <VCardActions class="pa-4">
           <VSpacer />
-          <VBtn variant="text" color="medium-emphasis" @click="close" class="px-4">取消</VBtn>
-          <VBtn color="primary" @click="save" class="px-6" variant="flat">保存</VBtn>
+          <VBtn
+            variant="text"
+            color="medium-emphasis"
+            class="px-4"
+            @click="close"
+          >
+            取消
+          </VBtn>
+          <VBtn
+            color="primary"
+            class="px-6"
+            variant="flat"
+            @click="save"
+          >
+            保存
+          </VBtn>
         </VCardActions>
       </VCard>
     </VDialog>

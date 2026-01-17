@@ -1,5 +1,8 @@
 <template>
-  <StandardPage title="大模型管理" subtitle="配置AI模型提供商及策略">
+  <StandardPage
+    title="大模型管理"
+    subtitle="配置AI模型提供商及策略"
+  >
     <template #actions>
       <VBtn
         v-if="activeTab === 'models'"
@@ -19,11 +22,23 @@
       </VBtn>
     </template>
 
-    <VCard elevation="0" border>
-      <VTabs v-model="activeTab" color="primary">
-        <VTab value="models">模型列表</VTab>
-        <VTab value="strategies">策略配置</VTab>
-        <VTab value="prompts">提示词管理</VTab>
+    <VCard
+      elevation="0"
+      border
+    >
+      <VTabs
+        v-model="activeTab"
+        color="primary"
+      >
+        <VTab value="models">
+          模型列表
+        </VTab>
+        <VTab value="strategies">
+          策略配置
+        </VTab>
+        <VTab value="prompts">
+          提示词管理
+        </VTab>
       </VTabs>
       <VDivider />
       <VWindow v-model="activeTab">
@@ -62,50 +77,78 @@
               <VSwitch
                 density="compact"
                 :model-value="item.enabled"
-                @update:model-value="val => toggleProviderEnabled(item.name, val)"
                 color="primary"
                 hide-details
                 inset
+                @update:model-value="val => toggleProviderEnabled(item.name, val)"
               />
             </template>
-          <template #item.actions="{ item }">
-            <div class="d-flex justify-end">
-              <VBtn
-                icon
-                size="small"
-                variant="text"
-                color="primary"
-                class="me-1"
-                @click="openProviderDialog(item)"
-              >
-                <VIcon icon="mdi-pencil-outline" size="20" />
-                <VTooltip activator="parent" location="top">编辑配置</VTooltip>
-              </VBtn>
+            <template #item.actions="{ item }">
+              <div class="d-flex justify-end">
+                <VBtn
+                  icon
+                  size="small"
+                  variant="text"
+                  color="primary"
+                  class="me-1"
+                  @click="openProviderDialog(item)"
+                >
+                  <VIcon
+                    icon="mdi-pencil-outline"
+                    size="20"
+                  />
+                  <VTooltip
+                    activator="parent"
+                    location="top"
+                  >
+                    编辑配置
+                  </VTooltip>
+                </VBtn>
               
-              <VBtn
-                icon
-                size="small"
-                variant="text"
-                color="error"
-                @click="deleteProviderItem(item)"
-              >
-                <VIcon icon="mdi-delete-outline" size="20" />
-                <VTooltip activator="parent" location="top">删除提供商</VTooltip>
-              </VBtn>
-            </div>
-          </template>
+                <VBtn
+                  icon
+                  size="small"
+                  variant="text"
+                  color="error"
+                  @click="deleteProviderItem(item)"
+                >
+                  <VIcon
+                    icon="mdi-delete-outline"
+                    size="20"
+                  />
+                  <VTooltip
+                    activator="parent"
+                    location="top"
+                  >
+                    删除提供商
+                  </VTooltip>
+                </VBtn>
+              </div>
+            </template>
             <template #top>
               <div class="pa-4 bg-grey-lighten-5 text-body-2 text-medium-emphasis">
-                <VIcon icon="mdi-information-outline" size="small" class="me-2" />
+                <VIcon
+                  icon="mdi-information-outline"
+                  size="small"
+                  class="me-2"
+                />
                 已预置提供商：{{ presetPlatforms.join('、') }}。可同时启用多个。
               </div>
               <VDivider />
             </template>
             <template #no-data>
               <div class="text-center pa-8">
-                <VIcon icon="mdi-robot-off" size="64" class="mb-4 text-disabled" />
-                <div class="text-h6 text-medium-emphasis">暂无模型数据</div>
-                <div class="text-body-2 text-disabled mt-2">请点击右上角新建模型</div>
+                <VIcon
+                  icon="mdi-robot-off"
+                  size="64"
+                  class="mb-4 text-disabled"
+                />
+                <div class="text-h6 text-medium-emphasis">
+                  暂无模型数据
+                </div>
+                <div class="text-body-2 text-disabled mt-2">
+                  请点击右上角新建模型
+                </div>
               </div>
             </template>
           </VDataTable>
@@ -113,8 +156,13 @@
 
         <VWindowItem value="strategies">
           <div class="pa-4">
-            <div class="text-subtitle-1 mb-2 font-weight-bold">场景配置</div>
-            <VExpansionPanels multiple variant="accordion">
+            <div class="text-subtitle-1 mb-2 font-weight-bold">
+              场景配置
+            </div>
+            <VExpansionPanels
+              multiple
+              variant="accordion"
+            >
               <VExpansionPanel
                 v-for="scene in scenes"
                 :key="scene.key"
@@ -124,7 +172,10 @@
                 <VExpansionPanelTitle>{{ scene.title }}</VExpansionPanelTitle>
                 <VExpansionPanelText>
                   <VRow class="mt-1">
-                    <VCol cols="12" md="6">
+                    <VCol
+                      cols="12"
+                      md="6"
+                    >
                       <VSelect
                         :key="'provider-'+scene.key"
                         v-model="sceneForm.models[scene.key].provider"
@@ -136,7 +187,10 @@
                         density="compact"
                       />
                     </VCol>
-                    <VCol cols="12" md="6">
+                    <VCol
+                      cols="12"
+                      md="6"
+                    >
                       <VSelect
                         :key="'model-'+scene.key"
                         v-model="sceneForm.models[scene.key].model"
@@ -163,7 +217,10 @@
     </VCard>
 
     <!-- Dialogs -->
-    <VDialog v-model="providerDialog" max-width="560px">
+    <VDialog
+      v-model="providerDialog"
+      max-width="560px"
+    >
       <VCard>
         <VCardTitle class="pa-4">
           配置 {{ providerForm.provider }}
@@ -180,7 +237,10 @@
                 hide-details
               />
             </VCol>
-            <VCol cols="12" md="6">
+            <VCol
+              cols="12"
+              md="6"
+            >
               <VSelect
                 v-model="providerForm.provider"
                 :items="presetPlatforms"
@@ -190,7 +250,10 @@
                 clearable
               />
             </VCol>
-            <VCol cols="12" md="6">
+            <VCol
+              cols="12"
+              md="6"
+            >
               <VTextField
                 v-model="providerForm.model"
                 label="模型名称"
@@ -214,19 +277,38 @@
         <VDivider />
         <VCardActions class="pa-4">
           <VSpacer />
-          <VBtn variant="text" @click="providerDialog = false">取消</VBtn>
-          <VBtn color="primary" @click="saveProvider" :loading="saving">保存</VBtn>
+          <VBtn
+            variant="text"
+            @click="providerDialog = false"
+          >
+            取消
+          </VBtn>
+          <VBtn
+            color="primary"
+            :loading="saving"
+            @click="saveProvider"
+          >
+            保存
+          </VBtn>
         </VCardActions>
       </VCard>
     </VDialog>
 
-    <VDialog v-model="createModelDialog" max-width="560px">
+    <VDialog
+      v-model="createModelDialog"
+      max-width="560px"
+    >
       <VCard>
-        <VCardTitle class="pa-4">新建大模型</VCardTitle>
+        <VCardTitle class="pa-4">
+          新建大模型
+        </VCardTitle>
         <VDivider />
         <VCardText class="pa-4">
           <VRow>
-            <VCol cols="12" md="6">
+            <VCol
+              cols="12"
+              md="6"
+            >
               <VSelect
                 v-model="createModelForm.provider"
                 :items="presetPlatforms"
@@ -236,7 +318,10 @@
                 clearable
               />
             </VCol>
-            <VCol cols="12" md="6">
+            <VCol
+              cols="12"
+              md="6"
+            >
               <VTextField
                 v-model="createModelForm.model"
                 label="模型名称"
@@ -268,13 +353,27 @@
         <VDivider />
         <VCardActions class="pa-4">
           <VSpacer />
-          <VBtn variant="text" @click="createModelDialog = false">取消</VBtn>
-          <VBtn color="primary" @click="createModel" :loading="saving">创建</VBtn>
+          <VBtn
+            variant="text"
+            @click="createModelDialog = false"
+          >
+            取消
+          </VBtn>
+          <VBtn
+            color="primary"
+            :loading="saving"
+            @click="createModel"
+          >
+            创建
+          </VBtn>
         </VCardActions>
       </VCard>
     </VDialog>
 
-    <VDialog v-model="strategyDialog" max-width="800px">
+    <VDialog
+      v-model="strategyDialog"
+      max-width="800px"
+    >
       <VCard>
         <VCardTitle class="pa-4">
           {{ editingStrategy ? '编辑策略组' : '新建策略组' }}
@@ -282,7 +381,10 @@
         <VDivider />
         <VCardText class="pa-4">
           <VRow>
-            <VCol cols="12" md="6">
+            <VCol
+              cols="12"
+              md="6"
+            >
               <VTextField
                 v-model="strategyForm.name"
                 label="策略组名称"
@@ -291,7 +393,10 @@
                 :disabled="isDefaultStrategy(strategyForm.id) || (editingStrategy && isDefaultStrategy(editingStrategy.id))"
               />
             </VCol>
-            <VCol cols="12" md="6">
+            <VCol
+              cols="12"
+              md="6"
+            >
               <VTextField
                 v-model="strategyForm.id"
                 label="策略组ID"
@@ -300,7 +405,10 @@
                 :disabled="isDefaultStrategy(strategyForm.id)"
               />
             </VCol>
-            <VCol v-if="!isDefaultStrategy(strategyForm.id)" cols="12">
+            <VCol
+              v-if="!isDefaultStrategy(strategyForm.id)"
+              cols="12"
+            >
               <VAutocomplete
                 v-model="strategyForm.scope"
                 v-model:search="companySearch"
@@ -319,8 +427,13 @@
               />
             </VCol>
             <VCol cols="12">
-              <div class="text-subtitle-1 mb-2 font-weight-bold">场景配置</div>
-              <VExpansionPanels multiple variant="accordion">
+              <div class="text-subtitle-1 mb-2 font-weight-bold">
+                场景配置
+              </div>
+              <VExpansionPanels
+                multiple
+                variant="accordion"
+              >
                 <VExpansionPanel
                   v-for="scene in scenes"
                   :key="scene.key"
@@ -330,7 +443,10 @@
                   <VExpansionPanelTitle>{{ scene.title }}</VExpansionPanelTitle>
                   <VExpansionPanelText>
                     <VRow class="mt-1">
-                      <VCol cols="12" md="6">
+                      <VCol
+                        cols="12"
+                        md="6"
+                      >
                         <VSelect
                           :key="'provider-'+scene.key"
                           v-model="strategyForm.models[scene.key].provider"
@@ -342,7 +458,10 @@
                           density="compact"
                         />
                       </VCol>
-                      <VCol cols="12" md="6">
+                      <VCol
+                        cols="12"
+                        md="6"
+                      >
                         <VSelect
                           :key="'model-'+scene.key"
                           v-model="strategyForm.models[scene.key].model"
@@ -365,8 +484,19 @@
         <VDivider />
         <VCardActions class="pa-4">
           <VSpacer />
-          <VBtn variant="text" @click="strategyDialog = false">取消</VBtn>
-          <VBtn color="primary" @click="saveStrategy" :loading="saving">保存</VBtn>
+          <VBtn
+            variant="text"
+            @click="strategyDialog = false"
+          >
+            取消
+          </VBtn>
+          <VBtn
+            color="primary"
+            :loading="saving"
+            @click="saveStrategy"
+          >
+            保存
+          </VBtn>
         </VCardActions>
       </VCard>
     </VDialog>

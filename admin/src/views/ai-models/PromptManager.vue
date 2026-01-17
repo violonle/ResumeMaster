@@ -1,36 +1,79 @@
 <template>
   <div class="prompt-manager">
     <div class="d-flex justify-space-between align-center mb-4">
-      <h3 class="text-h6">提示词模板管理</h3>
-      <VBtn color="primary" @click="fetchPrompts" :loading="loading" prepend-icon="mdi-refresh">刷新</VBtn>
+      <h3 class="text-h6">
+        提示词模板管理
+      </h3>
+      <VBtn
+        color="primary"
+        :loading="loading"
+        prepend-icon="mdi-refresh"
+        @click="fetchPrompts"
+      >
+        刷新
+      </VBtn>
     </div>
 
     <VCard>
       <VTable>
         <thead>
           <tr>
-            <th class="text-left">名称</th>
-            <th class="text-left">Key</th>
-            <th class="text-left">分类</th>
-            <th class="text-left">状态</th>
-            <th class="text-left">操作</th>
+            <th class="text-left">
+              名称
+            </th>
+            <th class="text-left">
+              Key
+            </th>
+            <th class="text-left">
+              分类
+            </th>
+            <th class="text-left">
+              状态
+            </th>
+            <th class="text-left">
+              操作
+            </th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="item in prompts" :key="item.key">
+          <tr
+            v-for="item in prompts"
+            :key="item.key"
+          >
             <td>
-              <div class="font-weight-medium">{{ item.name }}</div>
-              <div class="text-caption text-medium-emphasis">{{ item.description }}</div>
+              <div class="font-weight-medium">
+                {{ item.name }}
+              </div>
+              <div class="text-caption text-medium-emphasis">
+                {{ item.description }}
+              </div>
             </td>
             <td><code>{{ item.key }}</code></td>
-            <td><VChip size="small" color="info">{{ item.category }}</VChip></td>
             <td>
-              <VChip size="small" :color="item.is_active ? 'success' : 'error'">
+              <VChip
+                size="small"
+                color="info"
+              >
+                {{ item.category }}
+              </VChip>
+            </td>
+            <td>
+              <VChip
+                size="small"
+                :color="item.is_active ? 'success' : 'error'"
+              >
                 {{ item.is_active ? '启用' : '禁用' }}
               </VChip>
             </td>
             <td>
-              <VBtn size="small" color="primary" variant="text" @click="editPrompt(item)">编辑</VBtn>
+              <VBtn
+                size="small"
+                color="primary"
+                variant="text"
+                @click="editPrompt(item)"
+              >
+                编辑
+              </VBtn>
             </td>
           </tr>
         </tbody>
@@ -38,19 +81,39 @@
     </VCard>
 
     <!-- Edit Dialog -->
-    <VDialog v-model="dialog" max-width="800px">
+    <VDialog
+      v-model="dialog"
+      max-width="800px"
+    >
       <VCard>
         <VCardTitle class="pa-4 bg-primary text-white">
           编辑提示词模板
         </VCardTitle>
         <VCardText class="pa-4">
-          <VForm ref="form" v-model="valid">
+          <VForm
+            ref="form"
+            v-model="valid"
+          >
             <VRow>
-              <VCol cols="12" md="6">
-                <VTextField v-model="editedItem.name" label="模板名称" required></VTextField>
+              <VCol
+                cols="12"
+                md="6"
+              >
+                <VTextField
+                  v-model="editedItem.name"
+                  label="模板名称"
+                  required
+                />
               </VCol>
-              <VCol cols="12" md="6">
-                <VTextField v-model="editedItem.key" label="Key (不可修改)" disabled></VTextField>
+              <VCol
+                cols="12"
+                md="6"
+              >
+                <VTextField
+                  v-model="editedItem.key"
+                  label="Key (不可修改)"
+                  disabled
+                />
               </VCol>
               <VCol cols="12">
                 <VTextarea
@@ -60,26 +123,50 @@
                   hint="支持变量，如 {{variableName}}"
                   persistent-hint
                   class="font-monospace"
-                ></VTextarea>
+                />
               </VCol>
               <VCol cols="12">
-                <div class="text-caption mb-2">可用变量:</div>
+                <div class="text-caption mb-2">
+                  可用变量:
+                </div>
                 <div class="d-flex gap-2 flex-wrap">
-                  <VChip v-for="v in editedItem.variables" :key="v" size="small" color="secondary" @click="insertVariable(v)">
+                  <VChip
+                    v-for="v in editedItem.variables"
+                    :key="v"
+                    size="small"
+                    color="secondary"
+                    @click="insertVariable(v)"
+                  >
                     {{ v }}
                   </VChip>
                 </div>
               </VCol>
               <VCol cols="12">
-                <VSwitch v-model="editedItem.is_active" label="启用" color="success"></VSwitch>
+                <VSwitch
+                  v-model="editedItem.is_active"
+                  label="启用"
+                  color="success"
+                />
               </VCol>
             </VRow>
           </VForm>
         </VCardText>
         <VCardActions class="pa-4">
-          <VSpacer></VSpacer>
-          <VBtn color="grey" variant="text" @click="dialog = false">取消</VBtn>
-          <VBtn color="primary" @click="savePrompt" :loading="saving">保存</VBtn>
+          <VSpacer />
+          <VBtn
+            color="grey"
+            variant="text"
+            @click="dialog = false"
+          >
+            取消
+          </VBtn>
+          <VBtn
+            color="primary"
+            :loading="saving"
+            @click="savePrompt"
+          >
+            保存
+          </VBtn>
         </VCardActions>
       </VCard>
     </VDialog>

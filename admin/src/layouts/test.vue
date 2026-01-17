@@ -5,14 +5,14 @@
       <h3>测试导航</h3>
       <div style="margin-top: 20px;">
         <button 
-          @click="() => { console.log('Test dashboard click'); router.push('/dashboard'); }"
           style="display: block; width: 100%; padding: 10px; margin: 5px 0; cursor: pointer;"
+          @click="() => { console.log('Test dashboard click'); router.push('/dashboard'); }"
         >
           仪表板 (测试)
         </button>
         <button 
-          @click="() => { console.log('Test customers click'); router.push('/customers'); }"
           style="display: block; width: 100%; padding: 10px; margin: 5px 0; cursor: pointer;"
+          @click="() => { console.log('Test customers click'); router.push('/customers'); }"
         >
           客户管理 (测试)
         </button>

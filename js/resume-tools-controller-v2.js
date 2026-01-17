@@ -266,8 +266,10 @@
                             </span>
                         </div>
                     </div>
-                    <div class="checkbox-custom ${isSelected ? 'checked' : ''} shadow-sm">
-                        ${isSelected ? '<i class="fas fa-check text-[10px] text-white"></i>' : ''}
+                    <div class="flex items-center justify-center ml-2">
+                        <input type="${state.analysisMode === 'single' ? 'radio' : 'checkbox'}" 
+                               class="w-5 h-5 text-blue-600 accent-blue-600 bg-gray-50 border-gray-200 focus:ring-blue-500 focus:ring-2 checked:bg-blue-600 checked:border-transparent ${state.analysisMode === 'single' ? 'rounded-full' : 'rounded'} pointer-events-none transition-all"
+                               ${isSelected ? 'checked' : ''}>
                     </div>
                 </div>
             `;

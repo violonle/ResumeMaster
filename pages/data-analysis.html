@@ -9,7 +9,6 @@
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <script src="../js/tailwindcss.js"></script>
     <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://fastly.jsdelivr.net/npm/chart.js"></script>
     <script src="../js/resume-data.js?v=3"></script>
     <script src="../js/user-auth.js"></script>
@@ -17,23 +16,8 @@
     <link rel="stylesheet" href="/css/design-system.css">
     <style>
         :root {
-            --font-family-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
         }
         body {
-            font-family: var(--font-family-sans);
-        }
-        .portal-card {
-            background-color: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 16px;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
-            transition-property: all;
-            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-            transition-duration: 300ms;
-        }
-        .portal-card:hover {
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            transform: translateY(-2px);
         }
         .brand-title { white-space: normal !important; }
     </style>
@@ -43,7 +27,7 @@
     <aside id="sidebar" class="fixed left-0 top-0 bottom-0 sidebar-modern z-40"></aside>
 
 
-    <header class="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20 h-20">
+    <header class="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md border-b border-gray-100 z-20 h-20">
         <div class="max-w-[1440px] mx-auto flex items-center justify-between px-6 h-full">
             <div class="flex items-center space-x-4 pl-8">
                 <div class="brand-title flex flex-col justify-center space-y-1.5">
@@ -56,72 +40,72 @@
             </div>
         </div>
     </header>
-    <main class="main-content p-6 pt-24" id="main-content">
+    <main class="main-content p-8 pt-24" id="main-content">
         <div class="max-w-[1440px] mx-auto">
             <div class="flex justify-between items-center mb-6">
                 <div></div>
                 <div class="flex space-x-3">
-                    <select class="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                    <select class="bg-gray-50 border-none rounded-2xl px-4 py-2 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-blue-100 outline-none cursor-pointer">
                         <option>最近7天</option>
                         <option>最近30天</option>
                         <option>最近90天</option>
                         <option>自定义时间</option>
                     </select>
-                    <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium"
+                    <button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-2xl font-bold shadow-md shadow-blue-200 transition-all"
                         onclick="exportReport()"><i class="fas fa-download mr-2"></i>导出报告</button>
                 </div>
             </div>
             <div class="grid grid-cols-4 gap-6 mb-8 min-w-0">
-                <div class="portal-card p-6 transition-colors group hover:border-blue-200">
+                <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-6 transition-colors group hover:border-blue-200">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm text-gray-500 font-medium">总简历数</p>
                             <p class="text-3xl font-bold text-gray-900 mt-2" id="total-resumes-count">—</p>
                             <p class="text-sm text-gray-400 mt-2 flex items-center" id="total-resumes-growth"><i class="fas fa-arrow-up mr-1"></i>+0%</p>
                         </div>
-                        <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center border border-blue-100 group-hover:bg-blue-100 transition-colors">
+                        <div class="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center border border-blue-100 group-hover:bg-blue-100 transition-colors">
                             <i class="fas fa-file-alt text-blue-600 text-xl"></i>
                         </div>
                     </div>
                 </div>
-                <div class="portal-card p-6 transition-colors group hover:border-blue-200">
+                <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-6 transition-colors group hover:border-blue-200">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm text-gray-500 font-medium">总职位数</p>
                             <p class="text-3xl font-bold text-gray-900 mt-2" id="total-jobs-count">—</p>
                             <p class="text-sm text-gray-400 mt-2 flex items-center" id="total-jobs-growth"><i class="fas fa-arrow-up mr-1"></i>+0%</p>
                         </div>
-                        <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center border border-blue-100 group-hover:bg-blue-100 transition-colors">
+                        <div class="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center border border-blue-100 group-hover:bg-blue-100 transition-colors">
                             <i class="fas fa-briefcase text-blue-600 text-xl"></i>
                         </div>
                     </div>
                 </div>
-                <div class="portal-card p-6 transition-colors group hover:border-blue-200">
+                <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-6 transition-colors group hover:border-blue-200">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm text-gray-500 font-medium">面试安排</p>
                             <p class="text-3xl font-bold text-gray-900 mt-2" id="interviews-count">—</p>
                             <p class="text-sm text-gray-400 mt-2 flex items-center" id="interviews-growth"><i class="fas fa-arrow-up mr-1"></i>+0%</p>
                         </div>
-                        <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center border border-blue-100 group-hover:bg-blue-100 transition-colors">
+                        <div class="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center border border-blue-100 group-hover:bg-blue-100 transition-colors">
                             <i class="fas fa-calendar-check text-blue-600 text-xl"></i>
                         </div>
                     </div>
                 </div>
-                <div class="portal-card p-6 transition-colors group hover:border-blue-200">
+                <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-6 transition-colors group hover:border-blue-200">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm text-gray-500 font-medium">入职率</p>
                             <p class="text-3xl font-bold text-gray-900 mt-2" id="onboarding-rate">—</p>
                             <p class="text-sm text-gray-400 mt-2 flex items-center" id="onboarding-growth"><i class="fas fa-arrow-up mr-1"></i>+0%</p>
                         </div>
-                        <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center border border-blue-100 group-hover:bg-blue-100 transition-colors">
+                        <div class="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center border border-blue-100 group-hover:bg-blue-100 transition-colors">
                             <i class="fas fa-user-check text-blue-600 text-xl"></i>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="portal-card p-6 mb-8">
+            <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-6 mb-8">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-lg font-medium text-gray-900">招聘漏斗</h3>
                     <span class="text-xs text-gray-500">投递 → 初筛 → 面试 → Offer → 入职</span>
@@ -132,27 +116,27 @@
                 <!-- 统一使用横条 + 指标 + 图例样式，移除旧卡片式漏斗 -->
             </div>
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                <div class="portal-card p-6">
+                <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg font-medium text-gray-900">简历投递趋势</h3>
-                        <div class="flex space-x-2"><button class="text-xs px-2 py-1 bg-blue-100 text-blue-600 rounded"
+                        <div class="flex space-x-2"><button class="text-xs px-3 py-1.5 bg-blue-100 text-blue-600 rounded-lg font-bold"
                                 onclick="updateChart('resume','week')">周</button><button
-                                class="text-xs px-2 py-1 text-gray-500 rounded"
+                                class="text-xs px-3 py-1.5 text-gray-500 rounded-lg font-bold hover:bg-gray-100 transition-colors"
                                 onclick="updateChart('resume','month')">月</button></div>
                     </div>
                     <canvas id="resumeChart" width="400" height="200"></canvas>
                 </div>
-                <div class="portal-card p-6">
+                <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg font-medium text-gray-900">职位匹配分析</h3><button
-                            class="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded" onclick="refreshMatchData()"><i
+                            class="text-xs px-3 py-1.5 bg-gray-50 text-gray-600 rounded-lg font-bold hover:bg-gray-100 transition-colors" onclick="refreshMatchData()"><i
                                 class="fas fa-sync-alt mr-1"></i>刷新</button>
                     </div>
                     <canvas id="matchChart" width="400" height="200"></canvas>
                 </div>
             </div>
             <div class="grid grid-cols-1 gap-6">
-                <div class="portal-card">
+                <div class="bg-white border border-gray-100 rounded-2xl shadow-sm">
                     <div class="px-6 py-4 border-b border-gray-200">
                         <h3 class="text-lg font-medium text-gray-900">招聘效率统计</h3>
                     </div>

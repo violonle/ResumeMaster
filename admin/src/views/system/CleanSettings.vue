@@ -4,20 +4,48 @@
     subtitle="配置系统基础参数和功能"
   >
     <!-- 设置标签页 -->
-    <VTabs v-model="activeTab" class="mb-6" color="primary">
-      <VTab value="basic" prepend-icon="mdi-cog">基础设置</VTab>
-      <VTab value="notifications" prepend-icon="mdi-bell">通知设置</VTab>
-      <VTab value="roles" prepend-icon="mdi-shield-account">角色权限</VTab>
+    <VTabs
+      v-model="activeTab"
+      class="mb-6"
+      color="primary"
+    >
+      <VTab
+        value="basic"
+        prepend-icon="mdi-cog"
+      >
+        基础设置
+      </VTab>
+      <VTab
+        value="notifications"
+        prepend-icon="mdi-bell"
+      >
+        通知设置
+      </VTab>
+      <VTab
+        value="roles"
+        prepend-icon="mdi-shield-account"
+      >
+        角色权限
+      </VTab>
     </VTabs>
 
     <!-- 基础设置 -->
     <VWindow v-model="activeTab">
       <VWindowItem value="basic">
-        <VCard elevation="0" border>
+        <VCard
+          elevation="0"
+          border
+        >
           <VCardText>
-            <VForm ref="basicForm" @submit.prevent="saveBasicSettings">
+            <VForm
+              ref="basicForm"
+              @submit.prevent="saveBasicSettings"
+            >
               <VRow>
-                <VCol cols="12" md="6">
+                <VCol
+                  cols="12"
+                  md="6"
+                >
                   <VTextField
                     v-model="systemStore.settings.siteName"
                     label="网站名称"
@@ -28,7 +56,10 @@
                     prepend-inner-icon="mdi-web"
                   />
                 </VCol>
-                <VCol cols="12" md="6">
+                <VCol
+                  cols="12"
+                  md="6"
+                >
                   <VTextField
                     v-model="systemStore.settings.siteLogo"
                     label="网站Logo"
@@ -48,7 +79,10 @@
                     prepend-inner-icon="mdi-text"
                   />
                 </VCol>
-                <VCol cols="12" md="6">
+                <VCol
+                  cols="12"
+                  md="6"
+                >
                   <VTextField
                     v-model="systemStore.settings.contactEmail"
                     label="联系邮箱"
@@ -58,7 +92,10 @@
                     prepend-inner-icon="mdi-email"
                   />
                 </VCol>
-                <VCol cols="12" md="6">
+                <VCol
+                  cols="12"
+                  md="6"
+                >
                   <VTextField
                     v-model="systemStore.settings.contactPhone"
                     label="联系电话"
@@ -80,7 +117,11 @@
                         <span class="me-2">维护模式</span>
                         <VTooltip location="end">
                           <template #activator="{ props }">
-                            <VIcon v-bind="props" icon="mdi-help-circle-outline" size="small" />
+                            <VIcon
+                              v-bind="props"
+                              icon="mdi-help-circle-outline"
+                              size="small"
+                            />
                           </template>
                           启用后，只有管理员可以访问系统
                         </VTooltip>
@@ -88,7 +129,10 @@
                     </template>
                   </VSwitch>
                 </VCol>
-                <VCol cols="12" class="d-flex justify-end">
+                <VCol
+                  cols="12"
+                  class="d-flex justify-end"
+                >
                   <VBtn 
                     type="submit" 
                     color="primary" 
@@ -106,16 +150,32 @@
 
       <!-- 通知设置 -->
       <VWindowItem value="notifications">
-        <VCard elevation="0" border>
+        <VCard
+          elevation="0"
+          border
+        >
           <VCardText>
-            <VForm ref="notificationForm" @submit.prevent="saveNotificationSettings">
+            <VForm
+              ref="notificationForm"
+              @submit.prevent="saveNotificationSettings"
+            >
               <VRow>
-                <VCol cols="12" md="6">
-                  <VCard border class="h-100">
+                <VCol
+                  cols="12"
+                  md="6"
+                >
+                  <VCard
+                    border
+                    class="h-100"
+                  >
                     <VCardText class="d-flex align-center justify-space-between">
                       <div>
-                        <div class="text-subtitle-1 font-weight-bold">邮件通知</div>
-                        <div class="text-caption text-medium-emphasis">启用后系统将通过邮件发送重要通知</div>
+                        <div class="text-subtitle-1 font-weight-bold">
+                          邮件通知
+                        </div>
+                        <div class="text-caption text-medium-emphasis">
+                          启用后系统将通过邮件发送重要通知
+                        </div>
                       </div>
                       <VSwitch
                         v-model="systemStore.settings.emailNotifications"
@@ -126,12 +186,22 @@
                     </VCardText>
                   </VCard>
                 </VCol>
-                <VCol cols="12" md="6">
-                  <VCard border class="h-100">
+                <VCol
+                  cols="12"
+                  md="6"
+                >
+                  <VCard
+                    border
+                    class="h-100"
+                  >
                     <VCardText class="d-flex align-center justify-space-between">
                       <div>
-                        <div class="text-subtitle-1 font-weight-bold">短信通知</div>
-                        <div class="text-caption text-medium-emphasis">启用后系统将通过短信发送验证码和通知</div>
+                        <div class="text-subtitle-1 font-weight-bold">
+                          短信通知
+                        </div>
+                        <div class="text-caption text-medium-emphasis">
+                          启用后系统将通过短信发送验证码和通知
+                        </div>
                       </div>
                       <VSwitch
                         v-model="systemStore.settings.smsNotifications"
@@ -142,12 +212,22 @@
                     </VCardText>
                   </VCard>
                 </VCol>
-                <VCol cols="12" md="6">
-                  <VCard border class="h-100">
+                <VCol
+                  cols="12"
+                  md="6"
+                >
+                  <VCard
+                    border
+                    class="h-100"
+                  >
                     <VCardText class="d-flex align-center justify-space-between">
                       <div>
-                        <div class="text-subtitle-1 font-weight-bold">系统通知</div>
-                        <div class="text-caption text-medium-emphasis">启用站内消息通知</div>
+                        <div class="text-subtitle-1 font-weight-bold">
+                          系统通知
+                        </div>
+                        <div class="text-caption text-medium-emphasis">
+                          启用站内消息通知
+                        </div>
                       </div>
                       <VSwitch
                         v-model="systemStore.settings.systemNotifications"
@@ -158,12 +238,22 @@
                     </VCardText>
                   </VCard>
                 </VCol>
-                <VCol cols="12" md="6">
-                  <VCard border class="h-100">
+                <VCol
+                  cols="12"
+                  md="6"
+                >
+                  <VCard
+                    border
+                    class="h-100"
+                  >
                     <VCardText class="d-flex align-center justify-space-between">
                       <div>
-                        <div class="text-subtitle-1 font-weight-bold">营销通知</div>
-                        <div class="text-caption text-medium-emphasis">接收产品更新和营销活动通知</div>
+                        <div class="text-subtitle-1 font-weight-bold">
+                          营销通知
+                        </div>
+                        <div class="text-caption text-medium-emphasis">
+                          接收产品更新和营销活动通知
+                        </div>
                       </div>
                       <VSwitch
                         v-model="systemStore.settings.marketingNotifications"
@@ -174,7 +264,10 @@
                     </VCardText>
                   </VCard>
                 </VCol>
-                <VCol cols="12" class="d-flex justify-end">
+                <VCol
+                  cols="12"
+                  class="d-flex justify-end"
+                >
                   <VBtn 
                     type="submit" 
                     color="primary" 
@@ -193,8 +286,14 @@
       <!-- 角色权限 -->
       <VWindowItem value="roles">
         <VRow>
-          <VCol cols="12" lg="8">
-            <VCard elevation="0" border>
+          <VCol
+            cols="12"
+            lg="8"
+          >
+            <VCard
+              elevation="0"
+              border
+            >
               <VCardText class="pa-0">
                 <div class="d-flex align-center pa-4 gap-4 border-b">
                   <div style="width: 300px">
@@ -237,19 +336,35 @@
                         class="me-1"
                         @click="editRole(item)"
                       >
-                        <VIcon icon="mdi-pencil-outline" size="20" />
-                        <VTooltip activator="parent" location="top">编辑权限</VTooltip>
+                        <VIcon
+                          icon="mdi-pencil-outline"
+                          size="20"
+                        />
+                        <VTooltip
+                          activator="parent"
+                          location="top"
+                        >
+                          编辑权限
+                        </VTooltip>
                       </VBtn>
                       <VBtn
                         icon
                         size="small"
                         color="error"
                         variant="text"
-                        @click="deleteRole(item)"
                         :disabled="item.is_system"
+                        @click="deleteRole(item)"
                       >
-                        <VIcon icon="mdi-trash-can-outline" size="20" />
-                        <VTooltip activator="parent" location="top">删除角色</VTooltip>
+                        <VIcon
+                          icon="mdi-trash-can-outline"
+                          size="20"
+                        />
+                        <VTooltip
+                          activator="parent"
+                          location="top"
+                        >
+                          删除角色
+                        </VTooltip>
                       </VBtn>
                     </div>
                   </template>
@@ -258,20 +373,46 @@
             </VCard>
           </VCol>
           
-          <VCol cols="12" lg="4">
-            <VCard elevation="0" border color="primary" variant="tonal">
+          <VCol
+            cols="12"
+            lg="4"
+          >
+            <VCard
+              elevation="0"
+              border
+              color="primary"
+              variant="tonal"
+            >
               <VCardText>
                 <div class="d-flex align-center mb-4">
-                  <VIcon icon="mdi-shield-check" size="32" color="primary" class="me-3" />
+                  <VIcon
+                    icon="mdi-shield-check"
+                    size="32"
+                    color="primary"
+                    class="me-3"
+                  />
                   <div>
-                    <div class="text-h6 font-weight-bold">权限说明</div>
-                    <div class="text-caption">系统角色与权限管理指南</div>
+                    <div class="text-h6 font-weight-bold">
+                      权限说明
+                    </div>
+                    <div class="text-caption">
+                      系统角色与权限管理指南
+                    </div>
                   </div>
                 </div>
                 <VList bg-color="transparent">
-                  <VListItem prepend-icon="mdi-circle-small" title="超级管理员拥有所有权限，不可删除" />
-                  <VListItem prepend-icon="mdi-circle-small" title="建议为不同职能人员分配最小够用权限" />
-                  <VListItem prepend-icon="mdi-circle-small" title="修改角色权限后，相关用户下次登录生效" />
+                  <VListItem
+                    prepend-icon="mdi-circle-small"
+                    title="超级管理员拥有所有权限，不可删除"
+                  />
+                  <VListItem
+                    prepend-icon="mdi-circle-small"
+                    title="建议为不同职能人员分配最小够用权限"
+                  />
+                  <VListItem
+                    prepend-icon="mdi-circle-small"
+                    title="修改角色权限后，相关用户下次登录生效"
+                  />
                 </VList>
               </VCardText>
             </VCard>
@@ -281,14 +422,20 @@
     </VWindow>
 
     <!-- 角色编辑对话框 -->
-    <VDialog v-model="roleDialog" max-width="600px">
+    <VDialog
+      v-model="roleDialog"
+      max-width="600px"
+    >
       <VCard>
         <VCardTitle class="pa-4">
           {{ roleForm.id ? '编辑角色' : '新增角色' }}
         </VCardTitle>
         <VDivider />
         <VCardText class="pa-4">
-          <VForm ref="roleFormRef" @submit.prevent="saveRole">
+          <VForm
+            ref="roleFormRef"
+            @submit.prevent="saveRole"
+          >
             <VTextField
               v-model="roleForm.name"
               label="角色名称"
@@ -306,9 +453,19 @@
               rows="3"
               class="mb-4"
             />
-            <div class="text-subtitle-2 mb-2">权限配置</div>
-            <VSheet border rounded class="pa-2" style="max-height: 300px; overflow-y: auto">
-              <div v-if="!systemStore.permissions || systemStore.permissions.length === 0" class="text-caption text-medium-emphasis text-center pa-4">
+            <div class="text-subtitle-2 mb-2">
+              权限配置
+            </div>
+            <VSheet
+              border
+              rounded
+              class="pa-2"
+              style="max-height: 300px; overflow-y: auto"
+            >
+              <div
+                v-if="!systemStore.permissions || systemStore.permissions.length === 0"
+                class="text-caption text-medium-emphasis text-center pa-4"
+              >
                 暂无可用权限配置
               </div>
               <template v-else>
@@ -328,8 +485,19 @@
         <VDivider />
         <VCardActions class="pa-4">
           <VSpacer />
-          <VBtn variant="text" @click="roleDialog = false">取消</VBtn>
-          <VBtn color="primary" @click="saveRole" :loading="savingRole">保存</VBtn>
+          <VBtn
+            variant="text"
+            @click="roleDialog = false"
+          >
+            取消
+          </VBtn>
+          <VBtn
+            color="primary"
+            :loading="savingRole"
+            @click="saveRole"
+          >
+            保存
+          </VBtn>
         </VCardActions>
       </VCard>
     </VDialog>

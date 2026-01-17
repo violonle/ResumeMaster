@@ -25,7 +25,11 @@
   <div class="standard-page">
     <!-- 页面头部区域 -->
     <VRow class="page-head">
-      <VCol cols="12" md="6" class="d-flex align-center">
+      <VCol
+        cols="12"
+        md="6"
+        class="d-flex align-center"
+      >
         <VBtn
           v-if="showBack"
           icon="mdi-arrow-left"
@@ -34,20 +38,31 @@
           @click="$emit('back')"
         />
         <div>
-          <h1 class="page-title">{{ title }}</h1>
-          <p v-if="subtitle" class="page-sub">
+          <h1 class="page-title">
+            {{ title }}
+          </h1>
+          <p
+            v-if="subtitle"
+            class="page-sub"
+          >
             {{ subtitle }}
           </p>
         </div>
       </VCol>
-      <VCol cols="12" md="6" class="text-md-right">
+      <VCol
+        cols="12"
+        md="6"
+        class="text-md-right"
+      >
         <!-- 操作按钮插槽 -->
         <slot name="actions" />
       </VCol>
     </VRow>
 
     <!-- 内容区域 -->
-    <div class="page-body"><slot /></div>
+    <div class="page-body">
+      <slot />
+    </div>
   </div>
 </template>
 

@@ -1,33 +1,68 @@
 <template>
   <VApp>
     <VMain class="login-main">
-      <VContainer fluid class="fill-height pa-0">
-        <VRow no-gutters class="fill-height">
+      <VContainer
+        fluid
+        class="fill-height pa-0"
+      >
+        <VRow
+          no-gutters
+          class="fill-height"
+        >
           <!-- Left Brand Section -->
-          <VCol cols="12" md="6" lg="7" class="d-none d-md-flex brand-col position-relative align-center justify-center">
-            <div class="brand-bg"></div>
-            <div class="brand-content d-flex flex-column align-center text-center pa-12 text-white w-100" style="z-index: 1">
+          <VCol
+            cols="12"
+            md="6"
+            lg="7"
+            class="d-none d-md-flex brand-col position-relative align-center justify-center"
+          >
+            <div class="brand-bg" />
+            <div
+              class="brand-content d-flex flex-column align-center text-center pa-12 text-white w-100"
+              style="z-index: 1"
+            >
               <div class="d-flex align-end justify-center mb-8 w-100 ga-4">
-                  <div style="width: 72px;">
-                    <VImg :src="`${baseUrl}logo.png`" alt="Logo" contain />
-                  </div>
-                  <h1 class="text-h3 font-weight-bold mb-0">争湃·简历大师</h1>
+                <div style="width: 72px;">
+                  <VImg
+                    :src="`${baseUrl}logo.png`"
+                    alt="Logo"
+                    contain
+                  />
                 </div>
-              <p class="text-h6 font-weight-regular opacity-90 mb-12 mx-auto" style="max-width: 520px">
-                专业的企业级简历解析与管理平台，<br class="d-md-none d-lg-block" />赋能人力资源数字化转型
+                <h1 class="text-h3 font-weight-bold mb-0">
+                  争湃·简历大师
+                </h1>
+              </div>
+              <p
+                class="text-h6 font-weight-regular opacity-90 mb-12 mx-auto"
+                style="max-width: 520px"
+              >
+                专业的企业级简历解析与管理平台，<br class="d-md-none d-lg-block">赋能人力资源数字化转型
               </p>
               
               <div class="d-flex ga-8 justify-center w-100">
                 <div class="d-flex flex-column align-center">
-                  <VIcon icon="mdi-shield-check" size="32" class="mb-2 opacity-90" />
+                  <VIcon
+                    icon="mdi-shield-check"
+                    size="32"
+                    class="mb-2 opacity-90"
+                  />
                   <span class="text-subtitle-2 font-weight-medium">企业级安全</span>
                 </div>
                 <div class="d-flex flex-column align-center">
-                  <VIcon icon="mdi-lightning-bolt" size="32" class="mb-2 opacity-90" />
+                  <VIcon
+                    icon="mdi-lightning-bolt"
+                    size="32"
+                    class="mb-2 opacity-90"
+                  />
                   <span class="text-subtitle-2 font-weight-medium">AI 智能解析</span>
                 </div>
                 <div class="d-flex flex-column align-center">
-                  <VIcon icon="mdi-account-group" size="32" class="mb-2 opacity-90" />
+                  <VIcon
+                    icon="mdi-account-group"
+                    size="32"
+                    class="mb-2 opacity-90"
+                  />
                   <span class="text-subtitle-2 font-weight-medium">高效协作</span>
                 </div>
               </div>
@@ -35,19 +70,41 @@
           </VCol>
 
           <!-- Right Login Form Section -->
-          <VCol cols="12" md="6" lg="5" class="d-flex align-center justify-center bg-surface">
-            <div class="w-100 pa-8 pa-sm-12" style="max-width: 480px">
+          <VCol
+            cols="12"
+            md="6"
+            lg="5"
+            class="d-flex align-center justify-center bg-surface"
+          >
+            <div
+              class="w-100 pa-8 pa-sm-12"
+              style="max-width: 480px"
+            >
               <div class="mb-10">
                 <div class="d-flex align-end mb-4">
-                  <div style="width: 58px;" class="mr-4">
-                    <VImg :src="`${baseUrl}logo.png`" alt="Logo" contain />
+                  <div
+                    style="width: 58px;"
+                    class="mr-4"
+                  >
+                    <VImg
+                      :src="`${baseUrl}logo.png`"
+                      alt="Logo"
+                      contain
+                    />
                   </div>
-                  <h2 class="text-h4 font-weight-bold mb-0">欢迎回来</h2>
+                  <h2 class="text-h4 font-weight-bold mb-0">
+                    欢迎回来
+                  </h2>
                 </div>
-                <p class="text-body-1 text-medium-emphasis">请输入您的管理员账号以继续</p>
+                <p class="text-body-1 text-medium-emphasis">
+                  请输入您的管理员账号以继续
+                </p>
               </div>
 
-              <VForm @submit.prevent="handleLogin" ref="loginForm">
+              <VForm
+                ref="loginForm"
+                @submit.prevent="handleLogin"
+              >
                 <VTextField
                   v-model="credentials.username"
                   label="用户名"
@@ -67,12 +124,12 @@
                   prepend-inner-icon="mdi-lock-outline"
                   :type="isPasswordVisible ? 'text' : 'password'"
                   :append-inner-icon="isPasswordVisible ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
-                  @click:append-inner="isPasswordVisible = !isPasswordVisible"
                   variant="outlined"
                   color="primary"
                   :rules="[v => !!v || '请输入密码']"
                   class="mb-2"
                   required
+                  @click:append-inner="isPasswordVisible = !isPasswordVisible"
                 />
 
                 <div class="d-flex align-center justify-between mb-6">
@@ -84,7 +141,10 @@
                     density="compact"
                   />
                   <VSpacer />
-                  <a href="#" class="text-primary text-decoration-none text-body-2 font-weight-medium">忘记密码?</a>
+                  <a
+                    href="#"
+                    class="text-primary text-decoration-none text-body-2 font-weight-medium"
+                  >忘记密码?</a>
                 </div>
 
                 <VBtn

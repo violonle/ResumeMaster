@@ -15,7 +15,11 @@
 
     <!-- 统计卡片 -->
     <VRow class="mb-6">
-      <VCol cols="12" md="3" sm="6">
+      <VCol
+        cols="12"
+        md="3"
+        sm="6"
+      >
         <VCard class="h-100">
           <VCardText class="d-flex align-center pa-4">
             <VAvatar
@@ -25,17 +29,28 @@
               size="48"
               class="me-4"
             >
-              <VIcon icon="mdi-account-group" size="24" />
+              <VIcon
+                icon="mdi-account-group"
+                size="24"
+              />
             </VAvatar>
             <div>
-              <div class="text-h5 font-weight-bold">{{ customerStore.totalItems }}</div>
-              <div class="text-caption text-medium-emphasis">总账号数</div>
+              <div class="text-h5 font-weight-bold">
+                {{ customerStore.totalItems }}
+              </div>
+              <div class="text-caption text-medium-emphasis">
+                总账号数
+              </div>
             </div>
           </VCardText>
         </VCard>
       </VCol>
 
-      <VCol cols="12" md="3" sm="6">
+      <VCol
+        cols="12"
+        md="3"
+        sm="6"
+      >
         <VCard class="h-100">
           <VCardText class="d-flex align-center pa-4">
             <VAvatar
@@ -45,17 +60,28 @@
               size="48"
               class="me-4"
             >
-              <VIcon icon="mdi-check-circle" size="24" />
+              <VIcon
+                icon="mdi-check-circle"
+                size="24"
+              />
             </VAvatar>
             <div>
-              <div class="text-h5 font-weight-bold">{{ activeAccounts }}</div>
-              <div class="text-caption text-medium-emphasis">启用账号</div>
+              <div class="text-h5 font-weight-bold">
+                {{ activeAccounts }}
+              </div>
+              <div class="text-caption text-medium-emphasis">
+                启用账号
+              </div>
             </div>
           </VCardText>
         </VCard>
       </VCol>
 
-      <VCol cols="12" md="3" sm="6">
+      <VCol
+        cols="12"
+        md="3"
+        sm="6"
+      >
         <VCard class="h-100">
           <VCardText class="d-flex align-center pa-4">
             <VAvatar
@@ -65,17 +91,28 @@
               size="48"
               class="me-4"
             >
-              <VIcon icon="mdi-clock-outline" size="24" />
+              <VIcon
+                icon="mdi-clock-outline"
+                size="24"
+              />
             </VAvatar>
             <div>
-              <div class="text-h5 font-weight-bold">{{ verifiedAccounts }}</div>
-              <div class="text-caption text-medium-emphasis">已认证</div>
+              <div class="text-h5 font-weight-bold">
+                {{ verifiedAccounts }}
+              </div>
+              <div class="text-caption text-medium-emphasis">
+                已认证
+              </div>
             </div>
           </VCardText>
         </VCard>
       </VCol>
 
-      <VCol cols="12" md="3" sm="6">
+      <VCol
+        cols="12"
+        md="3"
+        sm="6"
+      >
         <VCard class="h-100">
           <VCardText class="d-flex align-center pa-4">
             <VAvatar
@@ -85,11 +122,18 @@
               size="48"
               class="me-4"
             >
-              <VIcon icon="mdi-block-helper" size="24" />
+              <VIcon
+                icon="mdi-block-helper"
+                size="24"
+              />
             </VAvatar>
             <div>
-              <div class="text-h5 font-weight-bold">{{ unverifiedAccounts }}</div>
-              <div class="text-caption text-medium-emphasis">未认证</div>
+              <div class="text-h5 font-weight-bold">
+                {{ unverifiedAccounts }}
+              </div>
+              <div class="text-caption text-medium-emphasis">
+                未认证
+              </div>
             </div>
           </VCardText>
         </VCard>
@@ -97,10 +141,20 @@
     </VRow>
 
     <!-- 搜索和筛选 -->
-    <VCard class="mb-6" elevation="0" border>
+    <VCard
+      class="mb-6"
+      elevation="0"
+      border
+    >
       <VCardText class="pa-4">
-        <VRow dense align="center">
-          <VCol cols="12" md="4">
+        <VRow
+          dense
+          align="center"
+        >
+          <VCol
+            cols="12"
+            md="4"
+          >
             <VTextField
               v-model="searchQuery"
               placeholder="搜索姓名、邮箱或手机号"
@@ -112,7 +166,10 @@
               @input="handleSearch"
             />
           </VCol>
-          <VCol cols="12" md="3">
+          <VCol
+            cols="12"
+            md="3"
+          >
             <VSelect
               v-model="roleFilter"
               :items="roleOptions"
@@ -125,13 +182,16 @@
             />
           </VCol>
           <VSpacer />
-          <VCol cols="12" md="auto">
+          <VCol
+            cols="12"
+            md="auto"
+          >
             <VBtn
               color="primary"
               variant="tonal"
               prepend-icon="mdi-refresh"
-              @click="handleRefresh"
               :loading="customerStore.loading"
+              @click="handleRefresh"
             >
               刷新列表
             </VBtn>
@@ -141,18 +201,21 @@
     </VCard>
 
     <!-- 客户列表 -->
-    <VCard elevation="0" border>
+    <VCard
+      elevation="0"
+      border
+    >
       <VDataTable
+        v-model:page="currentPage"
         :headers="headers"
         :items="customerStore.customers"
         :loading="customerStore.loading"
         :items-per-page="customerStore.filters.itemsPerPage"
         :items-length="customerStore.totalItems"
-        v-model:page="currentPage"
-        @update:page="handlePageChange"
-        @update:items-per-page="handleItemsPerPageChange"
         hover
         class="clean-table"
+        @update:page="handlePageChange"
+        @update:items-per-page="handleItemsPerPageChange"
       >
         <!-- 状态列 -->
         <template #item.is_active="{ item }">
@@ -178,7 +241,11 @@
         
         <!-- 角色列 -->
         <template #item.role="{ item }">
-          <VChip size="small" variant="outlined" class="text-caption">
+          <VChip
+            size="small"
+            variant="outlined"
+            class="text-caption"
+          >
             {{ getRoleText(item.role) }}
           </VChip>
         </template>
@@ -187,38 +254,47 @@
         <template #item.actions="{ item }">
           <div class="d-flex justify-end">
             <VBtn
+              v-tooltip="'查看详情'"
               icon
               size="small"
               color="info"
               variant="text"
               class="me-1"
               @click="viewCustomer(item)"
-              v-tooltip="'查看详情'"
             >
-              <VIcon icon="mdi-eye" size="20" />
+              <VIcon
+                icon="mdi-eye"
+                size="20"
+              />
             </VBtn>
             
             <VBtn
+              v-tooltip="'编辑'"
               icon
               size="small"
               color="primary"
               variant="text"
               class="me-1"
               @click="editCustomer(item)"
-              v-tooltip="'编辑'"
             >
-              <VIcon icon="mdi-pencil" size="20" />
+              <VIcon
+                icon="mdi-pencil"
+                size="20"
+              />
             </VBtn>
             
             <VBtn
+              v-tooltip="'删除'"
               icon
               size="small"
               color="error"
               variant="text"
               @click="confirmDelete(item)"
-              v-tooltip="'删除'"
             >
-              <VIcon icon="mdi-delete" size="20" />
+              <VIcon
+                icon="mdi-delete"
+                size="20"
+              />
             </VBtn>
           </div>
         </template>
@@ -226,26 +302,49 @@
         <!-- 空状态 -->
         <template #no-data>
           <div class="text-center pa-8">
-            <VIcon icon="mdi-account-off" size="48" class="mb-4 text-medium-emphasis" />
-            <div class="text-h6 text-medium-emphasis">暂无账号数据</div>
-            <div class="text-caption text-medium-emphasis mt-2">点击右上角"新建账号"按钮添加第一个账号</div>
+            <VIcon
+              icon="mdi-account-off"
+              size="48"
+              class="mb-4 text-medium-emphasis"
+            />
+            <div class="text-h6 text-medium-emphasis">
+              暂无账号数据
+            </div>
+            <div class="text-caption text-medium-emphasis mt-2">
+              点击右上角"新建账号"按钮添加第一个账号
+            </div>
           </div>
         </template>
       </VDataTable>
     </VCard>
 
     <!-- 创建/编辑对话框 -->
-    <VDialog v-model="showCreateDialog" max-width="600px" persistent>
+    <VDialog
+      v-model="showCreateDialog"
+      max-width="600px"
+      persistent
+    >
       <VCard>
         <VCardTitle class="d-flex align-center justify-space-between pa-4">
           <span class="text-h6">{{ editingAccount ? '编辑账号' : '新建账号' }}</span>
-          <VBtn icon="mdi-close" variant="text" size="small" @click="closeDialog" />
+          <VBtn
+            icon="mdi-close"
+            variant="text"
+            size="small"
+            @click="closeDialog"
+          />
         </VCardTitle>
         <VDivider />
         <VCardText class="pa-4">
-          <VForm ref="formRef" @submit.prevent="handleSubmit">
+          <VForm
+            ref="formRef"
+            @submit.prevent="handleSubmit"
+          >
             <VRow>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <VTextField
                   v-model="accountForm.username"
                   label="姓名"
@@ -254,7 +353,10 @@
                   required
                 />
               </VCol>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <VTextField
                   v-model="accountForm.email"
                   label="邮箱"
@@ -263,7 +365,10 @@
                   variant="outlined"
                 />
               </VCol>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <VTextField
                   v-model="accountForm.phone"
                   label="手机号"
@@ -272,7 +377,10 @@
                   required
                 />
               </VCol>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <VSelect
                   v-model="accountForm.role"
                   :items="roleOptions"
@@ -293,7 +401,10 @@
                   clearable
                 />
               </VCol>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <VSwitch
                   v-model="accountForm.is_verified"
                   label="已认证"
@@ -308,23 +419,52 @@
         <VDivider />
         <VCardActions class="pa-4">
           <VSpacer />
-          <VBtn color="grey-darken-1" variant="text" @click="closeDialog">取消</VBtn>
-          <VBtn color="primary" @click="handleSubmit" :loading="saving">保存</VBtn>
+          <VBtn
+            color="grey-darken-1"
+            variant="text"
+            @click="closeDialog"
+          >
+            取消
+          </VBtn>
+          <VBtn
+            color="primary"
+            :loading="saving"
+            @click="handleSubmit"
+          >
+            保存
+          </VBtn>
         </VCardActions>
       </VCard>
     </VDialog>
 
     <!-- 删除确认对话框 -->
-    <VDialog v-model="showDeleteDialog" max-width="400px">
+    <VDialog
+      v-model="showDeleteDialog"
+      max-width="400px"
+    >
       <VCard>
-        <VCardTitle class="pa-4">确认删除</VCardTitle>
+        <VCardTitle class="pa-4">
+          确认删除
+        </VCardTitle>
         <VCardText class="pa-4 pt-0">
           确定要删除账号 "{{ deletingAccount?.username }}" 吗？此操作不可恢复。
         </VCardText>
         <VCardActions class="pa-4">
           <VSpacer />
-          <VBtn color="grey-darken-1" variant="text" @click="showDeleteDialog = false">取消</VBtn>
-          <VBtn color="error" @click="handleDelete" :loading="deleting">删除</VBtn>
+          <VBtn
+            color="grey-darken-1"
+            variant="text"
+            @click="showDeleteDialog = false"
+          >
+            取消
+          </VBtn>
+          <VBtn
+            color="error"
+            :loading="deleting"
+            @click="handleDelete"
+          >
+            删除
+          </VBtn>
         </VCardActions>
       </VCard>
     </VDialog>

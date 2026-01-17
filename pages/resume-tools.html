@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>深度解析 - 争湃·简历大师</title>
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="../js/tailwindcss.js"></script>
     <link rel="stylesheet" href="https://fastly.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
     <script src="../js/chart.min.js"></script>
@@ -32,137 +31,33 @@
     <link rel="stylesheet" href="../css/responsive.css">
 
     <style>
-        :root {
-            --font-family-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-        }
-        body {
-            font-family: var(--font-family-sans);
-        }
-        .portal-card {
-            background-color: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 16px;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
-            transition-property: all;
-            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-            transition-duration: 300ms;
-        }
-        .portal-card:hover {
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            transform: translateY(-2px);
-        }
-        .brand-title { white-space: normal !important; }
-        .sidebar-left {
-            width: 360px;
-            display: flex;
-            flex-direction: column;
-            position: sticky;
-            top: 80px; /* Matches header height h-20 */
-            height: calc(100vh - 80px);
-        }
-        .main-content-area {
-            flex: 1;
-            background: #f9fafb;
-            min-height: calc(100vh - 80px);
-            padding: 40px 20px;
-            overflow-y: auto;
-        }
-        .main-content {
-            padding: 80px 0 0 0 !important; /* Overriding sidebar.css to allow full-width split layout */
-        }
         .tab-btn {
-            padding: 12px 24px;
-            font-size: 14px;
+            /* Tailwind: px-4 py-2 text-sm font-medium text-gray-500 rounded-md transition-all */
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
             font-weight: 500;
             color: #6b7280;
-            border-bottom: 2px solid transparent;
+            border-radius: 0.375rem;
             transition: all 0.2s;
-            flex: 1;
-            text-align: center;
+        }
+        .tab-btn:hover {
+            color: #111827;
+            background-color: #f9fafb;
         }
         .tab-btn.active {
+            /* Tailwind: bg-blue-50 text-blue-600 shadow-sm */
+            background-color: #eff6ff;
             color: #2563eb;
-            border-bottom-color: #2563eb;
-            background: #eff6ff;
-        }
-        .candidate-item.selected {
-            border-color: #2563eb !important;
-            background-color: #eff6ff !important;
-        }
-        .analysis-type-btn {
-            padding: 8px 16px;
-            font-size: 13px;
-            font-weight: 500;
-            border-radius: 6px;
-            transition: all 0.2s;
-        }
-        .analysis-type-btn.active {
-            background: #2563eb;
-            color: #fff;
-        }
-        .analysis-type-btn:not(.active) {
-            background: #fff;
-            color: #4b5563;
-            border: 1px solid #e5e7eb;
-        }
-        .score-card {
-            background: #fff;
-            border: 1px solid #f3f4f6;
-            border-radius: 12px;
-            padding: 16px;
-            transition: all 0.2s;
-        }
-        .score-card:hover {
-            border-color: #2563eb;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.05);
-        }
-        .checkbox-custom {
-            width: 18px;
-            height: 18px;
-            border: 2px solid #e5e7eb;
-            border-radius: 5px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-        }
-        .checkbox-custom.checked {
-            background: #2563eb;
-            border-color: #2563eb;
-        }
-        .radar-container {
-            background: #fff;
-            border: 1px solid #f3f4f6;
-            border-radius: 16px;
-            padding: 24px;
-            height: 360px;
-        }
-        .report-section {
-            background: #fff;
-            border: 1px solid #f3f4f6;
-            border-radius: 12px;
-            padding: 20px;
-            margin-top: 16px;
-        }
-        .progress-bar-bg {
-            height: 8px;
-            background: #e5e7eb;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-        .progress-bar-fill {
-            height: 100%;
-            background: #2563eb;
-            transition: width 0.3s ease;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
         }
     </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50 h-screen overflow-hidden">
     <aside id="sidebar" class="fixed left-0 top-0 bottom-0 sidebar-modern z-40"></aside>
     <div id="sidebar-overlay" class="sidebar-overlay"></div>
 
     <!-- Header -->
-    <header class="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20 h-20">
+    <header class="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md border-b border-gray-100 z-20 h-20">
         <div class="flex items-center justify-between px-6 h-full">
             <div class="flex items-center space-x-4 pl-8">
                 <div class="brand-title flex flex-col justify-center space-y-1.5">
@@ -174,10 +69,10 @@
         </div>
     </header>
 
-    <div class="main-content flex" id="main-content">
+    <div class="main-content flex h-full gap-6 !pt-[88px] !pb-6 !px-6" id="main-content">
         <!-- Sidebar Left (Candidate Selection) -->
-        <div class="sidebar-left overflow-hidden bg-gray-50/50 p-4 pr-2">
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col h-full overflow-hidden">
+        <div class="sidebar-left w-80 flex-shrink-0 h-full flex flex-col overflow-hidden bg-gray-50/50 rounded-2xl">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-100 flex flex-col h-full overflow-hidden">
                 <div class="flex border-b border-gray-100 bg-gray-50/30">
                     <button class="tab-btn active" data-tab="library">从人才库选择</button>
                     <button class="tab-btn" data-tab="upload">上传新简历</button>
@@ -200,9 +95,9 @@
                     </div>
 
                     <div class="relative mb-4">
-                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                        <input type="text" id="candidate-search" placeholder="搜索候选人姓名..." 
-                               class="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-white">
+                        <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        <input type="text" id="candidate-search" placeholder="搜索候选人..." 
+                               class="w-full pl-11 pr-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-100 outline-none text-sm font-bold text-gray-700 transition-all">
                     </div>
                     <div id="candidate-list" class="flex-1 overflow-y-auto pr-2 custom-scrollbar">
                         <!-- Dynamic List -->
@@ -211,7 +106,7 @@
 
                 <!-- Upload Tab Content -->
                 <div id="upload-content" class="hidden flex-1 flex flex-col p-4 overflow-hidden">
-                    <div id="drop-zone" class="border-2 border-dashed border-gray-100 rounded-xl p-6 text-center hover:border-blue-400 hover:bg-blue-50 transition-all cursor-pointer mb-4 bg-gray-50/50">
+                    <div id="drop-zone" class="border-2 border-dashed border-gray-100 rounded-lg p-6 text-center hover:border-blue-400 hover:bg-blue-50 transition-all cursor-pointer mb-4 bg-gray-50/50">
                         <i class="fas fa-cloud-upload-alt text-2xl text-gray-400 mb-2"></i>
                         <p class="text-sm text-gray-600 font-medium">点击上传简历</p>
                         <p class="text-xs text-gray-400 mt-1">支持 PDF, DOC, DOCX</p>
@@ -223,7 +118,7 @@
                 </div>
 
                 <div class="p-4 border-t border-gray-100 bg-gray-50/30">
-                    <button id="analyze-btn" disabled class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 disabled:opacity-50 disabled:shadow-none flex items-center justify-center">
+                    <button id="analyze-btn" disabled class="w-full bg-blue-600 text-white py-3 rounded-2xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 disabled:opacity-50 disabled:shadow-none flex items-center justify-center">
                         <i class="fas fa-arrow-right mr-2"></i> 开始解析
                     </button>
                 </div>
@@ -231,23 +126,23 @@
         </div>
 
         <!-- Main Content Area (Right) -->
-        <div class="main-content-area">
-            <div class="max-w-[1440px] mx-auto">
+        <div class="main-content-area flex-1 min-w-0 h-full overflow-y-auto custom-scrollbar">
+            <div class="max-w-[1440px] mx-auto pb-8">
                 <div class="flex items-center justify-between mb-8">
                     <div class="flex items-center space-x-4">
-                        <a href="analysis-records.html" class="inline-flex items-center px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-all shadow-sm">
+                        <a href="analysis-records.html" class="inline-flex items-center px-4 py-2 bg-white border border-gray-200 rounded-2xl text-sm font-bold text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-all shadow-sm">
                             <i class="fas fa-history mr-2"></i>
                             解析记录
                         </a>
                     </div>
-                    <div class="flex bg-white p-1 rounded-lg border border-gray-200">
-                        <button class="tab-btn active px-4 py-2 text-sm" data-mode="single">单一深度解析</button>
-                        <button class="tab-btn px-4 py-2 text-sm" data-mode="multi">多人对比解析</button>
+                    <div class="flex bg-white p-1 rounded-2xl border border-gray-200">
+                        <button class="tab-btn active px-4 py-2 text-sm rounded-xl font-bold" data-mode="single">单一深度解析</button>
+                        <button class="tab-btn px-4 py-2 text-sm rounded-xl font-bold" data-mode="multi">多人对比解析</button>
                     </div>
                 </div>
 
                 <!-- Empty State -->
-                <div id="empty-state" class="flex flex-col items-center justify-center py-20 portal-card border-dashed">
+                <div id="empty-state" class="flex flex-col items-center justify-center py-20 bg-white border border-gray-100 rounded-2xl shadow-sm border-dashed">
                     <div class="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-6">
                         <i class="fas fa-user-check text-4xl text-gray-300"></i>
                     </div>
@@ -258,9 +153,9 @@
                 <!-- Single Analysis Results -->
                 <div id="single-analysis-results" class="hidden space-y-5">
                     <!-- Basic Info Card -->
-                    <div class="portal-card p-6 flex items-center justify-between">
+                    <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-6 flex items-center justify-between">
                         <div class="flex items-center space-x-6">
-                            <div class="w-16 h-16 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 text-2xl font-bold border border-blue-100">
+                            <div class="w-16 h-16 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 text-2xl font-bold border border-blue-100">
                                 <i class="fas fa-user-tie"></i>
                             </div>
                             <div>
@@ -282,7 +177,7 @@
                     </div>
 
                     <!-- Unified Analysis Card -->
-                    <div class="portal-card p-6 md:p-8">
+                    <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-6 md:p-8">
                         <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
                             <h4 class="text-lg font-bold text-gray-900 flex items-center">
                                 <i class="fas fa-chart-line mr-2 text-blue-600"></i>
@@ -312,7 +207,7 @@
                     </div>
 
                     <!-- AI Analysis Report -->
-                    <div class="portal-card p-6">
+                    <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
                         <h4 class="text-base font-bold text-gray-900 mb-5 flex items-center">
                             <i class="fas fa-file-invoice mr-2 text-blue-600"></i>
                             AI 深度分析报告
@@ -350,19 +245,19 @@
         
         <div class="mt-10 grid grid-cols-3 gap-8 w-full max-w-lg">
             <div class="flex flex-col items-center">
-                <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 mb-2">
+                <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 mb-2">
                     <i class="fas fa-file-alt"></i>
                 </div>
                 <span class="text-[10px] font-bold text-gray-400 uppercase">读取简历</span>
             </div>
             <div class="flex flex-col items-center">
-                <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 mb-2">
+                <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 mb-2">
                     <i class="fas fa-brain"></i>
                 </div>
                 <span class="text-[10px] font-bold text-gray-400 uppercase">逻辑推理</span>
             </div>
             <div class="flex flex-col items-center">
-                <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 mb-2">
+                <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 mb-2">
                     <i class="fas fa-chart-bar"></i>
                 </div>
                 <span class="text-[10px] font-bold text-gray-400 uppercase">生成报告</span>

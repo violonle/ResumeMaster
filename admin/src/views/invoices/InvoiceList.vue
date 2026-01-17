@@ -4,10 +4,20 @@
     subtitle="管理用户发票申请及开具记录"
   >
     <!-- 搜索与筛选 -->
-    <VCard class="mb-6" elevation="0" border>
+    <VCard
+      class="mb-6"
+      elevation="0"
+      border
+    >
       <VCardText class="pa-4">
-        <VRow dense align="center">
-          <VCol cols="12" md="4">
+        <VRow
+          dense
+          align="center"
+        >
+          <VCol
+            cols="12"
+            md="4"
+          >
             <VTextField
               v-model="search"
               label="搜索发票号/抬头"
@@ -19,7 +29,10 @@
               @update:model-value="handleSearch"
             />
           </VCol>
-          <VCol cols="12" md="3">
+          <VCol
+            cols="12"
+            md="3"
+          >
             <VSelect
               v-model="statusFilter"
               :items="statusItems"
@@ -33,7 +46,13 @@
           </VCol>
           <VSpacer />
           <VCol cols="auto">
-            <VBtn color="primary" variant="tonal" prepend-icon="mdi-refresh" @click="handleRefresh" :loading="loading">
+            <VBtn
+              color="primary"
+              variant="tonal"
+              prepend-icon="mdi-refresh"
+              :loading="loading"
+              @click="handleRefresh"
+            >
               刷新
             </VBtn>
           </VCol>
@@ -42,7 +61,10 @@
     </VCard>
 
     <!-- 数据表格 -->
-    <VCard elevation="0" border>
+    <VCard
+      elevation="0"
+      border
+    >
       <VCardText class="pa-0">
         <VDataTable
           :headers="headers"
@@ -56,7 +78,10 @@
           </template>
 
           <template #item.status="{ item }">
-            <VChip :color="getStatusColor(item.status)" size="small">
+            <VChip
+              :color="getStatusColor(item.status)"
+              size="small"
+            >
               {{ getStatusText(item.status) }}
             </VChip>
           </template>
@@ -66,29 +91,62 @@
           </template>
           
           <template #item.actions="{ item }">
-            <VBtn icon="mdi-eye" size="small" variant="text" color="primary" @click="viewDetail(item)" />
+            <VBtn
+              icon="mdi-eye"
+              size="small"
+              variant="text"
+              color="primary"
+              @click="viewDetail(item)"
+            />
           </template>
         </VDataTable>
       </VCardText>
     </VCard>
     
     <!-- 详情对话框 (简化版) -->
-    <VDialog v-model="detailDialog" max-width="600">
+    <VDialog
+      v-model="detailDialog"
+      max-width="600"
+    >
       <VCard v-if="selectedItem">
         <VCardTitle>发票详情</VCardTitle>
         <VCardText>
           <VList density="compact">
-            <VListItem title="发票号" :subtitle="selectedItem.invoiceNo" />
-            <VListItem title="抬头" :subtitle="selectedItem.buyerName" />
-            <VListItem title="税号" :subtitle="selectedItem.buyerTaxNumber || '-'" />
-            <VListItem title="金额" :subtitle="`¥${selectedItem.amount}`" />
-            <VListItem title="状态" :subtitle="getStatusText(selectedItem.status)" />
-            <VListItem title="开票时间" :subtitle="formatDate(selectedItem.issuedAt)" />
+            <VListItem
+              title="发票号"
+              :subtitle="selectedItem.invoiceNo"
+            />
+            <VListItem
+              title="抬头"
+              :subtitle="selectedItem.buyerName"
+            />
+            <VListItem
+              title="税号"
+              :subtitle="selectedItem.buyerTaxNumber || '-'"
+            />
+            <VListItem
+              title="金额"
+              :subtitle="`¥${selectedItem.amount}`"
+            />
+            <VListItem
+              title="状态"
+              :subtitle="getStatusText(selectedItem.status)"
+            />
+            <VListItem
+              title="开票时间"
+              :subtitle="formatDate(selectedItem.issuedAt)"
+            />
           </VList>
         </VCardText>
         <VCardActions>
           <VSpacer />
-          <VBtn color="primary" variant="text" @click="detailDialog = false">关闭</VBtn>
+          <VBtn
+            color="primary"
+            variant="text"
+            @click="detailDialog = false"
+          >
+            关闭
+          </VBtn>
         </VCardActions>
       </VCard>
     </VDialog>

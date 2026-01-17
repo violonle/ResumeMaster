@@ -2,13 +2,22 @@
   <div>
     <!-- 页面标题和操作区 -->
     <VRow class="mb-6">
-      <VCol cols="12" md="6">
-        <h1 class="text-h4 font-weight-bold">账号管理</h1>
+      <VCol
+        cols="12"
+        md="6"
+      >
+        <h1 class="text-h4 font-weight-bold">
+          账号管理
+        </h1>
         <p class="text-subtitle-1 text-medium-emphasis">
           管理所有使用争湃·简历大师的用户
         </p>
       </VCol>
-      <VCol cols="12" md="6" class="text-md-right">
+      <VCol
+        cols="12"
+        md="6"
+        class="text-md-right"
+      >
         <VBtn
           color="primary"
           prepend-icon="mdi-plus"
@@ -21,7 +30,11 @@
 
     <!-- 统计卡片 -->
     <VRow class="mb-6">
-      <VCol cols="12" md="3" sm="6">
+      <VCol
+        cols="12"
+        md="3"
+        sm="6"
+      >
         <VCard>
           <VCardText class="d-flex align-center">
             <VAvatar
@@ -30,17 +43,28 @@
               variant="tonal"
               class="me-4"
             >
-              <VIcon icon="mdi-account-group" size="24" />
+              <VIcon
+                icon="mdi-account-group"
+                size="24"
+              />
             </VAvatar>
             <div>
-              <div class="text-h4">{{ totalCustomers }}</div>
-              <div class="text-caption text-medium-emphasis">总客户数</div>
+              <div class="text-h4">
+                {{ totalCustomers }}
+              </div>
+              <div class="text-caption text-medium-emphasis">
+                总客户数
+              </div>
             </div>
           </VCardText>
         </VCard>
       </VCol>
 
-      <VCol cols="12" md="3" sm="6">
+      <VCol
+        cols="12"
+        md="3"
+        sm="6"
+      >
         <VCard>
           <VCardText class="d-flex align-center">
             <VAvatar
@@ -49,17 +73,28 @@
               variant="tonal"
               class="me-4"
             >
-              <VIcon icon="mdi-check-circle" size="24" />
+              <VIcon
+                icon="mdi-check-circle"
+                size="24"
+              />
             </VAvatar>
             <div>
-              <div class="text-h4">{{ activeCustomers }}</div>
-              <div class="text-caption text-medium-emphasis">活跃客户</div>
+              <div class="text-h4">
+                {{ activeCustomers }}
+              </div>
+              <div class="text-caption text-medium-emphasis">
+                活跃客户
+              </div>
             </div>
           </VCardText>
         </VCard>
       </VCol>
 
-      <VCol cols="12" md="3" sm="6">
+      <VCol
+        cols="12"
+        md="3"
+        sm="6"
+      >
         <VCard>
           <VCardText class="d-flex align-center">
             <VAvatar
@@ -68,17 +103,28 @@
               variant="tonal"
               class="me-4"
             >
-              <VIcon icon="mdi-credit-card" size="24" />
+              <VIcon
+                icon="mdi-credit-card"
+                size="24"
+              />
             </VAvatar>
             <div>
-              <div class="text-h4">{{ paidCustomers }}</div>
-              <div class="text-caption text-medium-emphasis">付费客户</div>
+              <div class="text-h4">
+                {{ paidCustomers }}
+              </div>
+              <div class="text-caption text-medium-emphasis">
+                付费客户
+              </div>
             </div>
           </VCardText>
         </VCard>
       </VCol>
 
-      <VCol cols="12" md="3" sm="6">
+      <VCol
+        cols="12"
+        md="3"
+        sm="6"
+      >
         <VCard>
           <VCardText class="d-flex align-center">
             <VAvatar
@@ -87,11 +133,18 @@
               variant="tonal"
               class="me-4"
             >
-              <VIcon icon="mdi-calendar-today" size="24" />
+              <VIcon
+                icon="mdi-calendar-today"
+                size="24"
+              />
             </VAvatar>
             <div>
-              <div class="text-h4">{{ newCustomersThisMonth }}</div>
-              <div class="text-caption text-medium-emphasis">本月新增</div>
+              <div class="text-h4">
+                {{ newCustomersThisMonth }}
+              </div>
+              <div class="text-caption text-medium-emphasis">
+                本月新增
+              </div>
             </div>
           </VCardText>
         </VCard>
@@ -103,7 +156,10 @@
       <VCardText>
         <!-- 搜索和操作 -->
         <VRow class="mb-4">
-          <VCol cols="12" md="6">
+          <VCol
+            cols="12"
+            md="6"
+          >
             <VTextField
               v-model="search"
               prepend-inner-icon="mdi-magnify"
@@ -113,7 +169,11 @@
               dense
             />
           </VCol>
-          <VCol cols="12" md="6" class="text-md-right">
+          <VCol
+            cols="12"
+            md="6"
+            class="text-md-right"
+          >
             <VBtn
               color="secondary"
               variant="tonal"
@@ -146,12 +206,20 @@
           <!-- 客户信息列 -->
           <template #item.customer="{ item }">
             <div class="d-flex align-center">
-              <VAvatar size="40" color="primary" class="me-3">
+              <VAvatar
+                size="40"
+                color="primary"
+                class="me-3"
+              >
                 <span class="text-h6">{{ item.name.charAt(0) }}</span>
               </VAvatar>
               <div>
-                <div class="text-body-1 font-weight-medium">{{ item.name }}</div>
-                <div class="text-caption text-medium-emphasis">{{ item.email }}</div>
+                <div class="text-body-1 font-weight-medium">
+                  {{ item.name }}
+                </div>
+                <div class="text-caption text-medium-emphasis">
+                  {{ item.email }}
+                </div>
               </div>
             </div>
           </template>
@@ -210,8 +278,15 @@
           <!-- 无数据 -->
           <template #no-data>
             <div class="text-center py-8">
-              <VIcon icon="mdi-account-search" size="64" color="grey" class="mb-4" />
-              <h3 class="text-h6 mb-2">暂无客户数据</h3>
+              <VIcon
+                icon="mdi-account-search"
+                size="64"
+                color="grey"
+                class="mb-4"
+              />
+              <h3 class="text-h6 mb-2">
+                暂无客户数据
+              </h3>
               <p class="text-body-2 text-medium-emphasis">
                 还没有客户注册或符合搜索条件
               </p>
@@ -222,15 +297,24 @@
     </VCard>
 
     <!-- 创建/编辑对话框 -->
-    <VDialog v-model="showCreateDialog" max-width="600px">
+    <VDialog
+      v-model="showCreateDialog"
+      max-width="600px"
+    >
       <VCard>
         <VCardTitle>
           <span class="text-h5">{{ editingCustomer ? '编辑客户' : '新建客户' }}</span>
         </VCardTitle>
         <VCardText>
-          <VForm ref="formRef" v-model="valid">
+          <VForm
+            ref="formRef"
+            v-model="valid"
+          >
             <VRow>
-              <VCol cols="12" sm="6">
+              <VCol
+                cols="12"
+                sm="6"
+              >
                 <VTextField
                   v-model="customerForm.name"
                   label="姓名"
@@ -238,7 +322,10 @@
                   required
                 />
               </VCol>
-              <VCol cols="12" sm="6">
+              <VCol
+                cols="12"
+                sm="6"
+              >
                 <VTextField
                   v-model="customerForm.email"
                   label="邮箱"
@@ -247,14 +334,20 @@
                   required
                 />
               </VCol>
-              <VCol cols="12" sm="6">
+              <VCol
+                cols="12"
+                sm="6"
+              >
                 <VTextField
                   v-model="customerForm.phone"
                   label="电话"
                   type="tel"
                 />
               </VCol>
-              <VCol cols="12" sm="6">
+              <VCol
+                cols="12"
+                sm="6"
+              >
                 <VSelect
                   v-model="customerForm.status"
                   label="状态"
@@ -275,12 +368,18 @@
         </VCardText>
         <VCardActions>
           <VSpacer />
-          <VBtn color="grey" variant="text" @click="showCreateDialog = false">取消</VBtn>
+          <VBtn
+            color="grey"
+            variant="text"
+            @click="showCreateDialog = false"
+          >
+            取消
+          </VBtn>
           <VBtn
             color="primary"
             :loading="saving"
-            @click="handleSave"
             :disabled="!valid"
+            @click="handleSave"
           >
             保存
           </VBtn>
@@ -289,16 +388,33 @@
     </VDialog>
 
     <!-- 删除确认对话框 -->
-    <VDialog v-model="showDeleteDialog" max-width="400px">
+    <VDialog
+      v-model="showDeleteDialog"
+      max-width="400px"
+    >
       <VCard>
-        <VCardTitle class="text-h5">确认删除</VCardTitle>
+        <VCardTitle class="text-h5">
+          确认删除
+        </VCardTitle>
         <VCardText>
           确定要删除客户 "{{ deletingCustomer?.name }}" 吗？此操作不可恢复。
         </VCardText>
         <VCardActions>
           <VSpacer />
-          <VBtn color="grey" variant="text" @click="showDeleteDialog = false">取消</VBtn>
-          <VBtn color="error" @click="handleDelete" :loading="deleting">删除</VBtn>
+          <VBtn
+            color="grey"
+            variant="text"
+            @click="showDeleteDialog = false"
+          >
+            取消
+          </VBtn>
+          <VBtn
+            color="error"
+            :loading="deleting"
+            @click="handleDelete"
+          >
+            删除
+          </VBtn>
         </VCardActions>
       </VCard>
     </VDialog>

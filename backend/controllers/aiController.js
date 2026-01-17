@@ -9,6 +9,8 @@ const { UserActivity } = require('../models');
 
 const aiService = new DomesticAIService();
 
+const OptimizedResumeParseService = require('../services/optimizedResumeParseService');
+
 class AIController {
   // 简历分析
   async analyzeResume(req, res) {
@@ -158,6 +160,21 @@ class AIController {
     try {
       console.log(`[AI Controller] Background analysis started for resumeId: ${resumeId}`);
       logger.info('Starting background analysis', { resumeId });
+      
+      // 1. 先进行基础的正则解析，确保基础数据不丢失
+      let localParsedData = {};
+      try {
+          console.log(`[AI Controller] Running local regex parsing for resumeId: ${resumeId}`);
+          const parseService = new OptimizedResumeParseService();
+          const resume = await Resume.findByPk(resumeId);
+          // 确定文件扩展名
+          const fileType = resume ? (resume.file_type || 'txt') : 'txt';
+          localParsedData = await parseService.parseResumeContent(text, fileType);
+          console.log(`[AI Controller] Local parsing completed. Name found: ${localParsedData.name}`);
+      } catch (parseErr) {
+          console.error(`[AI Controller] Local parsing failed: ${parseErr.message}`);
+      }
+
       const result = await aiService.analyzeResume(text, jobDescription, user, options ? options.scene : null);
 
         if (result.success) {
@@ -309,13 +326,82 @@ class AIController {
         
         console.log(`[AI Controller] Analysis record created for resumeId: ${resumeId}`);
         
+        // 获取当前简历数据以便合并而非覆盖
+        const currentResume = await Resume.findByPk(resumeId);
+        const currentParsedData = currentResume.parsed_data || {};
+        
+        // 智能合并策略：
+        // 1. 优先使用本地正则解析的数据 (localParsedData)，因为它更稳定
+        // 2. 其次使用当前 DB 中的数据 (currentParsedData)
+        // 3. 最后合并 AI 分析的数据 (analysisData)
+        const mergedParsedData = {
+            ...currentParsedData,
+            ...localParsedData, // 本地解析覆盖旧数据
+            ...analysisData,    // AI 数据覆盖 (主要是 scores, summary 等)
+            
+            // 保护关键列表字段
+            // 优先级: AI > 本地解析 > 原有数据 (因为 AI 可能做了更好的结构化)
+            // 但如果 AI 是空的，必须回退到本地解析
+            work_experience: (analysisData.work_experience && analysisData.work_experience.length > 0) 
+                ? analysisData.work_experience 
+                : (localParsedData.work_experience && localParsedData.work_experience.length > 0 
+                    ? localParsedData.work_experience 
+                    : (currentParsedData.work_experience || [])),
+            
+            education: (analysisData.education && analysisData.education.length > 0) 
+                ? analysisData.education 
+                : (localParsedData.education && localParsedData.education.length > 0 
+                    ? localParsedData.education 
+                    : (currentParsedData.education || [])),
+            
+            projects: (analysisData.projects && analysisData.projects.length > 0) 
+                ? analysisData.projects 
+                : (localParsedData.projects && localParsedData.projects.length > 0 
+                    ? localParsedData.projects 
+                    : (currentParsedData.projects || [])),
+            
+            skills: (analysisData.skills && analysisData.skills.length > 0)
+                ? analysisData.skills
+                : (localParsedData.skills && localParsedData.skills.length > 0 
+                    ? localParsedData.skills 
+                    : (currentParsedData.skills || [])),
+            
+            // 保护基础信息
+            basic_info: {
+                ...(currentParsedData.basic_info || {}),
+                ...(localParsedData.basic_info || {}), // 本地解析可能有更准的手机号/邮箱
+                ...(analysisData.basic_info || {})
+            },
+            
+            // 确保 rawText 不丢失
+            rawText: currentParsedData.rawText || currentParsedData.raw_text || analysisData.rawText || text || ''
+        };
+
+        // 确保 name, email, phone 等核心字段有值 (从 mergedParsedData 中提取)
+        const finalName = mergedParsedData.name || mergedParsedData.basic_info?.name || localParsedData.name || '';
+        const finalEmail = mergedParsedData.email || mergedParsedData.basic_info?.email || localParsedData.email || '';
+        const finalPhone = mergedParsedData.phone || mergedParsedData.basic_info?.phone || localParsedData.phone || '';
+        const finalJob = mergedParsedData.job_title || mergedParsedData.basic_info?.job_title || localParsedData.job_title || '';
+        const finalExp = parseInt(mergedParsedData.experience_years || mergedParsedData.basic_info?.work_years || localParsedData.experience_years || 0);
+        const finalEdu = mergedParsedData.highest_education || mergedParsedData.basic_info?.education || localParsedData.highest_education || '';
+
         // 最后更新简历状态
+        // 关键修复：将 AI 分析得到的结构化数据回填到 Resume 表的 parsed_data 字段，
+        // 确保 resume-details.html 能显示出 AI 提取的详细字段。
         await Resume.update({ 
           status: 'analyzed',
           last_analysis_date: new Date(),
-          score: overallScore
+          score: overallScore,
+          parsed_data: mergedParsedData,
+          // 同时尝试更新部分核心字段，方便列表页筛选
+          name: finalName || undefined,
+          email: finalEmail || undefined,
+          phone: finalPhone || undefined,
+          job_title: finalJob || undefined,
+          experience_years: finalExp || undefined,
+          highest_education: finalEdu || undefined
         }, { where: { id: resumeId } });
-        console.log(`[AI Controller] Resume status updated to 'analyzed' for resumeId: ${resumeId}`);
+        console.log(`[AI Controller] Resume status updated to 'analyzed' and parsed_data populated for resumeId: ${resumeId}`);
         
         logger.info('Background analysis completed', { resumeId, score: overallScore });
       } else {

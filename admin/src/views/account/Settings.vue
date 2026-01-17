@@ -7,7 +7,9 @@
       <VCol cols="12">
         <VCard>
           <VCardText>
-            <p class="text-subtitle-1 text-medium-emphasis">账户设置功能开发中...</p>
+            <p class="text-subtitle-1 text-medium-emphasis">
+              账户设置功能开发中...
+            </p>
           </VCardText>
         </VCard>
       </VCol>

@@ -14,10 +14,17 @@
     </template>
 
     <!-- 搜索栏 -->
-    <VCard class="mb-6" elevation="0" border>
+    <VCard
+      class="mb-6"
+      elevation="0"
+      border
+    >
       <VCardText class="pa-4">
         <VRow>
-          <VCol cols="12" md="8">
+          <VCol
+            cols="12"
+            md="8"
+          >
             <VTextField
               v-model="filters.search"
               prepend-inner-icon="mdi-magnify"
@@ -31,16 +38,35 @@
               @click:clear="handleSearch"
             />
           </VCol>
-          <VCol cols="12" md="4" class="d-flex align-center">
-            <VBtn color="primary" variant="flat" class="me-2" @click="handleSearch">搜索</VBtn>
-            <VBtn variant="outlined" @click="resetFilters">重置</VBtn>
+          <VCol
+            cols="12"
+            md="4"
+            class="d-flex align-center"
+          >
+            <VBtn
+              color="primary"
+              variant="flat"
+              class="me-2"
+              @click="handleSearch"
+            >
+              搜索
+            </VBtn>
+            <VBtn
+              variant="outlined"
+              @click="resetFilters"
+            >
+              重置
+            </VBtn>
           </VCol>
         </VRow>
       </VCardText>
     </VCard>
 
     <!-- 简历列表 -->
-    <VCard elevation="0" border>
+    <VCard
+      elevation="0"
+      border
+    >
       <VDataTableServer
         v-model:items-per-page="filters.limit"
         :headers="headers"
@@ -48,15 +74,19 @@
         :items-length="total"
         :loading="loading"
         :items-per-page-options="[10, 20, 50, 100]"
-        @update:options="loadItems"
         hover
+        @update:options="loadItems"
       >
-        <template v-slot:item.name="{ item }">
-          <div class="font-weight-medium">{{ item.name }}</div>
-          <div class="text-caption text-medium-emphasis">{{ item.file_name }}</div>
+        <template #item.name="{ item }">
+          <div class="font-weight-medium">
+            {{ item.name }}
+          </div>
+          <div class="text-caption text-medium-emphasis">
+            {{ item.file_name }}
+          </div>
         </template>
 
-        <template v-slot:item.jobs="{ item }">
+        <template #item.jobs="{ item }">
           <div class="d-flex flex-wrap ga-1">
             <VChip
               v-for="rj in item.ResumeJobs"
@@ -66,15 +96,18 @@
             >
               {{ rj.Job?.title || '未知职位' }}
             </VChip>
-            <span v-if="!item.ResumeJobs?.length" class="text-caption text-disabled">无</span>
+            <span
+              v-if="!item.ResumeJobs?.length"
+              class="text-caption text-disabled"
+            >无</span>
           </div>
         </template>
 
-        <template v-slot:item.created_at="{ item }">
+        <template #item.created_at="{ item }">
           {{ formatDate(item.upload_date) }}
         </template>
 
-        <template v-slot:item.actions="{ item }">
+        <template #item.actions="{ item }">
           <div class="d-flex justify-end align-center">
             <VBtn
               variant="text"
@@ -84,8 +117,16 @@
               class="me-1"
               @click="openAttachment(item)"
             >
-              <VIcon icon="mdi-file-download-outline" size="20" />
-              <VTooltip activator="parent" location="top">打开附件</VTooltip>
+              <VIcon
+                icon="mdi-file-download-outline"
+                size="20"
+              />
+              <VTooltip
+                activator="parent"
+                location="top"
+              >
+                打开附件
+              </VTooltip>
             </VBtn>
             <VBtn
               variant="text"
@@ -95,8 +136,16 @@
               class="me-1"
               @click="generateLink(item)"
             >
-              <VIcon icon="mdi-link-variant" size="20" />
-              <VTooltip activator="parent" location="top">生成面试链接</VTooltip>
+              <VIcon
+                icon="mdi-link-variant"
+                size="20"
+              />
+              <VTooltip
+                activator="parent"
+                location="top"
+              >
+                生成面试链接
+              </VTooltip>
             </VBtn>
             <VBtn
               variant="text"
@@ -105,8 +154,16 @@
               color="primary"
               @click="viewDetail(item)"
             >
-              <VIcon icon="mdi-eye-outline" size="20" />
-              <VTooltip activator="parent" location="top">查看详情</VTooltip>
+              <VIcon
+                icon="mdi-eye-outline"
+                size="20"
+              />
+              <VTooltip
+                activator="parent"
+                location="top"
+              >
+                查看详情
+              </VTooltip>
             </VBtn>
           </div>
         </template>
@@ -114,11 +171,18 @@
     </VCard>
 
     <!-- 链接生成弹窗 -->
-    <VDialog v-model="showLinkDialog" max-width="500">
+    <VDialog
+      v-model="showLinkDialog"
+      max-width="500"
+    >
       <VCard>
-        <VCardTitle class="pa-4">AI面试链接生成</VCardTitle>
+        <VCardTitle class="pa-4">
+          AI面试链接生成
+        </VCardTitle>
         <VCardText class="pa-4">
-          <div class="text-body-2 mb-4">请复制以下链接发送给候选人：</div>
+          <div class="text-body-2 mb-4">
+            请复制以下链接发送给候选人：
+          </div>
           <VTextField
             v-model="generatedLink"
             readonly
@@ -128,7 +192,12 @@
           />
         </VCardText>
         <VCardActions class="pa-4 pt-0 justify-end">
-          <VBtn color="primary" @click="showLinkDialog = false">关闭</VBtn>
+          <VBtn
+            color="primary"
+            @click="showLinkDialog = false"
+          >
+            关闭
+          </VBtn>
         </VCardActions>
       </VCard>
     </VDialog>

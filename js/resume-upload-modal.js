@@ -539,6 +539,7 @@
 
     // New Preview Modal Logic
     function openPreviewModal(data) {
+        console.log('Preview Data Received:', data); // Debug log
         currentPreviewData = data;
         if (!document.getElementById('libraryPreviewOverlay')) {
             injectPreviewModalHTML();
@@ -549,10 +550,41 @@
         
         // Populate Data
         const parsed = data.parsed_data || {};
-        document.getElementById('preview-name').value = parsed.name || '';
-        document.getElementById('preview-email').value = parsed.email || '';
-        document.getElementById('preview-phone').value = parsed.phone || '';
-        document.getElementById('preview-raw-text').value = data.raw_text || '';
+        // Support both direct properties and nested basic_info
+        const info = parsed.basic_info || parsed;
+        const rawText = data.raw_text || parsed.rawText || '';
+        
+        // Robust extraction fallback if backend failed
+        let name = info.name || '';
+        let email = info.email || '';
+        let phone = info.phone || '';
+        
+        if (!name && rawText) {
+            // Try to extract name from raw text
+            // 1. Try to find "姓名: XXX" or "- 姓名: XXX"
+            const nameMatch = rawText.match(/(?:^|\n)\s*(?:-\s*)?(?:姓名|Name|候选人)[:：]\s*([^\n\r]+)/i) || 
+                              // 2. Try to find first line if it looks like a name (2-4 chars, chinese)
+                              rawText.match(/^\s*([^\n\r]{2,4})(?:\s+|$)/) || 
+                              // 3. Try to find name before phone number
+                              rawText.match(/([^\n\r]{2,4})\s+(?:1[3-9]\d{9})/); 
+            if (nameMatch) name = nameMatch[1].trim();
+        }
+        
+        if (!email && rawText) {
+            const emailMatch = rawText.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
+            if (emailMatch) email = emailMatch[1];
+        }
+        
+        if (!phone && rawText) {
+            // Support XXX-XXXX-XXXX format and standard 11 digits
+            const phoneMatch = rawText.match(/(?:1[3-9][0-9\-\s]{9,13})|(?:\d{3,4}[-\s]\d{3,4}[-\s]\d{3,4})/);
+            if (phoneMatch) phone = phoneMatch[0].replace(/[^\d-]/g, '');
+        }
+        
+        document.getElementById('preview-name').value = name;
+        document.getElementById('preview-email').value = email;
+        document.getElementById('preview-phone').value = phone;
+        document.getElementById('preview-raw-text').value = rawText;
         document.getElementById('preview-file-name').textContent = data.file_name || '未知文件';
         
         // Bind Confirm Action
@@ -568,15 +600,31 @@
     async function submitFinalImport() {
         if (!currentPreviewData) return;
         
+        // Handle nested basic_info structure
+        const originalParsed = currentPreviewData.parsed_data || {};
+        let updatedParsedData = { ...originalParsed };
+        
+        const name = document.getElementById('preview-name').value;
+        const email = document.getElementById('preview-email').value;
+        const phone = document.getElementById('preview-phone').value;
+        
+        if (updatedParsedData.basic_info) {
+            updatedParsedData.basic_info = {
+                ...updatedParsedData.basic_info,
+                name,
+                email,
+                phone
+            };
+        } else {
+            updatedParsedData.name = name;
+            updatedParsedData.email = email;
+            updatedParsedData.phone = phone;
+        }
+        
         // Gather modified data
         const updatedData = {
             ...currentPreviewData,
-            parsed_data: {
-                ...currentPreviewData.parsed_data,
-                name: document.getElementById('preview-name').value,
-                email: document.getElementById('preview-email').value,
-                phone: document.getElementById('preview-phone').value
-            },
+            parsed_data: updatedParsedData,
             raw_text: document.getElementById('preview-raw-text').value
         };
         

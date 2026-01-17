@@ -28,6 +28,7 @@
       }
     }},
     { icon: 'fas fa-file-alt', label: '简历解析', onClick: () => location.href = 'resume-tools.html' },
+    { icon: 'fas fa-robot', label: 'AI面试', onClick: () => location.href = '/pages/quick-interview.html' },
   ];
 
   function baseName(url) {

@@ -37,6 +37,22 @@ instance.interceptors.response.use(
     }
   },
   (error: any) => {
+    // 处理 401 未授权错误
+    if (error.response?.status === 401) {
+      // 检查当前页面是否是面试页面
+      const isInterviewPage = window.location.pathname.includes('interview.html') || 
+                            window.location.search.includes('sessionId=') ||
+                            window.location.search.includes('resumeJobId=');
+      
+      if (!isInterviewPage) {
+        // 只有非面试页面才自动跳转登录
+        console.warn('Unauthorized access, redirecting to login...');
+        window.location.href = '/pages/login.html';
+      } else {
+        console.warn('Unauthorized API call on interview page, but not redirecting to allow candidate access');
+      }
+    }
+
     let message = '网络错误';
     if (error.response?.data?.error) {
       const apiError = error.response.data.error;

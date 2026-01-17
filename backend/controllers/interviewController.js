@@ -1,7 +1,9 @@
-const { InterviewSession, Resume, ResumeJob, Job, sequelize } = require('../models');
+const { InterviewSession, Resume, ResumeJob, Job, Company, User, sequelize } = require('../models');
 const DomesticAIService = require('../services/domesticAIService');
 const aiService = new DomesticAIService();
 const logger = require('../utils/logger');
+const sms = require('../services/smsService');
+const emailService = require('../services/emailService');
 
 /**
  * 面试控制器
@@ -72,6 +74,180 @@ class InterviewController {
     }
 
     return textParts.join('\n').trim();
+  }
+
+  /**
+   * 快速安排面试
+   */
+  async quickSchedule(req, res) {
+    try {
+      const { jobId, resumeId, interviewType, interviewDate, address, remarks } = req.body;
+      
+      // 1. 验证必填项
+      if (!jobId || !resumeId || !interviewType || !interviewDate) {
+        return res.status(400).json({ success: false, error: { message: '请填写所有必填项' } });
+      }
+
+      // 2. 获取职位和简历信息
+      const job = await Job.findByPk(jobId);
+      const resume = await Resume.findByPk(resumeId);
+
+      if (!job || !resume) {
+        return res.status(404).json({ success: false, error: { message: '职位或简历不存在' } });
+      }
+
+      // 3. 关联简历和职位 (如果尚未关联)
+      let resumeJob = await ResumeJob.findOne({
+        where: { resume_id: resumeId, job_id: jobId }
+      });
+
+      if (!resumeJob) {
+        resumeJob = await ResumeJob.create({
+          resume_id: resumeId,
+          job_id: jobId,
+          status: 'interview', // 更新状态为面试
+          company_id: req.user.company_id,
+          user_id: req.user.id
+        });
+      } else {
+        // 更新状态
+        await resumeJob.update({ status: 'interview' });
+      }
+
+      // 4. 创建面试会话 (如果是线上AI面试)
+      let session = null;
+      let interviewLink = address; // 默认为输入的地址
+
+      if (interviewType === 'online') {
+        // 准备生成题目所需的文本
+        const resumeText = this._extractResumeText(resume);
+        
+        // 生成题目
+        let questions = [];
+        try {
+           const aiResult = await aiService.analyzeResume(
+               resumeText,
+               job.description,
+               null,
+               'interview_question_generation',
+               8
+           );
+           
+           if (aiResult.success && aiResult.data && aiResult.data.questions) {
+               questions = aiResult.data.questions.map(q => ({
+                   ...q,
+                   userAnswer: null,
+                   score: null,
+                   feedback: null
+               }));
+           } else {
+               throw new Error(aiResult.error || 'AI未能生成题目');
+           }
+        } catch (err) {
+           logger.error('生成面试题目失败', err);
+           // 即使失败也继续创建会话，可能后续重试或使用默认题目
+           questions = [
+             { content: "请做一个简单的自我介绍。", type: "open", userAnswer: null },
+             { content: "你为什么应聘这个职位？", type: "open", userAnswer: null },
+             { content: "你认为自己最大的优势是什么？", type: "open", userAnswer: null }
+           ];
+        }
+
+        // 创建会话
+        session = await InterviewSession.create({
+            resume_id: resumeId,
+            resume_job_id: resumeJob.id,
+            resume_text: resumeText,
+            status: 'CREATED',
+            expires_at: new Date(interviewDate), // 截止日期
+            total_questions: questions.length,
+            current_question_index: 0,
+            questions: questions
+        });
+
+        // 生成链接
+        // 尝试从环境变量获取 PORTAL_URL，否则根据请求头推断，或使用默认
+        let portalUrl = process.env.PORTAL_URL;
+        if (!portalUrl) {
+            // 简单的回退逻辑
+            portalUrl = `${req.protocol}://${req.get('host').replace('3000', '5173')}`;
+        }
+        interviewLink = `${portalUrl}/interview.html?sessionId=${session.id}`;
+      }
+
+      // 5. 发送通知
+      const notificationData = {
+        candidateName: resume.name || '候选人',
+        jobTitle: job.title,
+        interviewDate: new Date(interviewDate).toLocaleString('zh-CN', { hour12: false }),
+        interviewLink: interviewLink,
+        address: address,
+        remarks: remarks || '',
+        type: interviewType === 'online' ? '线上AI面试' : '现场面试'
+      };
+
+      // 发送短信
+      if (resume.phone) {
+         try {
+             // 构造短信参数
+             const smsParams = {
+                name: notificationData.candidateName,
+                job: notificationData.jobTitle,
+                time: notificationData.interviewDate,
+                // 注意：短信模板变量长度有限制，地址/链接太长可能无法发送
+                // 这里假设模板支持 address 变量
+                address: interviewType === 'online' ? '请查看邮件获取链接' : (address.length > 20 ? address.substring(0, 17) + '...' : address)
+             };
+             
+             // 使用 interview 场景发送
+             await sms.sendText(resume.phone, smsParams, sms.SCENARIOS.INTERVIEW);
+             logger.info(`短信发送成功: ${resume.phone}`);
+         } catch (e) {
+             logger.error('短信发送失败', e);
+         }
+      }
+
+      // 发送邮件
+      if (resume.email) {
+          try {
+              const subject = `面试邀请：${job.title}`;
+              const html = `
+                <div style="font-family: sans-serif; padding: 20px; color: #333;">
+                  <h2 style="color: #2563eb;">面试邀请</h2>
+                  <p>尊敬的 <strong>${notificationData.candidateName}</strong>：</p>
+                  <p>您好！我们诚挚地邀请您参加 <strong>${notificationData.jobTitle}</strong> 的面试。</p>
+                  
+                  <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                    <p><strong>面试类型：</strong>${notificationData.type}</p>
+                    <p><strong>时间/截止时间：</strong>${notificationData.interviewDate}</p>
+                    <p><strong>地点/链接：</strong><a href="${interviewLink}" style="color: #2563eb; word-break: break-all;">${interviewLink}</a></p>
+                    ${remarks ? `<p><strong>备注：</strong>${remarks}</p>` : ''}
+                  </div>
+                  
+                  <p>请准时参加，祝您面试顺利！</p>
+                  <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;" />
+                  <p style="font-size: 12px; color: #666;">此邮件由系统自动发送，请勿回复。</p>
+                </div>
+              `;
+              await emailService.sendMail(resume.email, subject, html);
+              logger.info(`邮件发送成功: ${resume.email}`);
+          } catch (e) {
+             logger.error('邮件发送失败', e);
+          }
+      }
+
+      res.json({ 
+          success: true, 
+          data: { 
+              sessionId: session ? session.id : null,
+              interviewLink 
+          } 
+      });
+
+    } catch (error) {
+      logger.error('快速安排面试失败', error);
+      res.status(500).json({ success: false, error: { message: error.message } });
+    }
   }
 
   /**
@@ -181,18 +357,40 @@ class InterviewController {
         if (existingSession) {
           logger.info(`找到已有活跃会话: ${existingSession.id}`);
           
-          // 获取简历详情用于返回
+          // 获取简历和公司详情用于返回
           let candidateName = '';
           let candidatePhone = '';
+          let companyName = '';
           try {
-            const resume = await Resume.findByPk(existingSession.resume_id);
+            const resume = await Resume.findByPk(existingSession.resume_id, {
+              include: [{
+                model: Company,
+                as: 'Company'
+              }]
+            });
             if (resume) {
               const data = resume.parsed_data || {};
               candidateName = resume.name || data.name || '';
               candidatePhone = resume.phone || data.phone || '';
+              
+              if (resume.Company) {
+                companyName = resume.Company.name;
+              } else if (resume.user_id) {
+                const user = await User.findByPk(resume.user_id, {
+                  include: [{
+                    model: Company,
+                    as: 'Company'
+                  }]
+                });
+                if (user && user.Company) {
+                  companyName = user.Company.name;
+                } else if (user && user.company_name) {
+                  companyName = user.company_name;
+                }
+              }
             }
           } catch (e) {
-            logger.warn('获取候选人信息失败:', e);
+            logger.warn('获取候选人或公司信息失败:', e);
           }
 
           return res.json({
@@ -211,7 +409,8 @@ class InterviewController {
               createdAt: existingSession.created_at,
               updatedAt: existingSession.updated_at,
               candidateName,
-              candidatePhone
+              candidatePhone,
+              companyName
             }
           });
         }
@@ -257,18 +456,40 @@ class InterviewController {
       // 成功返回
       const sessionData = session.toJSON();
       
-      // 获取简历详情用于返回
+      // 获取简历和公司详情用于返回
       let candidateName = '';
       let candidatePhone = '';
+      let companyName = '';
       try {
-        const resume = await Resume.findByPk(finalResumeId);
+        const resume = await Resume.findByPk(finalResumeId, {
+          include: [{
+            model: Company,
+            as: 'Company'
+          }]
+        });
         if (resume) {
           const data = resume.parsed_data || {};
           candidateName = resume.name || data.name || '';
           candidatePhone = resume.phone || data.phone || '';
+          
+          if (resume.Company) {
+            companyName = resume.Company.name;
+          } else if (resume.user_id) {
+            const user = await User.findByPk(resume.user_id, {
+              include: [{
+                model: Company,
+                as: 'Company'
+              }]
+            });
+            if (user && user.Company) {
+              companyName = user.Company.name;
+            } else if (user && user.company_name) {
+              companyName = user.company_name;
+            }
+          }
         }
       } catch (e) {
-        logger.warn('获取候选人信息失败:', e);
+        logger.warn('获取候选人或公司信息失败:', e);
       }
 
       return res.json({
@@ -287,7 +508,8 @@ class InterviewController {
           createdAt: session.created_at,
           updatedAt: session.updated_at,
           candidateName,
-          candidatePhone
+          candidatePhone,
+          companyName
         }
       });
 
@@ -377,18 +599,41 @@ class InterviewController {
         return res.status(404).json({ success: false, error: '面试会话不存在' });
       }
 
-      // 获取简历详情用于返回
+      // 获取简历和公司详情用于返回
       let candidateName = '';
       let candidatePhone = '';
+      let companyName = '';
       try {
-        const resume = await Resume.findByPk(session.resume_id);
+        const resume = await Resume.findByPk(session.resume_id, {
+          include: [{
+            model: Company,
+            as: 'Company'
+          }]
+        });
         if (resume) {
           const data = resume.parsed_data || {};
           candidateName = resume.name || data.name || '';
           candidatePhone = resume.phone || data.phone || '';
+          
+          if (resume.Company) {
+            companyName = resume.Company.name;
+          } else if (resume.user_id) {
+            // 如果简历没有直接关联公司，尝试通过所属用户查找
+            const user = await User.findByPk(resume.user_id, {
+              include: [{
+                model: Company,
+                as: 'Company'
+              }]
+            });
+            if (user && user.Company) {
+              companyName = user.Company.name;
+            } else if (user && user.company_name) {
+              companyName = user.company_name;
+            }
+          }
         }
       } catch (e) {
-        logger.warn('获取候选人信息失败:', e);
+        logger.warn('获取候选人或公司信息失败:', e);
       }
 
       return res.json({
@@ -407,7 +652,8 @@ class InterviewController {
           createdAt: session.created_at,
           updatedAt: session.updated_at,
           candidateName,
-          candidatePhone
+          candidatePhone,
+          companyName
         }
       });
     } catch (error) {
@@ -504,18 +750,40 @@ class InterviewController {
         return res.json({ success: true, data: null });
       }
 
-      // 获取简历详情用于返回
+      // 获取简历和公司详情用于返回
       let candidateName = '';
       let candidatePhone = '';
+      let companyName = '';
       try {
-        const resume = await Resume.findByPk(session.resume_id);
+        const resume = await Resume.findByPk(session.resume_id, {
+          include: [{
+            model: Company,
+            as: 'Company'
+          }]
+        });
         if (resume) {
           const data = resume.parsed_data || {};
           candidateName = resume.name || data.name || '';
           candidatePhone = resume.phone || data.phone || '';
+          
+          if (resume.Company) {
+            companyName = resume.Company.name;
+          } else if (resume.user_id) {
+            const user = await User.findByPk(resume.user_id, {
+              include: [{
+                model: Company,
+                as: 'Company'
+              }]
+            });
+            if (user && user.Company) {
+              companyName = user.Company.name;
+            } else if (user && user.company_name) {
+              companyName = user.company_name;
+            }
+          }
         }
       } catch (e) {
-        logger.warn('获取候选人信息失败:', e);
+        logger.warn('获取候选人或公司信息失败:', e);
       }
 
       return res.json({
@@ -534,7 +802,8 @@ class InterviewController {
           createdAt: session.created_at,
           updatedAt: session.updated_at,
           candidateName,
-          candidatePhone
+          candidatePhone,
+          companyName
         }
       });
     } catch (error) {

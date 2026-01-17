@@ -26,11 +26,18 @@
     </template>
 
     <!-- 链接生成弹窗 -->
-    <VDialog v-model="showLinkDialog" max-width="500">
+    <VDialog
+      v-model="showLinkDialog"
+      max-width="500"
+    >
       <VCard>
-        <VCardTitle class="pa-4">AI面试链接生成</VCardTitle>
+        <VCardTitle class="pa-4">
+          AI面试链接生成
+        </VCardTitle>
         <VCardText class="pa-4">
-          <div class="text-body-2 mb-4">请复制以下链接发送给候选人：</div>
+          <div class="text-body-2 mb-4">
+            请复制以下链接发送给候选人：
+          </div>
           <VTextField
             v-model="generatedLink"
             readonly
@@ -40,52 +47,92 @@
           />
         </VCardText>
         <VCardActions class="pa-4 pt-0 justify-end">
-          <VBtn color="primary" @click="showLinkDialog = false">关闭</VBtn>
+          <VBtn
+            color="primary"
+            @click="showLinkDialog = false"
+          >
+            关闭
+          </VBtn>
         </VCardActions>
       </VCard>
     </VDialog>
 
-    <div v-if="loading" class="d-flex justify-center align-center py-12">
-      <VProgressCircular indeterminate color="primary" size="64" />
+    <div
+      v-if="loading"
+      class="d-flex justify-center align-center py-12"
+    >
+      <VProgressCircular
+        indeterminate
+        color="primary"
+        size="64"
+      />
     </div>
 
     <template v-else-if="resume">
       <VRow>
         <!-- 主内容区 -->
-        <VCol cols="12" md="8">
+        <VCol
+          cols="12"
+          md="8"
+        >
           <!-- 解析摘要 -->
-          <VCard variant="outlined" class="mb-6">
+          <VCard
+            variant="outlined"
+            class="mb-6"
+          >
             <VCardTitle class="pa-4 d-flex align-center">
-              <VIcon icon="mdi-file-document-edit-outline" class="me-2" color="primary" />
+              <VIcon
+                icon="mdi-file-document-edit-outline"
+                class="me-2"
+                color="primary"
+              />
               解析摘要
             </VCardTitle>
             <VDivider />
             <VCardText class="pa-4">
               <div v-if="resume.parsed_data">
                 <div class="mb-6">
-                  <div class="text-subtitle-2 font-weight-bold mb-2">个人总结 / 核心优势</div>
+                  <div class="text-subtitle-2 font-weight-bold mb-2">
+                    个人总结 / 核心优势
+                  </div>
                   <div class="summary-content text-body-1">
                     {{ decodeText(resume.parsed_data.summary) || '暂无总结内容' }}
                   </div>
                 </div>
 
                 <VRow>
-                  <VCol cols="12" sm="6">
+                  <VCol
+                    cols="12"
+                    sm="6"
+                  >
                     <div class="mb-4">
-                      <div class="text-subtitle-2 font-weight-bold mb-1">教育背景</div>
-                      <div class="text-body-2">{{ decodeText(resume.parsed_data.education) || '未解析' }}</div>
+                      <div class="text-subtitle-2 font-weight-bold mb-1">
+                        教育背景
+                      </div>
+                      <div class="text-body-2">
+                        {{ decodeText(resume.parsed_data.education) || '未解析' }}
+                      </div>
                     </div>
                   </VCol>
-                  <VCol cols="12" sm="6">
+                  <VCol
+                    cols="12"
+                    sm="6"
+                  >
                     <div class="mb-4">
-                      <div class="text-subtitle-2 font-weight-bold mb-1">工作年限</div>
-                      <div class="text-body-2">{{ resume.parsed_data.experience_years || '0' }} 年</div>
+                      <div class="text-subtitle-2 font-weight-bold mb-1">
+                        工作年限
+                      </div>
+                      <div class="text-body-2">
+                        {{ resume.parsed_data.experience_years || '0' }} 年
+                      </div>
                     </div>
                   </VCol>
                 </VRow>
 
                 <div class="mb-0">
-                  <div class="text-subtitle-2 font-weight-bold mb-2">技能关键词</div>
+                  <div class="text-subtitle-2 font-weight-bold mb-2">
+                    技能关键词
+                  </div>
                   <div class="d-flex flex-wrap ga-2">
                     <VChip
                       v-for="skill in resume.parsed_data.skills || []"
@@ -96,12 +143,24 @@
                     >
                       {{ decodeText(skill) }}
                     </VChip>
-                    <div v-if="!resume.parsed_data.skills?.length" class="text-caption text-disabled">未提取技能</div>
+                    <div
+                      v-if="!resume.parsed_data.skills?.length"
+                      class="text-caption text-disabled"
+                    >
+                      未提取技能
+                    </div>
                   </div>
                 </div>
               </div>
-              <div v-else class="text-center py-8 text-medium-emphasis">
-                <VIcon icon="mdi-alert-circle-outline" size="48" class="mb-2" />
+              <div
+                v-else
+                class="text-center py-8 text-medium-emphasis"
+              >
+                <VIcon
+                  icon="mdi-alert-circle-outline"
+                  size="48"
+                  class="mb-2"
+                />
                 <div>暂无解析数据</div>
               </div>
             </VCardText>
@@ -110,7 +169,11 @@
           <!-- 原始文本内容 -->
           <VCard variant="outlined">
             <VCardTitle class="pa-4 d-flex align-center">
-              <VIcon icon="mdi-text-box-outline" class="me-2" color="primary" />
+              <VIcon
+                icon="mdi-text-box-outline"
+                class="me-2"
+                color="primary"
+              />
               原始文本内容
               <VSpacer />
               <VBtn
@@ -133,20 +196,36 @@
           </VCard>
         </VCol>
 
-          <!-- 侧边栏信息 -->
-        <VCol cols="12" md="4">
-          <VCard variant="outlined" class="mb-6">
+        <!-- 侧边栏信息 -->
+        <VCol
+          cols="12"
+          md="4"
+        >
+          <VCard
+            variant="outlined"
+            class="mb-6"
+          >
             <VCardTitle class="pa-4 d-flex align-center">
-              <VIcon icon="mdi-account-circle-outline" class="me-2" color="primary" />
+              <VIcon
+                icon="mdi-account-circle-outline"
+                class="me-2"
+                color="primary"
+              />
               基本信息
             </VCardTitle>
             <VDivider />
             <VList class="pa-2">
               <VListItem>
                 <template #prepend>
-                  <VIcon icon="mdi-account-outline" size="small" class="me-2" />
+                  <VIcon
+                    icon="mdi-account-outline"
+                    size="small"
+                    class="me-2"
+                  />
                 </template>
-                <VListItemTitle class="text-caption text-medium-emphasis">姓名</VListItemTitle>
+                <VListItemTitle class="text-caption text-medium-emphasis">
+                  姓名
+                </VListItemTitle>
                 <VListItemSubtitle class="text-body-1 font-weight-bold text-high-emphasis">
                   {{ decodeText(resume.name || resume.parsed_data?.name) || '未知' }}
                 </VListItemSubtitle>
@@ -154,9 +233,15 @@
 
               <VListItem>
                 <template #prepend>
-                  <VIcon icon="mdi-office-building-outline" size="small" class="me-2" />
+                  <VIcon
+                    icon="mdi-office-building-outline"
+                    size="small"
+                    class="me-2"
+                  />
                 </template>
-                <VListItemTitle class="text-caption text-medium-emphasis">所属企业</VListItemTitle>
+                <VListItemTitle class="text-caption text-medium-emphasis">
+                  所属企业
+                </VListItemTitle>
                 <VListItemSubtitle class="text-body-1 text-high-emphasis">
                   {{ resume.Company?.name || '个人上传' }}
                 </VListItemSubtitle>
@@ -164,9 +249,15 @@
 
               <VListItem>
                 <template #prepend>
-                  <VIcon icon="mdi-calendar-clock-outline" size="small" class="me-2" />
+                  <VIcon
+                    icon="mdi-calendar-clock-outline"
+                    size="small"
+                    class="me-2"
+                  />
                 </template>
-                <VListItemTitle class="text-caption text-medium-emphasis">上传时间</VListItemTitle>
+                <VListItemTitle class="text-caption text-medium-emphasis">
+                  上传时间
+                </VListItemTitle>
                 <VListItemSubtitle class="text-body-2 text-high-emphasis">
                   {{ formatDate(resume.upload_date) }}
                 </VListItemSubtitle>
@@ -174,9 +265,15 @@
 
               <VListItem>
                 <template #prepend>
-                  <VIcon icon="mdi-briefcase-outline" size="small" class="me-2" />
+                  <VIcon
+                    icon="mdi-briefcase-outline"
+                    size="small"
+                    class="me-2"
+                  />
                 </template>
-                <VListItemTitle class="text-caption text-medium-emphasis">关联职位</VListItemTitle>
+                <VListItemTitle class="text-caption text-medium-emphasis">
+                  关联职位
+                </VListItemTitle>
                 <div class="d-flex flex-wrap ga-1 mt-1">
                   <VChip
                     v-for="rj in resume.ResumeJobs"
@@ -187,7 +284,12 @@
                   >
                     {{ rj.Job?.title || '未知职位' }}
                   </VChip>
-                  <div v-if="!resume.ResumeJobs?.length" class="text-caption text-disabled">暂无关联职位</div>
+                  <div
+                    v-if="!resume.ResumeJobs?.length"
+                    class="text-caption text-disabled"
+                  >
+                    暂无关联职位
+                  </div>
                 </div>
               </VListItem>
             </VList>
@@ -195,16 +297,26 @@
 
           <VCard variant="outlined">
             <VCardTitle class="pa-4 d-flex align-center">
-              <VIcon icon="mdi-file-outline" class="me-2" color="primary" />
+              <VIcon
+                icon="mdi-file-outline"
+                class="me-2"
+                color="primary"
+              />
               文件信息
             </VCardTitle>
             <VDivider />
             <VList class="pa-2">
               <VListItem>
                 <template #prepend>
-                  <VIcon icon="mdi-file-document-outline" size="small" class="me-2" />
+                  <VIcon
+                    icon="mdi-file-document-outline"
+                    size="small"
+                    class="me-2"
+                  />
                 </template>
-                <VListItemTitle class="text-caption text-medium-emphasis">文件名</VListItemTitle>
+                <VListItemTitle class="text-caption text-medium-emphasis">
+                  文件名
+                </VListItemTitle>
                 <VListItemSubtitle class="text-body-2 text-high-emphasis text-break">
                   {{ resume.file_name }}
                 </VListItemSubtitle>
@@ -212,9 +324,15 @@
 
               <VListItem>
                 <template #prepend>
-                  <VIcon icon="mdi-weight-kilogram" size="small" class="me-2" />
+                  <VIcon
+                    icon="mdi-weight-kilogram"
+                    size="small"
+                    class="me-2"
+                  />
                 </template>
-                <VListItemTitle class="text-caption text-medium-emphasis">文件大小</VListItemTitle>
+                <VListItemTitle class="text-caption text-medium-emphasis">
+                  文件大小
+                </VListItemTitle>
                 <VListItemSubtitle class="text-body-2 text-high-emphasis">
                   {{ (resume.file_size / 1024 / 1024).toFixed(2) }} MB
                 </VListItemSubtitle>
@@ -225,9 +343,19 @@
       </VRow>
     </template>
 
-    <div v-else class="text-center py-12">
-      <VIcon icon="mdi-file-question-outline" size="64" color="disabled" class="mb-4" />
-      <div class="text-h6 text-medium-emphasis">未找到简历信息</div>
+    <div
+      v-else
+      class="text-center py-12"
+    >
+      <VIcon
+        icon="mdi-file-question-outline"
+        size="64"
+        color="disabled"
+        class="mb-4"
+      />
+      <div class="text-h6 text-medium-emphasis">
+        未找到简历信息
+      </div>
     </div>
   </StandardPage>
 </template>

@@ -7,8 +7,8 @@
       <VBtn
         variant="outlined"
         prepend-icon="mdi-arrow-left"
-        @click="router.back()"
         class="me-2"
+        @click="router.back()"
       >
         返回
       </VBtn>
@@ -22,10 +22,17 @@
     </template>
 
     <!-- 搜索栏 -->
-    <VCard class="mb-6" elevation="0" border>
+    <VCard
+      class="mb-6"
+      elevation="0"
+      border
+    >
       <VCardText class="pa-4">
         <VRow>
-          <VCol cols="12" md="8">
+          <VCol
+            cols="12"
+            md="8"
+          >
             <VTextField
               v-model="filters.search"
               prepend-inner-icon="mdi-magnify"
@@ -39,16 +46,35 @@
               @click:clear="handleSearch"
             />
           </VCol>
-          <VCol cols="12" md="4" class="d-flex align-center">
-            <VBtn color="primary" variant="flat" class="me-2" @click="handleSearch">搜索</VBtn>
-            <VBtn variant="outlined" @click="resetFilters">重置</VBtn>
+          <VCol
+            cols="12"
+            md="4"
+            class="d-flex align-center"
+          >
+            <VBtn
+              color="primary"
+              variant="flat"
+              class="me-2"
+              @click="handleSearch"
+            >
+              搜索
+            </VBtn>
+            <VBtn
+              variant="outlined"
+              @click="resetFilters"
+            >
+              重置
+            </VBtn>
           </VCol>
         </VRow>
       </VCardText>
     </VCard>
 
     <!-- 职位列表 -->
-    <VCard elevation="0" border>
+    <VCard
+      elevation="0"
+      border
+    >
       <VDataTableServer
         v-model:items-per-page="filters.limit"
         :headers="headers"
@@ -56,11 +82,14 @@
         :items-length="total"
         :loading="loading"
         :items-per-page-options="[10, 20, 50, 100]"
-        @update:options="loadItems"
         hover
+        @update:options="loadItems"
       >
-        <template v-slot:item.title="{ item }">
-          <div class="font-weight-medium text-primary cursor-pointer" @click="viewDetail(item)">
+        <template #item.title="{ item }">
+          <div
+            class="font-weight-medium text-primary cursor-pointer"
+            @click="viewDetail(item)"
+          >
             {{ item.title }}
           </div>
           <div class="text-caption text-medium-emphasis">
@@ -68,13 +97,13 @@
           </div>
         </template>
 
-        <template v-slot:item.salary="{ item }">
+        <template #item.salary="{ item }">
           <div class="text-warning font-weight-bold">
             {{ item.salary_min }}k - {{ item.salary_max }}k
           </div>
         </template>
 
-        <template v-slot:item.status="{ item }">
+        <template #item.status="{ item }">
           <VChip
             :color="item.status === 'active' ? 'success' : 'grey'"
             size="small"
@@ -85,11 +114,11 @@
           </VChip>
         </template>
 
-        <template v-slot:item.created_at="{ item }">
+        <template #item.created_at="{ item }">
           {{ formatDate(item.created_at) }}
         </template>
 
-        <template v-slot:item.actions="{ item }">
+        <template #item.actions="{ item }">
           <div class="d-flex justify-end align-center">
             <VBtn
               variant="text"
@@ -99,8 +128,16 @@
               class="me-1"
               @click="viewDetail(item)"
             >
-              <VIcon icon="mdi-eye-outline" size="20" />
-              <VTooltip activator="parent" location="top">查看详情</VTooltip>
+              <VIcon
+                icon="mdi-eye-outline"
+                size="20"
+              />
+              <VTooltip
+                activator="parent"
+                location="top"
+              >
+                查看详情
+              </VTooltip>
             </VBtn>
             
             <VBtn
@@ -111,8 +148,16 @@
               class="me-1"
               @click="editJob(item)"
             >
-              <VIcon icon="mdi-pencil-outline" size="20" />
-              <VTooltip activator="parent" location="top">编辑职位</VTooltip>
+              <VIcon
+                icon="mdi-pencil-outline"
+                size="20"
+              />
+              <VTooltip
+                activator="parent"
+                location="top"
+              >
+                编辑职位
+              </VTooltip>
             </VBtn>
 
             <VBtn
@@ -123,8 +168,16 @@
               class="me-1"
               @click="viewResumes(item)"
             >
-              <VIcon icon="mdi-file-document-outline" size="20" />
-              <VTooltip activator="parent" location="top">关联简历</VTooltip>
+              <VIcon
+                icon="mdi-file-document-outline"
+                size="20"
+              />
+              <VTooltip
+                activator="parent"
+                location="top"
+              >
+                关联简历
+              </VTooltip>
             </VBtn>
 
             <VBtn
@@ -134,8 +187,16 @@
               color="error"
               @click="confirmDelete(item)"
             >
-              <VIcon icon="mdi-trash-can-outline" size="20" />
-              <VTooltip activator="parent" location="top">删除职位</VTooltip>
+              <VIcon
+                icon="mdi-trash-can-outline"
+                size="20"
+              />
+              <VTooltip
+                activator="parent"
+                location="top"
+              >
+                删除职位
+              </VTooltip>
             </VBtn>
           </div>
         </template>
@@ -143,7 +204,10 @@
     </VCard>
 
     <!-- 发布/编辑职位对话框 -->
-    <VDialog v-model="showCreateDialog" max-width="800px">
+    <VDialog
+      v-model="showCreateDialog"
+      max-width="800px"
+    >
       <VCard>
         <VCardTitle class="pa-4">
           <span class="text-h5">{{ editingJob ? '编辑职位' : '发布新职位' }}</span>
@@ -152,7 +216,10 @@
         <VCardText class="pa-4">
           <VForm ref="jobForm">
             <VRow>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <VTextField
                   v-model="jobFormData.title"
                   label="职位名称"
@@ -161,7 +228,10 @@
                   density="comfortable"
                 />
               </VCol>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <VTextField
                   v-model="jobFormData.category"
                   label="职位类别"
@@ -169,7 +239,10 @@
                   density="comfortable"
                 />
               </VCol>
-              <VCol cols="12" md="4">
+              <VCol
+                cols="12"
+                md="4"
+              >
                 <VTextField
                   v-model.number="jobFormData.salary_min"
                   label="薪资下限 (k)"
@@ -178,7 +251,10 @@
                   density="comfortable"
                 />
               </VCol>
-              <VCol cols="12" md="4">
+              <VCol
+                cols="12"
+                md="4"
+              >
                 <VTextField
                   v-model.number="jobFormData.salary_max"
                   label="薪资上限 (k)"
@@ -187,7 +263,10 @@
                   density="comfortable"
                 />
               </VCol>
-              <VCol cols="12" md="4">
+              <VCol
+                cols="12"
+                md="4"
+              >
                 <VSelect
                   v-model="jobFormData.status"
                   :items="[{ title: '招募中', value: 'active' }, { title: '已关闭', value: 'inactive' }]"
@@ -218,8 +297,18 @@
         <VDivider />
         <VCardActions class="pa-4">
           <VSpacer />
-          <VBtn color="grey" variant="text" @click="closeDialog">取消</VBtn>
-          <VBtn color="primary" @click="handleSubmit" :loading="saving">
+          <VBtn
+            color="grey"
+            variant="text"
+            @click="closeDialog"
+          >
+            取消
+          </VBtn>
+          <VBtn
+            color="primary"
+            :loading="saving"
+            @click="handleSubmit"
+          >
             {{ editingJob ? '保存' : '发布' }}
           </VBtn>
         </VCardActions>
@@ -227,14 +316,31 @@
     </VDialog>
 
     <!-- 删除确认 -->
-    <VDialog v-model="showDeleteDialog" max-width="400px">
+    <VDialog
+      v-model="showDeleteDialog"
+      max-width="400px"
+    >
       <VCard>
-        <VCardTitle class="text-h5">确定删除？</VCardTitle>
+        <VCardTitle class="text-h5">
+          确定删除？
+        </VCardTitle>
         <VCardText>此操作不可撤销，将删除该职位及其关联的所有数据。</VCardText>
         <VCardActions>
           <VSpacer />
-          <VBtn color="grey" variant="text" @click="showDeleteDialog = false">取消</VBtn>
-          <VBtn color="error" @click="handleDelete" :loading="deleting">删除</VBtn>
+          <VBtn
+            color="grey"
+            variant="text"
+            @click="showDeleteDialog = false"
+          >
+            取消
+          </VBtn>
+          <VBtn
+            color="error"
+            :loading="deleting"
+            @click="handleDelete"
+          >
+            删除
+          </VBtn>
         </VCardActions>
       </VCard>
     </VDialog>

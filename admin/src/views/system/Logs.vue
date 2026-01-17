@@ -4,85 +4,177 @@
     subtitle="查询与导出系统日志记录"
   >
     <template #actions>
-      <VBtn color="primary" prepend-icon="mdi-magnify" @click="fetchLogs" :loading="loading.logs" class="me-2">搜索</VBtn>
-      <VBtn color="success" prepend-icon="mdi-download" @click="exportLogs" :loading="exporting">导出</VBtn>
+      <VBtn
+        color="primary"
+        prepend-icon="mdi-magnify"
+        :loading="loading.logs"
+        class="me-2"
+        @click="fetchLogs"
+      >
+        搜索
+      </VBtn>
+      <VBtn
+        color="success"
+        prepend-icon="mdi-download"
+        :loading="exporting"
+        @click="exportLogs"
+      >
+        导出
+      </VBtn>
     </template>
     <VRow>
       <VCol cols="12">
         <VCard>
           <VCardText>
-                <VRow class="mb-4">
-                  <VCol cols="12" md="3">
-                    <VSelect v-model="logFilters.level" :items="logLevelOptions" label="日志级别" clearable />
-                  </VCol>
-                  <VCol cols="12" md="3">
-                    <VSelect v-model="logFilters.module" :items="logModuleOptions" label="模块" clearable />
-                  </VCol>
-                  <VCol cols="12" md="3">
-                    <VTextField v-model="logFilters.startDate" label="开始日期" type="date" />
-                  </VCol>
-                  <VCol cols="12" md="3">
-                    <VTextField v-model="logFilters.endDate" label="结束日期" type="date" />
-                  </VCol>
-                  <VCol cols="12" md="6">
-                    <VBtn color="primary" @click="fetchLogs" :loading="loading.logs">
-                      <VIcon icon="mdi-magnify" class="me-2" />
-                      搜索
-                    </VBtn>
-                    <VBtn color="success" @click="exportLogs" class="ms-2" :loading="exporting">
-                      <VIcon icon="mdi-download" class="me-2" />
-                      导出
-                    </VBtn>
-                  </VCol>
-                </VRow>
-                <VDataTable
-                  :headers="logHeaders"
-                  :items="systemStore.logs"
+            <VRow class="mb-4">
+              <VCol
+                cols="12"
+                md="3"
+              >
+                <VSelect
+                  v-model="logFilters.level"
+                  :items="logLevelOptions"
+                  label="日志级别"
+                  clearable
+                />
+              </VCol>
+              <VCol
+                cols="12"
+                md="3"
+              >
+                <VSelect
+                  v-model="logFilters.module"
+                  :items="logModuleOptions"
+                  label="模块"
+                  clearable
+                />
+              </VCol>
+              <VCol
+                cols="12"
+                md="3"
+              >
+                <VTextField
+                  v-model="logFilters.startDate"
+                  label="开始日期"
+                  type="date"
+                />
+              </VCol>
+              <VCol
+                cols="12"
+                md="3"
+              >
+                <VTextField
+                  v-model="logFilters.endDate"
+                  label="结束日期"
+                  type="date"
+                />
+              </VCol>
+              <VCol
+                cols="12"
+                md="6"
+              >
+                <VBtn
+                  color="primary"
                   :loading="loading.logs"
-                  :items-per-page="logFilters.itemsPerPage"
-                  :items-length="systemStore.totalLogs"
-                  v-model:page="logFilters.page"
-                  @update:page="fetchLogs"
-                  class="clean-table"
-                  hover
+                  @click="fetchLogs"
                 >
-                  <template #item.level="{ item }">
-                    <VChip :color="getLogLevelColor(item.level)" size="small">{{ item.level }}</VChip>
-                  </template>
-                  <template #item.message="{ item }">
-                    <div class="text-truncate" style="max-width: 300px;">{{ item.message }}</div>
-                  </template>
-                  <template #item.timestamp="{ item }">
-                    {{ formatDateTime(item.timestamp) }}
-                  </template>
-                  <template #item.actions="{ item }">
-                    <VBtn size="small" variant="text" color="primary" @click="openLogDetail(item)">
-                      <VIcon icon="mdi-eye" />
-                    </VBtn>
-                  </template>
-                </VDataTable>
-              </VCardText>
-            </VCard>
-          </VCol>
-        </VRow>
-        <VDialog v-model="showLogDialog" max-width="800px">
-          <VCard>
-            <VCardTitle>日志详情</VCardTitle>
-            <VCardText>
-              <div class="mb-2 text-caption text-medium-emphasis">{{ formatDateTime(selectedLog?.timestamp) }} • {{ selectedLog?.level }} • {{ selectedLog?.module }}</div>
-              <div class="mb-3">{{ selectedLog?.message }}</div>
-              <VDivider class="mb-3" />
-              <div>
-                <div class="text-subtitle-2 mb-2">Payload</div>
-                <pre style="background:#f5f5f5; padding:12px; border-radius:8px; overflow:auto; max-height:300px">{{ prettyPayload }}</pre>
-              </div>
-            </VCardText>
-            <VCardActions>
-              <VSpacer />
-              <VBtn variant="text" @click="showLogDialog = false">关闭</VBtn>
-            </VCardActions>
-          </VCard>
-        </VDialog>
+                  <VIcon
+                    icon="mdi-magnify"
+                    class="me-2"
+                  />
+                  搜索
+                </VBtn>
+                <VBtn
+                  color="success"
+                  class="ms-2"
+                  :loading="exporting"
+                  @click="exportLogs"
+                >
+                  <VIcon
+                    icon="mdi-download"
+                    class="me-2"
+                  />
+                  导出
+                </VBtn>
+              </VCol>
+            </VRow>
+            <VDataTable
+              v-model:page="logFilters.page"
+              :headers="logHeaders"
+              :items="systemStore.logs"
+              :loading="loading.logs"
+              :items-per-page="logFilters.itemsPerPage"
+              :items-length="systemStore.totalLogs"
+              class="clean-table"
+              hover
+              @update:page="fetchLogs"
+            >
+              <template #item.level="{ item }">
+                <VChip
+                  :color="getLogLevelColor(item.level)"
+                  size="small"
+                >
+                  {{ item.level }}
+                </VChip>
+              </template>
+              <template #item.message="{ item }">
+                <div
+                  class="text-truncate"
+                  style="max-width: 300px;"
+                >
+                  {{ item.message }}
+                </div>
+              </template>
+              <template #item.timestamp="{ item }">
+                {{ formatDateTime(item.timestamp) }}
+              </template>
+              <template #item.actions="{ item }">
+                <VBtn
+                  size="small"
+                  variant="text"
+                  color="primary"
+                  @click="openLogDetail(item)"
+                >
+                  <VIcon icon="mdi-eye" />
+                </VBtn>
+              </template>
+            </VDataTable>
+          </VCardText>
+        </VCard>
+      </VCol>
+    </VRow>
+    <VDialog
+      v-model="showLogDialog"
+      max-width="800px"
+    >
+      <VCard>
+        <VCardTitle>日志详情</VCardTitle>
+        <VCardText>
+          <div class="mb-2 text-caption text-medium-emphasis">
+            {{ formatDateTime(selectedLog?.timestamp) }} • {{ selectedLog?.level }} • {{ selectedLog?.module }}
+          </div>
+          <div class="mb-3">
+            {{ selectedLog?.message }}
+          </div>
+          <VDivider class="mb-3" />
+          <div>
+            <div class="text-subtitle-2 mb-2">
+              Payload
+            </div>
+            <pre style="background:#f5f5f5; padding:12px; border-radius:8px; overflow:auto; max-height:300px">{{ prettyPayload }}</pre>
+          </div>
+        </VCardText>
+        <VCardActions>
+          <VSpacer />
+          <VBtn
+            variant="text"
+            @click="showLogDialog = false"
+          >
+            关闭
+          </VBtn>
+        </VCardActions>
+      </VCard>
+    </VDialog>
   </StandardPage>
 </template>
 

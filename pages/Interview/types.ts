@@ -11,6 +11,7 @@ export interface InterviewSession {
   status: 'CREATED' | 'IN_PROGRESS' | 'COMPLETED' | 'EVALUATED';
   candidateName?: string;
   candidatePhone?: string;
+  companyName?: string;
 }
 
 export interface InterviewQuestion {

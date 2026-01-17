@@ -297,9 +297,10 @@ router.get('/system/sms', authenticateToken, requireAdmin, async (req, res) => {
     const SystemConfig = sequelize.models.SystemConfig
     const { Op } = require('sequelize')
     const keys = [
-      'sms.provider', 'sms.accessKeyId', 'sms.accessKeySecret', 'sms.signName', 'sms.templateCode', 'sms.enabled',
-      'sms.auth.signName', 'sms.auth.templateCode',
-      'sms.interview.signName', 'sms.interview.templateCode'
+      'sms.provider', 'sms.accessKeyId', 'sms.accessKeySecret', 'sms.signName', 'sms.enabled',
+      'sms.auth.templateCode',
+      'sms.interview.templateCode',
+      'sms.reminder.templateCode'
     ]
     const rows = await SystemConfig.findAll({ where: { key: { [Op.in]: keys } } })
     const data = { 
@@ -307,11 +308,11 @@ router.get('/system/sms', authenticateToken, requireAdmin, async (req, res) => {
       accessKeyId: '', 
       accessKeySecret: '', 
       signName: '', 
-      templateCode: '', 
       enabled: false,
       scenarios: {
-        auth: { signName: '', templateCode: '' },
-        interview: { signName: '', templateCode: '' }
+        auth: { templateCode: '' },
+        interview: { templateCode: '' },
+        reminder: { templateCode: '' }
       }
     }
     for (const r of rows) {
@@ -319,21 +320,18 @@ router.get('/system/sms', authenticateToken, requireAdmin, async (req, res) => {
       if (r.key === 'sms.accessKeyId') data.accessKeyId = r.value || data.accessKeyId
       if (r.key === 'sms.accessKeySecret') data.accessKeySecret = r.value || data.accessKeySecret
       if (r.key === 'sms.signName') data.signName = r.value || data.signName
-      if (r.key === 'sms.templateCode') data.templateCode = r.value || data.templateCode
       if (r.key === 'sms.enabled') data.enabled = r.value === 'true'
       
       // Scenarios
-      if (r.key === 'sms.auth.signName') data.scenarios.auth.signName = r.value || ''
       if (r.key === 'sms.auth.templateCode') data.scenarios.auth.templateCode = r.value || ''
-      if (r.key === 'sms.interview.signName') data.scenarios.interview.signName = r.value || ''
       if (r.key === 'sms.interview.templateCode') data.scenarios.interview.templateCode = r.value || ''
+      if (r.key === 'sms.reminder.templateCode') data.scenarios.reminder.templateCode = r.value || ''
     }
     res.json({ 
       provider: data.provider, 
       accessKeyId: data.accessKeyId ? '***' : '', 
       accessKeySecret: data.accessKeySecret ? '***' : '', 
       signName: data.signName, 
-      templateCode: data.templateCode, 
       enabled: !!data.enabled,
       scenarios: data.scenarios
     })
@@ -361,23 +359,21 @@ router.put('/system/sms', authenticateToken, requireAdmin, async (req, res) => {
     if (ak && String(ak).trim() !== '***') await set('sms.accessKeyId', String(ak).trim())
     if (sk && String(sk).trim() !== '***') await set('sms.accessKeySecret', String(sk).trim())
     
-    // Handle Global SignName and TemplateCode
+    // Handle Global SignName
     const signName = req.body.smsSignName || req.body.signName;
-    const templateCode = req.body.templateCode || req.body.smsTemplateCode;
-    
     if (signName !== undefined) await set('sms.signName', signName)
-    if (templateCode !== undefined) await set('sms.templateCode', templateCode)
     
     // Handle Scenario-specific settings
     if (req.body.scenarios) {
-      const { auth, interview } = req.body.scenarios
+      const { auth, interview, reminder } = req.body.scenarios
       if (auth) {
-        if (auth.signName !== undefined) await set('sms.auth.signName', auth.signName)
         if (auth.templateCode !== undefined) await set('sms.auth.templateCode', auth.templateCode)
       }
       if (interview) {
-        if (interview.signName !== undefined) await set('sms.interview.signName', interview.signName)
         if (interview.templateCode !== undefined) await set('sms.interview.templateCode', interview.templateCode)
+      }
+      if (reminder) {
+        if (reminder.templateCode !== undefined) await set('sms.reminder.templateCode', reminder.templateCode)
       }
     }
     
@@ -390,7 +386,6 @@ router.put('/system/sms', authenticateToken, requireAdmin, async (req, res) => {
       accessKeyId: cfg.accessKeyId ? '***' : '', 
       accessKeySecret: cfg.accessKeySecret ? '***' : '', 
       signName: cfg.signName, 
-      templateCode: cfg.templateCode, 
       enabled: cfg.enabled === true || req.body.enabled === true,
       scenarios: cfg.scenarios
     })
@@ -405,12 +400,61 @@ router.post('/system/sms/test', authenticateToken, requireAdmin, async (req, res
     const { phone, content, templateCode, scenario } = req.body
     if (!phone) return res.status(400).json({ message: '缺少手机号' })
     
+    // 获取当前管理员关联的公司名称作为默认值
+    let defaultCompanyName = '超级简历'
+    if (req.user) {
+      if (req.user.company_id) {
+        const company = await Company.findByPk(req.user.company_id)
+        if (company) defaultCompanyName = company.name
+      } else if (req.user.company_name) {
+        defaultCompanyName = req.user.company_name
+      }
+    }
+
     // 如果提供了 templateCode，则直接调用 sendAliyunSms
     let r;
     if (templateCode) {
-      r = await smsService.sendAliyunSms(String(phone), templateCode, content)
+      // 优先使用传入的 content，如果 content 是对象则合并，否则使用默认公司名称
+      let params = { company: defaultCompanyName };
+      if (content && typeof content === 'object') {
+        params = { ...params, ...content };
+      } else if (content) {
+        params.content = content;
+      }
+      
+      console.log('[Admin] Testing SMS with templateCode:', templateCode, 'params:', JSON.stringify(params));
+      r = await smsService.sendAliyunSms(String(phone), null, templateCode, params)
+    } else if (scenario) {
+      // 优先使用用户提供的测试内容
+      if (content && typeof content === 'object' && Object.keys(content).length > 0) {
+        const params = { company: defaultCompanyName, ...content }
+        console.log('[Admin] Testing SMS with scenario:', scenario, 'params:', JSON.stringify(params));
+        r = await smsService.sendText(String(phone), params, scenario)
+      } else {
+        // 根据场景发送默认测试内容
+        if (scenario === 'auth') {
+          r = await smsService.sendVerificationCode(String(phone), '123456')
+        } else if (scenario === 'interview') {
+          r = await smsService.sendText(String(phone), {
+            name: '张三',
+            company: defaultCompanyName,
+            time: '2026-01-20 10:00',
+            jobId: '12345'
+          }, 'interview')
+        } else if (scenario === 'reminder') {
+          r = await smsService.sendText(String(phone), {
+            time: '15分钟后',
+            name: '张三',
+            company: defaultCompanyName,
+            url: 'https://m.cloujade.com/i/123'
+          }, 'reminder')
+        } else {
+          r = await smsService.sendText(String(phone), content || '这是一条测试短信', scenario)
+        }
+      }
     } else {
-      r = await smsService.sendText(String(phone), content, scenario)
+      // 默认行为
+      r = await smsService.sendVerificationCode(String(phone), '123456')
     }
     
     if (r.success) return res.json({ success: true })

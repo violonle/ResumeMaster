@@ -44,6 +44,10 @@ class OptimizedResumeParseService {
     };
     }
 
+    cleanTextPreserveNewlines(text) {
+        return cleanTextPreserveNewlines(text);
+    }
+
     async parseResumeContent(content, fileType = 'txt', fileName = '') {
         try {
             if (!content || typeof content !== 'string') {
@@ -63,9 +67,9 @@ class OptimizedResumeParseService {
                 location: this.extractLocation(content),
                 job_title: this.extractJobTitle(content),
                 skills: this.extractSkills(sections.skills || content),
-                education: this.extractEducation(sections.education || ''),
-                work_experience: workExperience,
-                projects: this.extractProjects(sections.projects || ''),
+                education: this.extractEducation(sections.education || content),
+                work_experience: this.extractExperience(sections.experience || content),
+                projects: this.extractProjects(sections.projects || content),
                 experience_years: this.calculateExperienceYears(content),
                 summary: this.extractSummary(sections.summary || '') || this.extractSummary(content)
             };
@@ -88,6 +92,41 @@ class OptimizedResumeParseService {
         }
     }
 
+    escapeRegExp(str) {
+        return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    matchSectionHeadingLine(line, sortedTitles) {
+        if (!line) return null;
+        let s = line.trim();
+        if (!s) return null;
+
+        s = s.replace(/^[\s>*•·\-\–—=]+/g, '').trim();
+        s = s.replace(/^(?:第?\s*(?:\d+|[一二三四五六七八九十]+)\s*(?:章|节|部分|段)?\s*[\.、\-\–—:：]?\s*)+/g, '').trim();
+        s = s.replace(/^(?:(?:\(?\d+\)?|[一二三四五六七八九十]+|（[一二三四五六七八九十]+）)\s*[\.、\-\–—:：]?\s*)+/g, '').trim();
+        s = s.replace(/^【\s*/, '').replace(/\s*】$/, '').trim();
+        s = s.replace(/^\[\s*/, '').replace(/\s*\]$/, '').trim();
+
+        for (const title of sortedTitles) {
+            const titlePattern = new RegExp(
+                `^${this.escapeRegExp(title)}(?:\\s*[\\-–—/|｜·•]*\\s*(?:\\(.*?\\)|（.*?）))?\\s*[:：]?\\s*(.*)$`,
+                'i'
+            );
+            const m = s.match(titlePattern);
+            if (!m) continue;
+
+            const inlineContent = (m[1] || '').trim();
+
+            if (title === '工作' && inlineContent && /^[\u4e00-\u9fa5A-Za-z]/.test(inlineContent)) {
+                continue;
+            }
+
+            return { title, inlineContent };
+        }
+
+        return null;
+    }
+
     extractAllSections(content) {
         const sections = {
             summary: '',
@@ -106,9 +145,7 @@ class OptimizedResumeParseService {
         ];
 
         const allSectionTitles = sectionDefinitions.flatMap(def => def.titles);
-        const sectionPattern = new RegExp(`^(${allSectionTitles.join('|')})[:：]?\\s*$`, 'im');
-        const sectionPatternWithContent = new RegExp(`^(${allSectionTitles.join('|')})[:：]?\\s+(.+)$`, 'im');
-        const sectionPatternAtStart = new RegExp(`^(${allSectionTitles.join('|')})`, 'im');
+        const allSectionTitlesSorted = [...allSectionTitles].sort((a, b) => b.length - a.length);
 
         const lines = content.split('\n');
         const allSectionPositions = [];
@@ -120,43 +157,30 @@ class OptimizedResumeParseService {
                 continue;
             }
 
-            if (sectionPattern.test(trimmedLine)) {
-                const matchedTitle = trimmedLine.match(sectionPattern)[1];
-                const sectionKey = this.findSectionKey(matchedTitle, sectionDefinitions);
-                
+            const matched = this.matchSectionHeadingLine(trimmedLine, allSectionTitlesSorted);
+            if (matched) {
+                const sectionKey = this.findSectionKey(matched.title, sectionDefinitions);
                 if (sectionKey) {
-                    allSectionPositions.push({ index: i, key: sectionKey, title: matchedTitle });
+                    allSectionPositions.push({
+                        index: i,
+                        key: sectionKey,
+                        title: matched.title,
+                        inlineContent: matched.inlineContent
+                    });
                 }
-            } else if (sectionPatternWithContent.test(trimmedLine)) {
-                const match = trimmedLine.match(sectionPatternWithContent);
-                const matchedTitle = match[1];
-                const sectionContent = match[2];
-                const sectionKey = this.findSectionKey(matchedTitle, sectionDefinitions);
-                
-                if (sectionKey) {
-                    allSectionPositions.push({ index: i, key: sectionKey, title: matchedTitle, inlineContent: sectionContent });
-                }
-            } else if (sectionPatternAtStart.test(trimmedLine)) {
-                const match = trimmedLine.match(sectionPatternAtStart);
-                const matchedTitle = match[1];
-                const sectionKey = this.findSectionKey(matchedTitle, sectionDefinitions);
-                
-                if (sectionKey) {
-                    const inlineContent = trimmedLine.substring(matchedTitle.length).trim();
-                    allSectionPositions.push({ index: i, key: sectionKey, title: matchedTitle, inlineContent: inlineContent });
-                }
-            } else {
-                const nextLine = i + 1 < lines.length ? lines[i + 1].trim() : '';
-                const combinedLine = (trimmedLine + nextLine).replace(/\s+/g, '');
-                
-                for (const title of allSectionTitles) {
-                    if (combinedLine === title) {
-                        const sectionKey = this.findSectionKey(title, sectionDefinitions);
-                        if (sectionKey) {
-                            allSectionPositions.push({ index: i, key: sectionKey, title: title });
-                            i++;
-                            break;
-                        }
+                continue;
+            }
+
+            const nextLine = i + 1 < lines.length ? lines[i + 1].trim() : '';
+            const combinedLine = (trimmedLine + nextLine).replace(/\s+/g, '');
+            
+            for (const title of allSectionTitles) {
+                if (combinedLine === title) {
+                    const sectionKey = this.findSectionKey(title, sectionDefinitions);
+                    if (sectionKey) {
+                        allSectionPositions.push({ index: i, key: sectionKey, title: title });
+                        i++;
+                        break;
                     }
                 }
             }
@@ -1031,6 +1055,39 @@ class OptimizedResumeParseService {
                 });
                 continue;
             }
+
+            // Generic Fallback for Multi-line Education
+            // If we found a date line but no match above
+            if (this.isDateLine(line)) {
+                 // Try to find School in previous lines (up to 2 lines back)
+                 let school = '';
+                 
+                 // Check i-1
+                 if (i > 0) {
+                     const prev = lines[i-1];
+                     school = this.extractSchoolFromText(prev);
+                     // If prev line is very short and not school, check i-2
+                     if (!school && prev.length < 10 && i > 1) {
+                         const prev2 = lines[i-2];
+                         school = this.extractSchoolFromText(prev2);
+                     }
+                 }
+                 
+                 if (school) {
+                      const { startDate, endDate } = this.parseDateRange(line);
+                      const key = `${school}-${startDate}-${endDate}`;
+                      if (!processedKeys.has(key)) {
+                          processedKeys.add(key);
+                          educationItems.push({
+                              startDate,
+                              endDate,
+                              school,
+                              major: '', 
+                              degree: ''
+                          });
+                      }
+                 }
+            }
         }
 
         const continuousMatches = [...content.matchAll(patterns[7])];
@@ -1055,7 +1112,60 @@ class OptimizedResumeParseService {
             });
         }
 
+        if (educationItems.length === 0) {
+            const fallback = this.extractEducationFromLabels(content);
+            for (const edu of fallback) {
+                const key = `${edu.school}-${edu.startDate || ''}-${edu.endDate || ''}`;
+                if (!processedKeys.has(key)) {
+                    processedKeys.add(key);
+                    educationItems.push(edu);
+                }
+            }
+        }
+
         return educationItems;
+    }
+
+    extractEducationFromLabels(content) {
+        if (!content || content.trim().length === 0) return [];
+        const lines = content.split('\n').map(l => l.trim()).filter(Boolean);
+
+        const schoolLabel = /^(?:学校|毕业院校|院校|University|School)[:：]\s*(.+)$/i;
+        const degreeLabel = /^(?:学历|学位|Degree)[:：]\s*(.+)$/i;
+        const majorLabel = /^(?:专业|Major)[:：]\s*(.+)$/i;
+        const timeLabel = /^(?:就读时间|在校时间|学习时间|时间|起止时间|起止日期)[:：]\s*(.+)$/i;
+
+        let school = '';
+        let degree = '';
+        let major = '';
+        let timeText = '';
+
+        for (let i = 0; i < lines.length; i++) {
+            const s = lines[i].match(schoolLabel);
+            if (s && !school) school = (s[1] || '').trim();
+
+            const d = lines[i].match(degreeLabel);
+            if (d && !degree) degree = (d[1] || '').trim();
+
+            const m = lines[i].match(majorLabel);
+            if (m && !major) major = (m[1] || '').trim();
+
+            const t = lines[i].match(timeLabel);
+            if (t && !timeText) timeText = (t[1] || '').trim();
+
+            if (school && (degree || major) && timeText) break;
+        }
+
+        if (!school) return [];
+
+        const { startDate, endDate } = timeText ? this.parseDateRange(timeText) : { startDate: '', endDate: '' };
+        return [{
+            startDate: startDate || '',
+            endDate: endDate || '',
+            school: school,
+            major: major || '',
+            degree: degree || ''
+        }];
     }
 
     extractSchoolFromText(text) {
@@ -1116,6 +1226,8 @@ class OptimizedResumeParseService {
         if (!content || content.trim().length === 0) return [];
 
         const experienceItems = [];
+        const lines = content.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+        const processedMatches = new Set();
 
         const positionKeywords = [
             '项目经理', '项目主管', '项目总监', '项目助理', '项目专员',
@@ -1132,114 +1244,122 @@ class OptimizedResumeParseService {
             '设计师', 'UI设计师', 'UX设计师', '平面设计师',
             '架构师', '系统架构师', '技术架构师',
             '总监', '经理', '主管', '专员', '助理', '工程师', '分析师', '顾问',
-            '开发', '设计', '测试', '运维', '实施', '支持'
+            '开发', '设计', '测试', '运维', '实施', '支持', '实习生'
         ];
 
-        const projectKeywords = [
-            '项目背景', '项目职责', '项目结果', '项目描述', '项目介绍', 
-            'Project Background', 'Project Description', 'Project Details'
+        const datePatterns = [
+            /(\d{4}\.\d{1,2}[-–]\d{4}\.\d{1,2}|\d{4}\.\d{1,2}[-–]至今)/,
+            /(\d{4}[-–年]\d{4}|\d{4}[-–年]至今)/
         ];
 
-        const patterns = [
-            /(\d{4}\.\d{1,2}[-–]\d{4}\.\d{1,2}|\d{4}\.\d{1,2}[-–]至今)(.+)/g,
-            /(\d{4}[-–年]\d{4}|\d{4}[-–年]至今)(.+)/g
-        ];
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            
+            let dateMatch = null;
+            let dateRange = '';
+            
+            for (const p of datePatterns) {
+                const m = line.match(p);
+                if (m) {
+                    dateMatch = m;
+                    dateRange = m[1];
+                    break;
+                }
+            }
 
-        const lines = content.split('\n');
-
-        const processedMatches = new Set();
-        let lastKnownCompany = '';
-
-        for (const pattern of patterns) {
-            const matches = [...content.matchAll(pattern)];
-
-            for (const match of matches) {
-                const dateRange = match[1];
-                const restText = match[2].trim();
-
-                if (!restText || restText.length < 3) continue;
-
-                const matchLineIndex = content.substring(0, match.index).split('\n').length - 1;
-                const nextLineIndex = matchLineIndex + 1;
-                const nextLine = nextLineIndex < lines.length ? lines[nextLineIndex].trim() : '';
-
+            if (dateMatch) {
                 let company = '';
                 let position = '';
+                const textWithoutDate = line.replace(dateRange, '').trim();
 
-                const positionKeyword = positionKeywords.find(keyword => restText.includes(keyword));
-
-                if (positionKeyword) {
-                    const positionIndex = restText.indexOf(positionKeyword);
-                    company = restText.substring(0, positionIndex);
-                    position = restText.substring(positionIndex);
-                } else {
-                    const companyTypes = [
-                        '股份有限公司', '有限责任公司', '有限公司', '集团', '科技', 
-                        '网络', '软件', '信息', '技术', '数据', '智能', '电子', 
-                        '数码', '传媒', '文化', '教育', '咨询', '服务', '贸易', 
-                        '实业', '控股', '股份', '公司', 'Co', 'Ltd', 'Inc'
-                    ];
-
-                    let companyEndIndex = -1;
-                    for (const type of companyTypes) {
-                        const index = restText.indexOf(type);
-                        if (index !== -1 && index > companyEndIndex) {
-                            companyEndIndex = index + type.length;
+                // Case 1: Date and Text on same line
+                if (textWithoutDate.length > 2) {
+                    const positionKeyword = positionKeywords.find(keyword => textWithoutDate.includes(keyword));
+                    
+                    if (positionKeyword) {
+                        const positionIndex = textWithoutDate.indexOf(positionKeyword);
+                        // If position is at start, company might be after or absent
+                        if (positionIndex === 0) {
+                            position = textWithoutDate;
+                            // Check previous line for company
+                            if (i > 0 && this.looksLikeCompany(lines[i-1])) {
+                                company = lines[i-1];
+                            }
+                        } else {
+                            company = textWithoutDate.substring(0, positionIndex).trim();
+                            position = textWithoutDate.substring(positionIndex).trim();
+                        }
+                    } else {
+                        // Use company suffix heuristic
+                        const companyEndIndex = this.findCompanyEndIndex(textWithoutDate);
+                        if (companyEndIndex > 0) {
+                            company = textWithoutDate.substring(0, companyEndIndex).trim();
+                            position = textWithoutDate.substring(companyEndIndex).trim();
+                        } else {
+                            // Assume it's Company if it looks like one
+                            if (this.looksLikeCompany(textWithoutDate)) {
+                                company = textWithoutDate;
+                                // Look for position in next line
+                                if (i < lines.length - 1 && lines[i+1].length < 30) {
+                                     position = lines[i+1];
+                                }
+                            } else {
+                                // Assume it's Position (or just text)
+                                position = textWithoutDate;
+                                // Look for Company in previous line
+                                if (i > 0 && this.looksLikeCompany(lines[i-1])) {
+                                    company = lines[i-1];
+                                }
+                            }
                         }
                     }
-
-                    if (companyEndIndex > 0) {
-                        company = restText.substring(0, companyEndIndex);
-                        position = restText.substring(companyEndIndex).trim();
-                    } else {
-                        company = restText;
-                        position = '';
+                } 
+                // Case 2: Date is standalone or text is very short
+                else {
+                    // Strategy: Look Up for Company, Down for Position
+                    // Heuristic: Company is usually BOLD or distinct, often above date or same block
+                    if (i > 0 && this.looksLikeCompany(lines[i-1])) {
+                        company = lines[i-1];
+                        if (i < lines.length - 1) {
+                            const nextLine = lines[i+1];
+                            // If next line is not another date and short enough, assume position
+                            if (!this.isDateLine(nextLine) && nextLine.length < 30) {
+                                position = nextLine;
+                            }
+                        }
+                    } else if (i < lines.length - 1 && this.looksLikeCompany(lines[i+1])) {
+                        // Date line -> Company line -> Position line
+                        company = lines[i+1];
+                        if (i < lines.length - 2) {
+                             const nextNextLine = lines[i+2];
+                             if (!this.isDateLine(nextNextLine) && nextNextLine.length < 30) {
+                                 position = nextNextLine;
+                             }
+                        }
                     }
                 }
 
-                if (!company || company.length < 2) continue;
-
-                const cleanPosition = this.cleanPosition(position);
-                let cleanCompany = company.trim();
-                cleanCompany = cleanCompany.replace(/项目$/, '');
-                cleanCompany = cleanCompany.replace(/项目项目$/, '项目');
-                cleanCompany = cleanCompany.trim();
-
-                const isRealCompany = cleanCompany.includes('有限公司') || 
-                                     cleanCompany.includes('股份有限公司') ||
-                                     cleanCompany.includes('集团') ||
-                                     cleanCompany.includes('科技有限公司') ||
-                                     cleanCompany.includes('信息技术有限公司') ||
-                                     cleanCompany.includes('网络科技有限公司');
-
-                if (isRealCompany) {
-                    lastKnownCompany = cleanCompany;
-                } else {
-                    const projectKeywords = ['平台', '系统', '项目', '运营', '服务', '管理', '办公', '登记', '确权', '资源'];
-                    const isProject = projectKeywords.some(keyword => cleanCompany.includes(keyword));
+                // Cleanup and Add
+                if (company && company.length > 1) {
+                    // Clean Company Name
+                    let cleanCompany = company.trim();
+                    cleanCompany = cleanCompany.replace(/项目$/, '').replace(/项目项目$/, '项目').trim();
                     
-                    if (isProject && lastKnownCompany) {
-                        cleanCompany = lastKnownCompany;
-                    }
-                }
+                    // Basic Validation
+                    if (cleanCompany.length > 50 || cleanCompany.match(/^(时间|工作|经历|教育|项目|Time|Work|Experience)$/i)) continue;
 
-                const matchKey = `${cleanCompany}-${cleanPosition}-${dateRange}`;
-                if (processedMatches.has(matchKey)) {
-                    continue;
-                }
-                processedMatches.add(matchKey);
-
-                const { startDate, endDate } = this.parseDateRange(dateRange);
-
-                if (cleanCompany && cleanCompany.length > 1) {
+                    const cleanPosition = this.cleanPosition(position);
+                    const { startDate, endDate } = this.parseDateRange(dateRange);
+                    
                     const newExp = {
-                        startDate: startDate,
-                        endDate: endDate,
+                        startDate,
+                        endDate,
                         company: cleanCompany,
                         position: cleanPosition,
                         description: []
                     };
 
+                    // Check for duplicates
                     if (!this.isDuplicateExperience(newExp, experienceItems)) {
                         experienceItems.push(newExp);
                     }
@@ -1247,9 +1367,119 @@ class OptimizedResumeParseService {
             }
         }
 
-        const experienceWithDescriptions = this.extractExperienceDescriptions(content, experienceItems);
+        if (experienceItems.length === 0) {
+            const fallbackItems = this.extractExperienceFromLabels(content);
+            for (const item of fallbackItems) {
+                if (!this.isDuplicateExperience(item, experienceItems)) {
+                    experienceItems.push(item);
+                }
+            }
+        }
 
-        return experienceWithDescriptions;
+        return this.extractExperienceDescriptions(content, experienceItems);
+    }
+
+    extractExperienceFromLabels(content) {
+        if (!content || content.trim().length === 0) return [];
+        const lines = content.split('\n').map(l => l.trim()).filter(Boolean);
+        const items = [];
+        const seen = new Set();
+
+        const companyLabel = /^(?:公司名称|公司|单位|任职单位)[:：]\s*(.+)$/i;
+        const positionLabel = /^(?:目标职能|目标岗位|职位名称|职位|岗位|职务|现任职位|工作岗位)[:：]\s*(.+)$/i;
+        const timeLabel = /^(?:任职时间|工作时间|在职时间|时间|起止时间|起止日期|任职日期)[:：]\s*(.+)$/i;
+        const startLabel = /^(?:入职时间|开始时间|起始时间|Start(?:\s*Date)?)[:：]\s*(.+)$/i;
+        const endLabel = /^(?:离职时间|结束时间|截止时间|End(?:\s*Date)?)[:：]\s*(.+)$/i;
+
+        for (let i = 0; i < lines.length; i++) {
+            const m = lines[i].match(companyLabel);
+            if (!m) continue;
+
+            const company = (m[1] || '').trim();
+            if (!company) continue;
+
+            let position = '';
+            let dateText = '';
+            let startDate = '';
+            let endDate = '';
+
+            for (let j = i; j < Math.min(i + 6, lines.length); j++) {
+                const p = lines[j].match(positionLabel);
+                if (p && !position) position = (p[1] || '').trim();
+
+                const t = lines[j].match(timeLabel);
+                if (t && !dateText) dateText = (t[1] || '').trim();
+
+                const s = lines[j].match(startLabel);
+                if (s && !startDate) startDate = (s[1] || '').trim();
+
+                const e = lines[j].match(endLabel);
+                if (e && !endDate) endDate = (e[1] || '').trim();
+            }
+
+            let start = '';
+            let end = '';
+            if (dateText) {
+                const parsed = this.parseDateRange(dateText);
+                start = parsed.startDate;
+                end = parsed.endDate;
+            } else if (startDate || endDate) {
+                const sParsed = startDate ? this.parseDateRange(startDate) : { startDate: '', endDate: '' };
+                const eParsed = endDate ? this.parseDateRange(endDate) : { startDate: '', endDate: '' };
+                start = sParsed.startDate || sParsed.endDate || '';
+                end = eParsed.endDate || eParsed.startDate || '';
+                if (!end && /至今|present|now/i.test(endDate || '')) end = '至今';
+            }
+
+            const key = `${company}-${position}-${start}-${end}`;
+            if (seen.has(key)) continue;
+            seen.add(key);
+
+            items.push({
+                startDate: start || '',
+                endDate: end || '',
+                company: company,
+                position: this.cleanPosition(position),
+                description: []
+            });
+        }
+
+        return items;
+    }
+
+    looksLikeCompany(text) {
+        if (!text || text.length < 2 || text.length > 50) return false;
+        const companyIndicators = [
+            '公司', '集团', '科技', '网络', '软件', '信息', '技术', '数据', 
+            '工作室', '厂', '局', '院', '中心', 'Co.', 'Ltd', 'Inc'
+        ];
+        return companyIndicators.some(ind => text.includes(ind));
+    }
+
+    findCompanyEndIndex(text) {
+        const companyTypes = [
+            '股份有限公司', '有限责任公司', '有限公司', '集团', '科技', 
+            '网络', '软件', '信息', '技术', '数据', '智能', '电子', 
+            '数码', '传媒', '文化', '教育', '咨询', '服务', '贸易', 
+            '实业', '控股', '股份', '公司', 'Co', 'Ltd', 'Inc'
+        ];
+
+        let companyEndIndex = -1;
+        for (const type of companyTypes) {
+            const index = text.indexOf(type);
+            if (index !== -1) {
+                const endIndex = index + type.length;
+                if (endIndex > companyEndIndex) {
+                    companyEndIndex = endIndex;
+                }
+            }
+        }
+        return companyEndIndex;
+    }
+
+    isDateLine(text) {
+        return /(\d{4}\.\d{1,2}[-–]\d{4}\.\d{1,2}|\d{4}\.\d{1,2}[-–]至今)/.test(text) ||
+               /(\d{4}[-–年]\d{4}|\d{4}[-–年]至今)/.test(text);
     }
 
     extractExperienceDescriptions(content, experienceItems) {
@@ -1850,7 +2080,18 @@ class OptimizedResumeParseService {
         }
         
         const result = summaryLines.join('\n').substring(0, 200);
-        return result;
+        if (result && result.trim().length > 0) return result;
+
+        const fallbackLines = content
+            .split('\n')
+            .map(l => l.trim())
+            .filter(l => l.length > 0)
+            .filter(l => !l.match(/^(姓名|电话|手机|邮箱|地址|城市|Location|City)[:：]/i))
+            .filter(l => !this.isDateLine(l))
+            .filter(l => l.length >= 8 && l.length <= 120)
+            .filter(l => /(擅长|熟悉|精通|具备|拥有|经验|能力|优势|特点|负责|主导|参与)/.test(l));
+
+        return fallbackLines.slice(0, 3).join('\n').substring(0, 200);
     }
 }
 

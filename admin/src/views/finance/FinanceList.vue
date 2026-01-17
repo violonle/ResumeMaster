@@ -4,10 +4,20 @@
     subtitle="查看所有支付订单及财务统计"
   >
     <!-- 搜索与筛选 -->
-    <VCard class="mb-6" elevation="0" border>
+    <VCard
+      class="mb-6"
+      elevation="0"
+      border
+    >
       <VCardText class="pa-4">
-        <VRow dense align="center">
-          <VCol cols="12" md="4">
+        <VRow
+          dense
+          align="center"
+        >
+          <VCol
+            cols="12"
+            md="4"
+          >
             <VTextField
               v-model="search"
               label="搜索订单号"
@@ -19,7 +29,10 @@
               @update:model-value="handleSearch"
             />
           </VCol>
-          <VCol cols="12" md="3">
+          <VCol
+            cols="12"
+            md="3"
+          >
             <VSelect
               v-model="statusFilter"
               :items="statusItems"
@@ -33,7 +46,13 @@
           </VCol>
           <VSpacer />
           <VCol cols="auto">
-            <VBtn color="primary" variant="tonal" prepend-icon="mdi-refresh" @click="handleRefresh" :loading="loading">
+            <VBtn
+              color="primary"
+              variant="tonal"
+              prepend-icon="mdi-refresh"
+              :loading="loading"
+              @click="handleRefresh"
+            >
               刷新
             </VBtn>
           </VCol>
@@ -42,7 +61,10 @@
     </VCard>
 
     <!-- 数据表格 -->
-    <VCard elevation="0" border>
+    <VCard
+      elevation="0"
+      border
+    >
       <VCardText class="pa-0">
         <VDataTable
           :headers="headers"
@@ -56,14 +78,21 @@
           </template>
 
           <template #item.status="{ item }">
-            <VChip :color="getStatusColor(item.status)" size="small">
+            <VChip
+              :color="getStatusColor(item.status)"
+              size="small"
+            >
               {{ getStatusText(item.status) }}
             </VChip>
           </template>
 
           <template #item.paymentMethod="{ item }">
-             <VIcon :icon="getPaymentIcon(item.paymentMethod)" :color="getPaymentColor(item.paymentMethod)" class="mr-1" />
-             {{ getPaymentText(item.paymentMethod) }}
+            <VIcon
+              :icon="getPaymentIcon(item.paymentMethod)"
+              :color="getPaymentColor(item.paymentMethod)"
+              class="mr-1"
+            />
+            {{ getPaymentText(item.paymentMethod) }}
           </template>
 
           <template #item.createdAt="{ item }">

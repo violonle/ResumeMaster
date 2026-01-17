@@ -6,16 +6,27 @@
     <VRow>
       <!-- 全局配置 -->
       <VCol cols="12">
-        <VCard elevation="0" border class="mb-6">
+        <VCard
+          elevation="0"
+          border
+          class="mb-6"
+        >
           <VCardTitle class="pa-4 d-flex align-center">
-            <VIcon icon="mdi-earth" class="me-2" color="primary" />
+            <VIcon
+              icon="mdi-earth"
+              class="me-2"
+              color="primary"
+            />
             全局短信配置
           </VCardTitle>
           <VDivider />
           <VCardText class="pa-6">
             <VForm ref="globalForm">
               <VRow>
-                <VCol cols="12" md="6">
+                <VCol
+                  cols="12"
+                  md="6"
+                >
                   <VSelect
                     v-model="systemStore.smsSettings.provider"
                     :items="smsProviders"
@@ -25,7 +36,10 @@
                     prepend-inner-icon="mdi-server"
                   />
                 </VCol>
-                <VCol cols="12" md="6">
+                <VCol
+                  cols="12"
+                  md="6"
+                >
                   <VSwitch
                     v-model="systemStore.smsSettings.enabled"
                     label="启用短信服务"
@@ -34,39 +48,48 @@
                     inset
                   />
                 </VCol>
-                <VCol cols="12" md="6">
+                <VCol
+                  cols="12"
+                  md="6"
+                >
                   <VTextField
                     v-model="systemStore.smsSettings.accessKeyId"
                     label="AccessKey ID"
                     :type="showSmsKey ? 'text' : 'password'"
                     :append-inner-icon="showSmsKey ? 'mdi-eye-off' : 'mdi-eye'"
-                    @click:append-inner="showSmsKey = !showSmsKey"
                     variant="outlined"
                     density="compact"
                     prepend-inner-icon="mdi-key"
+                    @click:append-inner="showSmsKey = !showSmsKey"
                   />
                 </VCol>
-                <VCol cols="12" md="6">
+                <VCol
+                  cols="12"
+                  md="6"
+                >
                   <VTextField
                     v-model="systemStore.smsSettings.accessKeySecret"
                     label="AccessKey Secret"
                     :type="showSmsSecret ? 'text' : 'password'"
                     :append-inner-icon="showSmsSecret ? 'mdi-eye-off' : 'mdi-eye'"
-                    @click:append-inner="showSmsSecret = !showSmsSecret"
                     variant="outlined"
                     density="compact"
                     prepend-inner-icon="mdi-lock"
+                    @click:append-inner="showSmsSecret = !showSmsSecret"
                   />
                 </VCol>
-                <VCol cols="12" md="6">
+                <VCol
+                  cols="12"
+                  md="6"
+                >
                   <VTextField
                     v-model="systemStore.smsSettings.signName"
                     label="默认短信签名"
                     variant="outlined"
                     density="compact"
                     prepend-inner-icon="mdi-pen"
-                            placeholder="例如：争湃简历大师"
-                          />
+                    placeholder="例如：争湃简历大师"
+                  />
                 </VCol>
               </VRow>
             </VForm>
@@ -76,22 +99,39 @@
 
       <!-- 场景化模板配置 -->
       <VCol cols="12">
-        <VCard elevation="0" border class="mb-6">
+        <VCard
+          elevation="0"
+          border
+          class="mb-6"
+        >
           <VCardTitle class="pa-4 d-flex align-center">
-            <VIcon icon="mdi-message-text-clock-outline" class="me-2" color="primary" />
+            <VIcon
+              icon="mdi-message-text-clock-outline"
+              class="me-2"
+              color="primary"
+            />
             业务场景模板配置
           </VCardTitle>
           <VDivider />
           <VCardText class="pa-6">
             <VRow>
               <!-- 登录/注册场景 -->
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <div class="mb-4">
                   <div class="text-subtitle-1 font-weight-bold mb-1">
-                    <VIcon icon="mdi-shield-check-outline" size="small" class="me-1" />
+                    <VIcon
+                      icon="mdi-shield-check-outline"
+                      size="small"
+                      class="me-1"
+                    />
                     登录/注册
                   </div>
-                  <div class="text-caption text-medium-emphasis mb-2">用于发送手机验证码</div>
+                  <div class="text-caption text-medium-emphasis mb-2">
+                    用于发送手机验证码
+                  </div>
                   <VTextField
                     v-model="systemStore.smsSettings.scenarios.auth.templateCode"
                     label="模板 Code"
@@ -104,13 +144,22 @@
               </VCol>
 
               <!-- 面试邀请场景 -->
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <div class="mb-4">
                   <div class="text-subtitle-1 font-weight-bold mb-1">
-                    <VIcon icon="mdi-calendar-check-outline" size="small" class="me-1" />
+                    <VIcon
+                      icon="mdi-calendar-check-outline"
+                      size="small"
+                      class="me-1"
+                    />
                     面试邀请
                   </div>
-                  <div class="text-caption text-medium-emphasis mb-2">用于发送面试通知链接</div>
+                  <div class="text-caption text-medium-emphasis mb-2">
+                    用于发送面试通知链接
+                  </div>
                   <VTextField
                     v-model="systemStore.smsSettings.scenarios.interview.templateCode"
                     label="模板 Code"
@@ -123,13 +172,22 @@
               </VCol>
 
               <!-- 面试提醒场景 -->
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <div class="mb-4">
                   <div class="text-subtitle-1 font-weight-bold mb-1">
-                    <VIcon icon="mdi-alarm-check" size="small" class="me-1" />
+                    <VIcon
+                      icon="mdi-alarm-check"
+                      size="small"
+                      class="me-1"
+                    />
                     面试提醒
                   </div>
-                  <div class="text-caption text-medium-emphasis mb-2">用于发送面试开始提醒</div>
+                  <div class="text-caption text-medium-emphasis mb-2">
+                    用于发送面试开始提醒
+                  </div>
                   <VTextField
                     v-model="systemStore.smsSettings.scenarios.reminder.templateCode"
                     label="模板 Code"
@@ -150,8 +208,8 @@
               variant="elevated"
               :loading="saving"
               prepend-icon="mdi-content-save"
-              @click="saveSettings"
               size="large"
+              @click="saveSettings"
             >
               保存配置
             </VBtn>
@@ -161,15 +219,25 @@
 
       <!-- 测试发送 -->
       <VCol cols="12">
-        <VCard elevation="0" border>
+        <VCard
+          elevation="0"
+          border
+        >
           <VCardTitle class="pa-4 d-flex align-center">
-            <VIcon icon="mdi-test-tube" class="me-2" color="warning" />
+            <VIcon
+              icon="mdi-test-tube"
+              class="me-2"
+              color="warning"
+            />
             短信发送测试
           </VCardTitle>
           <VDivider />
           <VCardText class="pa-6">
             <VRow>
-              <VCol cols="12" md="4">
+              <VCol
+                cols="12"
+                md="4"
+              >
                 <VTextField
                   v-model="testForm.phone"
                   label="接收手机号"
@@ -178,24 +246,30 @@
                   prepend-inner-icon="mdi-cellphone"
                 />
               </VCol>
-              <VCol cols="12" md="4">
+              <VCol
+                cols="12"
+                md="4"
+              >
                 <VTextField
                   v-model="testForm.templateCode"
                   label="测试模板 Code"
                   variant="outlined"
                   density="compact"
                   prepend-inner-icon="mdi-code-tags"
-                  placeholder="留空则使用全局配置"
+                  placeholder="例如：SMS_123456"
                 />
               </VCol>
-              <VCol cols="12" md="4">
+              <VCol
+                cols="12"
+                md="4"
+              >
                 <VTextField
                   v-model="testForm.content"
                   label="模板参数 (JSON)"
                   variant="outlined"
                   density="compact"
                   prepend-inner-icon="mdi-code-json"
-                  placeholder='{"code":"123456"}'
+                  placeholder="{&quot;code&quot;:&quot;123456&quot;}"
                 />
               </VCol>
             </VRow>

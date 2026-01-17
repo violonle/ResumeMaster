@@ -84,8 +84,11 @@ exports.scheduleInterview = async (req, res) => {
       
       // 生成面试链接
       const smsCfg = await sms.getConfig();
+      // 获取门户地址，确保末尾没有斜杠
       const portalUrl = (smsCfg.portalUrl || 'https://master.cloujade.com').replace(/\/$/, '');
-      const interviewLink = `${portalUrl}?resumeJobId=${rj.id}`;
+      
+      // 注意：这里使用 /interview.html 作为独立页面，避开根目录 index.html 的登录拦截
+      const interviewLink = `${portalUrl}/interview.html?resumeJobId=${rj.id}`;
 
       // 准备短信模板变量 (对应阿里云最终模板: ${name}, ${time}, ${jobId})
       const smsParams = {

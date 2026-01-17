@@ -15,7 +15,11 @@
 
     <!-- 统计卡片 -->
     <VRow class="mb-6">
-      <VCol cols="12" md="3" sm="6">
+      <VCol
+        cols="12"
+        md="3"
+        sm="6"
+      >
         <VCard>
           <VCardText class="d-flex align-center pa-4">
             <VAvatar
@@ -25,17 +29,28 @@
               class="me-4"
               size="48"
             >
-              <VIcon icon="mdi-office-building" size="24" />
+              <VIcon
+                icon="mdi-office-building"
+                size="24"
+              />
             </VAvatar>
             <div>
-              <div class="text-h4 font-weight-bold">{{ companyStore.totalItems }}</div>
-              <div class="text-caption text-medium-emphasis">总企业数</div>
+              <div class="text-h4 font-weight-bold">
+                {{ companyStore.totalItems }}
+              </div>
+              <div class="text-caption text-medium-emphasis">
+                总企业数
+              </div>
             </div>
           </VCardText>
         </VCard>
       </VCol>
 
-      <VCol cols="12" md="3" sm="6">
+      <VCol
+        cols="12"
+        md="3"
+        sm="6"
+      >
         <VCard>
           <VCardText class="d-flex align-center pa-4">
             <VAvatar
@@ -45,17 +60,28 @@
               class="me-4"
               size="48"
             >
-              <VIcon icon="mdi-check-decagram" size="24" />
+              <VIcon
+                icon="mdi-check-decagram"
+                size="24"
+              />
             </VAvatar>
             <div>
-              <div class="text-h4 font-weight-bold">{{ verifiedCompanies }}</div>
-              <div class="text-caption text-medium-emphasis">已认证</div>
+              <div class="text-h4 font-weight-bold">
+                {{ verifiedCompanies }}
+              </div>
+              <div class="text-caption text-medium-emphasis">
+                已认证
+              </div>
             </div>
           </VCardText>
         </VCard>
       </VCol>
 
-      <VCol cols="12" md="3" sm="6">
+      <VCol
+        cols="12"
+        md="3"
+        sm="6"
+      >
         <VCard>
           <VCardText class="d-flex align-center pa-4">
             <VAvatar
@@ -65,17 +91,28 @@
               class="me-4"
               size="48"
             >
-              <VIcon icon="mdi-clock-outline" size="24" />
+              <VIcon
+                icon="mdi-clock-outline"
+                size="24"
+              />
             </VAvatar>
             <div>
-              <div class="text-h4 font-weight-bold">{{ pendingCompanies }}</div>
-              <div class="text-caption text-medium-emphasis">待认证</div>
+              <div class="text-h4 font-weight-bold">
+                {{ pendingCompanies }}
+              </div>
+              <div class="text-caption text-medium-emphasis">
+                待认证
+              </div>
             </div>
           </VCardText>
         </VCard>
       </VCol>
 
-      <VCol cols="12" md="3" sm="6">
+      <VCol
+        cols="12"
+        md="3"
+        sm="6"
+      >
         <VCard>
           <VCardText class="d-flex align-center pa-4">
             <VAvatar
@@ -85,11 +122,18 @@
               class="me-4"
               size="48"
             >
-              <VIcon icon="mdi-close-circle" size="24" />
+              <VIcon
+                icon="mdi-close-circle"
+                size="24"
+              />
             </VAvatar>
             <div>
-              <div class="text-h4 font-weight-bold">{{ rejectedCompanies }}</div>
-              <div class="text-caption text-medium-emphasis">已拒绝</div>
+              <div class="text-h4 font-weight-bold">
+                {{ rejectedCompanies }}
+              </div>
+              <div class="text-caption text-medium-emphasis">
+                已拒绝
+              </div>
             </div>
           </VCardText>
         </VCard>
@@ -97,10 +141,20 @@
     </VRow>
 
     <!-- 搜索和筛选 -->
-    <VCard class="mb-6" elevation="0" border>
+    <VCard
+      class="mb-6"
+      elevation="0"
+      border
+    >
       <VCardText class="pa-4">
-        <VRow dense align="center">
-          <VCol cols="12" md="4">
+        <VRow
+          dense
+          align="center"
+        >
+          <VCol
+            cols="12"
+            md="4"
+          >
             <VTextField
               v-model="searchQuery"
               placeholder="搜索企业名称、联系人或邮箱"
@@ -112,7 +166,10 @@
               @input="handleSearch"
             />
           </VCol>
-          <VCol cols="12" md="3">
+          <VCol
+            cols="12"
+            md="3"
+          >
             <VSelect
               v-model="verifiedFilter"
               :items="verifiedOptions"
@@ -124,7 +181,10 @@
               @update:model-value="handleFilter"
             />
           </VCol>
-          <VCol cols="12" md="3">
+          <VCol
+            cols="12"
+            md="3"
+          >
             <VSelect
               v-model="statusFilter"
               :items="statusOptions"
@@ -137,13 +197,16 @@
             />
           </VCol>
           <VSpacer />
-          <VCol cols="12" md="auto">
+          <VCol
+            cols="12"
+            md="auto"
+          >
             <VBtn
               color="primary"
               variant="tonal"
               prepend-icon="mdi-refresh"
-              @click="handleRefresh"
               :loading="companyStore.loading"
+              @click="handleRefresh"
             >
               刷新列表
             </VBtn>
@@ -153,22 +216,27 @@
     </VCard>
 
     <!-- 企业列表 -->
-    <VCard elevation="0" border>
+    <VCard
+      elevation="0"
+      border
+    >
       <VDataTable
+        v-model:page="currentPage"
         class="clean-table"
         :headers="headers"
         :items="companyStore.companies"
         :loading="companyStore.loading"
         :items-per-page="companyStore.filters.itemsPerPage"
         :items-length="companyStore.totalItems"
-        v-model:page="currentPage"
+        hover
         @update:page="handlePageChange"
         @update:items-per-page="handleItemsPerPageChange"
-        hover
       >
         <!-- 联系人列 -->
         <template #item.contact_account_id="{ item }">
-          <div class="text-body-2">{{ item.Contact?.real_name || item.Contact?.username || item.contact_account_id || '-' }}</div>
+          <div class="text-body-2">
+            {{ item.Contact?.real_name || item.Contact?.username || item.contact_account_id || '-' }}
+          </div>
         </template>
 
         <!-- 地区列 -->
@@ -204,7 +272,9 @@
 
         <!-- 创建时间列 -->
         <template #item.created_at="{ item }">
-          <div class="text-caption">{{ formatDate(item.created_at, 'yyyy-MM-dd') }}</div>
+          <div class="text-caption">
+            {{ formatDate(item.created_at, 'yyyy-MM-dd') }}
+          </div>
         </template>
 
         <!-- 操作列 -->
@@ -218,8 +288,16 @@
               class="me-1"
               @click="viewCompany(item)"
             >
-              <VIcon icon="mdi-eye-outline" size="20" />
-              <VTooltip activator="parent" location="top">查看详情</VTooltip>
+              <VIcon
+                icon="mdi-eye-outline"
+                size="20"
+              />
+              <VTooltip
+                activator="parent"
+                location="top"
+              >
+                查看详情
+              </VTooltip>
             </VBtn>
             
             <VBtn
@@ -230,8 +308,16 @@
               class="me-1"
               @click="editCompany(item)"
             >
-              <VIcon icon="mdi-pencil-outline" size="20" />
-              <VTooltip activator="parent" location="top">编辑企业</VTooltip>
+              <VIcon
+                icon="mdi-pencil-outline"
+                size="20"
+              />
+              <VTooltip
+                activator="parent"
+                location="top"
+              >
+                编辑企业
+              </VTooltip>
             </VBtn>
 
             <VBtn
@@ -242,8 +328,16 @@
               class="me-1"
               @click="viewCompanyResumes(item)"
             >
-              <VIcon icon="mdi-file-document-outline" size="20" />
-              <VTooltip activator="parent" location="top">企业简历</VTooltip>
+              <VIcon
+                icon="mdi-file-document-outline"
+                size="20"
+              />
+              <VTooltip
+                activator="parent"
+                location="top"
+              >
+                企业简历
+              </VTooltip>
             </VBtn>
 
             <VBtn
@@ -254,12 +348,23 @@
               class="me-1"
               @click="viewCompanyJobs(item)"
             >
-              <VIcon icon="mdi-briefcase-outline" size="20" />
-              <VTooltip activator="parent" location="top">职位管理</VTooltip>
+              <VIcon
+                icon="mdi-briefcase-outline"
+                size="20"
+              />
+              <VTooltip
+                activator="parent"
+                location="top"
+              >
+                职位管理
+              </VTooltip>
             </VBtn>
 
-            <VMenu location="bottom end" open-on-hover>
-              <template v-slot:activator="{ props }">
+            <VMenu
+              location="bottom end"
+              open-on-hover
+            >
+              <template #activator="{ props }">
                 <VBtn
                   variant="text"
                   size="small"
@@ -267,8 +372,16 @@
                   color="grey-darken-1"
                   v-bind="props"
                 >
-                  <VIcon icon="mdi-dots-vertical" size="20" />
-                  <VTooltip activator="parent" location="top">更多操作</VTooltip>
+                  <VIcon
+                    icon="mdi-dots-vertical"
+                    size="20"
+                  />
+                  <VTooltip
+                    activator="parent"
+                    location="top"
+                  >
+                    更多操作
+                  </VTooltip>
                 </VBtn>
               </template>
               <VList density="compact">
@@ -297,8 +410,14 @@
         <!-- 空状态 -->
         <template #no-data>
           <div class="text-center pa-8">
-            <VIcon icon="mdi-office-building-off" size="64" class="mb-4 text-medium-emphasis" />
-            <div class="text-h6 text-medium-emphasis">暂无企业数据</div>
+            <VIcon
+              icon="mdi-office-building-off"
+              size="64"
+              class="mb-4 text-medium-emphasis"
+            />
+            <div class="text-h6 text-medium-emphasis">
+              暂无企业数据
+            </div>
             <div class="text-caption text-medium-emphasis mt-2">
               点击右上角"新建企业"按钮添加第一个企业
             </div>
@@ -308,16 +427,25 @@
     </VCard>
 
     <!-- 创建/编辑对话框 -->
-    <VDialog v-model="showCreateDialog" max-width="700px">
+    <VDialog
+      v-model="showCreateDialog"
+      max-width="700px"
+    >
       <VCard>
         <VCardTitle class="pa-4">
           <span class="text-h5">{{ editingCompany ? '编辑企业' : '新建企业' }}</span>
         </VCardTitle>
         <VDivider />
         <VCardText class="pa-4">
-          <VForm ref="companyForm" @submit.prevent="handleSubmit">
+          <VForm
+            ref="companyForm"
+            @submit.prevent="handleSubmit"
+          >
             <VRow>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <VTextField
                   v-model="companyFormData.name"
                   label="企业名称"
@@ -327,7 +455,10 @@
                   density="compact"
                 />
               </VCol>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <VSelect 
                   v-model="companyFormData.contact_account_id" 
                   :items="accountItems" 
@@ -339,7 +470,10 @@
                   density="compact"
                 />
               </VCol>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <VTextField 
                   v-model="companyFormData.province" 
                   label="省份" 
@@ -347,7 +481,10 @@
                   density="compact"
                 />
               </VCol>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <VTextField 
                   v-model="companyFormData.city" 
                   label="地市" 
@@ -355,7 +492,10 @@
                   density="compact"
                 />
               </VCol>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <VTextField 
                   v-model="companyFormData.district" 
                   label="县市区" 
@@ -363,7 +503,10 @@
                   density="compact"
                 />
               </VCol>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <VSelect
                   v-model="companyFormData.status"
                   :items="statusOptions"
@@ -383,7 +526,10 @@
                   density="compact"
                 />
               </VCol>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <VTextField 
                   v-model="companyFormData.code" 
                   label="企业编码（可选）" 
@@ -391,7 +537,10 @@
                   density="compact"
                 />
               </VCol>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <VSwitch 
                   v-model="companyFormData.is_verified" 
                   label="已认证" 
@@ -404,7 +553,7 @@
                   v-model="verificationJson" 
                   label="认证信息（JSON）" 
                   rows="4" 
-                  placeholder='例如：{ "license": "913...", "biz_scope": "软件需求..." }' 
+                  placeholder="例如：{ &quot;license&quot;: &quot;913...&quot;, &quot;biz_scope&quot;: &quot;软件需求...&quot; }" 
                   variant="outlined"
                   density="compact"
                 />
@@ -424,36 +573,76 @@
         <VDivider />
         <VCardActions class="pa-4">
           <VSpacer />
-          <VBtn color="grey" variant="text" @click="closeDialog">取消</VBtn>
-          <VBtn color="primary" @click="handleSubmit" :loading="saving">保存</VBtn>
+          <VBtn
+            color="grey"
+            variant="text"
+            @click="closeDialog"
+          >
+            取消
+          </VBtn>
+          <VBtn
+            color="primary"
+            :loading="saving"
+            @click="handleSubmit"
+          >
+            保存
+          </VBtn>
         </VCardActions>
       </VCard>
     </VDialog>
 
     <!-- 删除确认对话框 -->
-    <VDialog v-model="showDeleteDialog" max-width="400px">
+    <VDialog
+      v-model="showDeleteDialog"
+      max-width="400px"
+    >
       <VCard>
-        <VCardTitle class="pa-4">确认删除</VCardTitle>
+        <VCardTitle class="pa-4">
+          确认删除
+        </VCardTitle>
         <VCardText class="pa-4">
           确定要删除企业 "{{ deletingCompany?.name }}" 吗？此操作不可恢复。
         </VCardText>
         <VCardActions class="pa-4">
           <VSpacer />
-          <VBtn color="grey" variant="text" @click="showDeleteDialog = false">取消</VBtn>
-          <VBtn color="error" @click="handleDelete" :loading="deleting">删除</VBtn>
+          <VBtn
+            color="grey"
+            variant="text"
+            @click="showDeleteDialog = false"
+          >
+            取消
+          </VBtn>
+          <VBtn
+            color="error"
+            :loading="deleting"
+            @click="handleDelete"
+          >
+            删除
+          </VBtn>
         </VCardActions>
       </VCard>
     </VDialog>
 
     <!-- 认证信息对话框 -->
-    <VDialog v-model="showVerifyDialog" max-width="700px">
+    <VDialog
+      v-model="showVerifyDialog"
+      max-width="700px"
+    >
       <VCard>
-        <VCardTitle class="pa-4">企业认证</VCardTitle>
+        <VCardTitle class="pa-4">
+          企业认证
+        </VCardTitle>
         <VDivider />
         <VCardText class="pa-4">
-          <VForm ref="verifyForm" @submit.prevent="submitVerify">
+          <VForm
+            ref="verifyForm"
+            @submit.prevent="submitVerify"
+          >
             <VRow>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <VTextField 
                   v-model="verifyFormData.license" 
                   label="营业执照号" 
@@ -461,7 +650,10 @@
                   density="compact"
                 />
               </VCol>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <VTextField 
                   v-model="verifyFormData.legal_person" 
                   label="法人代表" 
@@ -469,7 +661,10 @@
                   density="compact"
                 />
               </VCol>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <VTextField 
                   v-model="verifyFormData.credit_code" 
                   label="统一社会信用代码" 
@@ -492,8 +687,20 @@
         <VDivider />
         <VCardActions class="pa-4">
           <VSpacer />
-          <VBtn color="grey" variant="text" @click="showVerifyDialog = false">取消</VBtn>
-          <VBtn color="primary" @click="submitVerify" :loading="verifying">提交认证</VBtn>
+          <VBtn
+            color="grey"
+            variant="text"
+            @click="showVerifyDialog = false"
+          >
+            取消
+          </VBtn>
+          <VBtn
+            color="primary"
+            :loading="verifying"
+            @click="submitVerify"
+          >
+            提交认证
+          </VBtn>
         </VCardActions>
       </VCard>
     </VDialog>

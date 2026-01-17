@@ -12,8 +12,8 @@
           color="warning"
           prepend-icon="mdi-cancel"
           variant="tonal"
-          @click="cancelSubscription"
           :loading="loading"
+          @click="cancelSubscription"
         >
           取消订阅
         </VBtn>
@@ -22,8 +22,8 @@
           color="success"
           prepend-icon="mdi-refresh"
           variant="tonal"
-          @click="renewSubscription"
           :loading="loading"
+          @click="renewSubscription"
         >
           续费订阅
         </VBtn>
@@ -39,10 +39,17 @@
 
     <!-- 订阅基本信息卡片 -->
     <VRow class="mb-6">
-      <VCol cols="12" md="8">
+      <VCol
+        cols="12"
+        md="8"
+      >
         <VCard>
           <VCardTitle class="d-flex align-center pa-4">
-            <VIcon icon="mdi-credit-card" class="me-2" size="small" />
+            <VIcon
+              icon="mdi-credit-card"
+              class="me-2"
+              size="small"
+            />
             订阅信息
             <VSpacer />
             <VChip
@@ -57,24 +64,43 @@
           <VDivider />
           <VCardText class="pa-4">
             <VRow>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <div class="mb-4">
-                  <div class="text-caption text-medium-emphasis mb-1">订阅计划</div>
+                  <div class="text-caption text-medium-emphasis mb-1">
+                    订阅计划
+                  </div>
                   <div class="text-body-1 font-weight-medium">
-                    <VIcon :icon="getPlanIcon(subscription?.plan)" size="small" class="me-1" />
+                    <VIcon
+                      :icon="getPlanIcon(subscription?.plan)"
+                      size="small"
+                      class="me-1"
+                    />
                     {{ getPlanName(subscription?.plan) || '-' }}
                   </div>
                 </div>
                 <div class="mb-4">
-                  <div class="text-caption text-medium-emphasis mb-1">客户名称</div>
-                  <div class="text-body-1">{{ subscription?.customer?.username || '-' }}</div>
+                  <div class="text-caption text-medium-emphasis mb-1">
+                    客户名称
+                  </div>
+                  <div class="text-body-1">
+                    {{ subscription?.customer?.username || '-' }}
+                  </div>
                 </div>
                 <div class="mb-4">
-                  <div class="text-caption text-medium-emphasis mb-1">金额</div>
-                  <div class="text-body-1">¥{{ subscription?.amount || 0 }}</div>
+                  <div class="text-caption text-medium-emphasis mb-1">
+                    金额
+                  </div>
+                  <div class="text-body-1">
+                    ¥{{ subscription?.amount || 0 }}
+                  </div>
                 </div>
                 <div class="mb-4">
-                  <div class="text-caption text-medium-emphasis mb-1">支付状态</div>
+                  <div class="text-caption text-medium-emphasis mb-1">
+                    支付状态
+                  </div>
                   <VChip
                     :color="getPaymentStatusColor(subscription?.paymentStatus)"
                     size="small"
@@ -85,21 +111,38 @@
                   </VChip>
                 </div>
               </VCol>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <div class="mb-4">
-                  <div class="text-caption text-medium-emphasis mb-1">开始时间</div>
-                  <div class="text-body-1">{{ formatDate(subscription?.startDate) }}</div>
+                  <div class="text-caption text-medium-emphasis mb-1">
+                    开始时间
+                  </div>
+                  <div class="text-body-1">
+                    {{ formatDate(subscription?.startDate) }}
+                  </div>
                 </div>
                 <div class="mb-4">
-                  <div class="text-caption text-medium-emphasis mb-1">结束时间</div>
-                  <div class="text-body-1">{{ formatDate(subscription?.endDate) }}</div>
+                  <div class="text-caption text-medium-emphasis mb-1">
+                    结束时间
+                  </div>
+                  <div class="text-body-1">
+                    {{ formatDate(subscription?.endDate) }}
+                  </div>
                 </div>
                 <div class="mb-4">
-                  <div class="text-caption text-medium-emphasis mb-1">创建时间</div>
-                  <div class="text-body-1">{{ formatDate(subscription?.createdAt) }}</div>
+                  <div class="text-caption text-medium-emphasis mb-1">
+                    创建时间
+                  </div>
+                  <div class="text-body-1">
+                    {{ formatDate(subscription?.createdAt) }}
+                  </div>
                 </div>
                 <div class="mb-4">
-                  <div class="text-caption text-medium-emphasis mb-1">自动续费</div>
+                  <div class="text-caption text-medium-emphasis mb-1">
+                    自动续费
+                  </div>
                   <VChip
                     :color="subscription?.autoRenew ? 'success' : 'default'"
                     size="small"
@@ -111,39 +154,69 @@
                 </div>
               </VCol>
             </VRow>
-            <div class="mb-4" v-if="subscription?.description">
-              <div class="text-caption text-medium-emphasis mb-1">描述</div>
-              <div class="text-body-2">{{ subscription.description }}</div>
+            <div
+              v-if="subscription?.description"
+              class="mb-4"
+            >
+              <div class="text-caption text-medium-emphasis mb-1">
+                描述
+              </div>
+              <div class="text-body-2">
+                {{ subscription.description }}
+              </div>
             </div>
             <div v-if="subscription?.remark">
-              <div class="text-caption text-medium-emphasis mb-1">备注</div>
-              <div class="text-body-2">{{ subscription.remark }}</div>
+              <div class="text-caption text-medium-emphasis mb-1">
+                备注
+              </div>
+              <div class="text-body-2">
+                {{ subscription.remark }}
+              </div>
             </div>
           </VCardText>
         </VCard>
       </VCol>
 
-      <VCol cols="12" md="4">
+      <VCol
+        cols="12"
+        md="4"
+      >
         <VCard height="100%">
           <VCardTitle class="d-flex align-center pa-4">
-            <VIcon icon="mdi-chart-pie" class="me-2" size="small" />
+            <VIcon
+              icon="mdi-chart-pie"
+              class="me-2"
+              size="small"
+            />
             使用统计
           </VCardTitle>
           <VDivider />
           <VCardText class="pa-4">
             <div class="text-center mb-6">
-              <div class="text-h3 font-weight-bold text-primary mb-1">{{ usageStats?.totalUsage || 0 }}</div>
-              <div class="text-caption text-medium-emphasis">总使用次数</div>
+              <div class="text-h3 font-weight-bold text-primary mb-1">
+                {{ usageStats?.totalUsage || 0 }}
+              </div>
+              <div class="text-caption text-medium-emphasis">
+                总使用次数
+              </div>
             </div>
             
             <VRow class="text-center">
               <VCol cols="6">
-                <div class="text-h5 font-weight-bold text-success mb-1">{{ usageStats?.remainingUsage || 0 }}</div>
-                <div class="text-caption text-medium-emphasis">剩余次数</div>
+                <div class="text-h5 font-weight-bold text-success mb-1">
+                  {{ usageStats?.remainingUsage || 0 }}
+                </div>
+                <div class="text-caption text-medium-emphasis">
+                  剩余次数
+                </div>
               </VCol>
               <VCol cols="6">
-                <div class="text-h5 font-weight-bold text-info mb-1">{{ usageStats?.resumeCount || 0 }}</div>
-                <div class="text-caption text-medium-emphasis">简历生成数</div>
+                <div class="text-h5 font-weight-bold text-info mb-1">
+                  {{ usageStats?.resumeCount || 0 }}
+                </div>
+                <div class="text-caption text-medium-emphasis">
+                  简历生成数
+                </div>
               </VCol>
             </VRow>
             
@@ -169,7 +242,11 @@
       <VCol cols="12">
         <VCard>
           <VCardTitle class="d-flex align-center pa-4">
-            <VIcon icon="mdi-receipt" class="me-2" size="small" />
+            <VIcon
+              icon="mdi-receipt"
+              class="me-2"
+              size="small"
+            />
             支付记录
           </VCardTitle>
           <VDivider />
@@ -212,7 +289,12 @@
                     @click="viewInvoice(item)"
                   >
                     <VIcon icon="mdi-file-document-outline" />
-                    <VTooltip activator="parent" location="top">查看发票</VTooltip>
+                    <VTooltip
+                      activator="parent"
+                      location="top"
+                    >
+                      查看发票
+                    </VTooltip>
                   </VBtn>
                   <VBtn
                     v-if="item.status === 'pending'"
@@ -223,13 +305,22 @@
                     @click="processPayment(item)"
                   >
                     <VIcon icon="mdi-cash" />
-                    <VTooltip activator="parent" location="top">支付</VTooltip>
+                    <VTooltip
+                      activator="parent"
+                      location="top"
+                    >
+                      支付
+                    </VTooltip>
                   </VBtn>
                 </div>
               </template>
               <template #no-data>
                 <div class="text-center pa-8 text-medium-emphasis">
-                  <VIcon icon="mdi-receipt-text-outline" size="48" class="mb-2" />
+                  <VIcon
+                    icon="mdi-receipt-text-outline"
+                    size="48"
+                    class="mb-2"
+                  />
                   <div>暂无支付记录</div>
                 </div>
               </template>
@@ -244,7 +335,11 @@
       <VCol cols="12">
         <VCard>
           <VCardTitle class="d-flex align-center pa-4">
-            <VIcon icon="mdi-history" class="me-2" size="small" />
+            <VIcon
+              icon="mdi-history"
+              class="me-2"
+              size="small"
+            />
             使用历史
           </VCardTitle>
           <VDivider />
@@ -279,7 +374,11 @@
               </template>
               <template #no-data>
                 <div class="text-center pa-8 text-medium-emphasis">
-                  <VIcon icon="mdi-history" size="48" class="mb-2" />
+                  <VIcon
+                    icon="mdi-history"
+                    size="48"
+                    class="mb-2"
+                  />
                   <div>暂无使用记录</div>
                 </div>
               </template>
@@ -294,13 +393,23 @@
       <VCol cols="12">
         <VCard>
           <VCardTitle class="d-flex align-center pa-4">
-            <VIcon icon="mdi-pulse" class="me-2" size="small" />
+            <VIcon
+              icon="mdi-pulse"
+              class="me-2"
+              size="small"
+            />
             最近活动
           </VCardTitle>
           <VDivider />
           <VCardText class="pa-0">
-            <VList lines="two" class="pa-0">
-              <template v-for="(activity, index) in recentActivities" :key="activity.id">
+            <VList
+              lines="two"
+              class="pa-0"
+            >
+              <template
+                v-for="(activity, index) in recentActivities"
+                :key="activity.id"
+              >
                 <VListItem class="pa-4">
                   <template #prepend>
                     <VAvatar
@@ -309,21 +418,37 @@
                       variant="tonal"
                       class="me-3"
                     >
-                      <VIcon :icon="getActivityIcon(activity.type)" size="20" />
+                      <VIcon
+                        :icon="getActivityIcon(activity.type)"
+                        size="20"
+                      />
                     </VAvatar>
                   </template>
                   
-                  <VListItemTitle class="font-weight-medium mb-1">{{ activity.title }}</VListItemTitle>
+                  <VListItemTitle class="font-weight-medium mb-1">
+                    {{ activity.title }}
+                  </VListItemTitle>
                   <VListItemSubtitle>
-                    <div class="text-body-2 mb-1">{{ activity.description }}</div>
-                    <div class="text-caption text-medium-emphasis">{{ formatTime(activity.createdAt) }}</div>
+                    <div class="text-body-2 mb-1">
+                      {{ activity.description }}
+                    </div>
+                    <div class="text-caption text-medium-emphasis">
+                      {{ formatTime(activity.createdAt) }}
+                    </div>
                   </VListItemSubtitle>
                 </VListItem>
                 <VDivider v-if="index < recentActivities.length - 1" />
               </template>
               
-              <div v-if="!recentActivities.length" class="text-center pa-8 text-medium-emphasis">
-                <VIcon icon="mdi-bell-sleep-outline" size="48" class="mb-2" />
+              <div
+                v-if="!recentActivities.length"
+                class="text-center pa-8 text-medium-emphasis"
+              >
+                <VIcon
+                  icon="mdi-bell-sleep-outline"
+                  size="48"
+                  class="mb-2"
+                />
                 <div>暂无活动记录</div>
               </div>
             </VList>
@@ -333,18 +458,31 @@
     </VRow>
 
     <!-- 编辑订阅对话框 -->
-    <VDialog v-model="editDialog" max-width="600">
+    <VDialog
+      v-model="editDialog"
+      max-width="600"
+    >
       <VCard>
         <VCardTitle class="d-flex align-center pa-4">
           <span class="text-h6">编辑订阅信息</span>
           <VSpacer />
-          <VBtn icon="mdi-close" variant="text" @click="editDialog = false" />
+          <VBtn
+            icon="mdi-close"
+            variant="text"
+            @click="editDialog = false"
+          />
         </VCardTitle>
         <VDivider />
         <VCardText class="pa-4">
-          <VForm ref="editForm" v-model="editFormValid">
+          <VForm
+            ref="editForm"
+            v-model="editFormValid"
+          >
             <VRow>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <VSelect
                   v-model="editFormData.plan"
                   label="订阅计划"
@@ -356,7 +494,10 @@
                   required
                 />
               </VCol>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <VTextField
                   v-model="editFormData.amount"
                   label="金额"
@@ -367,7 +508,10 @@
                   required
                 />
               </VCol>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <VTextField
                   v-model="editFormData.startDate"
                   label="开始时间"
@@ -377,7 +521,10 @@
                   required
                 />
               </VCol>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <VTextField
                   v-model="editFormData.endDate"
                   label="结束时间"
@@ -409,8 +556,20 @@
         <VDivider />
         <VCardActions class="pa-4">
           <VSpacer />
-          <VBtn color="grey-darken-1" variant="text" @click="editDialog = false">取消</VBtn>
-          <VBtn color="primary" @click="saveEdit" :loading="loading">保存</VBtn>
+          <VBtn
+            color="grey-darken-1"
+            variant="text"
+            @click="editDialog = false"
+          >
+            取消
+          </VBtn>
+          <VBtn
+            color="primary"
+            :loading="loading"
+            @click="saveEdit"
+          >
+            保存
+          </VBtn>
         </VCardActions>
       </VCard>
     </VDialog>

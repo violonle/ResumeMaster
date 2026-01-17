@@ -1,4 +1,4 @@
-import { request } from '@/api/request';
+import { request } from '../../client-api/request';
 import type {
   CreateInterviewRequest,
   CurrentQuestionResponse,

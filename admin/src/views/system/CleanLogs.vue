@@ -4,10 +4,20 @@
     subtitle="查看系统运行日志和审计记录"
   >
     <!-- 搜索和筛选 -->
-    <VCard class="mb-6" elevation="0" border>
+    <VCard
+      class="mb-6"
+      elevation="0"
+      border
+    >
       <VCardText class="pa-4">
-        <VRow dense align="center">
-          <VCol cols="12" md="3">
+        <VRow
+          dense
+          align="center"
+        >
+          <VCol
+            cols="12"
+            md="3"
+          >
             <VSelect
               v-model="logFilters.level"
               :items="logLevelOptions"
@@ -19,7 +29,10 @@
               prepend-inner-icon="mdi-filter-variant"
             />
           </VCol>
-          <VCol cols="12" md="3">
+          <VCol
+            cols="12"
+            md="3"
+          >
             <VSelect
               v-model="logFilters.module"
               :items="logModuleOptions"
@@ -31,7 +44,10 @@
               prepend-inner-icon="mdi-view-module"
             />
           </VCol>
-          <VCol cols="12" md="3">
+          <VCol
+            cols="12"
+            md="3"
+          >
             <VTextField
               v-model="logFilters.startDate"
               label="开始日期"
@@ -41,7 +57,10 @@
               hide-details
             />
           </VCol>
-          <VCol cols="12" md="3">
+          <VCol
+            cols="12"
+            md="3"
+          >
             <VTextField
               v-model="logFilters.endDate"
               label="结束日期"
@@ -51,34 +70,37 @@
               hide-details
             />
           </VCol>
-          <VCol cols="12" class="d-flex align-center mt-2">
+          <VCol
+            cols="12"
+            class="d-flex align-center mt-2"
+          >
             <VSpacer />
             <VBtn 
               color="primary" 
               variant="tonal"
-              @click="fetchLogs" 
-              :loading="loading.logs"
+              :loading="loading.logs" 
               prepend-icon="mdi-magnify"
               class="me-2"
+              @click="fetchLogs"
             >
               搜索
             </VBtn>
             <VBtn 
               color="success" 
               variant="tonal"
-              @click="exportLogs" 
               class="me-2" 
-              :loading="exporting"
+              :loading="exporting" 
               prepend-icon="mdi-download"
+              @click="exportLogs"
             >
               导出
             </VBtn>
             <VBtn 
               color="error" 
               variant="tonal"
-              @click="clearLogs" 
-              :loading="clearing"
+              :loading="clearing" 
               prepend-icon="mdi-delete"
+              @click="clearLogs"
             >
               清空日志
             </VBtn>
@@ -89,8 +111,15 @@
 
     <!-- 日志统计卡片 -->
     <VRow class="mb-6">
-      <VCol cols="12" sm="6" md="3">
-        <VCard elevation="0" border>
+      <VCol
+        cols="12"
+        sm="6"
+        md="3"
+      >
+        <VCard
+          elevation="0"
+          border
+        >
           <VCardText class="d-flex align-center pa-4">
             <VAvatar
               rounded="lg"
@@ -99,17 +128,31 @@
               size="48"
               class="me-4"
             >
-              <VIcon icon="mdi-information" size="24" />
+              <VIcon
+                icon="mdi-information"
+                size="24"
+              />
             </VAvatar>
             <div>
-              <div class="text-h5 font-weight-bold">{{ logStats.info }}</div>
-              <div class="text-caption text-medium-emphasis">信息日志</div>
+              <div class="text-h5 font-weight-bold">
+                {{ logStats.info }}
+              </div>
+              <div class="text-caption text-medium-emphasis">
+                信息日志
+              </div>
             </div>
           </VCardText>
         </VCard>
       </VCol>
-      <VCol cols="12" sm="6" md="3">
-        <VCard elevation="0" border>
+      <VCol
+        cols="12"
+        sm="6"
+        md="3"
+      >
+        <VCard
+          elevation="0"
+          border
+        >
           <VCardText class="d-flex align-center pa-4">
             <VAvatar
               rounded="lg"
@@ -118,17 +161,31 @@
               size="48"
               class="me-4"
             >
-              <VIcon icon="mdi-alert" size="24" />
+              <VIcon
+                icon="mdi-alert"
+                size="24"
+              />
             </VAvatar>
             <div>
-              <div class="text-h5 font-weight-bold">{{ logStats.warn }}</div>
-              <div class="text-caption text-medium-emphasis">警告日志</div>
+              <div class="text-h5 font-weight-bold">
+                {{ logStats.warn }}
+              </div>
+              <div class="text-caption text-medium-emphasis">
+                警告日志
+              </div>
             </div>
           </VCardText>
         </VCard>
       </VCol>
-      <VCol cols="12" sm="6" md="3">
-        <VCard elevation="0" border>
+      <VCol
+        cols="12"
+        sm="6"
+        md="3"
+      >
+        <VCard
+          elevation="0"
+          border
+        >
           <VCardText class="d-flex align-center pa-4">
             <VAvatar
               rounded="lg"
@@ -137,17 +194,31 @@
               size="48"
               class="me-4"
             >
-              <VIcon icon="mdi-close-circle" size="24" />
+              <VIcon
+                icon="mdi-close-circle"
+                size="24"
+              />
             </VAvatar>
             <div>
-              <div class="text-h5 font-weight-bold">{{ logStats.error }}</div>
-              <div class="text-caption text-medium-emphasis">错误日志</div>
+              <div class="text-h5 font-weight-bold">
+                {{ logStats.error }}
+              </div>
+              <div class="text-caption text-medium-emphasis">
+                错误日志
+              </div>
             </div>
           </VCardText>
         </VCard>
       </VCol>
-      <VCol cols="12" sm="6" md="3">
-        <VCard elevation="0" border>
+      <VCol
+        cols="12"
+        sm="6"
+        md="3"
+      >
+        <VCard
+          elevation="0"
+          border
+        >
           <VCardText class="d-flex align-center pa-4">
             <VAvatar
               rounded="lg"
@@ -156,11 +227,18 @@
               size="48"
               class="me-4"
             >
-              <VIcon icon="mdi-bug" size="24" />
+              <VIcon
+                icon="mdi-bug"
+                size="24"
+              />
             </VAvatar>
             <div>
-              <div class="text-h5 font-weight-bold">{{ logStats.debug }}</div>
-              <div class="text-caption text-medium-emphasis">调试日志</div>
+              <div class="text-h5 font-weight-bold">
+                {{ logStats.debug }}
+              </div>
+              <div class="text-caption text-medium-emphasis">
+                调试日志
+              </div>
             </div>
           </VCardText>
         </VCard>
@@ -168,17 +246,20 @@
     </VRow>
 
     <!-- 日志数据表格 -->
-    <VCard elevation="0" border>
+    <VCard
+      elevation="0"
+      border
+    >
       <VDataTable
+        v-model:page="logFilters.page"
         :headers="logHeaders"
         :items="systemStore.logs"
         :loading="loading.logs"
         :items-per-page="logFilters.itemsPerPage"
         :items-length="systemStore.totalLogs"
-        v-model:page="logFilters.page"
-        @update:page="fetchLogs"
         hover
         class="clean-table"
+        @update:page="fetchLogs"
       >
         <template #item.level="{ item }">
           <VChip
@@ -187,7 +268,11 @@
             class="font-weight-medium"
             variant="tonal"
           >
-            <VIcon :icon="getLogLevelIcon(item.level)" size="14" class="me-1" />
+            <VIcon
+              :icon="getLogLevelIcon(item.level)"
+              size="14"
+              class="me-1"
+            />
             {{ item.level.toUpperCase() }}
           </VChip>
         </template>
@@ -203,25 +288,42 @@
         </template>
 
         <template #item.message="{ item }">
-          <div class="text-truncate" style="max-width: 400px;">
+          <div
+            class="text-truncate"
+            style="max-width: 400px;"
+          >
             {{ item.message }}
           </div>
         </template>
 
         <template #item.user="{ item }">
-          <div v-if="item.user" class="d-flex align-center">
-            <VAvatar size="24" color="secondary" variant="tonal" class="me-2">
+          <div
+            v-if="item.user"
+            class="d-flex align-center"
+          >
+            <VAvatar
+              size="24"
+              color="secondary"
+              variant="tonal"
+              class="me-2"
+            >
               <span class="text-xs">{{ item.user.charAt(0).toUpperCase() }}</span>
             </VAvatar>
             <span class="text-body-2">{{ item.user }}</span>
           </div>
-          <div v-else class="text-caption text-medium-emphasis">
+          <div
+            v-else
+            class="text-caption text-medium-emphasis"
+          >
             系统
           </div>
         </template>
 
         <template #item.ip="{ item }">
-          <code class="text-caption bg-grey-lighten-4 pa-1 rounded" v-if="item.ip">
+          <code
+            v-if="item.ip"
+            class="text-caption bg-grey-lighten-4 pa-1 rounded"
+          >
             {{ item.ip }}
           </code>
         </template>
@@ -242,8 +344,16 @@
               class="me-1"
               @click="viewLogDetails(item)"
             >
-              <VIcon icon="mdi-eye-outline" size="20" />
-              <VTooltip activator="parent" location="top">查看详情</VTooltip>
+              <VIcon
+                icon="mdi-eye-outline"
+                size="20"
+              />
+              <VTooltip
+                activator="parent"
+                location="top"
+              >
+                查看详情
+              </VTooltip>
             </VBtn>
             <VBtn
               icon
@@ -252,8 +362,16 @@
               variant="text"
               @click="deleteLog(item)"
             >
-              <VIcon icon="mdi-trash-can-outline" size="20" />
-              <VTooltip activator="parent" location="top">删除日志</VTooltip>
+              <VIcon
+                icon="mdi-trash-can-outline"
+                size="20"
+              />
+              <VTooltip
+                activator="parent"
+                location="top"
+              >
+                删除日志
+              </VTooltip>
             </VBtn>
           </div>
         </template>
@@ -261,25 +379,44 @@
         <!-- 空状态 -->
         <template #no-data>
           <div class="d-flex flex-column align-center justify-center pa-8 text-medium-emphasis">
-            <VIcon icon="mdi-file-document-outline" size="48" class="mb-4" />
-            <div class="text-body-1">暂无日志记录</div>
+            <VIcon
+              icon="mdi-file-document-outline"
+              size="48"
+              class="mb-4"
+            />
+            <div class="text-body-1">
+              暂无日志记录
+            </div>
           </div>
         </template>
       </VDataTable>
     </VCard>
 
     <!-- 日志详情对话框 -->
-    <VDialog v-model="showLogDialog" max-width="800px">
+    <VDialog
+      v-model="showLogDialog"
+      max-width="800px"
+    >
       <VCard v-if="currentLog">
         <VCardTitle class="d-flex justify-space-between align-center pa-4 bg-light-blue-lighten-5">
           <span class="text-h6">日志详情</span>
-          <VBtn icon="mdi-close" variant="text" size="small" @click="showLogDialog = false" />
+          <VBtn
+            icon="mdi-close"
+            variant="text"
+            size="small"
+            @click="showLogDialog = false"
+          />
         </VCardTitle>
         <VDivider />
         <VCardText class="pa-4">
           <VRow>
-            <VCol cols="12" md="6">
-              <div class="text-caption text-medium-emphasis mb-1">级别</div>
+            <VCol
+              cols="12"
+              md="6"
+            >
+              <div class="text-caption text-medium-emphasis mb-1">
+                级别
+              </div>
               <VChip
                 :color="getLogLevelColor(currentLog.level)"
                 size="small"
@@ -289,32 +426,75 @@
                 {{ currentLog.level.toUpperCase() }}
               </VChip>
             </VCol>
-            <VCol cols="12" md="6">
-              <div class="text-caption text-medium-emphasis mb-1">模块</div>
-              <div class="text-body-2 font-weight-medium">{{ getModuleText(currentLog.module) }}</div>
+            <VCol
+              cols="12"
+              md="6"
+            >
+              <div class="text-caption text-medium-emphasis mb-1">
+                模块
+              </div>
+              <div class="text-body-2 font-weight-medium">
+                {{ getModuleText(currentLog.module) }}
+              </div>
             </VCol>
-            <VCol cols="12" md="6">
-              <div class="text-caption text-medium-emphasis mb-1">时间</div>
-              <div class="text-body-2">{{ formatDateTime(currentLog.timestamp) }}</div>
+            <VCol
+              cols="12"
+              md="6"
+            >
+              <div class="text-caption text-medium-emphasis mb-1">
+                时间
+              </div>
+              <div class="text-body-2">
+                {{ formatDateTime(currentLog.timestamp) }}
+              </div>
             </VCol>
-            <VCol cols="12" md="6">
-              <div class="text-caption text-medium-emphasis mb-1">操作人</div>
-              <div class="text-body-2">{{ currentLog.user || '系统' }}</div>
+            <VCol
+              cols="12"
+              md="6"
+            >
+              <div class="text-caption text-medium-emphasis mb-1">
+                操作人
+              </div>
+              <div class="text-body-2">
+                {{ currentLog.user || '系统' }}
+              </div>
             </VCol>
-            <VCol cols="12" md="6">
-              <div class="text-caption text-medium-emphasis mb-1">IP地址</div>
+            <VCol
+              cols="12"
+              md="6"
+            >
+              <div class="text-caption text-medium-emphasis mb-1">
+                IP地址
+              </div>
               <code class="text-body-2 bg-grey-lighten-4 pa-1 rounded">{{ currentLog.ip || '-' }}</code>
             </VCol>
             <VCol cols="12">
-              <div class="text-caption text-medium-emphasis mb-1">消息内容</div>
-              <div class="text-body-2 pa-3 bg-grey-lighten-5 rounded border">{{ currentLog.message }}</div>
+              <div class="text-caption text-medium-emphasis mb-1">
+                消息内容
+              </div>
+              <div class="text-body-2 pa-3 bg-grey-lighten-5 rounded border">
+                {{ currentLog.message }}
+              </div>
             </VCol>
-            <VCol cols="12" v-if="currentLog.stack_trace">
-              <div class="text-caption text-medium-emphasis mb-1">堆栈追踪</div>
-              <pre class="text-caption pa-3 bg-grey-darken-3 text-white rounded overflow-auto" style="max-height: 300px;">{{ currentLog.stack_trace }}</pre>
+            <VCol
+              v-if="currentLog.stack_trace"
+              cols="12"
+            >
+              <div class="text-caption text-medium-emphasis mb-1">
+                堆栈追踪
+              </div>
+              <pre
+                class="text-caption pa-3 bg-grey-darken-3 text-white rounded overflow-auto"
+                style="max-height: 300px;"
+              >{{ currentLog.stack_trace }}</pre>
             </VCol>
-            <VCol cols="12" v-if="currentLog.metadata">
-              <div class="text-caption text-medium-emphasis mb-1">元数据</div>
+            <VCol
+              v-if="currentLog.metadata"
+              cols="12"
+            >
+              <div class="text-caption text-medium-emphasis mb-1">
+                元数据
+              </div>
               <pre class="text-caption pa-3 bg-grey-lighten-4 rounded overflow-auto">{{ JSON.stringify(currentLog.metadata, null, 2) }}</pre>
             </VCol>
           </VRow>
@@ -322,7 +502,11 @@
         <VDivider />
         <VCardActions class="pa-4">
           <VSpacer />
-          <VBtn color="primary" variant="elevated" @click="showLogDialog = false">
+          <VBtn
+            color="primary"
+            variant="elevated"
+            @click="showLogDialog = false"
+          >
             关闭
           </VBtn>
         </VCardActions>

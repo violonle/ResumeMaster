@@ -106,6 +106,17 @@ const adminDistPath = path.join(ROOT_DIR, 'admin/dist');
 // 1. 处理后台管理系统的静态文件
 app.use('/admin', express.static(adminDistPath));
 
+// 1.1 处理面试页面的静态文件 (提升优先级)
+app.get('/interview.html', (req, res, next) => {
+  if (process.env.NODE_ENV !== 'production' && req.headers.host?.includes('3000')) {
+    console.log(`[DEBUG] Redirecting interview page from 3000 to 5173 for development`);
+    const targetUrl = `http://localhost:5173/interview.html${req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : ''}`;
+    return res.redirect(targetUrl);
+  }
+  next();
+});
+app.use('/interview.html', express.static(path.join(ROOT_DIR, 'interview.html')));
+
 // 2. 处理后台管理系统的 SPA 路由回退
 app.get('/admin/*', (req, res) => {
   // 如果是带后缀的文件且静态文件中间件没处理，说明文件不存在，返回 404
@@ -135,7 +146,10 @@ app.use(express.static(ROOT_DIR));
 
 // 日志中间件
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  // 记录关键页面的访问
+  if (req.path.includes('interview') || req.path.includes('Interview')) {
+    console.log(`[DEBUG] Interview Access: ${new Date().toISOString()} - ${req.method} ${req.path}`);
+  }
   next();
 });
 
@@ -455,6 +469,7 @@ const startServer = async () => {
         await checkAndAddColumn('resumes', 'source', 'TEXT');
         await checkAndAddColumn('resumes', 'is_talent_pool', 'INTEGER DEFAULT 0');
         await checkAndAddColumn('resumes', 'score', 'INTEGER DEFAULT 0');
+        await checkAndAddColumn('interview_sessions', 'expires_at', 'DATETIME DEFAULT NULL');
       }
     } catch (e) {
       console.error('⚠️ Safe column check failed:', e.message);

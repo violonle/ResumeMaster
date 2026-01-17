@@ -127,19 +127,19 @@
             <!-- 功能特色 -->
             <div class="flex justify-center space-x-8 text-sm text-gray-500">
                 <div class="flex items-center space-x-2">
-                    <span class="text-green-500">✅</span>
+                    <i class="fas fa-check-circle text-green-500"></i>
                     <span>支持多种格式</span>
                 </div>
                 <div class="flex items-center space-x-2">
-                    <span class="text-green-500">✅</span>
+                    <i class="fas fa-check-circle text-green-500"></i>
                     <span>AI智能分析</span>
                 </div>
                 <div class="flex items-center space-x-2">
-                    <span class="text-green-500">✅</span>
+                    <i class="fas fa-check-circle text-green-500"></i>
                     <span>专业优化建议</span>
                 </div>
                 <div class="flex items-center space-x-2">
-                    <span class="text-green-500">✅</span>
+                    <i class="fas fa-check-circle text-green-500"></i>
                     <span>安全隐私保护</span>
                 </div>
             </div>
@@ -156,7 +156,7 @@
                         <h2 class="text-2xl font-semibold text-gray-900">已选择简历</h2>
                         <div class="flex items-center space-x-4">
                             <button id="upload-resume-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center">
-                                <span class="mr-2">📤</span>
+                                <i class="fas fa-upload mr-2"></i>
                                 选择解析的简历
                             </button>
                             <span class="text-sm text-gray-500" id="selected-resume-count">已选择 0 份简历</span>
@@ -172,7 +172,7 @@
                                     <input type="text" id="library-search-input" placeholder="搜索简历名称或姓名..." 
                                            class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                                     <div class="absolute left-3 top-1/2 transform -translate-y-1/2">
-                                        <span class="text-gray-400">🔍</span>
+                                        <i class="fas fa-search text-gray-400"></i>
                                     </div>
                                 </div>
                             </div>
@@ -214,13 +214,13 @@
                             </div>
                             <div class="flex items-center space-x-2">
                                 <button id="library-select-all-btn" class="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                                    <span class="mr-1">☑️</span>全选
+                                    <i class="fas fa-check-square mr-1"></i>全选
                                 </button>
                                 <button id="library-clear-selection-btn" class="text-gray-600 hover:text-gray-700 text-sm font-medium">
-                                    <span class="mr-1">✖️</span>清空选择
+                                    <i class="fas fa-times mr-1"></i>清空选择
                                 </button>
                                 <button id="add-to-list-btn" class="text-green-600 hover:text-green-700 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                                    <span class="mr-1">➕</span>加入清单 (<span id="add-to-list-count">0</span>)
+                                    <i class="fas fa-plus mr-1"></i>加入清单 (<span id="add-to-list-count">0</span>)
                                 </button>
                             </div>
                         </div>
@@ -242,19 +242,19 @@
                                 </div>
                                 <div class="flex items-center space-x-2">
                                     <button id="library-first-page-btn" class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                                        <span class="mr-1">⏪</span>首页
+                                        <i class="fas fa-angle-double-left mr-1"></i>首页
                                     </button>
                                     <button id="library-prev-page-btn" class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                                        <span class="mr-1">◀️</span>上一页
+                                        <i class="fas fa-angle-left mr-1"></i>上一页
                                     </button>
                                     <div class="flex items-center space-x-1" id="library-page-numbers">
                                         <!-- 页码按钮将由JavaScript动态生成 -->
                                     </div>
                                     <button id="library-next-page-btn" class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">
-                                        下一页<span class="ml-1">▶️</span>
+                                        下一页<i class="fas fa-angle-right ml-1"></i>
                                     </button>
                                     <button id="library-last-page-btn" class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">
-                                        尾页<span class="ml-1">⏩</span>
+                                        尾页<i class="fas fa-angle-double-right ml-1"></i>
                                     </button>
                                 </div>
                             </div>
@@ -266,11 +266,11 @@
                         <div class="text-center">
                             <div class="flex items-center justify-center space-x-4">
                                 <button id="add-to-analysis-list-btn" class="bg-white border-2 border-blue-600 text-blue-600 py-4 px-8 rounded-xl font-medium hover:bg-blue-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-lg inline-flex items-center" disabled>
-                                    <span class="mr-2">➕</span>
+                                    <i class="fas fa-plus mr-2"></i>
                                     加入分析清单 (<span id="analysis-list-count">0</span>)
                                 </button>
                                 <button id="analyze-btn" type="button" class="bg-blue-600 text-white py-4 px-8 rounded-xl font-medium hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-lg inline-flex items-center" disabled>
-                                    <span class="mr-2">⚙️</span>
+                                    <i class="fas fa-cog mr-2"></i>
                                     开始解析 (<span id="library-analyze-count">0</span>)
                                 </button>
                             </div>
@@ -295,19 +295,19 @@
                         <div class="flex items-center justify-between">
                             <span class="text-sm text-gray-600">解析文档结构</span>
                             <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
-                                <span class="text-green-600 text-xs">✅</span>
+                                <i class="fas fa-check text-green-600 text-xs"></i>
                             </div>
                         </div>
                         <div class="flex items-center justify-between">
                             <span class="text-sm text-gray-600">提取个人信息</span>
                             <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
-                                <span class="text-green-600 text-xs">✅</span>
+                                <i class="fas fa-check text-green-600 text-xs"></i>
                             </div>
                         </div>
                         <div class="flex items-center justify-between">
                             <span class="text-sm text-gray-600">AI智能分析</span>
                             <div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center analysis-progress">
-                                <span class="text-blue-600 text-xs animate-spin">⏳</span>
+                                <i class="fas fa-circle-notch fa-spin text-blue-600 text-xs"></i>
                             </div>
                         </div>
                     </div>
@@ -324,7 +324,7 @@
                             <div id="sar-score-badge" class="hidden px-4 py-2 bg-blue-100 text-blue-800 rounded-lg font-bold text-lg">
                                 综合评分 <span id="sar-score-val">0</span>
                             </div>
-                            <button id="sar-download-pdf" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"><span class="mr-2">📄</span>导出PDF</button>
+                            <button id="sar-download-pdf" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"><i class="fas fa-file-pdf mr-2"></i>导出PDF</button>
                         </div>
                     </div>
                     

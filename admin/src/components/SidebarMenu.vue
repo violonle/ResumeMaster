@@ -10,17 +10,38 @@
   >
     <!-- Logo Area -->
     <div class="pa-4 d-flex flex-column align-center justify-center">
-      <div class="mb-2" :style="{ width: localRail ? '48px' : '50px', height: localRail ? '48px' : 'auto' }">
-        <VImg :src="`${baseUrl}logo.png`" alt="Logo" contain />
+      <div
+        class="mb-2"
+        :style="{ width: localRail ? '48px' : '50px', height: localRail ? '48px' : 'auto' }"
+      >
+        <VImg
+          :src="`${baseUrl}logo.png`"
+          alt="Logo"
+          contain
+        />
       </div>
-      <div v-if="!localRail" class="text-h6 font-weight-bold mt-1 text-truncate w-100 text-center">争湃·简历大师</div>
-      <div v-if="!localRail" class="text-caption text-medium-emphasis">后台管理系统</div>
+      <div
+          v-if="!localRail"
+          class="text-h6 font-weight-bold mt-1 text-truncate w-100 text-center text-primary"
+        >
+          争湃·简历大师
+        </div>
+      <div
+        v-if="!localRail"
+        class="text-caption text-medium-emphasis"
+      >
+        后台管理系统
+      </div>
     </div>
 
     <VDivider class="mx-4 mb-2" />
 
     <!-- Navigation List -->
-    <VList nav density="comfortable" class="px-2">
+    <VList
+      nav
+      density="comfortable"
+      class="px-2"
+    >
       <VListItem
         prepend-icon="mdi-view-dashboard-outline"
         title="仪表板"
@@ -30,8 +51,16 @@
         class="mb-1"
       />
 
-      <VListSubheader v-if="!localRail" class="text-caption font-weight-bold mt-2 mb-1">用户管理</VListSubheader>
-      <VDivider v-else class="my-2 mx-2" />
+      <VListSubheader
+        v-if="!localRail"
+        class="text-caption font-weight-bold mt-2 mb-1"
+      >
+        用户管理
+      </VListSubheader>
+      <VDivider
+        v-else
+        class="my-2 mx-2"
+      />
 
       <VListItem
         v-if="can('customers.view')"
@@ -70,8 +99,16 @@
         class="mb-1"
       />
 
-      <VListSubheader v-if="!localRail" class="text-caption font-weight-bold mt-2 mb-1">财务管理</VListSubheader>
-      <VDivider v-else class="my-2 mx-2" />
+      <VListSubheader
+        v-if="!localRail"
+        class="text-caption font-weight-bold mt-2 mb-1"
+      >
+        财务管理
+      </VListSubheader>
+      <VDivider
+        v-else
+        class="my-2 mx-2"
+      />
 
       <VListItem
         v-if="can('finance.view')"
@@ -92,8 +129,16 @@
         class="mb-1"
       />
 
-      <VListSubheader v-if="!localRail" class="text-caption font-weight-bold mt-2 mb-1">系统管理</VListSubheader>
-      <VDivider v-else class="my-2 mx-2" />
+      <VListSubheader
+        v-if="!localRail"
+        class="text-caption font-weight-bold mt-2 mb-1"
+      >
+        系统管理
+      </VListSubheader>
+      <VDivider
+        v-else
+        class="my-2 mx-2"
+      />
 
       <VListItem
         v-if="can('ai_models.view')"
@@ -150,8 +195,16 @@
         class="mb-1"
       />
 
-      <VListSubheader v-if="!localRail" class="text-caption font-weight-bold mt-2 mb-1">个人中心</VListSubheader>
-      <VDivider v-else class="my-2 mx-2" />
+      <VListSubheader
+        v-if="!localRail"
+        class="text-caption font-weight-bold mt-2 mb-1"
+      >
+        个人中心
+      </VListSubheader>
+      <VDivider
+        v-else
+        class="my-2 mx-2"
+      />
 
       <VListItem
         prepend-icon="mdi-account-cog-outline"
@@ -169,10 +222,13 @@
           block
           color="error"
           variant="tonal"
-          @click="$emit('logout')"
           class="text-capitalize"
+          @click="$emit('logout')"
         >
-          <VIcon :icon="localRail ? 'mdi-logout' : 'mdi-logout-variant'" :class="{ 'me-2': !localRail }" />
+          <VIcon
+            :icon="localRail ? 'mdi-logout' : 'mdi-logout-variant'"
+            :class="{ 'me-2': !localRail }"
+          />
           <span v-if="!localRail">退出登录</span>
         </VBtn>
       </div>

@@ -295,7 +295,7 @@ router.post('/:id/interview', authenticate, Permission.requireSubscription, Perm
             // 2. 发送邮件
             if (email) {
                 console.log(`[面试通知] 正在发送邮件给 ${email}`);
-                const typeStr = channel === 'video' ? '视频面试' : (channel === 'phone' ? '线上面试' : '现场面试');
+                const typeStr = (channel === 'video' || channel === 'online') ? '线上面试' : (channel === 'phone' ? '电话面试' : '现场面试');
                 const subject = `【面试邀请】${typeStr}安排 - 争湃·简历大师`;
                 const html = `
                     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
