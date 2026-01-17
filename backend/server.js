@@ -424,15 +424,26 @@ const promptService = require('./services/promptService');
 // 启动服务器
 const startServer = async () => {
   try {
-    // 在生产环境下，我们不应该自动同步数据库结构，除非明确要求
-    // 这可以防止由于索引过多或其他限制导致的启动失败
-    if (process.env.NODE_ENV === 'production') {
-      await sequelize.authenticate();
-      console.log('Database connection established successfully (Production).');
-    } else {
-      // 非生产环境可以尝试同步，但禁用 alter 以避免 ER_TOO_MANY_KEYS 错误
-      await sequelize.sync({ force: false, alter: false });
-      console.log('Database synchronized (Development).');
+    // 数据库连接重试机制
+    const maxRetries = 10;
+    const retryDelay = 5000;
+    
+    for (let i = 0; i < maxRetries; i++) {
+      try {
+        if (process.env.NODE_ENV === 'production') {
+          await sequelize.authenticate();
+          console.log('Database connection established successfully (Production).');
+        } else {
+          // 非生产环境可以尝试同步，但禁用 alter 以避免 ER_TOO_MANY_KEYS 错误
+          await sequelize.sync({ force: false, alter: false });
+          console.log('Database synchronized (Development).');
+        }
+        break; // 连接成功，跳出循环
+      } catch (err) {
+        console.error(`Database connection attempt ${i + 1}/${maxRetries} failed:`, err.message);
+        if (i === maxRetries - 1) throw err; // 最后一次尝试失败，抛出错误
+        await new Promise(resolve => setTimeout(resolve, retryDelay));
+      }
     }
     
     // 初始化数据
