@@ -28,7 +28,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          platforms: linux/arm64
+          platforms: linux/amd64
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/super-resume-master:latest
           cache-from: type=gha
@@ -47,16 +47,30 @@ jobs:
             cd /www/wwwroot/ResumeMaster
             
             echo "Starting deployment..."
-            # 停止并移除旧容器，强制删除旧镜像以确保拉取最新
-            docker compose stop app || true
-            docker compose rm -f app || true
+            
+            # 定义 docker-compose 命令变量，自动检测可用命令
+            if docker compose version >/dev/null 2>&1; then
+                DC_CMD="docker compose"
+            elif command -v docker-compose >/dev/null 2>&1; then
+                DC_CMD="docker-compose"
+            else
+                echo "Error: Neither 'docker compose' nor 'docker-compose' found."
+                exit 1
+            fi
+            echo "Using command: $DC_CMD"
+
+            # 停止并移除旧容器
+            $DC_CMD stop app || true
+            $DC_CMD rm -f app || true
+            
+            # 强制删除旧镜像
             docker rmi ${{ secrets.DOCKERHUB_USERNAME }}/super-resume-master:latest || true
             
             echo "Pulling latest image..."
-            docker compose pull app
+            $DC_CMD pull app
             
             echo "Starting new container..."
-            docker compose up -d app
+            $DC_CMD up -d app
             
             echo "Cleaning up..."
             docker image prune -f
