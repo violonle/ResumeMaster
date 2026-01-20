@@ -221,8 +221,13 @@
                     
                     <div class="space-y-6">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">职位描述 *</label>
-                            <textarea id="job-description" rows="10" class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="请填写岗位职责与任职要求等完整描述" required></textarea>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">岗位职责 *</label>
+                            <textarea id="job-description" rows="6" class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="请填写岗位的主要工作职责..." required></textarea>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">任职要求 *</label>
+                            <textarea id="job-requirements" rows="6" class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="请填写学历、经验、技能等硬性要求..." required></textarea>
                         </div>
                     </div>
                 </div>
@@ -434,12 +439,28 @@
                 experience: document.getElementById('experience').value,
                 education: document.getElementById('education').value,
                 description: document.getElementById('job-description').value,
-                benefits: Array.from(document.querySelectorAll('input[name="benefits"]:checked')).map(cb => cb.nextElementSibling.textContent)
+                requirements: document.getElementById('job-requirements').value,
+                benefits: Array.from(document.querySelectorAll('input[name="benefits"]:checked')).map(cb => cb.value)
             };
         }
 
         // 生成预览HTML
         function generatePreviewHTML(data) {
+            const benefitMap = {
+                'five-insurance-fund': '五险一金',
+                'commercial-insurance': '商业保险',
+                'annual-bonus': '年终奖',
+                'flexible-work': '弹性工作',
+                'remote-work': '远程办公',
+                'paid-leave': '带薪年假',
+                'training': '培训机会',
+                'career-development': '职业发展',
+                'free-meals': '免费餐食',
+                'gym': '健身房',
+                'team-building': '团建活动',
+                'stock-options': '股票期权'
+            };
+
             return `
                 <div class="space-y-6">
                     <div class="border-b border-gray-200 pb-6">
@@ -455,12 +476,17 @@
                         <h3 class="text-lg font-semibold text-gray-900 mb-3">职位描述</h3>
                         <div class="text-gray-700 whitespace-pre-line">${data.description || '暂无描述'}</div>
                     </div>
+
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-3">任职要求</h3>
+                        <div class="text-gray-700 whitespace-pre-line">${data.requirements || '暂无要求'}</div>
+                    </div>
                     
                     ${data.benefits.length > 0 ? `
                     <div>
                         <h3 class="text-lg font-semibold text-gray-900 mb-3">福利待遇</h3>
                         <div class="flex flex-wrap gap-2">
-                            ${data.benefits.map(benefit => `<span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">${benefit}</span>`).join('')}
+                            ${data.benefits.map(benefitKey => `<span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">${benefitMap[benefitKey] || benefitKey}</span>`).join('')}
                         </div>
                     </div>
                     ` : ''}
@@ -524,20 +550,30 @@
                     experience_required: formData.experience,
                     education_required: formData.education,
                     description: formData.description,
-                    // Combine benefits into description or separate field if backend supports
-                    requirements: `【福利待遇】\n${formData.benefits.join('、')}`, 
+                    requirements: formData.requirements,
+                    benefits: formData.benefits, // Send benefits array
                     status: 'active'
                 };
 
                 try {
-                    await window.resumeDataManager.createJob(jobData);
-                    ui.showNotification('职位发布成功！', 'success');
+                    const editJobId = document.getElementById('job-posting-form').dataset.editJobId;
+                    
+                    if (editJobId) {
+                        // 更新模式
+                        await window.resumeDataManager.updateJob(editJobId, jobData);
+                        ui.showNotification('职位更新成功！', 'success');
+                    } else {
+                        // 创建模式
+                        await window.resumeDataManager.createJob(jobData);
+                        ui.showNotification('职位发布成功！', 'success');
+                    }
+                    
                     setTimeout(() => {
                         window.location.href = 'job-management.html';
                     }, 1500);
                 } catch (error) {
-                    console.error('发布职位失败:', error);
-                    ui.showNotification(error.message || '发布失败，请重试', 'error');
+                    console.error('操作失败:', error);
+                    ui.showNotification(error.message || '操作失败，请重试', 'error');
                 }
             }
         }
@@ -595,15 +631,92 @@
             }, null, { type: 'warning', title: '取消确认' });
         });
 
-        // 页面动画
-        document.addEventListener('DOMContentLoaded', () => {
+        // 页面动画 & 初始化
+        document.addEventListener('DOMContentLoaded', async () => {
             const elements = document.querySelectorAll('.fade-in-up');
             elements.forEach((el, index) => {
                 setTimeout(() => {
                     el.style.opacity = '1';
                 }, index * 200);
             });
+
+            // 检查 URL 是否包含 id 参数（编辑模式）
+            const urlParams = new URLSearchParams(window.location.search);
+            const jobId = urlParams.get('id');
+
+            if (jobId) {
+                await loadJobDetails(jobId);
+            }
         });
+
+        // 加载职位详情（编辑模式）
+        async function loadJobDetails(jobId) {
+            try {
+                // 修改页面标题
+                document.title = '编辑职位 - 争湃·简历大师';
+                document.querySelector('.brand-title h1').textContent = '编辑职位';
+                document.querySelector('.brand-title p').textContent = '修改职位招聘信息';
+
+                const job = await window.resumeDataManager.getJobById(jobId);
+                if (!job) {
+                    ui.showNotification('职位不存在或已被删除', 'error');
+                    setTimeout(() => window.location.href = 'job-management.html', 2000);
+                    return;
+                }
+
+                // 填充表单
+                document.getElementById('job-title').value = job.title || '';
+                document.getElementById('job-location').value = job.location || '';
+                
+                // 解析薪资 "20-30K/月"
+                if (job.salary_range) {
+                    const salaryMatch = job.salary_range.match(/(\d+)-(\d+)K\/(月|年)/);
+                    if (salaryMatch) {
+                        document.getElementById('salary-min').value = salaryMatch[1];
+                        document.getElementById('salary-max').value = salaryMatch[2];
+                        document.getElementById('salary-unit').value = salaryMatch[3] === '年' ? 'year' : 'month';
+                    }
+                }
+
+                // 下拉框匹配
+                setSelectValue('experience', job.experience_required);
+                setSelectValue('education', job.education_required);
+
+                document.getElementById('job-description').value = job.description || '';
+                document.getElementById('job-requirements').value = job.requirements || '';
+
+                // 福利待遇 checkbox
+                if (job.benefits && Array.isArray(job.benefits)) {
+                    job.benefits.forEach(benefit => {
+                        const cb = document.querySelector(`input[name="benefits"][value="${benefit}"]`);
+                        if (cb) cb.checked = true;
+                    });
+                }
+                
+                // 存储当前编辑的 Job ID
+                document.getElementById('job-posting-form').dataset.editJobId = jobId;
+
+            } catch (error) {
+                console.error('加载职位详情失败:', error);
+                ui.showNotification('加载职位详情失败', 'error');
+            }
+        }
+
+        function setSelectValue(id, value) {
+            const select = document.getElementById(id);
+            if (!select || !value) return;
+            // 尝试直接匹配
+            select.value = value;
+            // 如果直接匹配失败（可能是 value 和 option value 不完全一致），尝试模糊匹配
+            if (select.value !== value) {
+                for (let i = 0; i < select.options.length; i++) {
+                    if (select.options[i].text.includes(value) || value.includes(select.options[i].value)) {
+                        select.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+        }
     </script>
     <!-- Scripts -->
     <script src="../js/user-auth.js"></script>
@@ -823,8 +936,9 @@
             function fillForm(data) {
                 if (data.title) document.getElementById('job-title').value = data.title;
                 if (data.location) document.getElementById('job-location').value = data.location;
-                const desc = [data.description || '', data.requirements || ''].filter(Boolean).join('\n\n');
-                if (desc) document.getElementById('job-description').value = desc;
+                
+                if (data.description) document.getElementById('job-description').value = data.description;
+                if (data.requirements) document.getElementById('job-requirements').value = data.requirements;
                 
                 // 简单的薪资解析填充
                 if (data.salary) {

@@ -6,7 +6,7 @@
   <title>简历详情 - 争湃·简历大师</title>
   <link rel="icon" href="/favicon.ico" type="image/x-icon">
   <script src="../js/tailwindcss.js"></script>
-  <link rel="stylesheet" href="https://fastly.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
   <script src="../js/user-auth.js"></script>
   <script src="../js/resume-data.js?v=2"></script>
   <link rel="stylesheet" href="/css/sidebar.css">
@@ -109,9 +109,12 @@
 
           </div>
           <div class="flex flex-col items-end">
-            <div class="text-center bg-blue-50 p-4 rounded-xl">
-              <p class="text-sm text-gray-500 mb-1">匹配度得分</p>
-              <p class="text-3xl font-bold text-blue-600" id="resume-score">0</p>
+            <div class="flex items-center gap-4">
+              <div id="pipeline-actions" class="flex flex-col gap-2 min-w-[120px]"></div>
+              <div class="text-center bg-blue-50 p-4 rounded-xl">
+                <p class="text-sm text-gray-500 mb-1">匹配度得分</p>
+                <p class="text-3xl font-bold text-blue-600" id="resume-score">0</p>
+              </div>
             </div>
             <p class="text-xs text-gray-400 mt-2">更新于: <span id="resume-updated">2024-01-01</span></p>
           </div>
@@ -401,6 +404,32 @@
       }
     }
 
+    window.updateStatus = async function(resumeId, status) {
+        if (!confirm('确定要更新状态吗？')) return;
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`/api/resumes/${resumeId}/status`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ status })
+            });
+            const result = await response.json();
+            if (result.success) {
+                if (typeof showToast === 'function') showToast('状态更新成功', 'success');
+                else alert('状态更新成功');
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                alert('更新失败: ' + (result.error?.message || result.error || '未知错误'));
+            }
+        } catch (e) {
+            console.error(e);
+            alert('网络错误');
+        }
+    };
+
     function renderResume(data) {
       console.log('Rendering Resume Data:', data);
       document.getElementById('loading-indicator').classList.add('hidden');
@@ -450,7 +479,24 @@
       }
       if (!name) name = data.file_name || '未命名简历';
       
-      document.getElementById('resume-name').textContent = name;
+      const nameEl = document.getElementById('resume-name');
+      nameEl.textContent = name;
+      
+      // Remove existing badge if any
+      const existingBadge = nameEl.querySelector('.status-badge');
+      if (existingBadge) existingBadge.remove();
+      
+      // Add '已录用' badge if status is hired or offer
+      const status = data.recruitment_status || '投递';
+      const statusKey = String(status).toLowerCase();
+      
+      if (statusKey === 'hired' || statusKey === '已入职' || statusKey === '入职' || statusKey === 'offer' || statusKey === '已录用') {
+          const badge = document.createElement('span');
+          badge.className = 'status-badge ml-3 px-2 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-lg align-middle border border-emerald-200';
+          badge.innerHTML = '<i class="fas fa-check-circle mr-1"></i>已录用';
+          nameEl.appendChild(badge);
+      }
+      
       document.getElementById('avatar-text').textContent = name.charAt(0);
       
       let jobTitle = data.job_title || basicInfo.job_title || basicInfo.current_position || basicInfo.target_position || pd.job_title || pd.position || '';
@@ -492,6 +538,38 @@
       let score = data.overall_score || data.score || pd.overall_score || 0;
       if (!score && pd.scores && pd.scores.overall) score = pd.scores.overall;
       document.getElementById('resume-score').textContent = score;
+
+      // 渲染操作按钮
+      const actionsDiv = document.getElementById('pipeline-actions');
+      if (actionsDiv) {
+          const status = data.recruitment_status || '投递';
+          const statusKey = String(status).toLowerCase();
+          let btnHtml = '';
+          const btnClass = "px-4 py-2 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center w-full justify-center";
+          
+          if (statusKey === '投递' || statusKey === 'applied' || statusKey === 'new' || statusKey === 'uploaded') {
+              btnHtml = `<button class="${btnClass} bg-blue-600 text-white hover:bg-blue-700" onclick="updateStatus('${data.id}', 'screening')"><i class="fas fa-check mr-1.5"></i>通过初筛</button>`;
+          } else if (statusKey === '初筛' || statusKey === 'screening' || statusKey === '已初筛' || statusKey === 'passed') {
+              btnHtml = `<button class="${btnClass} bg-indigo-600 text-white hover:bg-indigo-700" onclick="updateStatus('${data.id}', 'interview')"><i class="fas fa-comments mr-1.5"></i>进入面试</button>`;
+          } else if (statusKey === 'offer' || statusKey === '已发offer') {
+              btnHtml = `<button class="${btnClass} bg-emerald-600 text-white hover:bg-emerald-700" onclick="updateStatus('${data.id}', 'hired')"><i class="fas fa-user-check mr-1.5"></i>确认入职</button>`;
+          }
+          
+          if (statusKey === 'hired' || statusKey === '已入职' || statusKey === '入职') {
+              // 已入职状态不显示操作按钮，或者显示已完成
+              // btnHtml = `<button class="${btnClass} bg-gray-100 text-gray-500 cursor-default"><i class="fas fa-check-double mr-1.5"></i>已入职</button>`;
+          }
+          
+          if (!['淘汰', 'rejected', 'hired', '入职', '已淘汰', '已入职'].includes(statusKey)) {
+              btnHtml += `<button class="${btnClass} bg-red-50 text-red-600 border border-red-100 hover:bg-red-100" onclick="updateStatus('${data.id}', 'rejected')"><i class="fas fa-times mr-1.5"></i>淘汰</button>`;
+          }
+          
+          if (statusKey === '淘汰' || statusKey === 'rejected' || statusKey === '已淘汰') {
+              btnHtml = `<button class="${btnClass} bg-green-50 text-green-600 border border-green-100 hover:bg-green-100" onclick="updateStatus('${data.id}', 'applied')"><i class="fas fa-undo mr-1.5"></i>恢复</button>`;
+          }
+          
+          actionsDiv.innerHTML = btnHtml;
+      }
       
       const date = data.upload_date ? new Date(data.upload_date).toLocaleDateString() : new Date().toLocaleDateString();
       document.getElementById('resume-updated').textContent = date;

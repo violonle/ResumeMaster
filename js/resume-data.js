@@ -3,7 +3,10 @@
  * 负责简历数据的存储、检索和管理（通过API调用）
  */
 
-class ResumeDataManager {
+(function() {
+if (typeof window.ResumeDataManager !== 'undefined') return;
+
+class ResumeDataManagerInternal {
     constructor() {
         const ua = (window.userAuthInstance && window.userAuthInstance.apiBaseUrl) ? window.userAuthInstance.apiBaseUrl : null;
         // 确保默认API路径为 /api，避免尝试 http://localhost:5001/api 这种错误端口
@@ -201,8 +204,13 @@ class ResumeDataManager {
      * @returns {Promise<Array>} - 流程数据
      */
     async getRecruitmentPipeline(jobId = null, status = null, silent = false) {
-        // 现在使用统一的人才库API获取招聘流程数据
-        // 忽略jobId和status参数，因为我们只关注在人才库中的简历
+        if (jobId) {
+            let endpoint = `/recruitment/pipeline?jobId=${jobId}`;
+            if (status) endpoint += `&status=${status}`;
+            const result = await this.apiRequest(endpoint, 'GET', null, true, silent);
+            return result.data;
+        }
+        // 否则使用统一的人才库API获取招聘流程数据
         return this.getTalentPoolResumes(true, silent);
     }
 
@@ -379,13 +387,8 @@ class ResumeDataManager {
      */
     async updateResumeStatus(resumeId, status) {
         try {
-            const resume = await this.getResumeById(resumeId);
-            if (!resume) {
-                return false;
-            }
-
+            // 直接发送 PUT 请求更新状态，不需要先 GET
             await this.apiRequest(`/resumes/${resumeId}`, 'PUT', {
-                ...resume,
                 recruitment_status: status
             });
 
@@ -547,5 +550,10 @@ class ResumeDataManager {
     }
 }
 
+window.ResumeDataManager = ResumeDataManagerInternal;
+})();
+
 // 创建全局实例
-window.resumeDataManager = new ResumeDataManager();
+if (!window.resumeDataManager) {
+    window.resumeDataManager = new window.ResumeDataManager();
+}

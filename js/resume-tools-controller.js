@@ -575,7 +575,7 @@
                 }
             }
             
-            ui.showNotification('解析完成', 'success');
+            ui.showNotification('深度解析任务已启动，正在后台处理', 'success');
             renderMainParsingList();
             
             // Show result of the last analyzed item

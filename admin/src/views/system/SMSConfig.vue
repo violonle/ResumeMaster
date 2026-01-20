@@ -171,7 +171,7 @@
                 </div>
               </VCol>
 
-              <!-- 面试提醒场景 -->
+              <!-- Offer Scenario -->
               <VCol
                 cols="12"
                 md="6"
@@ -179,17 +179,17 @@
                 <div class="mb-4">
                   <div class="text-subtitle-1 font-weight-bold mb-1">
                     <VIcon
-                      icon="mdi-alarm-check"
+                      icon="mdi-email-check"
                       size="small"
                       class="me-1"
                     />
-                    面试提醒
+                    Offer发送通知
                   </div>
                   <div class="text-caption text-medium-emphasis mb-2">
-                    用于发送面试开始提醒
+                    发送Offer时通知候选人
                   </div>
                   <VTextField
-                    v-model="systemStore.smsSettings.scenarios.reminder.templateCode"
+                    v-model="systemStore.smsSettings.scenarios.offer.templateCode"
                     label="模板 Code"
                     variant="outlined"
                     density="comfortable"
@@ -238,8 +238,21 @@
                 cols="12"
                 md="4"
               >
+                <VSelect
+                  v-model="smsTestScenario"
+                  :items="smsScenarioOptions"
+                  label="选择测试场景"
+                  variant="outlined"
+                  density="compact"
+                  prepend-inner-icon="mdi-shape-outline"
+                />
+              </VCol>
+              <VCol
+                cols="12"
+                md="4"
+              >
                 <VTextField
-                  v-model="testForm.phone"
+                  v-model="smsTestPhone"
                   label="接收手机号"
                   variant="outlined"
                   density="compact"
@@ -251,25 +264,26 @@
                 md="4"
               >
                 <VTextField
-                  v-model="testForm.templateCode"
-                  label="测试模板 Code"
+                  :model-value="systemStore.smsSettings.scenarios?.[smsTestScenario]?.templateCode || ''"
+                  label="当前场景模板 Code"
                   variant="outlined"
                   density="compact"
                   prepend-inner-icon="mdi-code-tags"
-                  placeholder="例如：SMS_123456"
+                  readonly
                 />
               </VCol>
               <VCol
                 cols="12"
-                md="4"
+                md="12"
               >
-                <VTextField
-                  v-model="testForm.content"
-                  label="模板参数 (JSON)"
+                <VTextarea
+                  v-model="smsTestParams"
+                  label="测试参数 (JSON)"
                   variant="outlined"
                   density="compact"
                   prepend-inner-icon="mdi-code-json"
-                  placeholder="{&quot;code&quot;:&quot;123456&quot;}"
+                  rows="6"
+                  auto-grow
                 />
               </VCol>
             </VRow>
@@ -281,7 +295,7 @@
               variant="outlined"
               :loading="testing"
               prepend-icon="mdi-send"
-              @click="testSMS"
+              @click="testSms"
             >
               发送测试短信
             </VBtn>
@@ -293,7 +307,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useSystemStore } from '@/stores/system'
 import ui from '@/utils/ui-components.js'
 
@@ -310,11 +324,34 @@ const smsProviders = [
   { title: 'Twilio', value: 'twilio' }
 ]
 
-const testForm = reactive({
-  phone: '',
-  templateCode: '',
-  content: ''
-})
+const smsTestScenario = ref('auth')
+const smsTestPhone = ref('')
+const smsTestParams = ref('')
+const smsScenarioOptions = [
+  { title: '登录/注册验证码', value: 'auth' },
+  { title: '面试邀请通知', value: 'interview' },
+  { title: 'Offer发送通知', value: 'offer' },
+]
+
+const defaultTestParams = {
+  auth: { code: '123456' },
+  interview: {
+    name: '张三',
+    time: '2026-01-20 10:00',
+    jobId: '12345',
+  },
+  offer: {
+    name: '张三',
+    company: '争湃科技',
+    time: '2026-02-01',
+  },
+}
+
+watch(smsTestScenario, (newVal) => {
+  if (newVal && defaultTestParams[newVal]) {
+    smsTestParams.value = JSON.stringify(defaultTestParams[newVal], null, 2)
+  }
+}, { immediate: true })
 
 const saveSettings = async () => {
   saving.value = true
@@ -329,14 +366,32 @@ const saveSettings = async () => {
   }
 }
 
-const testSMS = async () => {
-  if (!testForm.phone) {
+const testSms = async () => {
+  if (!smsTestPhone.value || !smsTestScenario.value) {
     ui.showNotification('请输入接收手机号', 'warning')
     return
   }
   testing.value = true
   try {
-    await systemStore.testSms(testForm)
+    let params = null
+    try {
+      if (smsTestParams.value) {
+        params = JSON.parse(smsTestParams.value)
+      }
+    } catch (e) {
+      ui.showNotification('测试参数格式错误，请输入有效的 JSON', 'error')
+      testing.value = false
+      return
+    }
+
+    const currentTemplateCode = systemStore.smsSettings.scenarios[smsTestScenario.value]?.templateCode
+
+    await systemStore.testSms({ 
+      phone: smsTestPhone.value,
+      scenario: smsTestScenario.value,
+      templateCode: currentTemplateCode,
+      content: params
+    })
     ui.showNotification('测试短信已发出', 'success')
   } catch (error) {
     console.error('Test SMS error:', error)

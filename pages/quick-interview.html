@@ -10,9 +10,9 @@
     <link rel="stylesheet" href="../css/design-system.css">
     <link rel="stylesheet" href="/css/sidebar.css">
     <!-- Flatpickr -->
-    <link rel="stylesheet" href="https://fastly.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <script src="https://fastly.jsdelivr.net/npm/flatpickr"></script>
-    <script src="https://fastly.jsdelivr.net/npm/flatpickr/dist/l10n/zh.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/zh.js"></script>
     <script src="../js/user-auth.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <style>
@@ -347,11 +347,13 @@
                     const event = new Event('change');
                     document.querySelector('input[name="interviewType"][value="online"]').dispatchEvent(event);
                 } else {
-                    alert('发送失败: ' + (response.data.error || '未知错误'));
+                    const errorMsg = response.data.error?.message || response.data.error || '未知错误';
+                    alert('发送失败: ' + errorMsg);
                 }
             } catch (error) {
                 console.error('Submit error:', error);
-                alert('系统错误: ' + (error.response?.data?.error || error.message));
+                const errorMsg = error.response?.data?.error?.message || error.response?.data?.error || error.message;
+                alert('系统错误: ' + errorMsg);
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = originalText;

@@ -425,23 +425,35 @@ const promptService = require('./services/promptService');
 const startServer = async () => {
   try {
     // 数据库连接重试机制
-    const maxRetries = 10;
+    const maxRetries = 20; // 增加重试次数
     const retryDelay = 5000;
     
+    console.log(`[Startup] Starting server initialization...`);
+    console.log(`[Startup] Environment: ${process.env.NODE_ENV}`);
+    console.log(`[Startup] Database Host: ${process.env.DB_HOST}`);
+    
+    let dbConnected = false;
+
     for (let i = 0; i < maxRetries; i++) {
       try {
+        console.log(`[Startup] Database connection attempt ${i + 1}/${maxRetries}...`);
         if (process.env.NODE_ENV === 'production') {
           await sequelize.authenticate();
-          console.log('Database connection established successfully (Production).');
+          console.log('[Startup] Database connection established successfully (Production).');
         } else {
           // 非生产环境可以尝试同步，但禁用 alter 以避免 ER_TOO_MANY_KEYS 错误
           await sequelize.sync({ force: false, alter: false });
-          console.log('Database synchronized (Development).');
+          console.log('[Startup] Database synchronized (Development).');
         }
+        dbConnected = true;
         break; // 连接成功，跳出循环
       } catch (err) {
-        console.error(`Database connection attempt ${i + 1}/${maxRetries} failed:`, err.message);
-        if (i === maxRetries - 1) throw err; // 最后一次尝试失败，抛出错误
+        console.error(`[Startup] Database connection attempt ${i + 1}/${maxRetries} failed:`, err.message);
+        if (i === maxRetries - 1) {
+             console.error('[Startup] All database connection attempts failed.');
+             // 这里不抛出错误，而是继续尝试启动 HTTP 服务，以便至少能返回 503 而不是 502
+             // throw err; 
+        }
         await new Promise(resolve => setTimeout(resolve, retryDelay));
       }
     }
@@ -480,7 +492,51 @@ const startServer = async () => {
         await checkAndAddColumn('resumes', 'source', 'TEXT');
         await checkAndAddColumn('resumes', 'is_talent_pool', 'INTEGER DEFAULT 0');
         await checkAndAddColumn('resumes', 'score', 'INTEGER DEFAULT 0');
+        await checkAndAddColumn('jobs', 'enable_auto_screening', 'BOOLEAN DEFAULT FALSE');
+        await checkAndAddColumn('jobs', 'auto_reject_score', 'INTEGER DEFAULT 60');
+        await checkAndAddColumn('jobs', 'notify_high_score', 'BOOLEAN DEFAULT FALSE');
+        await checkAndAddColumn('jobs', 'high_score_threshold', 'INTEGER DEFAULT 85');
+        await checkAndAddColumn('jobs', 'weight_preference', "ENUM('balanced', 'skills', 'experience', 'education') DEFAULT 'balanced'");
+        
+        await checkAndAddColumn('resumes', 'auto_rejected', 'BOOLEAN DEFAULT FALSE');
+        await checkAndAddColumn('resumes', 'rejection_reason', 'VARCHAR(255) DEFAULT NULL');
+        
         await checkAndAddColumn('interview_sessions', 'expires_at', 'DATETIME DEFAULT NULL');
+      } else if (dialect === 'sqlite') {
+        const checkAndAddColumnSQLite = async (table, column, definition) => {
+          try {
+            const [columns] = await sequelize.query(`PRAGMA table_info(${table})`);
+            const exists = columns.some(c => c.name === column);
+            if (!exists) {
+              await sequelize.query(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+              console.log(`✅ [SQLite] Added missing column: ${table}.${column}`);
+            }
+          } catch (e) {
+            console.warn(`⚠️ [SQLite] Skipped adding ${table}.${column}: ${e.message}`);
+          }
+        };
+
+        const tables = ['users', 'jobs', 'resumes', 'analysis_results', 'orders', 'invoices', 'recruitment_processes', 'user_activities', 'deep_analysis_records'];
+        for (const table of tables) {
+          await checkAndAddColumnSQLite(table, 'company_id', 'INTEGER DEFAULT NULL');
+        }
+        
+        await checkAndAddColumnSQLite('subscription_plans', 'i18n_names', 'TEXT');
+        await checkAndAddColumnSQLite('resumes', 'source', 'TEXT');
+        await checkAndAddColumnSQLite('resumes', 'is_talent_pool', 'INTEGER DEFAULT 0');
+        await checkAndAddColumnSQLite('resumes', 'score', 'INTEGER DEFAULT 0');
+        
+        // Fix for reported issues
+        await checkAndAddColumnSQLite('jobs', 'enable_auto_screening', 'INTEGER DEFAULT 0');
+        await checkAndAddColumnSQLite('jobs', 'auto_reject_score', 'INTEGER DEFAULT 60');
+        await checkAndAddColumnSQLite('jobs', 'notify_high_score', 'INTEGER DEFAULT 0');
+        await checkAndAddColumnSQLite('jobs', 'high_score_threshold', 'INTEGER DEFAULT 85');
+        await checkAndAddColumnSQLite('jobs', 'weight_preference', "TEXT DEFAULT 'balanced'");
+        
+        await checkAndAddColumnSQLite('resumes', 'auto_rejected', 'INTEGER DEFAULT 0');
+        await checkAndAddColumnSQLite('resumes', 'rejection_reason', 'TEXT DEFAULT NULL');
+        
+        await checkAndAddColumnSQLite('interview_sessions', 'expires_at', 'DATETIME DEFAULT NULL');
       }
     } catch (e) {
       console.error('⚠️ Safe column check failed:', e.message);

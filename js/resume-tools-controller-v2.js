@@ -494,6 +494,11 @@
                     const formData = new FormData();
                     formData.append('file', file);
                     
+                    // 核心优化：传递目标职位上下文，触发后端自动初筛
+                    if (selectedJob) {
+                        formData.append('targetJob', JSON.stringify(selectedJob));
+                    }
+
                     // Use resumeDataManager.apiRequest for better error handling and token management
                     const uploadRes = await window.resumeDataManager.apiRequest('/ai/upload', 'POST', formData, true, true);
                     

@@ -229,7 +229,15 @@ class InterviewController {
                   <p style="font-size: 12px; color: #666;">此邮件由系统自动发送，请勿回复。</p>
                 </div>
               `;
-              await emailService.sendMail(resume.email, subject, html);
+              const built = await emailService.buildScenarioMail('interview', {
+                name: notificationData.candidateName,
+                type: notificationData.type,
+                time: notificationData.interviewDate,
+                location: notificationData.address || '',
+                aiQuestionCount: session ? session.total_questions : '',
+                link: interviewLink,
+              }, { subject, html, text: '' });
+              await emailService.sendMail(resume.email, built.subject || subject, built.html || html, built.text || '');
               logger.info(`邮件发送成功: ${resume.email}`);
           } catch (e) {
              logger.error('邮件发送失败', e);

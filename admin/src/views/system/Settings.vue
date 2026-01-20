@@ -276,7 +276,7 @@
                       </VCard>
                     </VCol>
 
-                    <!-- Reminder Scenario -->
+                    <!-- Offer Scenario -->
                     <VCol
                       cols="12"
                       md="4"
@@ -287,14 +287,14 @@
                       >
                         <div class="d-flex align-center mb-3">
                           <VIcon
-                            icon="mdi-alarm"
+                            icon="mdi-email-check"
                             class="me-2"
                             color="warning"
                           />
-                          <span class="text-subtitle-2 font-weight-bold">面试提醒通知</span>
+                          <span class="text-subtitle-2 font-weight-bold">Offer发送通知</span>
                         </div>
                         <VTextField
-                          v-model="systemStore.smsSettings.scenarios.reminder.templateCode"
+                          v-model="systemStore.smsSettings.scenarios.offer.templateCode"
                           label="模板代码"
                           placeholder="例如: SMS_11223344"
                           variant="underlined"
@@ -302,7 +302,7 @@
                           :disabled="!systemStore.smsSettings.enabled"
                         />
                         <div class="text-caption text-grey mt-2">
-                          在面试开始前提醒候选人和面试官。
+                          发送Offer时通知候选人。
                         </div>
                       </VCard>
                     </VCol>
@@ -499,6 +499,95 @@
                     :rules="systemStore.emailSettings.enabled ? [v => !!v || '请输入SMTP密码'] : []"
                     @click:append-inner="showEmailSecret = !showEmailSecret"
                   />
+                </VCol>
+                <VCol cols="12">
+                  <VDivider class="my-4" />
+                  <div class="text-subtitle-1 mb-2 font-weight-bold">
+                    场景化邮件模板
+                  </div>
+                  <div class="text-caption text-grey mb-4">
+                    支持按场景配置邮件主题与内容模板，支持 {{variable}} 或 ${variable} 占位符。
+                  </div>
+                </VCol>
+
+                <VCol cols="12">
+                  <VExpansionPanels variant="accordion">
+                    <VExpansionPanel>
+                      <VExpansionPanelTitle>
+                        AI面试通知
+                      </VExpansionPanelTitle>
+                      <VExpansionPanelText>
+                        <VRow>
+                          <VCol cols="12">
+                            <VTextField
+                              v-model="systemStore.emailSettings.scenarios.interview.subject"
+                              label="邮件主题模板"
+                              placeholder="例如：【面试邀请】{{type}}安排 - {{siteName}}"
+                              :disabled="!systemStore.emailSettings.enabled"
+                            />
+                          </VCol>
+                          <VCol cols="12">
+                            <VTextarea
+                              v-model="systemStore.emailSettings.scenarios.interview.html"
+                              label="HTML 模板"
+                              rows="10"
+                              persistent-hint
+                              hint="可用变量：name、type、time、location、aiQuestionCount、link、siteName"
+                              :disabled="!systemStore.emailSettings.enabled"
+                            />
+                          </VCol>
+                          <VCol cols="12">
+                            <VTextarea
+                              v-model="systemStore.emailSettings.scenarios.interview.text"
+                              label="纯文本模板（可选）"
+                              rows="6"
+                              persistent-hint
+                              hint="可用变量同上；留空则仅发送 HTML"
+                              :disabled="!systemStore.emailSettings.enabled"
+                            />
+                          </VCol>
+                        </VRow>
+                      </VExpansionPanelText>
+                    </VExpansionPanel>
+
+                    <VExpansionPanel>
+                      <VExpansionPanelTitle>
+                        Offer发送通知
+                      </VExpansionPanelTitle>
+                      <VExpansionPanelText>
+                        <VRow>
+                          <VCol cols="12">
+                            <VTextField
+                              v-model="systemStore.emailSettings.scenarios.offer.subject"
+                              label="邮件主题模板"
+                              placeholder="例如：【Offer通知】{{company}} - {{siteName}}"
+                              :disabled="!systemStore.emailSettings.enabled"
+                            />
+                          </VCol>
+                          <VCol cols="12">
+                            <VTextarea
+                              v-model="systemStore.emailSettings.scenarios.offer.html"
+                              label="HTML 模板"
+                              rows="10"
+                              persistent-hint
+                              hint="可用变量：name、company、time、message、siteName"
+                              :disabled="!systemStore.emailSettings.enabled"
+                            />
+                          </VCol>
+                          <VCol cols="12">
+                            <VTextarea
+                              v-model="systemStore.emailSettings.scenarios.offer.text"
+                              label="纯文本模板（可选）"
+                              rows="6"
+                              persistent-hint
+                              hint="可用变量同上；留空则仅发送 HTML"
+                              :disabled="!systemStore.emailSettings.enabled"
+                            />
+                          </VCol>
+                        </VRow>
+                      </VExpansionPanelText>
+                    </VExpansionPanel>
+                  </VExpansionPanels>
                 </VCol>
                 <VCol cols="12">
                   <VDivider class="my-4" />
@@ -1026,6 +1115,11 @@ const defaultTestParams = {
     time: '2026-01-20 10:00', 
     jobId: '12345'
   },
+  offer: {
+    name: '张三',
+    company: '争湃科技',
+    time: '2026-02-01',
+  },
   reminder: { 
     time: '15分钟后', 
     url: 'https://m.cloujade.com/i/123' 
@@ -1042,7 +1136,7 @@ watch(smsTestScenario, (newVal) => {
 const smsScenarioOptions = [
   { title: '登录/注册验证码', value: 'auth' },
   { title: '面试邀请通知', value: 'interview' },
-  { title: '面试提醒通知', value: 'reminder' },
+  { title: 'Offer发送通知', value: 'offer' },
 ]
 
 const emailTestAddress = ref('')

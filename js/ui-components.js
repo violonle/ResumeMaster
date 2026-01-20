@@ -164,6 +164,144 @@ class UIComponents {
     }
 
     /**
+     * 全局加载状态管理
+     */
+    showLoading(message = '正在处理...') {
+        try {
+            let loader = document.getElementById('global-loader');
+            if (!loader) {
+                loader = document.createElement('div');
+                loader.id = 'global-loader';
+                loader.className = 'fixed inset-0 z-[200] flex items-center justify-center bg-white/60 backdrop-blur-[2px] transition-opacity duration-300 opacity-0';
+                loader.innerHTML = `
+                    <div class="bg-white p-6 rounded-2xl shadow-xl flex flex-col items-center space-y-4 border border-gray-100 max-w-xs w-full mx-4">
+                        <div class="relative">
+                            <div class="w-12 h-12 border-4 border-blue-100 rounded-full"></div>
+                            <div class="w-12 h-12 border-4 border-blue-600 rounded-full border-t-transparent animate-spin absolute inset-0"></div>
+                        </div>
+                        <p class="text-gray-600 font-medium text-center" id="global-loader-message">${message}</p>
+                    </div>
+                `;
+                document.body.appendChild(loader);
+            } else {
+                document.getElementById('global-loader-message').textContent = message;
+            }
+            
+            loader.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                loader.classList.add('opacity-100');
+            });
+            document.body.style.overflow = 'hidden';
+        } catch (error) {
+            console.error('显示加载状态失败:', error);
+        }
+    }
+
+    hideLoading() {
+        try {
+            const loader = document.getElementById('global-loader');
+            const analysisLoader = document.getElementById('analysis-loader');
+            
+            // Clear analysis timer if it exists
+            if (this.analysisTimer) {
+                clearTimeout(this.analysisTimer);
+                this.analysisTimer = null;
+            }
+            
+            if (loader) {
+                loader.classList.remove('opacity-100');
+                loader.classList.add('opacity-0');
+                setTimeout(() => {
+                    loader.classList.add('hidden');
+                    if (!analysisLoader || analysisLoader.classList.contains('hidden')) {
+                        document.body.style.overflow = '';
+                    }
+                }, 300);
+            }
+
+            if (analysisLoader) {
+                analysisLoader.classList.remove('opacity-100');
+                analysisLoader.classList.add('opacity-0');
+                setTimeout(() => {
+                    analysisLoader.classList.add('hidden');
+                    if (!loader || loader.classList.contains('hidden')) {
+                        document.body.style.overflow = '';
+                    }
+                }, 300);
+            }
+        } catch (error) {
+            console.error('隐藏加载状态失败:', error);
+        }
+    }
+
+    /**
+     * 深度解析专用加载蒙层
+     */
+    showAnalysisLoading() {
+        try {
+            let loader = document.getElementById('analysis-loader');
+            if (!loader) {
+                loader = document.createElement('div');
+                loader.id = 'analysis-loader';
+                // 使用 rgba(0,0,0,0.5) 背景和更高层级
+                loader.className = 'fixed inset-0 z-[300] flex items-center justify-center bg-black/50 transition-opacity duration-300 opacity-0 p-4 cursor-pointer';
+                loader.innerHTML = `
+                    <div class="bg-white rounded-[8px] shadow-2xl flex flex-col items-center p-8 max-w-sm w-full animate-in cursor-default relative" onclick="event.stopPropagation()">
+                        <!-- 关闭按钮 -->
+                        <button id="close-analysis-loader" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                        
+                        <div class="mb-6">
+                            <div class="w-16 h-16 border-4 border-blue-50 border-t-blue-600 rounded-full animate-spin"></div>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900 mb-3 text-center">深度解析进行中</h3>
+                        <p class="text-gray-600 text-center mb-4 leading-relaxed">
+                            正在调用大模型进行深度解析，这个过程大约需要30-60秒
+                        </p>
+                        <div class="bg-blue-50 p-4 rounded-lg w-full">
+                            <p class="text-blue-700 text-sm text-center font-medium">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                您可以安全关闭此页面，稍后返回此处查看解析结果
+                            </p>
+                        </div>
+                    </div>
+                `;
+                
+                // 绑定关闭按钮事件
+                const closeBtn = loader.querySelector('#close-analysis-loader');
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.hideLoading();
+                    });
+                }
+
+                // 点击蒙层背景关闭
+                loader.addEventListener('click', () => {
+                    this.hideLoading();
+                });
+                document.body.appendChild(loader);
+            }
+            
+            loader.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                loader.classList.add('opacity-100');
+            });
+            document.body.style.overflow = 'hidden';
+
+            // 10秒后自动关闭
+            if (this.analysisTimer) clearTimeout(this.analysisTimer);
+            this.analysisTimer = setTimeout(() => {
+                this.hideLoading();
+            }, 10000);
+
+        } catch (error) {
+            console.error('显示深度解析加载状态失败:', error);
+        }
+    }
+
+    /**
      * 加载状态管理
      */
     setupLoadingStates() {

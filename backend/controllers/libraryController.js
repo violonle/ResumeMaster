@@ -288,10 +288,27 @@ async function createResumeRecord(req, res, { file_name, file_size, file_type, f
     if (rawText && rawText.length > 50) {
         // 使用 processAnalysisBackground 进行异步分析
         // 这里的 req.user 需要确保包含 id
-        setTimeout(() => {
-            console.log(`[LibraryController] Triggering background AI analysis for resume ${resume.id}`);
-            aiController.processAnalysisBackground(resume.id, rawText, '', req.user)
-                .catch(err => console.error(`[LibraryController] Background AI analysis failed for resume ${resume.id}:`, err));
+        setTimeout(async () => {
+            try {
+                console.log(`[LibraryController] Triggering background AI analysis for resume ${resume.id}`);
+                
+                let jobDescription = '';
+                const options = {};
+                
+                if (jobId) {
+                    const { Job } = require('../models');
+                    const job = await Job.findByPk(jobId);
+                    if (job) {
+                        // 优先使用详细描述，如果没有则使用职位名称
+                        jobDescription = job.description || job.title || '';
+                        options.jobId = jobId;
+                    }
+                }
+                
+                await aiController.processAnalysisBackground(resume.id, rawText, jobDescription, req.user, options);
+            } catch (err) {
+                console.error(`[LibraryController] Background AI analysis failed for resume ${resume.id}:`, err);
+            }
         }, 100); // 稍微延迟，确保主事务提交
     }
 

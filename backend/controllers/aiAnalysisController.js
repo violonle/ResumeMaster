@@ -8,6 +8,7 @@ const { Resume } = require('../models');
 const multer = require('multer');
 const path = require('path');
 const { extractTextFromFile } = require('../services/textExtractor');
+const aiController = require('./aiController');
 
 // 配置multer用于文件上传
 const storage = multer.diskStorage({
@@ -128,6 +129,17 @@ const uploadAndParseDocument = async (req, res) => {
         // 清理临时文件
         require('fs').unlink(filePath, () => {});
 
+        // 场景化自动初筛：如果有目标职位，自动触发分析
+        if (targetJobObj) {
+            console.log(`[Auto-Screen] Automatically triggering analysis for resume ${resume.id}`);
+            // 异步触发，不阻塞响应
+            aiController.processAnalysisBackground(resume.id, resumeContent, targetJobObj, req.user)
+                .catch(err => console.error('[Auto-Screen] Background analysis failed:', err));
+            
+            // 标记状态为处理中（虽然数据库可能是 uploaded，但前端可以知道正在处理）
+            resume.status = 'processing'; 
+        }
+
         res.json({
             success: true,
             data: {
@@ -136,9 +148,10 @@ const uploadAndParseDocument = async (req, res) => {
                 fileSize: fileSize,
                 contentLength: resumeContent.length,
                 content: resumeContent.substring(0, 500) + '...', // 返回部分内容预览
-                targetJob: targetJobObj
+                targetJob: targetJobObj,
+                isAnalyzing: !!targetJobObj // 告知前端正在进行后台分析
             },
-            message: '文档上传和解析成功'
+            message: targetJobObj ? '文档上传成功，正在自动进行AI初筛...' : '文档上传和解析成功'
         });
 
     } catch (error) {

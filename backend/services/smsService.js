@@ -11,7 +11,7 @@ function iso(){return new Date().toISOString().replace(/\.(\d{3})Z$/,'Z')}
 const SCENARIOS = {
   AUTH: 'auth',           // 登录/注册验证码
   INTERVIEW: 'interview', // 面试邀请
-  REMINDER: 'reminder'    // 面试提醒
+  OFFER: 'offer'          // Offer发送通知
 }
 
 async function getConfig(){
@@ -23,9 +23,9 @@ async function getConfig(){
     templateCode: process.env.ALIYUN_SMS_TEMPLATE_CODE || '',
     enabled: String(process.env.SMS_ENABLED || '').toLowerCase() === 'true',
     scenarios: {
-      auth: { templateCode: '' },
-      interview: { templateCode: '' },
-      reminder: { templateCode: '' }
+      auth: { templateCode: process.env.ALIYUN_SMS_TEMPLATE_CODE_AUTH || '' },
+      interview: { templateCode: process.env.ALIYUN_SMS_TEMPLATE_CODE_INTERVIEW || '' },
+      offer: { templateCode: process.env.ALIYUN_SMS_TEMPLATE_CODE_OFFER || '' }
     },
     portalUrl: process.env.PORTAL_URL || 'https://master.cloujade.com'
   }
@@ -42,16 +42,25 @@ async function getConfig(){
           if(v.accessKeySecret) cfg.accessKeySecret = v.accessKeySecret;
           if(v.signName) cfg.signName = v.signName;
           if(v.templateCode) cfg.templateCode = v.templateCode;
-          if(v.scenarios) cfg.scenarios = { ...cfg.scenarios, ...v.scenarios };
+          if(v.scenarios) {
+            // Backward compatibility for 'reminder' -> 'offer'
+            if (v.scenarios.reminder && !v.scenarios.offer) {
+              v.scenarios.offer = v.scenarios.reminder;
+            }
+            cfg.scenarios = { ...cfg.scenarios, ...v.scenarios };
+          }
         }catch(_){/* ignore */}
       }
       
       // 2. Check individual keys (priority)
+      // PRIORITY RULE: DB Individual Key > DB JSON > Env Variables
+      // This ensures that configurations made in the Admin Panel (SystemConfig) always override file-based .env settings.
       const keys = [
         'sms.provider','sms.accessKeyId','sms.accessKeySecret','sms.signName','sms.enabled', 'settings',
         'sms.auth.templateCode',
         'sms.interview.templateCode',
-        'sms.reminder.templateCode'
+        'sms.offer.templateCode',
+        'sms.reminder.templateCode' // Backward compatibility
       ]
       const rows = await SystemConfig.findAll({ where: { key: { [Op.in]: keys } } })
       
@@ -70,10 +79,11 @@ async function getConfig(){
         if (r.key==='sms.signName' && val) cfg.signName = val
         if (r.key==='sms.enabled') cfg.enabled = val === 'true'
         
-        // Scenario specific
+        // Scenario specific - Overwriting Env values with DB values if they exist
         if (r.key==='sms.auth.templateCode' && val) cfg.scenarios.auth.templateCode = val
         if (r.key==='sms.interview.templateCode' && val) cfg.scenarios.interview.templateCode = val
-        if (r.key==='sms.reminder.templateCode' && val) cfg.scenarios.reminder.templateCode = val
+        if (r.key==='sms.offer.templateCode' && val) cfg.scenarios.offer.templateCode = val
+        if (r.key==='sms.reminder.templateCode' && val && !cfg.scenarios.offer.templateCode) cfg.scenarios.offer.templateCode = val
       }
 
       // Smart correction for common user mistakes
@@ -137,10 +147,10 @@ async function sendAliyunSms(phone, signName, templateCode, templateParam, scena
   }
   if (!sign) return { success:false, error:'CONFIG_MISSING_SIGN' }
   
-  // Try to create template if missing
-  if (!tpl) {
+  // Try to create template if missing (ONLY for AUTH/DEFAULT scenario)
+  if (!tpl && (!scenario || scenario === SCENARIOS.AUTH)) {
     try {
-      console.log('[SMS] Template code missing, attempting to create default template...')
+      console.log('[SMS] Template code missing for AUTH, attempting to create default template...')
       const init = await createAliyunTemplate('登录/注册验证码', '您的验证码为：${code}，5分钟内有效。若非本人操作请忽略。', 0, '系统自动创建')
       if (init && init.success && init.data && init.data.TemplateCode) {
         tpl = init.data.TemplateCode
@@ -155,12 +165,16 @@ async function sendAliyunSms(phone, signName, templateCode, templateParam, scena
         } catch(_){}
       } else {
         console.error('[SMS] Failed to create default template:', init)
-        return { success:false, error:'CONFIG_MISSING_TEMPLATE' }
+        // Don't return error here, let it fall through to param check, though it will likely fail
       }
     } catch(e) {
       console.error('[SMS] Error creating default template:', e)
-      return { success:false, error:'CONFIG_MISSING_TEMPLATE' }
     }
+  }
+
+  if (!tpl) {
+    console.error(`[SMS] Missing template code for scenario: ${scenario || 'default'}`);
+    return { success: false, error: 'CONFIG_MISSING_TEMPLATE', message: `未配置${scenario || '短信'}模板` };
   }
   
   const p = {

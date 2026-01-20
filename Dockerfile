@@ -37,7 +37,7 @@ RUN ln -s /app/node_modules /node_modules
 RUN npm run build
 
 # --- Stage 4: Final Image ---
-FROM --platform=$TARGETPLATFORM node:20-alpine
+FROM node:20-alpine
 WORKDIR /app
 
 # 安装运行时环境

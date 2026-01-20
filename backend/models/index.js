@@ -271,9 +271,19 @@ const Resume = sequelize.define('Resume', {
     comment: '项目经历'
   },
   recruitment_status: {
-    type: DataTypes.ENUM('投递', '初筛', '面试', 'Offer', '入职', '放弃'),
+    type: DataTypes.ENUM('投递', '初筛', '面试', 'Offer', '入职', '放弃', '淘汰'),
     defaultValue: '投递',
     comment: '招聘流程状态'
+  },
+  auto_rejected: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    comment: '是否为自动淘汰'
+  },
+  rejection_reason: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+    comment: '淘汰理由'
   },
   score: {
     type: DataTypes.INTEGER,
@@ -597,6 +607,31 @@ const Job = sequelize.define('Job', {
   is_featured: {
     type: DataTypes.BOOLEAN,
     defaultValue: false
+  },
+  enable_auto_screening: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    comment: '是否开启全自动初筛'
+  },
+  auto_reject_score: {
+    type: DataTypes.INTEGER,
+    defaultValue: 60,
+    comment: '自动初筛淘汰分数线'
+  },
+  notify_high_score: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    comment: '是否开启高分通知'
+  },
+  high_score_threshold: {
+    type: DataTypes.INTEGER,
+    defaultValue: 85,
+    comment: '高分通知阈值'
+  },
+  weight_preference: {
+    type: DataTypes.ENUM('balanced', 'skills', 'experience', 'education'),
+    defaultValue: 'balanced',
+    comment: '评分侧重'
   }
 }, {
   tableName: 'jobs',

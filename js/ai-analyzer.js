@@ -139,6 +139,16 @@ class AIResumeAnalyzer {
                 });
             }
 
+            // 优化：如果后端已经自动触发了分析（场景化自动初筛），则直接进入轮询
+            if (uploadResult.data && uploadResult.data.isAnalyzing) {
+                console.log('[AI Analyzer] Backend auto-triggered analysis, starting poll...');
+                const data = await this.pollAnalysisResult(uploadResult.data.resumeId);
+                if (progressCallback) {
+                    progressCallback({ step: 3, total: 3, message: 'AI分析完成', progress: 100 });
+                }
+                return data;
+            }
+
             const analysisResponse = await resumeDataManager.apiRequest('/ai/analyze', 'POST', {
                 resumeId: uploadResult.data.resumeId,
                 jobDescription: targetJob ? JSON.stringify(targetJob) : null,

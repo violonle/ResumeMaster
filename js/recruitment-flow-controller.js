@@ -12,11 +12,11 @@ const recruitmentFlowController = {
         currentJobId: 'all',
         candidates: [],
         columns: [
-            { id: 'applied', title: '新投递', icon: 'fa-inbox-in', color: 'blue' },
+            { id: 'applied', title: '待初筛', icon: 'fa-inbox-in', color: 'blue' },
             { id: 'screening', title: '已初筛', icon: 'fa-user-check', color: 'indigo' },
             { id: 'interview', title: '面试中', icon: 'fa-comments-question', color: 'purple' },
             { id: 'offer', title: '已录用', icon: 'fa-file-certificate', color: 'amber' },
-            { id: 'hired', title: '已入职', icon: 'fa-check-double', color: 'emerald' }
+            { id: 'rejected', title: '自动淘汰池', icon: 'fa-ban', color: 'red' }
         ],
         draggedCardId: null
     },
@@ -56,7 +56,8 @@ const recruitmentFlowController = {
                     ...jobs.map(j => ({
                         id: String(j.id),
                         title: j.title,
-                        department: j.department || ''
+                        department: j.department || '',
+                        enableAutoScreening: j.enableAutoScreening || j.enable_auto_screening || false
                     }))
                 ];
             }
@@ -74,7 +75,18 @@ const recruitmentFlowController = {
                     '初筛': 'screening',
                     '面试': 'interview',
                     'Offer': 'offer',
-                    '入职': 'hired'
+                    '入职': 'offer', // Map 'hired' related statuses to 'offer'
+                    '已入职': 'offer',
+                    '已录用': 'offer',
+                    '淘汰': 'rejected',
+                    '放弃': 'rejected',
+                    // Add English keys support for consistency
+                    'applied': 'applied',
+                    'screening': 'screening',
+                    'interview': 'interview',
+                    'offer': 'offer',
+                    'hired': 'offer', // Map 'hired' to 'offer' so they appear in the same column
+                    'rejected': 'rejected'
                 };
                 
                 this.state.candidates = [];
@@ -146,7 +158,7 @@ const recruitmentFlowController = {
             id: String(item.id),
             resumeId: String(item.id),
             name: item.name || item.file_name || '未知候选人',
-            jobId: 'all',
+            jobId: String(item.job_id || item.jobId || 'all'),
             score: item.score || 0,
             experience: experienceStr,
             education: educationStr,
@@ -225,6 +237,15 @@ const recruitmentFlowController = {
         });
 
         filteredCandidates.forEach(candidate => {
+            // Logic for 'applied' (待初筛): Show ALL candidates, ignoring auto-screening status
+            // to ensure consistency with librarypool.html
+            // if (candidate.status === 'applied') {
+            //     const job = this.state.jobs.find(j => j.id === candidate.jobId);
+            //     if (job && job.enableAutoScreening) {
+            //         return;
+            //     }
+            // }
+
             const colEl = document.getElementById(`col-${candidate.status}`);
             if (colEl) {
                 const card = document.createElement('div');
@@ -250,9 +271,27 @@ const recruitmentFlowController = {
                     'hired': '查看档案'
                 }[candidate.status] || '下一步';
 
-                card.innerHTML = `
-                    <!-- Hover Overlay -->
-                    <div class="absolute inset-0 bg-white/90 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-all duration-300 z-10 flex items-center justify-center px-2">
+                // Determine buttons content
+                let actionButtons;
+                if (candidate.status === 'rejected') {
+                    actionButtons = `
+                        <div class="flex items-center gap-1.5 w-[95%]">
+                            <button onclick="recruitmentFlowController.advanceCandidate('${candidate.id}', 'applied')" 
+                                    class="flex-1 bg-green-600 text-white text-[10px] font-black py-1.5 rounded-lg hover:bg-green-700 transition-colors shadow-md shadow-green-100 whitespace-nowrap overflow-hidden text-ellipsis">
+                                复活
+                            </button>
+                            <button onclick="recruitmentFlowController.deleteCandidate('${candidate.id}')" 
+                                    class="flex-1 bg-red-600 text-white text-[10px] font-black py-1.5 rounded-lg hover:bg-red-700 transition-colors shadow-md shadow-red-100 whitespace-nowrap overflow-hidden text-ellipsis">
+                                删除
+                            </button>
+                            <button onclick="window.location.href='resume-tools.html?id=${candidate.resumeId}'" 
+                                    class="flex-1 bg-blue-600 text-white text-[10px] font-black py-1.5 rounded-lg hover:bg-blue-700 transition-colors shadow-md shadow-blue-100 whitespace-nowrap overflow-hidden text-ellipsis">
+                                深度解析
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    actionButtons = `
                         <div class="flex items-center gap-1.5 w-[95%]">
                             <button onclick="recruitmentFlowController.viewResume('${candidate.resumeId}')" 
                                     class="flex-1 bg-white border border-gray-200 text-gray-700 text-[10px] font-black py-1.5 rounded-lg hover:bg-gray-50 transition-colors shadow-sm whitespace-nowrap overflow-hidden text-ellipsis">
@@ -267,6 +306,13 @@ const recruitmentFlowController = {
                                 淘汰
                             </a>
                         </div>
+                    `;
+                }
+
+                card.innerHTML = `
+                    <!-- Hover Overlay -->
+                    <div class="absolute inset-0 bg-white/90 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-all duration-300 z-10 flex items-center justify-center px-2">
+                        ${actionButtons}
                     </div>
 
                     <div class="flex justify-between items-start mb-2">
@@ -328,7 +374,8 @@ const recruitmentFlowController = {
             total: filtered.length,
             interview: filtered.filter(c => c.status === 'interview').length,
             offer: filtered.filter(c => c.status === 'offer').length,
-            hired: filtered.filter(c => c.status === 'hired').length
+            hired: filtered.filter(c => c.status === 'hired').length,
+            rejected: filtered.filter(c => c.status === 'rejected').length
         };
         
         const statsEl = document.getElementById('process-stats');
@@ -355,8 +402,14 @@ const recruitmentFlowController = {
                     <div class="w-px h-4 bg-gray-100"></div>
                     <div class="flex items-center">
                         <div class="w-2 h-2 rounded-full bg-emerald-600 mr-2"></div>
-                        <span class="text-[11px] font-black text-gray-400 mr-2">已入职</span>
+                        <span class="text-[11px] font-black text-gray-400 mr-2">已录用</span>
                         <span class="text-sm font-black text-gray-900">${stats.hired}</span>
+                    </div>
+                    <div class="w-px h-4 bg-gray-100"></div>
+                    <div class="flex items-center">
+                        <div class="w-2 h-2 rounded-full bg-red-600 mr-2"></div>
+                        <span class="text-[11px] font-black text-gray-400 mr-2">已淘汰</span>
+                        <span class="text-sm font-black text-gray-900">${stats.rejected}</span>
                     </div>
                 </div>
             `;
@@ -468,6 +521,36 @@ const recruitmentFlowController = {
 
         this.renderBoard();
         this.updateStats();
+    },
+
+    async deleteCandidate(id) {
+        if (!confirm('确定要删除这位候选人吗？此操作不可恢复。')) return;
+        
+        try {
+            if (typeof ErrorHandler !== 'undefined') ErrorHandler.showLoading(true);
+            const candidate = this.state.candidates.find(c => c.id === id);
+            if (candidate && candidate.resumeId) {
+                await resumeDataManager.deleteResume(candidate.resumeId);
+            } else {
+                throw new Error('Candidate not found');
+            }
+            
+            // Remove from state
+            this.state.candidates = this.state.candidates.filter(c => c.id !== id);
+            this.renderCards();
+            this.updateStats();
+            
+            if (typeof window !== 'undefined' && window.ui && window.ui.showAlert) {
+                window.ui.showAlert('候选人已删除', { type: 'success' });
+            }
+        } catch (error) {
+            console.error('Delete failed:', error);
+             if (typeof window !== 'undefined' && window.ui && window.ui.showAlert) {
+                window.ui.showAlert('删除失败: ' + error.message, { type: 'error' });
+            }
+        } finally {
+            if (typeof ErrorHandler !== 'undefined') ErrorHandler.showLoading(false);
+        }
     },
 
     viewResume(id) {
@@ -627,7 +710,7 @@ const recruitmentFlowController = {
                 try {
                     if (typeof ErrorHandler !== 'undefined') ErrorHandler.showLoading(true);
                     
-                    await resumeDataManager.scheduleInterview(id, {
+                    const result = await resumeDataManager.scheduleInterview(id, {
                         datetime: data.datetime,
                         channel: data.channel,
                         aiQuestionCount: data.aiQuestionCount,
@@ -636,7 +719,11 @@ const recruitmentFlowController = {
                     });
                     
                     if (typeof window !== 'undefined' && window.ui && window.ui.showAlert) {
-                        window.ui.showAlert('面试已成功安排，短信通知已发送！', { type: 'success' });
+                        const n = result && result.notifications ? result.notifications : null;
+                        const smsText = n ? (n.sms.sent ? '短信已发送' : (n.sms.skipped ? '短信已跳过' : (n.sms.attempted ? '短信发送失败/未配置' : '短信未发送'))) : '短信/邮件按配置发送';
+                        const emailText = n ? (n.email.sent ? '邮件已发送' : (n.email.skipped ? '邮件已跳过' : (n.email.attempted ? '邮件发送失败/未配置' : '邮件未发送'))) : '';
+                        const msg = ['面试已成功安排', smsText, emailText].filter(Boolean).join('，');
+                        window.ui.showAlert(msg, { type: 'success' });
                     }
                     this.closeModal('interview');
                     this.loadData();
@@ -664,13 +751,17 @@ const recruitmentFlowController = {
                 const data = Object.fromEntries(formData.entries());
 
                 try {
-                    await resumeDataManager.sendOffer(id, {
+                    const result = await resumeDataManager.sendOffer(id, {
                         message: data.content || '恭喜您通过面试，我们向您发出录用意向。',
                         phone: '',
                         email: ''
                     });
                     if (typeof window !== 'undefined' && window.ui && window.ui.showAlert) {
-                        window.ui.showAlert('Offer已发送！', { type: 'success' });
+                        const n = result && result.notifications ? result.notifications : null;
+                        const smsText = n ? (n.sms.sent ? '短信已发送' : (n.sms.skipped ? '短信已跳过' : (n.sms.attempted ? '短信发送失败/未配置' : '短信未发送'))) : '短信/邮件按配置发送';
+                        const emailText = n ? (n.email.sent ? '邮件已发送' : (n.email.skipped ? '邮件已跳过' : (n.email.attempted ? '邮件发送失败/未配置' : '邮件未发送'))) : '';
+                        const msg = ['Offer已发送', smsText, emailText].filter(Boolean).join('，');
+                        window.ui.showAlert(msg, { type: 'success' });
                     }
                     this.closeModal('offer');
                     this.loadData();

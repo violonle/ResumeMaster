@@ -300,6 +300,7 @@ router.get('/system/sms', authenticateToken, requireAdmin, async (req, res) => {
       'sms.provider', 'sms.accessKeyId', 'sms.accessKeySecret', 'sms.signName', 'sms.enabled',
       'sms.auth.templateCode',
       'sms.interview.templateCode',
+      'sms.offer.templateCode',
       'sms.reminder.templateCode'
     ]
     const rows = await SystemConfig.findAll({ where: { key: { [Op.in]: keys } } })
@@ -312,6 +313,7 @@ router.get('/system/sms', authenticateToken, requireAdmin, async (req, res) => {
       scenarios: {
         auth: { templateCode: '' },
         interview: { templateCode: '' },
+        offer: { templateCode: '' },
         reminder: { templateCode: '' }
       }
     }
@@ -325,7 +327,13 @@ router.get('/system/sms', authenticateToken, requireAdmin, async (req, res) => {
       // Scenarios
       if (r.key === 'sms.auth.templateCode') data.scenarios.auth.templateCode = r.value || ''
       if (r.key === 'sms.interview.templateCode') data.scenarios.interview.templateCode = r.value || ''
+      if (r.key === 'sms.offer.templateCode') data.scenarios.offer.templateCode = r.value || ''
       if (r.key === 'sms.reminder.templateCode') data.scenarios.reminder.templateCode = r.value || ''
+      
+      // Backward compatibility: If offer is empty but reminder exists, copy reminder to offer
+      if (!data.scenarios.offer.templateCode && data.scenarios.reminder.templateCode) {
+        data.scenarios.offer.templateCode = data.scenarios.reminder.templateCode
+      }
     }
     res.json({ 
       provider: data.provider, 
@@ -365,7 +373,7 @@ router.put('/system/sms', authenticateToken, requireAdmin, async (req, res) => {
     
     // Handle Scenario-specific settings
     if (req.body.scenarios) {
-      const { auth, interview, reminder } = req.body.scenarios
+      const { auth, interview, reminder, offer } = req.body.scenarios
       if (auth) {
         if (auth.templateCode !== undefined) await set('sms.auth.templateCode', auth.templateCode)
       }
@@ -374,6 +382,9 @@ router.put('/system/sms', authenticateToken, requireAdmin, async (req, res) => {
       }
       if (reminder) {
         if (reminder.templateCode !== undefined) await set('sms.reminder.templateCode', reminder.templateCode)
+      }
+      if (offer) {
+        if (offer.templateCode !== undefined) await set('sms.offer.templateCode', offer.templateCode)
       }
     }
     
@@ -441,6 +452,18 @@ router.post('/system/sms/test', authenticateToken, requireAdmin, async (req, res
             time: '2026-01-20 10:00',
             jobId: '12345'
           }, 'interview')
+        } else if (scenario === 'offer') {
+          // Calculate time + 4 days for offer default test
+          const targetDate = new Date();
+          targetDate.setDate(targetDate.getDate() + 4);
+          const timeStr = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, '0')}-${String(targetDate.getDate()).padStart(2, '0')}`;
+          
+          r = await smsService.sendText(String(phone), {
+            name: '张三',
+            company: defaultCompanyName,
+            time: timeStr,
+            link: 'https://m.cloujade.com/offer/123'
+          }, 'offer')
         } else if (scenario === 'reminder') {
           r = await smsService.sendText(String(phone), {
             time: '15分钟后',
@@ -523,12 +546,104 @@ router.get('/system/email', authenticateToken, requireAdmin, async (req, res) =>
       user: '',
       pass: '',
       fromName: '争湃·简历大师',
-      enabled: false
+      enabled: false,
+      scenarios: {
+        interview: {
+          subject: '【面试邀请】{{type}}安排 - {{siteName}}',
+          html: `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; max-width: 640px; margin: 0 auto; padding: 24px; color: #0f172a;">
+  <div style="padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px;">
+    <div style="font-size: 20px; font-weight: 700; color: #2563eb; margin-bottom: 12px;">面试邀请</div>
+    <div style="font-size: 14px; line-height: 1.7; margin-bottom: 16px;">
+      <div><strong>{{name}}</strong> 您好：</div>
+      <div>我们已为您安排了 <strong>{{type}}</strong>，具体信息如下：</div>
+    </div>
+
+    <div style="background: #f8fafc; padding: 14px 16px; border-radius: 10px; font-size: 14px; line-height: 1.8;">
+      <div><strong>时间/截止时间：</strong>{{time}}</div>
+      <div><strong>面试地点：</strong>{{location}}</div>
+      <div><strong>面试链接：</strong><a href="{{link}}" style="color: #2563eb; word-break: break-all; text-decoration: none;">{{link}}</a></div>
+      <div><strong>面试题量：</strong>{{aiQuestionCount}} 题</div>
+    </div>
+
+    <div style="text-align: center; margin: 22px 0 12px;">
+      <a href="{{link}}" style="display: inline-block; background: #2563eb; color: #ffffff; padding: 12px 18px; border-radius: 10px; text-decoration: none; font-weight: 700;">立即开始面试</a>
+    </div>
+    <div style="font-size: 12px; color: #64748b; line-height: 1.7;">
+      如按钮无法点击，请复制链接到浏览器打开：<span style="word-break: break-all;">{{link}}</span>
+    </div>
+
+    <div style="margin-top: 18px; font-size: 14px; line-height: 1.7;">祝您面试顺利！</div>
+
+    <div style="border-top: 1px solid #e2e8f0; margin: 20px 0 0; padding-top: 12px; font-size: 12px; color: #94a3b8; text-align: center;">
+      此邮件由 {{siteName}} 系统自动发送，请勿直接回复。
+    </div>
+  </div>
+</div>`,
+          text: `面试邀请
+
+{{name}} 您好：
+
+我们已为您安排了 {{type}}，具体信息如下：
+- 时间/截止时间：{{time}}
+- 面试地点：{{location}}
+- 面试链接：{{link}}
+- 面试题量：{{aiQuestionCount}} 题
+
+如无法打开链接，请复制到浏览器访问：{{link}}
+
+祝您面试顺利！
+
+此邮件由 {{siteName}} 系统自动发送，请勿直接回复。`,
+        },
+        offer: {
+          subject: '【Offer通知】{{company}} - {{siteName}}',
+          html: `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; max-width: 640px; margin: 0 auto; padding: 24px; color: #0f172a;">
+  <div style="padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px;">
+    <div style="font-size: 20px; font-weight: 700; color: #16a34a; margin-bottom: 12px;">Offer 通知</div>
+    <div style="font-size: 14px; line-height: 1.7; margin-bottom: 16px;">
+      <div><strong>{{name}}</strong> 您好：</div>
+      <div>恭喜您！{{company}} 已向您发出 Offer。</div>
+    </div>
+
+    <div style="background: #f8fafc; padding: 14px 16px; border-radius: 10px; font-size: 14px; line-height: 1.8;">
+      <div><strong>公司：</strong>{{company}}</div>
+      <div><strong>截止日期：</strong>{{time}}</div>
+    </div>
+
+    <div style="margin-top: 16px; background: #f8fafc; padding: 14px 16px; border-radius: 10px;">
+      <div style="font-size: 14px; font-weight: 700; margin-bottom: 8px;">附加说明</div>
+      <div style="white-space: pre-wrap; font-size: 14px; line-height: 1.8; color: #334155;">{{message}}</div>
+    </div>
+
+    <div style="margin-top: 18px; font-size: 14px; line-height: 1.7;">期待您的回复！</div>
+
+    <div style="border-top: 1px solid #e2e8f0; margin: 20px 0 0; padding-top: 12px; font-size: 12px; color: #94a3b8; text-align: center;">
+      此邮件由 {{siteName}} 系统自动发送，请勿直接回复。
+    </div>
+  </div>
+</div>`,
+          text: `Offer 通知
+
+{{name}} 您好：
+
+恭喜您！{{company}} 已向您发出 Offer。
+
+- 公司：{{company}}
+- 截止日期：{{time}}
+
+附加说明：
+{{message}}
+
+期待您的回复！
+
+此邮件由 {{siteName}} 系统自动发送，请勿直接回复。`,
+        },
+      },
     };
     
     if (cfg && cfg.value) {
       const val = typeof cfg.value === 'string' ? JSON.parse(cfg.value) : cfg.value;
-      return res.json({ success: true, data: { ...defaultCfg, ...val } });
+      return res.json({ success: true, data: { ...defaultCfg, ...val, scenarios: { ...defaultCfg.scenarios, ...(val.scenarios || {}) } } });
     }
     
     res.json({ success: true, data: defaultCfg });
@@ -553,11 +668,20 @@ router.put('/system/email', authenticateToken, requireAdmin, async (req, res) =>
 
 router.post('/system/email/test', authenticateToken, requireAdmin, async (req, res) => {
   try {
-    const { to, subject, content } = req.body;
+    const { to, subject, content, scenario, variables } = req.body;
     if (!to) return res.status(400).json({ message: '请输入接收邮箱' });
     
     const emailService = require('../services/emailService');
-    await emailService.sendMail(to, subject || '测试邮件', content || '这是一封来自简历大师系统的测试邮件。');
+    if (scenario) {
+      const built = await emailService.buildScenarioMail(String(scenario), variables || {}, {
+        subject: subject || '测试邮件',
+        html: content || '这是一封来自简历大师系统的测试邮件。',
+        text: '',
+      });
+      await emailService.sendMail(to, built.subject || (subject || '测试邮件'), built.html || (content || ''), built.text || '');
+    } else {
+      await emailService.sendMail(to, subject || '测试邮件', content || '这是一封来自简历大师系统的测试邮件。');
+    }
     
     res.json({ success: true, message: '测试邮件已发送' });
   } catch (e) {

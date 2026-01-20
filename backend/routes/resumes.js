@@ -248,6 +248,8 @@ router.post('/:id/interview', authenticate, Permission.requireSubscription, Perm
             parsed_data: parsedData
         });
 
+        const notifications = { sms: { attempted: false, sent: false, skipped: false }, email: { attempted: false, sent: false, skipped: false } }
+
         // 发送面试通知（短信 + 邮件）
         try {
             // 更鲁棒的电话号码提取
@@ -274,26 +276,41 @@ router.post('/:id/interview', authenticate, Permission.requireSubscription, Perm
             const smsCfg = await sms.getConfig();
             const portalUrl = (smsCfg.portalUrl || 'https://master.cloujade.com').replace(/\/$/, '');
             const interviewLink = `${portalUrl}?resumeId=${resume.id}`;
+            const position = resume.job_title || parsedData.jobTitle || parsedData.position || '该职位';
 
-            // 准备短信模板变量
+            // 准备短信模板变量 (增加兼容性别名)
             const smsParams = {
                 name: name,
                 time: timeStr,
-                jobId: String(resume.id), // 显式转为字符串
-                link: interviewLink // 增加 link 参数，以防模板支持
+                date: timeStr,      // Alias: some templates use ${date}
+                job: position,      // Alias: friendly job name
+                position: position, // Alias: full position name
+                jobId: String(resume.id),
+                link: interviewLink,
+                url: interviewLink  // Alias: some templates use ${url}
             };
 
             // 1. 发送短信
             if (phone) {
-                console.log(`[面试通知] 正在发送短信给 ${phone}, 参数:`, JSON.stringify(smsParams));
+                notifications.sms.attempted = true
+                console.log(`[面试通知] 正在发送短信给 ${phone}, 场景: INTERVIEW, 参数:`, JSON.stringify(smsParams));
                 const smsResult = await sms.sendText(String(phone), smsParams, sms.SCENARIOS.INTERVIEW);
-                console.log(`[面试通知] 短信发送结果:`, JSON.stringify(smsResult));
+                
+                notifications.sms.sent = smsResult && smsResult.success === true
+                if (!notifications.sms.sent) {
+                    console.error(`[面试通知] 短信发送失败: ${smsResult.error} - ${smsResult.message || ''}`);
+                    // Note: We don't fail the request here, but we log the error clearly.
+                } else {
+                    console.log(`[面试通知] 短信发送成功:`, JSON.stringify(smsResult));
+                }
             } else {
+                notifications.sms.skipped = true
                 console.log(`[面试通知] 未找到电话号码，跳过短信发送`);
             }
 
             // 2. 发送邮件
             if (email) {
+                notifications.email.attempted = true
                 console.log(`[面试通知] 正在发送邮件给 ${email}`);
                 const typeStr = (channel === 'video' || channel === 'online') ? '线上面试' : (channel === 'phone' ? '电话面试' : '现场面试');
                 const subject = `【面试邀请】${typeStr}安排 - 争湃·简历大师`;
@@ -317,9 +334,19 @@ router.post('/:id/interview', authenticate, Permission.requireSubscription, Perm
                         <p style="color: #94a3b8; font-size: 0.8em; text-align: center;">此邮件由 争湃·简历大师 系统自动发送，请勿直接回复。</p>
                     </div>
                 `;
-                await emailService.sendMail(email, subject, html);
-                console.log(`[面试通知] 邮件发送成功`);
+                const built = await emailService.buildScenarioMail('interview', {
+                    name,
+                    type: typeStr,
+                    time: timeStr,
+                    location: location || '',
+                    aiQuestionCount: aiQuestionCount || 8,
+                    link: interviewLink,
+                }, { subject, html, text: '' });
+                const emailResult = await emailService.sendMail(String(email), built.subject || subject, built.html || html, built.text || '');
+                notifications.email.sent = emailResult && emailResult.success === true
+                if (notifications.email.sent) console.log(`[面试通知] 邮件发送成功`);
             } else {
+                notifications.email.skipped = true
                 console.log(`[面试通知] 未找到邮箱地址，跳过邮件发送`);
             }
         } catch (notifyError) {
@@ -330,7 +357,8 @@ router.post('/:id/interview', authenticate, Permission.requireSubscription, Perm
             success: true,
             data: {
                 id: resume.id,
-                interview: parsedData.interview
+                interview: parsedData.interview,
+                notifications
             }
         });
     } catch (error) {
@@ -347,6 +375,8 @@ router.post('/:id/offer', authenticate, Permission.requireSubscription, Permissi
     try {
         const { id } = req.params;
         const { phone, email, message } = req.body || {};
+        const { Company } = require('../models');
+        const sms = require('../services/smsService');
 
         const resume = await Resume.findOne({
             where: {
@@ -377,12 +407,91 @@ router.post('/:id/offer', authenticate, Permission.requireSubscription, Permissi
             recruitment_status: 'Offer',
             parsed_data: parsedData
         });
+        
+        const notifications = { sms: { attempted: false, sent: false, skipped: false }, email: { attempted: false, sent: false, skipped: false } }
+
+        let targetPhone = phone || resume.phone || parsedData.phone || (parsedData.basic_info && parsedData.basic_info.phone)
+        if (!targetPhone) {
+            const rawText = resume.raw_text || ''
+            const phoneMatch = rawText.match(/1\d{10}/)
+            if (phoneMatch) targetPhone = phoneMatch[0]
+        }
+
+        const targetEmail = email || resume.email || parsedData.email || (parsedData.basic_info && parsedData.basic_info.email)
+        const candidateName = resume.name || parsedData.name || (parsedData.basic_info && parsedData.basic_info.name) || '候选人'
+
+        let companyName = '我司'
+        if (req.user.company_id) {
+            const company = await Company.findByPk(req.user.company_id)
+            if (company && company.name) companyName = company.name
+        }
+
+        const targetDate = new Date()
+        targetDate.setDate(targetDate.getDate() + 4)
+        const timeStr = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, '0')}-${String(targetDate.getDate()).padStart(2, '0')}`
+
+        const offerMessage = message || '恭喜您通过面试，我们向您发出录用意向。'
+
+        if (targetPhone) {
+            notifications.sms.attempted = true
+            try {
+                const smsParams = { name: candidateName, company: companyName, time: timeStr }
+                console.log(`[Offer通知] 正在发送短信给 ${targetPhone}, 场景: OFFER, 参数:`, JSON.stringify(smsParams))
+                const smsResult = await sms.sendText(String(targetPhone), smsParams, sms.SCENARIOS.OFFER)
+                notifications.sms.sent = smsResult && smsResult.success === true
+                if (!notifications.sms.sent) console.error(`[Offer通知] 短信发送失败: ${smsResult && smsResult.error ? smsResult.error : 'UNKNOWN'}`)
+            } catch (smsError) {
+                console.error('[Offer通知] 发送短信过程中出现错误:', smsError)
+            }
+        } else {
+            notifications.sms.skipped = true
+            console.log('[Offer通知] 未找到电话号码，跳过短信发送')
+        }
+
+        if (targetEmail) {
+            notifications.email.attempted = true
+            try {
+                const subject = `【Offer通知】${companyName} - 争湃·简历大师`
+                const html = `
+                    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                        <h2 style="color: #d97706;">Offer 通知</h2>
+                        <p>${candidateName} 您好：</p>
+                        <p>我们向您发送 Offer 通知，信息如下：</p>
+                        <div style="background-color: #fffbeb; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                            <p style="margin: 5px 0;"><strong>公司：</strong> ${companyName}</p>
+                            <p style="margin: 5px 0;"><strong>截止日期：</strong> ${timeStr}</p>
+                        </div>
+                        <div style="background-color: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                            <p style="margin: 5px 0;"><strong>附加说明：</strong></p>
+                            <p style="margin: 10px 0; white-space: pre-wrap; color: #334155;">${offerMessage}</p>
+                        </div>
+                        <p style="margin-top: 30px;">期待您的回复！</p>
+                        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+                        <p style="color: #94a3b8; font-size: 0.8em; text-align: center;">此邮件由 争湃·简历大师 系统自动发送，请勿直接回复。</p>
+                    </div>
+                `
+                const built = await emailService.buildScenarioMail('offer', {
+                    name: candidateName,
+                    company: companyName,
+                    time: timeStr,
+                    message: offerMessage,
+                }, { subject, html, text: '' })
+                const emailResult = await emailService.sendMail(String(targetEmail), built.subject || subject, built.html || html, built.text || '')
+                notifications.email.sent = emailResult && emailResult.success === true
+            } catch (emailError) {
+                console.error('[Offer通知] 发送邮件过程中出现错误:', emailError)
+            }
+        } else {
+            notifications.email.skipped = true
+            console.log('[Offer通知] 未找到邮箱地址，跳过邮件发送')
+        }
 
         res.json({
             success: true,
             data: {
                 id: resume.id,
-                offer: parsedData.offer
+                offer: parsedData.offer,
+                notifications
             }
         });
     } catch (error) {
@@ -390,6 +499,55 @@ router.post('/:id/offer', authenticate, Permission.requireSubscription, Permissi
         res.status(500).json({
             success: false,
             error: { message: '发送Offer失败: ' + error.message }
+        });
+    }
+});
+
+// 更新简历状态
+router.put('/:id/status', authenticate, Permission.requireSubscription, Permission.rateLimit(300, 60*60*1000), async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
+
+        if (!status) {
+            return res.status(400).json({
+                success: false,
+                error: { message: '请提供新的状态' }
+            });
+        }
+
+        const resume = await Resume.findOne({
+            where: {
+                id,
+                [Op.or]: [
+                    { user_id: req.user.id },
+                    req.user.company_id ? { company_id: req.user.company_id } : null
+                ].filter(Boolean)
+            }
+        });
+
+        if (!resume) {
+            return res.status(404).json({
+                success: false,
+                error: { message: '简历不存在' }
+            });
+        }
+
+        await resume.update({ recruitment_status: status });
+
+        res.json({
+            success: true,
+            data: {
+                id: resume.id,
+                recruitment_status: status
+            },
+            message: '状态更新成功'
+        });
+    } catch (error) {
+        console.error('更新简历状态失败:', error);
+        res.status(500).json({
+            success: false,
+            error: { message: '更新状态失败: ' + error.message }
         });
     }
 });

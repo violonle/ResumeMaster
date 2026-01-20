@@ -30,7 +30,7 @@ class DashboardCharts {
     loadChartJS() {
         if (typeof Chart === 'undefined') {
             const script = document.createElement('script');
-            script.src = 'https://fastly.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js';
+            script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js';
             script.onload = () => {
                 this.initializeCharts();
             };

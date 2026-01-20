@@ -1,4 +1,4 @@
-const { ResumeJob, Resume, Job, User } = require('../models')
+const { ResumeJob, Resume, Job, User, Company } = require('../models')
 const sms = require('../services/smsService')
 const emailService = require('../services/emailService')
 const emailImport = require('../services/emailImportService')
@@ -24,7 +24,7 @@ exports.updateStatus = async (req, res) => {
   try{
     const { id } = req.params
     const { status, notes } = req.body || {}
-    const allowed = ['screening','interview','offer','hired','rejected']
+    const allowed = ['applied', 'screening','interview','offer','hired','rejected']
     if (!allowed.includes(String(status||'').toLowerCase())){
       return res.status(400).json({ success:false, error:{ code:'INVALID_STATUS', message:'无效状态' } })
     }
@@ -41,6 +41,19 @@ exports.updateStatus = async (req, res) => {
 
     const rn = safeJson(rj.recruiter_notes)
     if (notes) rn.notes = notes
+    
+    // 如果恢复为非淘汰状态，则清除 Resume 表上的 auto_rejected 标记
+    if (status !== 'rejected') {
+      try {
+        await Resume.update(
+          { auto_rejected: false, rejection_reason: null },
+          { where: { id: rj.resume_id } }
+        );
+      } catch (resumeErr) {
+        console.error('清除简历自动淘汰标记失败:', resumeErr);
+      }
+    }
+
     await rj.update({ status, recruiter_notes: JSON.stringify(rn) })
     return res.json({ success:true, data:{ id:rj.id, status:rj.status } })
   }catch(e){
@@ -51,7 +64,7 @@ exports.updateStatus = async (req, res) => {
 exports.scheduleInterview = async (req, res) => {
   try{
     const { id } = req.params
-    const { datetime, channel, location, note, aiQuestionCount } = req.body || {}
+    const { datetime, channel, location, notes, aiQuestionCount } = req.body || {}
     if (!datetime){
       return res.status(400).json({ success:false, error:{ code:'INVALID_TIME', message:'缺少面试时间' } })
     }
@@ -64,7 +77,7 @@ exports.scheduleInterview = async (req, res) => {
       datetime, 
       channel: channel||'offline', 
       location: location||'', 
-      note: note||'',
+      notes: notes||'',
       aiQuestionCount: aiQuestionCount || 8 // 默认8题
     }
     await rj.update({ status:'interview', recruiter_notes: JSON.stringify(rn) })
@@ -128,7 +141,15 @@ exports.scheduleInterview = async (req, res) => {
             <p style="color: #94a3b8; font-size: 0.8em; text-align: center;">此邮件由 争湃·简历大师 系统自动发送，请勿直接回复。</p>
           </div>
         `;
-        await emailService.sendMail(email, subject, html, content);
+        const built = await emailService.buildScenarioMail('interview', {
+          name,
+          type: typeStr,
+          time: timeStr,
+          location: location || '',
+          aiQuestionCount: aiQuestionCount || 8,
+          link: interviewLink,
+        }, { subject, html, text: '' });
+        await emailService.sendMail(email, built.subject || subject, built.html || html, built.text || '');
       }
     } catch (notifyError) {
       console.error('发送面试通知失败:', notifyError);
@@ -144,7 +165,7 @@ exports.scheduleInterview = async (req, res) => {
 exports.setInterviewResult = async (req, res) => {
   try{
     const { id } = req.params
-    const { result, note } = req.body || {}
+    const { result, notes } = req.body || {}
     const allowed = ['pass','fail']
     if (!allowed.includes(String(result||'').toLowerCase())){
       return res.status(400).json({ success:false, error:{ code:'INVALID_RESULT', message:'面试结果仅支持 pass/fail' } })
@@ -156,7 +177,7 @@ exports.setInterviewResult = async (req, res) => {
     const rn = safeJson(rj.recruiter_notes)
     rn.interview = rn.interview || {}
     rn.interview.result = result
-    rn.interview.result_note = note||''
+    rn.interview.result_note = notes||''
     const nextStatus = result==='pass' ? 'offer' : 'rejected'
     await rj.update({ status: nextStatus, recruiter_notes: JSON.stringify(rn) })
     return res.json({ success:true, data:{ id:rj.id, status: nextStatus } })
@@ -169,7 +190,7 @@ exports.sendOffer = async (req, res) => {
   try{
     const { id } = req.params
     const { phone, email, message } = req.body || {}
-    const rj = await ResumeJob.findOne({ where:{ id } })
+    const rj = await ResumeJob.findOne({ where:{ id }, include: [Resume, Job] })
     if (!rj || !(await ensureOwnership(req, rj))){
       return res.status(404).json({ success:false, error:{ code:'NOT_FOUND', message:'候选记录不存在' } })
     }
@@ -177,15 +198,74 @@ exports.sendOffer = async (req, res) => {
     rn.offer = rn.offer || {}
     rn.offer.sent_at = new Date().toISOString()
     rn.offer.message = message || '恭喜您通过面试，我们向您发出录用意向。'
-    // 先尝试短信
+    const offerMessage = rn.offer.message
+    const resume = rj.Resume
+    const job = rj.Job
+    const parsed = resume ? (resume.parsed_data || {}) : {}
+    const basicInfo = parsed.basic_info || {}
+
+    const targetPhone = phone || parsed.phone || basicInfo.phone || parsed.mobile || basicInfo.mobile || (resume && resume.phone) || ''
+    const targetEmail = email || parsed.email || basicInfo.email || (resume && resume.email) || ''
+    const candidateName = parsed.name || basicInfo.name || '候选人'
+
+    let companyName = (req.user && req.user.company_name) ? String(req.user.company_name) : ''
+    try {
+      const companyId = (req.user && req.user.company_id) ? req.user.company_id : (job && job.company_id ? job.company_id : null)
+      if (companyId) {
+        const c = await Company.findByPk(companyId)
+        if (c && c.name) companyName = c.name
+      }
+    } catch (_) {}
+    if (!companyName) companyName = '我司'
+
+    const targetDate = new Date()
+    targetDate.setDate(targetDate.getDate() + 4)
+    const timeStr = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, '0')}-${String(targetDate.getDate()).padStart(2, '0')}`
+
     let smsRes = null
-    if (phone) {
-      // 使用面试邀请场景的配置（或者如果有必要可以增加 OFFER 场景）
-      smsRes = await sms.sendText(String(phone), rn.offer.message, sms.SCENARIOS.INTERVIEW)
+    if (targetPhone) {
+      try {
+        smsRes = await sms.sendText(String(targetPhone), { name: candidateName, company: companyName, time: timeStr }, sms.SCENARIOS.OFFER)
+      } catch (e) {
+        smsRes = { success: false, error: e.message || 'SMS_SEND_ERROR' }
+      }
     }
     rn.offer.sms = smsRes || { success:false }
-    // 邮件发送占位：可后续接入 nodemailer
-    rn.offer.email = { to: email||null, success: !!email }
+
+    let emailRes = null
+    if (targetEmail) {
+      try {
+        const subject = `【Offer通知】${companyName} - 争湃·简历大师`
+        const html = `
+          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+            <h2 style="color: #d97706;">Offer 通知</h2>
+            <p>${candidateName} 您好：</p>
+            <p>我们向您发送 Offer 通知，信息如下：</p>
+            <div style="background-color: #fffbeb; padding: 15px; border-radius: 8px; margin: 20px 0;">
+              <p style="margin: 5px 0;"><strong>公司：</strong> ${companyName}</p>
+              <p style="margin: 5px 0;"><strong>截止日期：</strong> ${timeStr}</p>
+            </div>
+            <div style="background-color: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0;">
+              <p style="margin: 5px 0;"><strong>附加说明：</strong></p>
+              <p style="margin: 10px 0; white-space: pre-wrap; color: #334155;">${offerMessage}</p>
+            </div>
+            <p style="margin-top: 30px;">期待您的回复！</p>
+            <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+            <p style="color: #94a3b8; font-size: 0.8em; text-align: center;">此邮件由 争湃·简历大师 系统自动发送，请勿直接回复。</p>
+          </div>
+        `
+        const built = await emailService.buildScenarioMail('offer', {
+          name: candidateName,
+          company: companyName,
+          time: timeStr,
+          message: offerMessage,
+        }, { subject, html, text: '' })
+        emailRes = await emailService.sendMail(String(targetEmail), built.subject || subject, built.html || html, built.text || '')
+      } catch (e) {
+        emailRes = { success: false, error: e.message || 'EMAIL_SEND_ERROR' }
+      }
+    }
+    rn.offer.email = { to: targetEmail || null, success: !!(emailRes && emailRes.success), error: emailRes && emailRes.error ? emailRes.error : null }
     await rj.update({ status:'offer', recruiter_notes: JSON.stringify(rn) })
     return res.json({ success:true, data:{ id:rj.id, status:'offer', offer: rn.offer } })
   }catch(e){
@@ -289,35 +369,57 @@ exports.getPipeline = async (req, res) => {
     
     if (req.user.company_id) {
        // 企业用户：查询所有属于该公司的职位的申请记录
-       // 需要通过关联查询，或者先查出该公司的所有jobId
-       // 这里使用 Sequelize 的 include 过滤更方便，但 ResumeJob 本身没有 company_id
-       // 方案：先查询该公司所有 Job ID
        const companyJobs = await Job.findAll({ 
          where: { company_id: req.user.company_id },
          attributes: ['id']
        });
        const jobIds = companyJobs.map(j => j.id);
-       where.job_id = jobIds;
+       
+       if (jobId) {
+         // 确保查询的 jobId 属于该公司
+         const requestedJobId = parseInt(jobId);
+         if (jobIds.includes(requestedJobId)) {
+           where.job_id = requestedJobId;
+         } else {
+           // 如果不属于该公司，返回空数据
+           return res.json({ success: true, data: [] });
+         }
+       } else {
+         where.job_id = jobIds;
+       }
     } else {
        where.user_id = req.user.id;
+       if (jobId) where.job_id = jobId;
     }
 
-    if (jobId) where.job_id = jobId
     if (status) where.status = status
     const rows = await ResumeJob.findAll({ where, include:[{ model: Resume }, { model: Job }], order:[['updated_at','DESC']] })
-    const data = rows.map(r=>({ 
-      id: r.id, 
-      resume_id: r.resume_id, 
-      job_id: r.job_id, 
-      status: r.status, 
-      file_name: r.Resume && r.Resume.file_name, 
-      name: (r.Resume && r.Resume.parsed_data && r.Resume.parsed_data.name) || null, 
-      job_title: r.Job && r.Job.title, 
-      skills: (r.Resume && r.Resume.parsed_data && r.Resume.parsed_data.skills) || [], 
-      education: (r.Resume && r.Resume.parsed_data && r.Resume.parsed_data.education) || [],
-      experience: (r.Resume && r.Resume.parsed_data && r.Resume.parsed_data.workExperience) || [],
-      score: r.match_score || 0 
-    }))
+    
+    // 使用 Map 进行去重，确保同一个职位下同一个简历只出现一次
+    const uniqueMap = new Map();
+    rows.forEach(r => {
+      const key = `${r.resume_id}-${r.job_id}`;
+      if (!uniqueMap.has(key)) {
+        uniqueMap.set(key, { 
+          id: r.id, 
+          resume_id: r.resume_id, 
+          job_id: r.job_id, 
+          status: r.status, 
+          file_name: r.Resume && r.Resume.file_name, 
+          name: (r.Resume && r.Resume.parsed_data && r.Resume.parsed_data.name) || (r.Resume && r.Resume.name) || null, 
+          job_title: r.Job && r.Job.title, 
+          skills: (r.Resume && r.Resume.parsed_data && r.Resume.parsed_data.skills) || [], 
+          education: (r.Resume && r.Resume.parsed_data && r.Resume.parsed_data.education) || [],
+          experience: (r.Resume && r.Resume.parsed_data && r.Resume.parsed_data.workExperience) || [],
+          score: r.match_score || 0,
+          created_at: r.applied_at,
+          auto_rejected: r.Resume && r.Resume.auto_rejected,
+          rejection_reason: (r.Resume && r.Resume.rejection_reason) || r.notes
+        });
+      }
+    });
+    
+    const data = Array.from(uniqueMap.values());
     return res.json({ success:true, data })
   }catch(e){ return res.status(500).json({ success:false, error:{ code:'PIPELINE_ERROR', message:e.message } }) }
 }

@@ -6,14 +6,18 @@ const jobImportService = require('../services/jobImportService');
 const getAllJobs = async (req, res) => {
   try {
     const { status } = req.query;
-    let whereClause = {};
     
-    // 多租户隔离逻辑
-    if (req.user.company_id) {
-      whereClause.company_id = req.user.company_id;
-    } else {
-      whereClause.user_id = req.user.id;
-    }
+    // 多租户隔离逻辑：允许查看自己创建的或所属公司的职位
+    let whereClause = {
+      [Op.or]: req.user.company_id 
+        ? [
+            { company_id: req.user.company_id },
+            { user_id: req.user.id }
+          ]
+        : [
+            { user_id: req.user.id }
+          ]
+    };
     
     if (status) {
       whereClause.status = status;
@@ -47,10 +51,18 @@ const getJobById = async (req, res) => {
   try {
     const { id } = req.params;
     
-    // 多租户隔离逻辑
-    const whereClause = req.user.company_id 
-      ? { id, company_id: req.user.company_id } 
-      : { id, user_id: req.user.id };
+    // 多租户隔离逻辑：允许查看自己创建的或所属公司的职位
+    const whereClause = {
+      id,
+      [Op.or]: req.user.company_id 
+        ? [
+            { company_id: req.user.company_id },
+            { user_id: req.user.id }
+          ]
+        : [
+            { user_id: req.user.id }
+          ]
+    };
 
     const job = await Job.findOne({
       where: whereClause,
@@ -87,7 +99,11 @@ const getJobById = async (req, res) => {
 // 创建新职位
 const createJob = async (req, res) => {
   try {
-    const { title, description, requirements, salary_range, location, experience_required, status } = req.body;
+    const { 
+      title, description, requirements, salary_range, location, experience_required, status,
+      enable_auto_screening, auto_reject_score, notify_high_score, high_score_threshold, weight_preference,
+      positions_count, expiry_date
+    } = req.body;
 
     const job = await Job.create({
       user_id: req.user.id,
@@ -98,7 +114,14 @@ const createJob = async (req, res) => {
       salary_range,
       location,
       experience_required,
-      status
+      status,
+      enable_auto_screening: enable_auto_screening || false,
+      auto_reject_score: auto_reject_score || 60,
+      notify_high_score: notify_high_score || false,
+      high_score_threshold: high_score_threshold || 85,
+      weight_preference: weight_preference || 'balanced',
+      positions_count: positions_count || 1,
+      expiry_date: expiry_date || null
     });
 
     res.status(201).json({
@@ -121,15 +144,32 @@ const createJob = async (req, res) => {
 const updateJob = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, requirements, salary_range, location, experience_required, status } = req.body;
+    const { 
+      title, description, requirements, salary_range, location, experience_required, status,
+      enable_auto_screening, auto_reject_score, notify_high_score, high_score_threshold, weight_preference,
+      positions_count, expiry_date
+    } = req.body;
 
     // 多租户隔离逻辑
     const whereClause = req.user.company_id 
       ? { id, company_id: req.user.company_id } 
       : { id, user_id: req.user.id };
 
+    const updateData = { 
+      title, description, requirements, salary_range, location, experience_required, status,
+      enable_auto_screening, auto_reject_score, notify_high_score, high_score_threshold, weight_preference,
+      positions_count, expiry_date
+    };
+
+    // 过滤掉 undefined 的值，避免覆盖已有数据（如果某些字段没传）
+    Object.keys(updateData).forEach(key => {
+      if (updateData[key] === undefined) {
+        delete updateData[key];
+      }
+    });
+
     const updatedJob = await Job.update(
-      { title, description, requirements, salary_range, location, experience_required, status },
+      updateData,
       { where: whereClause, returning: true }
     );
 

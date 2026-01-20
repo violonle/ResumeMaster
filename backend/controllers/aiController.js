@@ -2,7 +2,7 @@ const DomesticAIService = require('../services/domesticAIService');
 const axios = require('axios');
 const cheerio = require('cheerio');
 const { extractTextFromFile, buildFallbackTextFromParsed } = require('../services/textExtractor');
-const { AnalysisResult, Resume, Job, User, DeepAnalysisRecord } = require('../models');
+const { AnalysisResult, Resume, Job, User, DeepAnalysisRecord, ResumeJob } = require('../models');
 const logger = require('../utils/logger');
 const promptService = require('../services/promptService');
 const { UserActivity } = require('../models');
@@ -385,11 +385,70 @@ class AIController {
         const finalExp = parseInt(mergedParsedData.experience_years || mergedParsedData.basic_info?.work_years || localParsedData.experience_years || 0);
         const finalEdu = mergedParsedData.highest_education || mergedParsedData.basic_info?.education || localParsedData.highest_education || '';
 
+        // 自动初筛淘汰逻辑
+        let recruitmentStatus = '投递'; // 默认状态
+        let finalStatus = 'analyzed';
+        let autoRejected = false;
+        let rejectionReason = null;
+
+        try {
+            // 尝试获取职位ID
+            let jobId = null;
+            if (jobDescription && typeof jobDescription === 'object' && jobDescription.id) {
+                jobId = jobDescription.id;
+            } else if (options && options.jobId) {
+                jobId = options.jobId;
+            }
+
+            if (jobId) {
+                const job = await Job.findByPk(jobId);
+                if (job) {
+                    // 1. 自动淘汰逻辑
+                    if (job.enable_auto_screening) {
+                        recruitmentStatus = '初筛'; // 开启初筛则进入初筛阶段
+                        if (overallScore < job.auto_reject_score) {
+                            recruitmentStatus = '淘汰';
+                            autoRejected = true;
+                            // 生成淘汰理由
+                            const scoreDiff = job.auto_reject_score - overallScore;
+                            let reason = `自动淘汰：评分 ${overallScore} (低于 ${job.auto_reject_score})`;
+                            
+                            // 尝试从 AI 结果中提取更多理由
+                            if (localParsedData && localParsedData.missing_skills && localParsedData.missing_skills.length > 0) {
+                                reason += `。缺失技能：${localParsedData.missing_skills.slice(0, 3).join(', ')}`;
+                            } else if (localParsedData && localParsedData.radar_scores) {
+                                // 找出最低维度
+                                const scores = localParsedData.radar_scores;
+                                const minDim = Object.keys(scores).reduce((a, b) => scores[a] < scores[b] ? a : b);
+                                const dimName = { job_fit: '岗位匹配', experience_fit: '经验匹配', learning_ability: '学习能力', teamwork: '团队协作' }[minDim] || minDim;
+                                reason += `。短板：${dimName}`;
+                            }
+                            rejectionReason = reason;
+                            
+                            console.log(`[Auto-Screening] Resume ${resumeId} automatically rejected. Reason: ${reason}`);
+                        }
+                    }
+
+                    // 2. 高分通知逻辑
+                    if (job.notify_high_score && overallScore >= job.high_score_threshold) {
+                        // TODO: 集成 NotificationService
+                        console.log(`[High-Score] Resume ${resumeId} scored ${overallScore} (>= ${job.high_score_threshold}). Triggering notification for Job ${jobId}`);
+                        // 暂时仅记录日志，实际可以调用 EmailService.sendHighScoreNotification(job.user_id, resume, overallScore)
+                    }
+                }
+            }
+        } catch (screenErr) {
+            console.error('[Auto-Screening] Error checking auto-screening rules:', screenErr);
+        }
+
         // 最后更新简历状态
         // 关键修复：将 AI 分析得到的结构化数据回填到 Resume 表的 parsed_data 字段，
         // 确保 resume-details.html 能显示出 AI 提取的详细字段。
         await Resume.update({ 
-          status: 'analyzed',
+          status: finalStatus,
+          recruitment_status: recruitmentStatus,
+          auto_rejected: autoRejected,
+          rejection_reason: rejectionReason,
           last_analysis_date: new Date(),
           score: overallScore,
           parsed_data: mergedParsedData,
@@ -401,6 +460,34 @@ class AIController {
           experience_years: finalExp || undefined,
           highest_education: finalEdu || undefined
         }, { where: { id: resumeId } });
+        
+        // 同时更新关联的 ResumeJob 记录中的 match_score
+        try {
+            let targetJobId = null;
+            if (jobDescription && typeof jobDescription === 'object' && jobDescription.id) {
+                targetJobId = jobDescription.id;
+            } else if (options && options.jobId) {
+                targetJobId = options.jobId;
+            }
+
+            if (targetJobId) {
+                await ResumeJob.update({
+                    match_score: overallScore,
+                    // 如果开启了自动初筛且被淘汰，同步状态到 ResumeJob
+                    status: (autoRejected && recruitmentStatus === '淘汰') ? 'rejected' : undefined,
+                    notes: rejectionReason || undefined
+                }, { 
+                    where: { 
+                        resume_id: resumeId, 
+                        job_id: targetJobId 
+                    } 
+                });
+                console.log(`[AI Controller] Updated ResumeJob match_score to ${overallScore} for jobId: ${targetJobId}`);
+            }
+        } catch (rjErr) {
+            console.error('[AI Controller] Failed to update ResumeJob score:', rjErr);
+        }
+
         console.log(`[AI Controller] Resume status updated to 'analyzed' and parsed_data populated for resumeId: ${resumeId}`);
         
         logger.info('Background analysis completed', { resumeId, score: overallScore });
@@ -1269,7 +1356,7 @@ class AIController {
         include: [
           {
             model: Resume,
-            attributes: ['id', 'file_name', 'file_type', 'upload_date', 'job_title']
+            attributes: ['id', 'file_name', 'file_type', 'upload_date', 'job_title', 'recruitment_status']
           }
         ],
         order: [['analysis_date', 'DESC']]
@@ -1311,7 +1398,7 @@ class AIController {
         include: [
           {
             model: Resume,
-            attributes: ['id', 'file_name', 'file_type', 'file_path']
+            attributes: ['id', 'file_name', 'file_type', 'file_path', 'recruitment_status']
           }
         ]
       });

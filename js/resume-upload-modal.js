@@ -7,7 +7,7 @@
     let currentPreviewData = null; // Store current preview data
 
     // Make functions globally available
-    window.openLibraryUploadModal = function() {
+    window.openLibraryUploadModal = function(jobId = null) {
         // Ensure modal HTML exists
         if (!document.getElementById('libraryUploadOverlay')) {
             injectModalHTML();
@@ -15,7 +15,7 @@
         
         const ov = document.getElementById('libraryUploadOverlay');
         if (ov) ov.classList.remove('hidden');
-        initLibraryUploadModal();
+        initLibraryUploadModal(jobId);
     };
 
     window.closeLibraryUploadModal = function() {
@@ -153,7 +153,7 @@
     };
 
     // Private Functions
-    async function initLibraryUploadModal() {
+    async function initLibraryUploadModal(preSelectedJobId = null) {
         const dropZone = document.getElementById('library-modal-drop-zone');
         const fileInput = document.getElementById('library-modal-file-input');
         const confirmBtn = document.getElementById('confirm-library-upload-btn');
@@ -198,6 +198,11 @@
                         option.textContent = job.title;
                         jobSelect.appendChild(option);
                     });
+                }
+                
+                // Select the job if provided
+                if (preSelectedJobId) {
+                    jobSelect.value = preSelectedJobId;
                 }
             } catch (e) {
                 console.warn('Failed to load jobs for upload modal', e);

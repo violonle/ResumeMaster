@@ -11,81 +11,76 @@
     <link rel="stylesheet" href="/css/design-system.css">
     <link rel="stylesheet" href="/css/sidebar.css">
     <style>
-        .brand-title { white-space: normal !important; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         
-        .portal-card {
-            background: #ffffff;
-            border: 1px solid #f3f4f6;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            border-radius: 16px;
-            transition: all 0.2s;
+        body { 
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif; 
+            background-color: #fdfdfd;
         }
 
-        .portal-card:hover {
+        .stat-card {
+            background: #ffffff;
+            border: 1px solid #f1f3f5;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
             border-color: #e5e7eb;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+
+        .animate-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 5px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #f1f3f5;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #e9ecef;
+        }
+
+        .tab-item {
+            position: relative;
+            transition: all 0.2s;
+        }
+        .tab-item.active {
+            color: #1d4ed8;
+        }
+        .tab-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: #1d4ed8;
+            border-radius: 2px;
         }
     </style>
 </head>
-<body class="bg-gray-50 font-sans text-gray-900 antialiased font-['Plus_Jakarta_Sans']">
-    <aside id="sidebar" class="fixed left-0 top-0 bottom-0 sidebar-modern z-40"></aside>
-
-    <script>
-        // 页面初始化
-        document.addEventListener('DOMContentLoaded', function() {
-            (function(){ 
-                var s=document.createElement('script'); 
-                s.src='/js/sidebar.js'; 
-                s.async=false; 
-                s.onload=function(){ 
-                    Sidebar.init({ mount:'#sidebar', active:'job' }).then(() => {
-                        // 侧边栏加载完成后更新订阅信息
-                        (async function(){
-                            try{
-                                const token = (JSON.parse(localStorage.getItem('userInfo')||'{}').token)||null;
-                                const headers = token? { Authorization: 'Bearer '+token } : {};
-                                const [cur, usage] = await Promise.all([
-                                    fetch('/api/subscription/current', { headers }).then(r=>r.json()).catch(()=>null),
-                                    fetch('/api/subscription/usage', { headers }).then(r=>r.json()).catch(()=>null)
-                                ]);
-                                
-                                const statusEl = document.getElementById('sub-status') || document.getElementById('sidebar-sub-status');
-                                const progressEl = document.getElementById('sub-progress') || document.getElementById('sidebar-sub-progress');
-                                const renewEl = document.getElementById('sub-renew') || document.getElementById('sidebar-sub-renew');
-                                
-                                if(!statusEl) return;
-                
-                                const plan = cur && cur.data ? (cur.data.planType || 'free') : 'unknown';
-                                const expiresAt = cur && cur.data ? (cur.data.expiresAt || cur.data.expires_at) : null;
-                                const leftDays = (function(){ if(!expiresAt) return null; const d = Math.ceil((new Date(expiresAt)-Date.now())/(1000*60*60*24)); return d })();
-                                
-                                statusEl.textContent = plan;
-                                
-                                const u = usage && usage.data ? usage.data : { aiAnalysis:0,resumeUpload:0,jobMatching:0 };
-                                const used = (u.aiAnalysis||0) + (u.resumeUpload||0) + (u.jobMatching||0);
-                                const pct = Math.max(0, Math.min(100, Math.round((used%100)/100*100)));
-                                
-                                if(progressEl) progressEl.style.width = pct+'%';
-                                if(renewEl) renewEl.textContent = leftDays!=null ? `距离到期还有 ${leftDays} 天` : '使用量与到期信息暂不可用';
-                            }catch(e){ console.error(e) }
-                        })();
-                    }); 
-                }; 
-                document.body.appendChild(s); 
-            })();
-        });
-    </script>
+<body class="antialiased text-gray-900 selection:bg-blue-100 selection:text-blue-700">
+    <aside id="sidebar" class="sidebar-modern"></aside>
     <div id="sidebar-overlay" class="sidebar-overlay"></div>
-
-    
 
     <header class="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20">
         <div class="flex items-center justify-between p-4">
             <div class="flex items-center space-x-4 pl-8">
-                <div class="brand-title flex flex-col justify-center space-y-1.5">
-                    <h1 class="text-lg font-bold text-gray-900 leading-none">职位管理</h1>
-                    <p class="text-xs text-gray-500 font-medium leading-tight">发布和管理招聘职位，匹配合适的简历</p>
-                </div>
+                <h1 class="text-lg font-bold text-gray-900 leading-none">职位管理</h1>
             </div>
             <div class="flex items-center space-x-4" id="header-right-section"></div>
             <script src="/js/header-profile.js"></script>
@@ -114,162 +109,168 @@
             <!-- 统计卡片 -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                 <!-- 总职位数 -->
-                <div class="portal-card p-6">
+                <div class="stat-card p-6 rounded-2xl animate-in" style="animation-delay: 0.1s">
                     <div class="flex items-center space-x-5">
-                        <div class="w-14 h-14 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center text-2xl">
+                        <div class="w-14 h-14 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center text-2xl shadow-sm">
                             <i class="fas fa-briefcase"></i>
                         </div>
                         <div>
-                            <p class="text-[11px] font-black text-gray-500 uppercase tracking-widest mb-1">总职位数</p>
-                            <h3 class="text-2xl font-black text-gray-900" id="stats-total">—</h3>
+                            <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">总职位数</p>
+                            <h3 class="text-2xl font-bold text-gray-900" id="stats-total">—</h3>
                         </div>
                     </div>
                 </div>
 
                 <!-- 活跃职位 -->
-                <div class="portal-card p-6">
+                <div class="stat-card p-6 rounded-2xl animate-in" style="animation-delay: 0.2s">
                     <div class="flex items-center space-x-5">
-                        <div class="w-14 h-14 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center text-2xl">
+                        <div class="w-14 h-14 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center text-2xl shadow-sm">
                             <i class="fas fa-check-circle"></i>
                         </div>
                         <div>
-                            <p class="text-[11px] font-black text-gray-500 uppercase tracking-widest mb-1">活跃职位</p>
-                            <h3 class="text-2xl font-black text-gray-900" id="stats-active">—</h3>
+                            <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">活跃职位</p>
+                            <h3 class="text-2xl font-bold text-gray-900" id="stats-active">—</h3>
                         </div>
                     </div>
                 </div>
 
                 <!-- 简历数 -->
-                <div class="portal-card p-6">
+                <div class="stat-card p-6 rounded-2xl animate-in" style="animation-delay: 0.3s">
                     <div class="flex items-center space-x-5">
-                        <div class="w-14 h-14 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center text-2xl">
+                        <div class="w-14 h-14 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center text-2xl shadow-sm">
                             <i class="fas fa-user-friends"></i>
                         </div>
                         <div>
-                            <p class="text-[11px] font-black text-gray-500 uppercase tracking-widest mb-1">简历数</p>
-                            <h3 class="text-2xl font-black text-gray-900" id="stats-candidates">—</h3>
+                            <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">简历数</p>
+                            <h3 class="text-2xl font-bold text-gray-900" id="stats-candidates">—</h3>
                         </div>
                     </div>
                 </div>
 
                 <!-- 匹配成功 -->
-                <div class="portal-card p-6">
+                <div class="stat-card p-6 rounded-2xl animate-in" style="animation-delay: 0.4s">
                     <div class="flex items-center space-x-5">
-                        <div class="w-14 h-14 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center text-2xl">
+                        <div class="w-14 h-14 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center text-2xl shadow-sm">
                             <i class="fas fa-handshake"></i>
                         </div>
                         <div>
-                            <p class="text-[11px] font-black text-gray-500 uppercase tracking-widest mb-1">匹配成功</p>
-                            <h3 class="text-2xl font-black text-gray-900" id="stats-matched">—</h3>
+                            <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">匹配成功</p>
+                            <h3 class="text-2xl font-bold text-gray-900" id="stats-matched">—</h3>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- 二级导航 -->
-            <div class="border-b border-gray-200 mb-6">
+            <div class="border-b border-gray-100 mb-8">
                 <nav class="-mb-px flex space-x-8">
-                    <a href="#" class="border-blue-500 text-blue-600 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm" data-tab="all">全部职位</a>
-                    <a href="#" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm" data-tab="active">招聘中</a>
-                    <a href="#" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm" data-tab="paused">已暂停</a>
-                    <a href="#" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm" data-tab="closed">已关闭</a>
-                    <a href="#" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm" data-tab="draft">草稿</a>
+                    <button class="tab-item active whitespace-nowrap py-4 px-1 font-semibold text-sm transition-all duration-200" data-tab="all">
+                        全部职位
+                    </button>
+                    <button class="tab-item text-gray-400 hover:text-gray-600 whitespace-nowrap py-4 px-1 font-medium text-sm transition-all duration-200" data-tab="active">
+                        招聘中
+                    </button>
+                    <button class="tab-item text-gray-400 hover:text-gray-600 whitespace-nowrap py-4 px-1 font-medium text-sm transition-all duration-200" data-tab="paused">
+                        已暂停
+                    </button>
+                    <button class="tab-item text-gray-400 hover:text-gray-600 whitespace-nowrap py-4 px-1 font-medium text-sm transition-all duration-200" data-tab="closed">
+                        已关闭
+                    </button>
+                    <button class="tab-item text-gray-400 hover:text-gray-600 whitespace-nowrap py-4 px-1 font-medium text-sm transition-all duration-200" data-tab="draft">
+                        草稿
+                    </button>
                 </nav>
             </div>
 
             <!-- 筛选和搜索 -->
-            <div class="bg-white rounded-lg shadow p-4 mb-6">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">搜索职位</label>
-                            <input type="text" placeholder="输入职位名称或关键词" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <div class="stat-card rounded-2xl p-5 mb-8 animate-in" style="animation-delay: 0.5s">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div class="relative group">
+                        <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 ml-1">搜索职位</label>
+                        <div class="relative">
+                            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
+                            <input type="text" placeholder="输入职位名称或关键词" class="w-full pl-10 pr-4 py-2.5 bg-gray-50/50 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500/50 transition-all text-sm">
+                        </div>
                     </div>
                     <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">职位类型</label>
-                        <select class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="">全部类型</option>
-                            <option value="fulltime">全职</option>
-                            <option value="parttime">兼职</option>
-                            <option value="contract">合同工</option>
-                            <option value="intern">实习</option>
-                        </select>
+                        <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 ml-1">职位类型</label>
+                        <div class="relative">
+                            <select class="w-full px-4 py-2.5 bg-gray-50/50 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500/50 transition-all text-sm appearance-none cursor-pointer">
+                                <option value="">全部类型</option>
+                                <option value="fulltime">全职</option>
+                                <option value="parttime">兼职</option>
+                                <option value="contract">合同工</option>
+                                <option value="intern">实习</option>
+                            </select>
+                            <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-[10px]"></i>
+                        </div>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">工作地点</label>
-                        <select class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="">全部地点</option>
-                            <option value="beijing">北京</option>
-                            <option value="shanghai">上海</option>
-                            <option value="guangzhou">广州</option>
-                            <option value="shenzhen">深圳</option>
-                            <option value="remote">远程</option>
-                        </select>
+                        <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 ml-1">工作地点</label>
+                        <div class="relative">
+                            <select class="w-full px-4 py-2.5 bg-gray-50/50 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500/50 transition-all text-sm appearance-none cursor-pointer">
+                                <option value="">全部地点</option>
+                                <option value="beijing">北京</option>
+                                <option value="shanghai">上海</option>
+                                <option value="guangzhou">广州</option>
+                                <option value="shenzhen">深圳</option>
+                                <option value="remote">远程</option>
+                            </select>
+                            <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-[10px]"></i>
+                        </div>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">发布时间</label>
-                        <select class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="">全部时间</option>
-                            <option value="today">今天</option>
-                            <option value="week">本周</option>
-                            <option value="month">本月</option>
-                            <option value="quarter">本季度</option>
-                        </select>
+                        <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 ml-1">发布时间</label>
+                        <div class="relative">
+                            <select class="w-full px-4 py-2.5 bg-gray-50/50 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500/50 transition-all text-sm appearance-none cursor-pointer">
+                                <option value="">全部时间</option>
+                                <option value="today">今天</option>
+                                <option value="week">本周</option>
+                                <option value="month">本月</option>
+                                <option value="quarter">本季度</option>
+                            </select>
+                            <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-[10px]"></i>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- 职位列表 -->
-            <div class="bg-white rounded-lg shadow overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <div class="flex justify-between items-center">
-                        <h3 class="text-lg font-medium text-gray-900">职位列表</h3>
-                        <div class="flex items-center space-x-2">
-                            <span class="text-sm text-gray-500">共 <span id="total-count">12</span> 个职位</span>
-                            <button class="text-gray-400 hover:text-gray-600">
-                                <i class="fas fa-th-large"></i>
-                            </button>
-                            <button class="text-blue-600 hover:text-blue-800">
-                                <i class="fas fa-list"></i>
-                            </button>
-                        </div>
+            <div class="stat-card rounded-2xl overflow-hidden animate-in" style="animation-delay: 0.6s">
+                <div class="px-6 py-5 border-b border-gray-50 flex justify-between items-center bg-white">
+                    <div>
+                        <h3 class="text-base font-bold text-gray-900">职位列表</h3>
+                        <p class="text-xs text-gray-400 mt-1">共 <span id="total-count" class="font-semibold text-blue-600">12</span> 个职位</p>
                     </div>
                 </div>
                 
-                <div class="divide-y divide-gray-200" id="job-list"></div>
+                <div class="divide-y divide-gray-50" id="job-list"></div>
                 
                 <!-- 分页 -->
-                <div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
+                <div class="bg-gray-50/30 px-6 py-4 border-t border-gray-50">
                     <div class="flex items-center justify-between">
-                        <div class="flex-1 flex justify-between sm:hidden">
-                            <button class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                                上一页
-                            </button>
-                            <button class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                                下一页
-                            </button>
-                        </div>
                         <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                             <div>
-                                <p class="text-sm text-gray-700">
-                                    显示第 <span class="font-medium">1</span> 到 <span class="font-medium">10</span> 条，共 <span class="font-medium">12</span> 条记录
+                                <p class="text-xs text-gray-400">
+                                    显示第 <span class="font-semibold text-gray-600">1</span> 到 <span class="font-semibold text-gray-600">10</span> 条，共 <span class="font-semibold text-gray-600">12</span> 条记录
                                 </p>
                             </div>
                             <div>
-                                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                                    <button class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                                        <i class="fas fa-chevron-left"></i>
+                                <nav class="relative z-0 inline-flex space-x-2">
+                                    <button class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-400 hover:bg-gray-50 transition-colors">
+                                        <i class="fas fa-chevron-left text-xs"></i>
                                     </button>
-                                    <button class="bg-blue-50 border-blue-500 text-blue-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium">1</button>
-                                    <button class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium">2</button>
-                                    <button class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                                        <i class="fas fa-chevron-right"></i>
+                                    <button class="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-600 text-white font-semibold text-xs shadow-md shadow-blue-200">1</button>
+                                    <button class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 font-medium text-xs transition-colors">2</button>
+                                    <button class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-400 hover:bg-gray-50 transition-colors">
+                                        <i class="fas fa-chevron-right text-xs"></i>
                                     </button>
                                 </nav>
                             </div>
                         </div>
                     </div>
                 </div>
-        </div>
+            </div>
         </div>
     </main>
 
@@ -300,8 +301,29 @@
                 if (!window.resumeDataManager || typeof window.resumeDataManager.getAllJobs !== 'function') {
                     throw new Error('数据管理器未初始化或方法缺失');
                 }
-                const jobs = await window.resumeDataManager.getAllJobs();
-                renderJobs(jobs);
+                
+                // 并行加载职位和候选人数据
+                // 使用 /recruitment/pipeline 接口以获取带有 job_id 的候选人数据
+                const [jobs, pipelineResp] = await Promise.all([
+                    window.resumeDataManager.getAllJobs(),
+                    window.resumeDataManager.apiRequest('/recruitment/pipeline', 'GET', null, true, true).catch(e => ({ data: [] }))
+                ]);
+
+                const pipelineData = pipelineResp.data || [];
+
+                // 处理候选人数据，转为扁平数组
+                let allCandidates = [];
+                if (Array.isArray(pipelineData)) {
+                    allCandidates = pipelineData;
+                } else if (pipelineData && typeof pipelineData === 'object') {
+                     Object.values(pipelineData).forEach(list => {
+                        if (Array.isArray(list)) {
+                            allCandidates = allCandidates.concat(list);
+                        }
+                    });
+                }
+
+                renderJobs(jobs, allCandidates);
                 updateStatistics(jobs);
             } catch (error) {
                 console.error('加载职位数据失败:', error);
@@ -322,64 +344,110 @@
         }
 
         // 渲染职位列表
-        function renderJobs(jobs) {
+        function renderJobs(jobs, allCandidates = []) {
             const jobList = document.getElementById('job-list');
             if (!jobList) return;
 
             if (jobs.length === 0) {
                 jobList.innerHTML = `
-                    <div class="col-span-full text-center py-12">
-                        <div class="text-gray-400 mb-2">
-                            <i class="fas fa-briefcase text-4xl"></i>
+                    <div class="col-span-full text-center py-20">
+                        <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-briefcase text-3xl text-gray-200"></i>
                         </div>
-                        <h3 class="text-lg font-medium text-gray-900 mb-2">暂无职位</h3>
-                        <p class="text-gray-600">还没有发布任何职位，点击"发布职位"开始创建</p>
+                        <h3 class="text-base font-bold text-gray-900 mb-1">暂无职位</h3>
+                        <p class="text-sm text-gray-400 mb-6">还没有发布任何职位，点击"发布职位"开始创建</p>
+                        <a href="job-posting.html" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-all">
+                            <i class="fas fa-plus mr-2 text-xs"></i>
+                            发布首个职位
+                        </a>
                     </div>
                 `;
                 return;
             }
 
-            jobList.innerHTML = jobs.map(job => `
-                <div class="p-6 hover:bg-gray-50 transition-colors">
+            jobList.innerHTML = jobs.map(job => {
+                // 获取当前职位的候选人
+                const jobCandidates = allCandidates.filter(c => String(c.job_id || c.jobId) === String(job.id));
+                // 取最新的5个
+                const recentCandidates = jobCandidates.slice(0, 5);
+                const extraCount = jobCandidates.length > 5 ? jobCandidates.length - 5 : 0;
+                
+                // 生成头像HTML
+                const avatarsHtml = recentCandidates.map(c => {
+                    const name = c.name || c.file_name || '未知';
+                    const initials = name.substring(0, 2);
+                    const colors = ['bg-blue-100 text-blue-600', 'bg-purple-100 text-purple-600', 'bg-green-100 text-green-600', 'bg-amber-100 text-amber-600', 'bg-rose-100 text-rose-600'];
+                    const colorClass = colors[name.charCodeAt(0) % colors.length];
+                    
+                    return `
+                        <div class="w-8 h-8 rounded-full ${colorClass} flex items-center justify-center text-[10px] font-bold border-2 border-white -ml-2 first:ml-0 shadow-sm" title="${name}">
+                            ${initials}
+                        </div>
+                    `;
+                }).join('');
+                
+                const moreHtml = extraCount > 0 ? `
+                    <div class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center text-[10px] font-bold border-2 border-white -ml-2 shadow-sm">
+                        +${extraCount}
+                    </div>
+                ` : '';
+                
+                const candidatesSection = jobCandidates.length > 0 ? `
+                    <div class="flex items-center pl-4 pr-4 border-l border-gray-100 h-8 hidden md:flex">
+                        <div class="flex -space-x-2">
+                            ${avatarsHtml}
+                            ${moreHtml}
+                        </div>
+                    </div>
+                ` : '';
+
+                return `
+                <div class="p-3 hover:bg-gray-50/50 transition-all group">
                     <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-4">
+                        <div class="flex items-center space-x-3 flex-1">
                             <div class="flex-shrink-0">
-                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                                    <i class="fas fa-code text-blue-600 text-xl"></i>
+                                <div class="w-10 h-10 bg-white border border-gray-100 rounded-xl flex items-center justify-center shadow-sm group-hover:border-blue-100 group-hover:bg-blue-50/30 transition-all">
+                                    <i class="fas fa-code text-blue-600 text-lg"></i>
                                 </div>
                             </div>
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center space-x-2">
-                                    <h4 class="text-lg font-medium text-gray-900">
+                                    <h4 class="text-sm font-bold text-gray-900">
                                         <a href="job-detail.html?id=${job.id}" class="hover:text-blue-600 transition-colors">${job.title}</a>
                                     </h4>
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusClass(job.status)}">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider ${getStatusClass(job.status)}">
                                         ${getStatusText(job.status)}
                                     </span>
                                 </div>
-                                <div class="mt-1 flex items-center space-x-4 text-sm text-gray-500">
-                                    <span><i class="fas fa-map-marker-alt mr-1"></i>${job.location || '未指定'}</span>
-                                    <span><i class="fas fa-dollar-sign mr-1"></i>${job.salary_range || '面议'}</span>
-                                    <span><i class="fas fa-calendar mr-1"></i>${job.experience_required || '不限'}</span>
-                                </div>
-                                <div class="mt-2 text-sm text-gray-600">
-                                    发布时间：${formatDate(job.created_at)}
+                                <div class="mt-1 flex items-center space-x-3 text-[11px] text-gray-400">
+                                    <span class="flex items-center"><i class="fas fa-map-marker-alt mr-1 opacity-50"></i>${job.location || '未指定'}</span>
+                                    <span class="flex items-center font-medium text-gray-500"><i class="fas fa-dollar-sign mr-1 opacity-50"></i>${job.salary_range || '面议'}</span>
+                                    <span class="flex items-center"><i class="fas fa-calendar mr-1 opacity-50"></i>${job.experience_required || '不限'}</span>
+                                    <span class="flex items-center text-gray-300">
+                                        <span class="mx-1">•</span>
+                                        ${formatDate(job.created_at)}
+                                    </span>
                                 </div>
                             </div>
                         </div>
-                        <div class="flex items-center space-x-2">
-                            <div class="flex space-x-1">
-                                <button class="text-blue-600 hover:text-blue-800" onclick="editJob(${job.id})">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="text-gray-500 hover:text-blue-600" onclick="deleteJob(${job.id})">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
+                        
+                        ${candidatesSection}
+
+                        <div class="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-all">
+                            <button class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-100 text-gray-400 hover:text-blue-600 hover:border-blue-100 hover:bg-blue-50/50 shadow-sm transition-all" onclick="editJob(${job.id})" title="编辑">
+                                <i class="fas fa-edit text-xs"></i>
+                            </button>
+                            <button class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-100 text-gray-400 hover:text-red-600 hover:border-red-100 hover:bg-red-50/50 shadow-sm transition-all" onclick="deleteJob(${job.id})" title="删除">
+                                <i class="fas fa-trash text-xs"></i>
+                            </button>
+                            <div class="w-px h-3 bg-gray-100 mx-0.5"></div>
+                            <button class="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-600 text-white shadow-md shadow-blue-100 hover:bg-blue-700 transition-all" onclick="window.location.href='job-detail.html?id=${job.id}'" title="查看详情">
+                                <i class="fas fa-chevron-right text-xs"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
-            `).join('');
+            `;}).join('');
         }
 
         // 更新统计数据
@@ -414,15 +482,15 @@
             })();
         }
 
-        // 获取状态样式
+        // 状态样式
         function getStatusClass(status) {
-            const statusClasses = {
-                'active': 'bg-green-100 text-green-800',
-                'paused': 'bg-yellow-100 text-yellow-800',
-                'closed': 'bg-red-100 text-red-800',
-                'draft': 'bg-gray-100 text-gray-800'
-            };
-            return statusClasses[status] || statusClasses['draft'];
+            switch(status) {
+                case 'active': return 'bg-emerald-50 text-emerald-600 border border-emerald-100';
+                case 'paused': return 'bg-amber-50 text-amber-600 border border-amber-100';
+                case 'closed': return 'bg-gray-50 text-gray-500 border border-gray-100';
+                case 'draft': return 'bg-blue-50 text-blue-600 border border-blue-100';
+                default: return 'bg-gray-50 text-gray-500 border border-gray-100';
+            }
         }
 
         // 获取状态文本
@@ -522,26 +590,21 @@
             tabs.forEach(tab => {
                 tab.addEventListener('click', (e) => {
                     e.preventDefault();
-                    
-                    // 移除所有活动状态
                     tabs.forEach(t => {
-                        t.classList.remove('border-blue-500', 'text-blue-600');
-                        t.classList.add('border-transparent', 'text-gray-500');
+                        t.classList.remove('active', 'font-semibold', 'text-blue-600');
+                        t.classList.add('text-gray-400', 'font-medium');
                     });
+                    tab.classList.add('active', 'font-semibold', 'text-blue-600');
+                    tab.classList.remove('text-gray-400', 'font-medium');
                     
-                    // 添加当前活动状态
-                    tab.classList.remove('border-transparent', 'text-gray-500');
-                    tab.classList.add('border-blue-500', 'text-blue-600');
-                    
-                    // 这里可以添加切换内容的逻辑
-                    const tabType = tab.getAttribute('data-tab');
-                    filterJobsByTab(tabType);
+                    const status = tab.dataset.tab;
+                    filterJobs(status);
                 });
             });
         }
 
         // 根据标签页筛选岗位
-        function filterJobsByTab(tabType) {
+        function filterJobs(tabType) {
             console.log('切换到标签页:', tabType);
             // 这里可以实现实际的筛选逻辑
         }
@@ -663,6 +726,18 @@
                 });
             }
         })();
+    </script>
+    <script src="../js/sidebar.js"></script>
+    <script>
+        // 初始化侧边栏
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof Sidebar !== 'undefined') {
+                Sidebar.init({ mount: '#sidebar', active: 'job' });
+            }
+            if (typeof HeaderProfile !== 'undefined') {
+                HeaderProfile.init('#header-right-section');
+            }
+        });
     </script>
 </body>
 </html>
