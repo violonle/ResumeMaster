@@ -1148,7 +1148,7 @@
                 try {
                     // 并行处理以提高速度
                     const promises = ids.map(id => 
-                        window.resumeDataManager.updateResumeStatus(id, '淘汰')
+                        window.resumeDataManager.updateResumeRecruitmentStatus(id, '淘汰')
                             .then(success => success ? 1 : 0)
                             .catch(e => {
                                 console.error(`淘汰简历 ${id} 失败:`, e);
@@ -1539,7 +1539,7 @@
             
             try {
                 // 1. 更新简历表状态 (使用中文 ENUM: '淘汰')
-                const success = await window.resumeDataManager.updateResumeStatus(resumeId, '淘汰');
+            const success = await window.resumeDataManager.updateResumeRecruitmentStatus(resumeId, '淘汰');
                 
                 if (success) {
                     // 2. 尝试同步更新候选人关联记录 (ResumeJob)
@@ -1574,7 +1574,7 @@
 
         async updateStatus(resumeId, status) {
             try {
-                const success = await window.resumeDataManager.updateResumeStatus(resumeId, status);
+                const success = await window.resumeDataManager.updateResumeRecruitmentStatus(resumeId, status);
                 if (success) {
                     if (window.ui && typeof window.ui.showNotification === 'function') {
                         window.ui.showNotification(`状态已更新为: ${status}`, 'success');

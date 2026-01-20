@@ -119,7 +119,7 @@ const createResume = async (req, res) => {
 const updateResume = async (req, res) => {
   try {
     const { id } = req.params;
-    const { parsed_data, tags, job_title, recruitment_status, is_talent_pool } = req.body;
+    const { parsed_data, tags, job_title, recruitment_status, is_talent_pool, status } = req.body;
 
     // 检查简历是否存在且属于当前用户
     const resume = await Resume.findOne({
@@ -148,7 +148,8 @@ const updateResume = async (req, res) => {
       tags,
       job_title,
       recruitment_status,
-      is_talent_pool
+      is_talent_pool,
+      status
     });
 
     res.json({

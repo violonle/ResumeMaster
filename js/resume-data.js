@@ -380,21 +380,37 @@ class ResumeDataManagerInternal {
     }
 
     /**
-     * 更新简历状态
+     * 更新简历系统状态 (uploaded, parsing, analyzed, failed, archived)
      * @param {string} resumeId - 简历ID
      * @param {string} status - 新状态
      * @returns {Promise<boolean>} - 更新是否成功
      */
     async updateResumeStatus(resumeId, status) {
         try {
-            // 直接发送 PUT 请求更新状态，不需要先 GET
             await this.apiRequest(`/resumes/${resumeId}`, 'PUT', {
-                recruitment_status: status
+                status: status
             });
-
             return true;
         } catch (error) {
             console.error('更新简历状态失败:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * 更新简历招聘流程状态 (投递, 初筛, 面试, Offer, 入职, 放弃, 淘汰)
+     * @param {string} resumeId - 简历ID
+     * @param {string} status - 新招聘状态
+     * @returns {Promise<boolean>} - 更新是否成功
+     */
+    async updateResumeRecruitmentStatus(resumeId, status) {
+        try {
+            await this.apiRequest(`/resumes/${resumeId}`, 'PUT', {
+                recruitment_status: status
+            });
+            return true;
+        } catch (error) {
+            console.error('更新简历招聘状态失败:', error);
             throw error;
         }
     }

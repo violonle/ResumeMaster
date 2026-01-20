@@ -501,6 +501,19 @@ const startServer = async () => {
         await checkAndAddColumn('resumes', 'auto_rejected', 'BOOLEAN DEFAULT FALSE');
         await checkAndAddColumn('resumes', 'rejection_reason', 'VARCHAR(255) DEFAULT NULL');
         
+        // 确保 recruitment_status ENUM 包含所有必要的值
+        try {
+          console.log('[Startup] Ensuring recruitment_status ENUM values...');
+          await sequelize.query(`
+            ALTER TABLE resumes MODIFY COLUMN recruitment_status 
+            ENUM('投递', '初筛', '面试', 'Offer', '入职', '放弃', '淘汰') 
+            DEFAULT '投递'
+          `);
+          console.log('✅ Updated recruitment_status ENUM values.');
+        } catch (e) {
+          console.warn('⚠️ Failed to update recruitment_status ENUM:', e.message);
+        }
+        
         await checkAndAddColumn('interview_sessions', 'expires_at', 'DATETIME DEFAULT NULL');
       } else if (dialect === 'sqlite') {
         const checkAndAddColumnSQLite = async (table, column, definition) => {
