@@ -2,8 +2,11 @@
 ARG TARGETPLATFORM
 ARG BUILDPLATFORM
 
+# 使用国内镜像源加速基础镜像拉取
+ARG DOCKER_MIRROR="docker.m.daocloud.io"
+
 # --- Stage 1: Build Admin ---
-FROM --platform=$BUILDPLATFORM node:20-slim AS admin-builder
+FROM --platform=$BUILDPLATFORM ${DOCKER_MIRROR}/library/node:20-slim AS admin-builder
 # 使用阿里云镜像源加速 apt-get 并增加重试机制
 RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources && \
     (apt-get update || (sleep 5 && apt-get update)) && \
@@ -19,7 +22,7 @@ RUN npm run build:icons
 RUN npm run build
 
 # --- Stage 2: Build Tika DocParser ---
-FROM --platform=$BUILDPLATFORM maven:3.9-eclipse-temurin-17 AS tika-builder
+FROM --platform=$BUILDPLATFORM ${DOCKER_MIRROR}/library/maven:3.9-eclipse-temurin-17 AS tika-builder
 WORKDIR /app/tika
 COPY backend/docparser/pom.xml .
 COPY backend/docparser/src ./src
@@ -29,7 +32,7 @@ RUN printf '<settings><mirrors><mirror><id>aliyun</id><mirrorOf>central</mirrorO
     mv target/docparser-1.0-SNAPSHOT.jar target/docparser.jar
 
 # --- Stage 3: Build Interview ---
-FROM --platform=$BUILDPLATFORM node:20-slim AS interview-builder
+FROM --platform=$BUILDPLATFORM ${DOCKER_MIRROR}/library/node:20-slim AS interview-builder
 WORKDIR /app
 COPY pages/Interview/package*.json ./
 RUN npm config set registry https://registry.npmmirror.com && \
@@ -46,7 +49,7 @@ RUN ln -s /app/node_modules /node_modules
 RUN npm run build
 
 # --- Stage 4: Final Image ---
-FROM node:20-slim
+FROM ${DOCKER_MIRROR}/library/node:20-slim
 WORKDIR /app
 
 # 安装运行时环境 (Debian 系统)
