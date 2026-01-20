@@ -3,11 +3,17 @@ ARG TARGETPLATFORM
 ARG BUILDPLATFORM
 
 # --- Stage 1: Build Admin ---
-FROM --platform=$BUILDPLATFORM node:20-alpine AS admin-builder
-RUN apk add --no-cache python3 make g++
+FROM --platform=$BUILDPLATFORM node:20-slim AS admin-builder
+# 使用阿里云镜像源加速 apt-get 并增加重试机制
+RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources && \
+    (apt-get update || (sleep 5 && apt-get update)) && \
+    apt-get install -y --no-install-recommends python3 make g++ && \
+    rm -rf /var/lib/apt/lists/*
 WORKDIR /app/admin
 COPY admin/package*.json ./
-RUN npm install --ignore-scripts
+# 使用国内淘宝镜像源加速
+RUN npm config set registry https://registry.npmmirror.com && \
+    npm install --ignore-scripts
 COPY admin/ .
 RUN npm run build:icons
 RUN npm run build
@@ -17,14 +23,17 @@ FROM --platform=$BUILDPLATFORM maven:3.9-eclipse-temurin-17 AS tika-builder
 WORKDIR /app/tika
 COPY backend/docparser/pom.xml .
 COPY backend/docparser/src ./src
-RUN mvn clean package -DskipTests && \
+# 使用国内阿里云镜像加速 Maven
+RUN printf '<settings><mirrors><mirror><id>aliyun</id><mirrorOf>central</mirrorOf><name>Aliyun Central</name><url>https://maven.aliyun.com/repository/central</url></mirror></mirrors></settings>' > /usr/share/maven/conf/settings.xml && \
+    mvn clean package -DskipTests && \
     mv target/docparser-1.0-SNAPSHOT.jar target/docparser.jar
 
 # --- Stage 3: Build Interview ---
-FROM --platform=$BUILDPLATFORM node:20-alpine AS interview-builder
+FROM --platform=$BUILDPLATFORM node:20-slim AS interview-builder
 WORKDIR /app
 COPY pages/Interview/package*.json ./
-RUN npm install
+RUN npm config set registry https://registry.npmmirror.com && \
+    npm install
 # 按照用户要求，将 client-api 放在 /client-api，依赖在 /app/node_modules
 COPY client-api/ /client-api/
 # 修复构建依赖：复制 js 和 css 目录到容器根路径，满足 vite alias 解析
@@ -37,15 +46,30 @@ RUN ln -s /app/node_modules /node_modules
 RUN npm run build
 
 # --- Stage 4: Final Image ---
-FROM node:20-alpine
+FROM node:20-slim
 WORKDIR /app
 
-# 安装运行时环境
-RUN apk add --no-cache python3 make g++ py3-setuptools openjdk17-jre
+# 安装运行时环境 (Debian 系统)
+# 使用阿里云镜像源加速 apt-get 并增加重试机制
+RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources && \
+    (apt-get update || (sleep 5 && apt-get update)) && \
+    apt-get install -y --no-install-recommends \
+    python3 \
+    make \
+    g++ \
+    openjdk-17-jre-headless \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# 设置 Puppeteer 和 Playwright 跳过下载浏览器（减少镜像大小和构建失败率）
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 
 # 1. 复制并安装后端依赖
 COPY backend/package*.json ./backend/
-RUN cd backend && npm install --production
+RUN cd backend && \
+    npm config set registry https://registry.npmmirror.com && \
+    npm install --production --no-audit --no-fund --loglevel error
 
 # 2. 复制后端核心代码
 COPY backend/ ./backend/

@@ -151,14 +151,44 @@ class HeaderProfile {
         const name = rawName || '显示ID';
         const role = user.role;
         const enterprise = user.enterpriseName;
-        const avatarUrl = user.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name)}&backgroundColor=0d8abc&fontSize=45`;
+        
+        // 使用更稳定的本地 SVG 兜底（对引号进行了转义以防 onerror 报错）
+        const fallbackAvatar = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23cccccc'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E".replace(/'/g, "&apos;");
+        
+        // 由于 ui-avatars.com 在国内可能也不稳定，我们改用本地生成的 Base64 头像（简单的文字头像）
+        const generateInitialAvatar = (name) => {
+            try {
+                const canvas = document.createElement('canvas');
+                canvas.width = 128;
+                canvas.height = 128;
+                const ctx = canvas.getContext('2d');
+                
+                // 背景
+                ctx.fillStyle = '#0d8abc';
+                ctx.fillRect(0, 0, 128, 128);
+                
+                // 文字
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 64px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                const initial = (name || '?').charAt(0).toUpperCase();
+                ctx.fillText(initial, 64, 64);
+                
+                return canvas.toDataURL('image/png');
+            } catch (e) {
+                return fallbackAvatar;
+            }
+        };
+
+        const avatarUrl = user.avatar || generateInitialAvatar(name);
 
         return `
             <div class="flex items-center space-x-4 ml-4">
                 <!-- User Profile Dropdown -->
                 <div class="relative z-50">
                     <button id="header-user-btn" class="flex items-center space-x-3 p-1.5 rounded-lg hover:bg-gray-50 transition-colors focus:outline-none border border-transparent hover:border-gray-200">
-                        <img src="${avatarUrl}" alt="Avatar" class="w-8 h-8 rounded-full object-cover border border-gray-200">
+                        <img src="${avatarUrl}" onerror="this.src='${fallbackAvatar}';this.onerror=null;" alt="Avatar" class="w-8 h-8 rounded-full object-cover border border-gray-200">
                         <div class="text-left hidden md:block">
                             <p class="text-sm font-semibold text-gray-900 leading-none">${name} <span class="font-normal text-gray-500 text-xs"> ${role}</span></p>
                             <p class="text-xs text-gray-500 mt-0.5">${enterprise}</p>
@@ -170,7 +200,7 @@ class HeaderProfile {
                     <div id="header-user-menu" class="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-100 py-2 hidden transform transition-all duration-200 origin-top-right">
                         <div class="px-4 py-3 border-b border-gray-50 bg-gray-50/50">
                             <div class="flex items-center space-x-3">
-                                <img src="${avatarUrl}" class="w-10 h-10 rounded-full object-cover border border-gray-200">
+                                <img src="${avatarUrl}" onerror="this.src='${fallbackAvatar}';this.onerror=null;" class="w-10 h-10 rounded-full object-cover border border-gray-200">
                                 <div class="overflow-hidden">
                                     <p class="text-sm font-semibold text-gray-900 truncate">${name}</p>
                                     <p class="text-xs text-gray-500 truncate">${user.email || '未绑定邮箱'}</p>

@@ -46,11 +46,21 @@ exports.updateStatus = async (req, res) => {
     if (status !== 'rejected') {
       try {
         await Resume.update(
-          { auto_rejected: false, rejection_reason: null },
+          { auto_rejected: false, rejection_reason: null, recruitment_status: '投递' },
           { where: { id: rj.resume_id } }
         );
       } catch (resumeErr) {
         console.error('清除简历自动淘汰标记失败:', resumeErr);
+      }
+    } else {
+      // 如果设置为淘汰状态，同步更新 Resume 表的 recruitment_status
+      try {
+        await Resume.update(
+          { recruitment_status: '淘汰' },
+          { where: { id: rj.resume_id } }
+        );
+      } catch (resumeErr) {
+        console.error('同步简历淘汰状态失败:', resumeErr);
       }
     }
 
@@ -452,4 +462,28 @@ exports.getStats = async (req, res) => {
     const conv = { applied_to_screening: Math.round((counts.screening/Math.max(1,counts.applied))*100), screening_to_interview: Math.round((counts.interview/Math.max(1,counts.screening))*100), interview_to_offer: Math.round((counts.offer/Math.max(1,counts.interview))*100), offer_to_hired: Math.round((counts.hired/Math.max(1,counts.offer))*100) }
     return res.json({ success:true, data:{ counts, conv } })
   }catch(e){ return res.status(500).json({ success:false, error:{ code:'STATS_ERROR', message:e.message } }) }
+}
+
+exports.getCandidates = async (req, res) => {
+  try {
+    const { resume_id } = req.query;
+    const where = {};
+    if (resume_id) where.resume_id = resume_id;
+    
+    // 多租户隔离
+    if (req.user.company_id) {
+      const companyJobs = await Job.findAll({ 
+        where: { company_id: req.user.company_id },
+        attributes: ['id']
+      });
+      where.job_id = companyJobs.map(j => j.id);
+    } else {
+      where.user_id = req.user.id;
+    }
+
+    const rows = await ResumeJob.findAll({ where });
+    return res.json({ success: true, data: rows });
+  } catch (e) {
+    return res.status(500).json({ success: false, error: { code: 'GET_CANDIDATES_ERROR', message: e.message } });
+  }
 }

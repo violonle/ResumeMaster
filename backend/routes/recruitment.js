@@ -9,10 +9,13 @@ router.post('/candidates/:id/schedule-interview', authenticate, ctrl.scheduleInt
 router.post('/candidates/:id/interview-result', authenticate, ctrl.setInterviewResult)
 router.post('/candidates/:id/send-offer', authenticate, ctrl.sendOffer)
 router.post('/candidates/:id/hired', authenticate, ctrl.markHired)
+router.get('/candidates', authenticate, ctrl.getCandidates)
 router.post('/screen', authenticate, ctrl.screenCandidates)
 router.post('/email/import-and-screen', authenticate, ctrl.importEmailAndScreen)
 router.get('/pipeline', authenticate, ctrl.getPipeline)
+router.get('/candidates/list', authenticate, ctrl.getCandidates)
 router.post('/link', authenticate, ctrl.linkResumes)
 router.get('/stats', authenticate, ctrl.getStats)
+router.get('/candidates', authenticate, ctrl.getCandidates)
 
 module.exports = router

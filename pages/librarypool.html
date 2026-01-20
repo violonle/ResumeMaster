@@ -6,7 +6,7 @@
   <title>人才库 - 争湃·简历大师</title>
   <link rel="icon" href="/favicon.ico" type="image/x-icon">
   <script src="../js/tailwindcss.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.2/css/all.min.css">
   <link rel="stylesheet" href="/css/design-system.css">
   <script src="../js/user-auth.js"></script>
   <script src="../js/resume-data.js?v=2"></script>
@@ -737,6 +737,25 @@
       // initLibraryLinkModal ...
       // submitLibraryLinkImport ...
       
+      function generateInitialAvatar(name) {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = 64;
+          canvas.height = 64;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#E5E7EB';
+          ctx.fillRect(0, 0, 64, 64);
+          ctx.fillStyle = '#111827';
+          ctx.font = 'bold 32px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText((name || '?').charAt(0).toUpperCase(), 32, 32);
+          return canvas.toDataURL();
+        } catch (e) {
+          return '';
+        }
+      }
+
       function normalizeResumes(arr){
       function fmtDate(iso){ try{ var d=new Date(iso); var diff=Math.ceil((Date.now()-d.getTime())/(1000*60*60*24)); if(diff<=1) return '今天'; if(diff<=7) return diff+'天前'; if(diff<=30) return Math.floor(diff/7)+'周前'; return d.toISOString().slice(0,10); }catch(_){ return '—' } }
       var out=[]; for(var i=0;i<arr.length;i++){
@@ -764,7 +783,7 @@
             score:score, 
             experience:exp, 
             education:edu, 
-            avatar:'https://api.dicebear.com/7.x/initials/svg?seed='+encodeURIComponent(name)+'&background=E5E7EB&color=111827', 
+            avatar: generateInitialAvatar(name), 
             lastUpdated:last, 
             status: r.status || 'uploaded',
             recruitment_status: r.recruitment_status || '投递',
@@ -1519,9 +1538,25 @@
             if (!confirm('确定要淘汰这份简历吗？')) return;
             
             try {
-                // 使用 resumeDataManager 更新状态，注意状态值需与数据库 ENUM 匹配（中文 '淘汰'）
+                // 1. 更新简历表状态 (使用中文 ENUM: '淘汰')
                 const success = await window.resumeDataManager.updateResumeStatus(resumeId, '淘汰');
+                
                 if (success) {
+                    // 2. 尝试同步更新候选人关联记录 (ResumeJob)
+                    // 由于目前前端没有直接关联的 ResumeJob ID，且库里可能有多条投递记录
+                    // 我们尝试获取该简历的所有投递记录并批量更新为 'rejected'
+                    try {
+                        // 使用新的 API 路径获取该简历的所有投递记录并批量更新为 'rejected'
+                        const appsResponse = await window.resumeDataManager.apiRequest(`/recruitment/candidates/list?resume_id=${resumeId}`);
+                        if (appsResponse && appsResponse.success && Array.isArray(appsResponse.data)) {
+                            for (const app of appsResponse.data) {
+                                await window.resumeDataManager.apiRequest(`/recruitment/candidates/${app.id}/status`, 'POST', { status: 'rejected' });
+                            }
+                        }
+                    } catch (syncError) {
+                        console.warn('同步 ResumeJob 状态失败:', syncError);
+                    }
+
                     if (window.ui && typeof window.ui.showNotification === 'function') {
                         window.ui.showNotification('已成功淘汰', 'success');
                     }
