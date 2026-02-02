@@ -589,8 +589,12 @@ const testSMS = async () => {
     ui.showNotification('测试短信发送成功', 'success')
   } catch (error) {
     console.error('Test SMS Error:', error)
-    const errorMsg = error.response?.data?.error || error.response?.data?.message || error.message || '发送失败'
-    ui.showNotification('发送测试短信失败: ' + errorMsg, 'error')
+    const data = error.response?.data
+    const err = data?.error
+    const msg = (err && typeof err === 'object')
+      ? `${err.code ? err.code + ': ' : ''}${err.message || '发送失败'}`
+      : (typeof err === 'string' ? err : (data?.message || error.message || '发送失败'))
+    ui.showNotification('发送测试短信失败: ' + msg, 'error')
   } finally {
     saving.sms = false
   }

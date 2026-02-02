@@ -164,49 +164,12 @@
         const cancelBtn = document.getElementById('cancel-library-upload-modal');
         const jobSelect = document.getElementById('library-modal-job-select');
 
+        // Bind events immediately (don't wait for async operations)
         if (emailBtn) {
              emailBtn.onclick = function() { 
                  window.closeLibraryUploadModal(); // Close main modal
                  window.openLibraryEmailModal(); // Open new email flow
              };
-        }
-        
-        // Load jobs into select
-        if (jobSelect) {
-            try {
-                // Try to use resumeDataManager if available
-                let jobs = [];
-                // Check if userAuthInstance or resumeDataManager is ready
-                let apiRequest = null;
-                if (window.resumeDataManager && typeof window.resumeDataManager.apiRequest === 'function') {
-                    apiRequest = window.resumeDataManager.apiRequest.bind(window.resumeDataManager);
-                } else if (window.userAuthInstance && typeof window.userAuthInstance.apiRequest === 'function') {
-                    apiRequest = window.userAuthInstance.apiRequest.bind(window.userAuthInstance);
-                }
-
-                if (apiRequest) {
-                    const res = await apiRequest('/jobs');
-                    jobs = res.data || [];
-                }
-
-                // Populate select
-                jobSelect.innerHTML = '<option value="">不关联职位</option>';
-                if (Array.isArray(jobs)) {
-                    jobs.forEach(job => {
-                        const option = document.createElement('option');
-                        option.value = job.id;
-                        option.textContent = job.title;
-                        jobSelect.appendChild(option);
-                    });
-                }
-                
-                // Select the job if provided
-                if (preSelectedJobId) {
-                    jobSelect.value = preSelectedJobId;
-                }
-            } catch (e) {
-                console.warn('Failed to load jobs for upload modal', e);
-            }
         }
 
         if (dropZone && fileInput) {
@@ -239,6 +202,48 @@
 
         if (confirmBtn) {
             confirmBtn.onclick = function() { submitLibraryModalUpload() };
+        }
+        
+        // Load jobs into select (Async, non-blocking)
+        if (jobSelect) {
+            loadJobsForSelect(jobSelect, preSelectedJobId);
+        }
+    }
+
+    async function loadJobsForSelect(jobSelect, preSelectedJobId) {
+        try {
+            // Try to use resumeDataManager if available
+            let jobs = [];
+            // Check if userAuthInstance or resumeDataManager is ready
+            let apiRequest = null;
+            if (window.resumeDataManager && typeof window.resumeDataManager.apiRequest === 'function') {
+                apiRequest = window.resumeDataManager.apiRequest.bind(window.resumeDataManager);
+            } else if (window.userAuthInstance && typeof window.userAuthInstance.apiRequest === 'function') {
+                apiRequest = window.userAuthInstance.apiRequest.bind(window.userAuthInstance);
+            }
+
+            if (apiRequest) {
+                const res = await apiRequest('/jobs');
+                jobs = res.data || [];
+            }
+
+            // Populate select
+            jobSelect.innerHTML = '<option value="">不关联职位</option>';
+            if (Array.isArray(jobs)) {
+                jobs.forEach(job => {
+                    const option = document.createElement('option');
+                    option.value = job.id;
+                    option.textContent = job.title;
+                    jobSelect.appendChild(option);
+                });
+            }
+            
+            // Select the job if provided
+            if (preSelectedJobId) {
+                jobSelect.value = preSelectedJobId;
+            }
+        } catch (e) {
+            console.warn('Failed to load jobs for upload modal', e);
         }
     }
 
@@ -471,7 +476,7 @@
                 console.log('文件解析成功:', file.name);
                 // Open Preview Modal with result data
                 if (result && result.success && result.data) {
-                    openPreviewModal(result.data);
+                    openPreviewModal(result.data, jobId);
                 }
             },
             onError: (error, file) => {
@@ -543,9 +548,9 @@
     }
 
     // New Preview Modal Logic
-    function openPreviewModal(data) {
-        console.log('Preview Data Received:', data); // Debug log
-        currentPreviewData = data;
+    function openPreviewModal(data, jobId = null) {
+        console.log('Preview Data Received:', data, 'JobId:', jobId); // Debug log
+        currentPreviewData = { ...data, jobId };
         if (!document.getElementById('libraryPreviewOverlay')) {
             injectPreviewModalHTML();
         }
@@ -674,16 +679,10 @@
                 file_type: currentPreviewData.file_type,
                 parsed_data: updatedData.parsed_data,
                 raw_text: updatedData.raw_text,
+                jobId: currentPreviewData.jobId, // Use stored jobId
                 save_preview: true // Flag to tell backend to save this data
             };
             
-            // Add Job ID if it was there
-            // We lost the job ID context. We should store it.
-            const jobSelect = document.getElementById('library-modal-job-select');
-            if (jobSelect && jobSelect.value) {
-                payload.jobId = jobSelect.value;
-            }
-
             const res = await apiRequest('/library/upload', 'POST', payload);
             
             if (res.success) {
@@ -813,8 +812,8 @@
                   <button id="library-modal-import-from-email-btn" class="p-4 border-2 border-dashed border-gray-200 rounded-xl hover:border-blue-300 hover:bg-blue-50 transition-all">
                     <div class="flex items-center justify-center space-x-2 text-blue-600"><i class="fas fa-envelope"></i><span>邮箱导入</span></div>
                   </button>
-                  <button id="library-modal-import-from-link-btn" class="p-4 border-2 border-dashed border-gray-200 rounded-xl hover:border-orange-300 hover:bg-orange-50 transition-all">
-                    <div class="flex items-center justify-center space-x-2 text-orange-600"><i class="fas fa-link"></i><span>链接导入</span></div>
+                  <button id="library-modal-import-from-link-btn" class="p-4 border-2 border-dashed border-gray-200 rounded-xl hover:border-blue-300 hover:bg-blue-50 transition-all">
+                    <div class="flex items-center justify-center space-x-2 text-blue-600"><i class="fas fa-link"></i><span>链接导入</span></div>
                   </button>
               </div>
             </div>

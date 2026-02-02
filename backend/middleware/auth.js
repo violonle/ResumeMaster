@@ -4,23 +4,45 @@ const { User } = require('../models');
 
 // 生成JWT令牌
 const generateToken = (user) => {
+  const secret = process.env.JWT_SECRET || jwtSecret;
   return jwt.sign(
-    { id: user.id, email: user.email },
-    jwtSecret,
+    { id: user.id, email: user.email, role: user.role },
+    secret,
     { expiresIn: jwtExpiration }
   );
 };
 
 // 验证JWT令牌
 const verifyToken = (token) => {
-  return jwt.verify(token, jwtSecret);
+  try {
+    const secret = process.env.JWT_SECRET || jwtSecret;
+    console.log('[Auth] Attempting Verify with Secret Prefix:', secret ? secret.substring(0, 5) : 'NONE');
+    const decoded = jwt.verify(token, secret);
+    console.log('[Auth] JWT Verify Success for User ID:', decoded.id, 'Role:', decoded.role);
+    return decoded;
+  } catch (err) {
+    const secret = process.env.JWT_SECRET || jwtSecret;
+    console.error('[Auth] JWT Verify Error Details:');
+    console.error('  Message:', err.message);
+    console.error('  Full Token:', token);
+    console.error('  Token Length:', token ? token.length : 0);
+    console.error('  Secret Status:', !!secret);
+    if (secret) {
+      console.error('  Secret Prefix:', secret.substring(0, 10) + '...');
+      console.error('  Secret Length:', secret.length);
+    }
+    console.error('  ENV JWT_SECRET Status:', !!process.env.JWT_SECRET);
+    throw err;
+  }
 };
 
 // 认证中间件
 const authenticate = async (req, res, next) => {
   console.log(`[Auth] authenticate check: Path=${req.path}`);
   try {
-    const token = req.headers.authorization?.split(' ')[1];
+    const authHeader = req.headers.authorization;
+    console.log('[Auth] Incoming Authorization Header:', authHeader);
+    const token = authHeader?.split(' ')[1]?.trim();
     
     if (!token) {
       return res.status(401).json({
@@ -34,7 +56,7 @@ const authenticate = async (req, res, next) => {
 
     const decoded = verifyToken(token);
     const user = await User.findByPk(decoded.id, {
-      attributes: ['id', 'username', 'email', 'role', 'company_id']
+      attributes: ['id', 'username', 'email', 'role', 'company_id', 'company_name']
     });
     
     if (!user) {

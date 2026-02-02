@@ -156,12 +156,12 @@ class ResumeComparison {
         div.className = 'selected-resume-item bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between';
         
         div.innerHTML = `
-            <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                    <svg class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/>
-                    </svg>
-                </div>
+            <div class="flex items-center space-x-3 mb-4">
+                ${window.ui ? window.ui.renderAvatar(resume.avatar, resume.name, 'w-10 h-10', 'rounded-lg', true) : `
+                    <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400">
+                        <i class="fas fa-user"></i>
+                    </div>
+                `}
                 <div>
                     <h4 class="font-medium text-gray-900">${resume.name}</h4>
                     <p class="text-sm text-gray-600">评分：${Number.isFinite(resume.score) ? resume.score : '—'}分</p>

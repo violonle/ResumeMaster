@@ -379,13 +379,13 @@ const headers = [
 
 const load = async () => {
   const res = await store.fetchSubscriptionPlans()
-  plans.value = res || []
+  plans.value = res.items || res.data?.items || res || []
 }
 
 const fetchIdByKey = async (key) => {
   try {
     const res = await subscriptionAPI.getPlans()
-    const list = res.data || []
+    const list = res.data?.items || res.data || []
     const found = list.find(p => p.key === key)
     return found?.id || null
   } catch (_) { return null }

@@ -9,6 +9,8 @@
     <script src="../js/ui-components.js"></script>
     <script src="../js/resume-data.js"></script>
     <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/sidebar.css">
     <script>
@@ -39,73 +41,56 @@
         }
         .portal-card {
             background-color: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 16px;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
-            transition-property: all;
-            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-            transition-duration: 300ms;
+            border: 1px solid #f3f4f6;
+            border-radius: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .portal-card:hover {
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
             transform: translateY(-2px);
-        }
-        *, *::before, *::after { box-sizing: border-box; }
-        html, body { width: 100%; max-width: 100%; overflow-x: hidden; }
-        
-        .btn-primary {
-            background-color: #2563eb;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-primary:hover {
-            background-color: #1d4ed8;
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
         }
         
         .form-input {
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
+            font-size: 0.875rem;
         }
         
         .form-input:focus {
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.05);
+            border-color: #0f172a;
         }
-        
-        .benefit-item {
+
+        .section-icon {
+            width: 42px;
+            height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
             background: #eff6ff;
-            color: #1e40af;
-            border: 1px solid #93c5fd;
-        }
-        
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            color: #2563eb;
         }
         
         .fade-in-up {
-            animation: fadeInUp 0.6s ease forwards;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
         }
         
-        .preview-mode {
-            background: #fef3c7;
-            border: 2px solid #f59e0b;
+        .fade-in-up.visible {
+            opacity: 1;
+            transform: translateY(0);
         }
         
-        .section-divider {
-            background: #e5e7eb;
-            height: 1px;
-            margin: 2rem 0;
+        /* 隐藏滚动条但保留功能 */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
         }
-        
-        .form-input, select, textarea { max-width: 100%; min-width: 0; }
-        .brand-title { white-space: normal !important; }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
     </style>
 </head>
 <body class="bg-gray-50 antialiased text-gray-900 selection:bg-blue-100 selection:text-blue-700 min-h-screen overflow-x-hidden">
@@ -132,13 +117,13 @@
             <div class="flex items-center justify-between mb-8 fade-in-up">
                 <div></div>
                 <div class="flex items-center space-x-4">
-                    <button class="px-4 py-2 bg-white text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors" id="import-btn">
+                    <button class="px-6 py-3 bg-white border border-gray-900 text-gray-900 rounded-xl text-sm font-black shadow-sm hover:bg-gray-50 transition-all flex items-center" id="import-btn">
                         <i class="fas fa-cloud-download-alt mr-2"></i>一键导入
                     </button>
-                    <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors" id="preview-btn">
+                    <button class="px-6 py-3 bg-slate-900 text-white rounded-xl text-sm font-black shadow-lg shadow-gray-200 hover:bg-black transition-all flex items-center" id="preview-btn">
                         <i class="fas fa-eye mr-2"></i>预览
                     </button>
-                    <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors" id="save-draft-btn">
+                    <button class="px-6 py-3 bg-slate-900 text-white rounded-xl text-sm font-black shadow-lg shadow-gray-200 hover:bg-black transition-all flex items-center" id="save-draft-btn">
                         <i class="fas fa-save mr-2"></i>保存草稿
                     </button>
                 </div>
@@ -146,36 +131,35 @@
 
             <form id="job-posting-form" class="space-y-8">
                 <!-- 基本信息 -->
-                <div class="portal-card p-6 fade-in-up">
-                    <div class="flex items-center mb-6">
-                        <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-info-circle text-blue-600"></i>
+                <div class="portal-card p-8 fade-in-up">
+                    <div class="flex items-center mb-8">
+                        <div class="section-icon">
+                            <i class="fas fa-info-circle text-lg"></i>
                         </div>
-                        <h2 class="text-xl font-semibold text-gray-900 ml-3">基本信息</h2>
+                        <div class="ml-4">
+                            <h2 class="text-lg font-bold text-gray-900">基本信息</h2>
+                            <p class="text-xs text-gray-500">填写职位的核心基础信息</p>
+                        </div>
                     </div>
                     
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">职位名称 *</label>
-                            <input type="text" id="job-title" class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="例：高级前端开发工程师" required>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <div class="lg:col-span-2">
+                            <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-2">职位名称 <span class="text-red-500">*</span></label>
+                            <input type="text" id="job-title" class="form-input w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:bg-white focus:ring-2" placeholder="例：高级前端开发工程师" required>
                         </div>
                         
-                        
-                        
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">工作地点 *</label>
-                            <input type="text" id="job-location" class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="例：北京市朝阳区" required>
+                            <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-2">工作地点 <span class="text-red-500">*</span></label>
+                            <input type="text" id="job-location" class="form-input w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:bg-white focus:ring-2" placeholder="例：北京市朝阳区" required>
                         </div>
                         
-                        
-                        
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">薪资范围 *</label>
-                            <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-2 space-y-2 sm:space-y-0">
-                                <input type="number" id="salary-min" class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="最低薪资" required>
-                                <span class="text-gray-500">-</span>
-                                <input type="number" id="salary-max" class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="最高薪资" required>
-                                <select id="salary-unit" class="form-input px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-2">薪资范围 <span class="text-red-500">*</span></label>
+                            <div class="flex items-center space-x-2">
+                                <input type="number" id="salary-min" class="form-input w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:bg-white focus:ring-2" placeholder="最低" required>
+                                <span class="text-gray-400 font-bold">-</span>
+                                <input type="number" id="salary-max" class="form-input w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:bg-white focus:ring-2" placeholder="最高" required>
+                                <select id="salary-unit" class="form-input px-3 py-3 bg-gray-50 border-none rounded-xl focus:bg-white focus:ring-2">
                                     <option value="month">月</option>
                                     <option value="year">年</option>
                                 </select>
@@ -183,9 +167,9 @@
                         </div>
                         
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">经验要求 *</label>
-                            <select id="experience" class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
-                                <option value="">请选择经验要求</option>
+                            <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-2">经验要求 <span class="text-red-500">*</span></label>
+                            <select id="experience" class="form-input w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:bg-white focus:ring-2" required>
+                                <option value="">请选择</option>
                                 <option value="0-1">0-1年</option>
                                 <option value="1-3">1-3年</option>
                                 <option value="3-5">3-5年</option>
@@ -195,8 +179,8 @@
                         </div>
                         
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">学历要求</label>
-                            <select id="education" class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-2">学历要求</label>
+                            <select id="education" class="form-input w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:bg-white focus:ring-2">
                                 <option value="">不限</option>
                                 <option value="high-school">高中</option>
                                 <option value="college">大专</option>
@@ -205,111 +189,114 @@
                                 <option value="phd">博士</option>
                             </select>
                         </div>
-                        
-                        
                     </div>
                 </div>
 
                 <!-- 职位描述 -->
-                <div class="portal-card p-6 fade-in-up">
-                    <div class="flex items-center mb-6">
-                        <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-file-alt text-blue-600"></i>
+                <div class="portal-card p-8 fade-in-up">
+                    <div class="flex items-center mb-8">
+                        <div class="section-icon bg-purple-50 text-purple-600">
+                            <i class="fas fa-file-alt text-lg"></i>
                         </div>
-                        <h2 class="text-xl font-semibold text-gray-900 ml-3">职位描述</h2>
+                        <div class="ml-4">
+                            <h2 class="text-lg font-bold text-gray-900">职位描述</h2>
+                            <p class="text-xs text-gray-500">详细描述岗位的职责与任职要求</p>
+                        </div>
                     </div>
                     
-                    <div class="space-y-6">
+                    <div class="space-y-8">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">岗位职责 *</label>
-                            <textarea id="job-description" rows="6" class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="请填写岗位的主要工作职责..." required></textarea>
+                            <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-3">岗位职责 <span class="text-red-500">*</span></label>
+                            <textarea id="job-description" rows="8" class="form-input w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:bg-white focus:ring-2 resize-none" placeholder="请填写岗位的主要工作职责..." required></textarea>
                         </div>
                         
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">任职要求 *</label>
-                            <textarea id="job-requirements" rows="6" class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="请填写学历、经验、技能等硬性要求..." required></textarea>
+                            <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-3">任职要求 <span class="text-red-500">*</span></label>
+                            <textarea id="job-requirements" rows="8" class="form-input w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:bg-white focus:ring-2 resize-none" placeholder="请填写学历、经验、技能等硬性要求..." required></textarea>
                         </div>
                     </div>
                 </div>
 
                 <!-- 福利待遇 -->
-                <div class="portal-card p-6 fade-in-up">
-                    <div class="flex items-center mb-6">
-                        <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-gift text-blue-600"></i>
+                <div class="portal-card p-8 fade-in-up">
+                    <div class="flex items-center mb-8">
+                        <div class="section-icon bg-blue-50 text-blue-600">
+                            <i class="fas fa-gift text-lg"></i>
                         </div>
-                        <h2 class="text-xl font-semibold text-gray-900 ml-3">福利待遇</h2>
+                        <div class="ml-4">
+                            <h2 class="text-lg font-bold text-gray-900">福利待遇</h2>
+                            <p class="text-xs text-gray-500">勾选职位提供的各种福利保障</p>
+                        </div>
                     </div>
                     
-                    <div class="space-y-6">
-                        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                            <label class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-                                <input type="checkbox" name="benefits" value="five-insurance-fund" class="rounded text-blue-600 focus:ring-blue-500">
-                                <span class="text-sm">五险一金</span>
-                            </label>
-                            <label class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-                                <input type="checkbox" name="benefits" value="commercial-insurance" class="rounded text-blue-600 focus:ring-blue-500">
-                                <span class="text-sm">商业保险</span>
-                            </label>
-                            <label class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-                                <input type="checkbox" name="benefits" value="annual-bonus" class="rounded text-blue-600 focus:ring-blue-500">
-                                <span class="text-sm">年终奖</span>
-                            </label>
-                            <label class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-                                <input type="checkbox" name="benefits" value="flexible-work" class="rounded text-blue-600 focus:ring-blue-500">
-                                <span class="text-sm">弹性工作</span>
-                            </label>
-                            <label class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-                                <input type="checkbox" name="benefits" value="remote-work" class="rounded text-blue-600 focus:ring-blue-500">
-                                <span class="text-sm">远程办公</span>
-                            </label>
-                            <label class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-                                <input type="checkbox" name="benefits" value="paid-leave" class="rounded text-blue-600 focus:ring-blue-500">
-                                <span class="text-sm">带薪年假</span>
-                            </label>
-                            <label class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-                                <input type="checkbox" name="benefits" value="training" class="rounded text-blue-600 focus:ring-blue-500">
-                                <span class="text-sm">培训机会</span>
-                            </label>
-                            <label class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-                                <input type="checkbox" name="benefits" value="career-development" class="rounded text-blue-600 focus:ring-blue-500">
-                                <span class="text-sm">职业发展</span>
-                            </label>
-                            <label class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-                                <input type="checkbox" name="benefits" value="free-meals" class="rounded text-blue-600 focus:ring-blue-500">
-                                <span class="text-sm">免费餐食</span>
-                            </label>
-                            <label class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-                                <input type="checkbox" name="benefits" value="gym" class="rounded text-blue-600 focus:ring-blue-500">
-                                <span class="text-sm">健身房</span>
-                            </label>
-                            <label class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-                                <input type="checkbox" name="benefits" value="team-building" class="rounded text-blue-600 focus:ring-blue-500">
-                                <span class="text-sm">团建活动</span>
-                            </label>
-                            <label class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-                                <input type="checkbox" name="benefits" value="stock-options" class="rounded text-blue-600 focus:ring-blue-500">
-                                <span class="text-sm">股票期权</span>
-                            </label>
-                        </div>
-                        
-                        
+                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                        <label class="group flex items-center space-x-3 p-4 bg-gray-50 rounded-xl cursor-pointer hover:bg-slate-900 transition-all">
+                            <input type="checkbox" name="benefits" value="five-insurance-fund" class="w-4 h-4 rounded border-gray-300 text-slate-900 focus:ring-slate-900">
+                            <span class="text-sm font-medium text-gray-600 group-hover:text-white">五险一金</span>
+                        </label>
+                        <label class="group flex items-center space-x-3 p-4 bg-gray-50 rounded-xl cursor-pointer hover:bg-slate-900 transition-all">
+                            <input type="checkbox" name="benefits" value="commercial-insurance" class="w-4 h-4 rounded border-gray-300 text-slate-900 focus:ring-slate-900">
+                            <span class="text-sm font-medium text-gray-600 group-hover:text-white">商业保险</span>
+                        </label>
+                        <label class="group flex items-center space-x-3 p-4 bg-gray-50 rounded-xl cursor-pointer hover:bg-slate-900 transition-all">
+                            <input type="checkbox" name="benefits" value="annual-bonus" class="w-4 h-4 rounded border-gray-300 text-slate-900 focus:ring-slate-900">
+                            <span class="text-sm font-medium text-gray-600 group-hover:text-white">年终奖</span>
+                        </label>
+                        <label class="group flex items-center space-x-3 p-4 bg-gray-50 rounded-xl cursor-pointer hover:bg-slate-900 transition-all">
+                            <input type="checkbox" name="benefits" value="flexible-work" class="w-4 h-4 rounded border-gray-300 text-slate-900 focus:ring-slate-900">
+                            <span class="text-sm font-medium text-gray-600 group-hover:text-white">弹性工作</span>
+                        </label>
+                        <label class="group flex items-center space-x-3 p-4 bg-gray-50 rounded-xl cursor-pointer hover:bg-slate-900 transition-all">
+                            <input type="checkbox" name="benefits" value="remote-work" class="w-4 h-4 rounded border-gray-300 text-slate-900 focus:ring-slate-900">
+                            <span class="text-sm font-medium text-gray-600 group-hover:text-white">远程办公</span>
+                        </label>
+                        <label class="group flex items-center space-x-3 p-4 bg-gray-50 rounded-xl cursor-pointer hover:bg-slate-900 transition-all">
+                            <input type="checkbox" name="benefits" value="paid-leave" class="w-4 h-4 rounded border-gray-300 text-slate-900 focus:ring-slate-900">
+                            <span class="text-sm font-medium text-gray-600 group-hover:text-white">带薪年假</span>
+                        </label>
+                        <label class="group flex items-center space-x-3 p-4 bg-gray-50 rounded-xl cursor-pointer hover:bg-slate-900 transition-all">
+                            <input type="checkbox" name="benefits" value="training" class="w-4 h-4 rounded border-gray-300 text-slate-900 focus:ring-slate-900">
+                            <span class="text-sm font-medium text-gray-600 group-hover:text-white">培训机会</span>
+                        </label>
+                        <label class="group flex items-center space-x-3 p-4 bg-gray-50 rounded-xl cursor-pointer hover:bg-slate-900 transition-all">
+                            <input type="checkbox" name="benefits" value="career-development" class="w-4 h-4 rounded border-gray-300 text-slate-900 focus:ring-slate-900">
+                            <span class="text-sm font-medium text-gray-600 group-hover:text-white">职业发展</span>
+                        </label>
+                        <label class="group flex items-center space-x-3 p-4 bg-gray-50 rounded-xl cursor-pointer hover:bg-slate-900 transition-all">
+                            <input type="checkbox" name="benefits" value="free-meals" class="w-4 h-4 rounded border-gray-300 text-slate-900 focus:ring-slate-900">
+                            <span class="text-sm font-medium text-gray-600 group-hover:text-white">免费餐食</span>
+                        </label>
+                        <label class="group flex items-center space-x-3 p-4 bg-gray-50 rounded-xl cursor-pointer hover:bg-slate-900 transition-all">
+                            <input type="checkbox" name="benefits" value="gym" class="w-4 h-4 rounded border-gray-300 text-slate-900 focus:ring-slate-900">
+                            <span class="text-sm font-medium text-gray-600 group-hover:text-white">健身房</span>
+                        </label>
+                        <label class="group flex items-center space-x-3 p-4 bg-gray-50 rounded-xl cursor-pointer hover:bg-slate-900 transition-all">
+                            <input type="checkbox" name="benefits" value="team-building" class="w-4 h-4 rounded border-gray-300 text-slate-900 focus:ring-slate-900">
+                            <span class="text-sm font-medium text-gray-600 group-hover:text-white">团建活动</span>
+                        </label>
+                        <label class="group flex items-center space-x-3 p-4 bg-gray-50 rounded-xl cursor-pointer hover:bg-slate-900 transition-all">
+                            <input type="checkbox" name="benefits" value="stock-options" class="w-4 h-4 rounded border-gray-300 text-slate-900 focus:ring-slate-900">
+                            <span class="text-sm font-medium text-gray-600 group-hover:text-white">股票期权</span>
+                        </label>
                     </div>
                 </div>
 
                 <!-- 发布设置 -->
-                <div class="portal-card p-6 fade-in-up">
-                    <div class="flex items-center mb-6">
-                        <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-cog text-blue-600"></i>
+                <div class="portal-card p-8 fade-in-up">
+                    <div class="flex items-center mb-8">
+                        <div class="section-icon bg-emerald-50 text-emerald-600">
+                            <i class="fas fa-cog text-lg"></i>
                         </div>
-                        <h2 class="text-xl font-semibold text-gray-900 ml-3">发布设置</h2>
+                        <div class="ml-4">
+                            <h2 class="text-lg font-bold text-gray-900">发布设置</h2>
+                            <p class="text-xs text-gray-500">配置职位的显示与联系方式</p>
+                        </div>
                     </div>
                     
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-8">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">有效期</label>
-                            <select id="validity-period" class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-2">有效期</label>
+                            <select id="validity-period" class="form-input w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:bg-white focus:ring-2">
                                 <option value="30">30天</option>
                                 <option value="60">60天</option>
                                 <option value="90" selected>90天</option>
@@ -318,40 +305,100 @@
                         </div>
                         
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">发布到</label>
-                            <div class="space-y-2">
-                                <label class="flex items-center space-x-3">
-                                    <input type="checkbox" name="publish-to" value="internal" class="rounded text-blue-600 focus:ring-blue-500" checked>
-                                    <span class="text-sm">内部招聘平台</span>
+                            <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-2">发布渠道</label>
+                            <div class="flex items-center space-x-6 mt-3">
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" name="publish-to" value="internal" class="w-4 h-4 rounded border-gray-300 text-slate-900 focus:ring-slate-900" checked>
+                                    <span class="text-sm font-medium text-gray-700">内部平台</span>
                                 </label>
-                                <label class="flex items-center space-x-3">
-                                    <input type="checkbox" name="publish-to" value="external" class="rounded text-blue-600 focus:ring-blue-500">
-                                    <span class="text-sm">外部招聘网站</span>
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" name="publish-to" value="external" class="w-4 h-4 rounded border-gray-300 text-slate-900 focus:ring-slate-900">
+                                    <span class="text-sm font-medium text-gray-700">外部网站</span>
                                 </label>
                             </div>
                         </div>
+
+                        <!-- 智能处理设置 -->
+                        <div class="sm:col-span-2 border-t border-gray-100 pt-8 mt-4">
+                            <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-6">智能处理设置</label>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <!-- 自动快评 -->
+                                <div class="p-4 bg-gray-50 rounded-2xl hover:bg-white hover:shadow-md transition-all border border-transparent hover:border-gray-100">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center">
+                                                <i class="fas fa-bolt text-sm"></i>
+                                            </div>
+                                            <span class="text-sm font-bold text-gray-900">自动快评</span>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" id="enable-auto-screening" class="sr-only peer" checked>
+                                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-slate-900"></div>
+                                        </label>
+                                    </div>
+                                    <p class="text-xs text-gray-500 leading-relaxed">新简历投递后立即开启AI快评，生成初步匹配得分</p>
+                                </div>
+
+                                <!-- 高分通知 -->
+                                <div class="p-4 bg-gray-50 rounded-2xl hover:bg-white hover:shadow-md transition-all border border-transparent hover:border-gray-100">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                                                <i class="fas fa-bell text-sm"></i>
+                                            </div>
+                                            <span class="text-sm font-bold text-gray-900">高分通知</span>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" id="notify-high-score" class="sr-only peer" checked>
+                                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-slate-900"></div>
+                                        </label>
+                                    </div>
+                                    <div class="flex items-center space-x-2 mt-2">
+                                        <span class="text-xs text-gray-500">分值 ≥</span>
+                                        <input type="number" id="high-score-threshold" class="w-16 px-2 py-1 bg-white border border-gray-200 rounded-lg text-xs font-bold focus:ring-1 focus:ring-slate-900 outline-none" value="85" min="0" max="100">
+                                    </div>
+                                </div>
+
+                                <!-- 自动深度解析 -->
+                                <div id="deep-analysis-card" class="p-4 bg-gray-50 rounded-2xl hover:bg-white hover:shadow-md transition-all border border-transparent hover:border-gray-100">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-8 h-8 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center">
+                                                <i class="fas fa-brain text-sm"></i>
+                                            </div>
+                                            <span class="text-sm font-bold text-gray-900">自动深度解析</span>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" id="enable-deep-analysis" class="sr-only peer">
+                                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-slate-900"></div>
+                                        </label>
+                                    </div>
+                                    <p class="text-xs text-gray-500 leading-relaxed">快评完成后，自动对简历进行深度维度分析与潜能评估</p>
+                                </div>
+                            </div>
+                        </div>
                         
-                        <div class="lg:col-span-2">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">联系方式</label>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <input type="text" id="contact-name" class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="联系人姓名">
-                                <input type="email" id="contact-email" class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="联系邮箱">
-                                <input type="tel" id="contact-phone" class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="联系电话">
-                                <input type="text" id="contact-wechat" class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="微信号">
+                        <div class="sm:col-span-2 mt-4 border-t border-gray-100 pt-8">
+                            <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-4">联系方式</label>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <input type="text" id="contact-name" class="form-input w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:bg-white focus:ring-2" placeholder="联系人姓名">
+                                <input type="email" id="contact-email" class="form-input w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:bg-white focus:ring-2" placeholder="联系邮箱">
+                                <input type="tel" id="contact-phone" class="form-input w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:bg-white focus:ring-2" placeholder="联系电话">
+                                <input type="text" id="contact-wechat" class="form-input w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:bg-white focus:ring-2" placeholder="微信号">
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- 提交按钮 -->
-                <div class="flex items-center justify-center space-x-4 pt-6">
-                    <button type="button" class="px-8 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors" id="cancel-btn">
+                <div class="flex items-center justify-center space-x-4 pt-8">
+                    <button type="button" class="px-8 py-3 bg-white border border-gray-900 text-gray-900 rounded-xl text-sm font-black shadow-sm hover:bg-gray-50 transition-all flex items-center" id="cancel-btn">
                         取消
                     </button>
-                    <button type="button" class="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors" id="save-draft-final-btn">
+                    <button type="button" class="px-8 py-3 bg-slate-900 text-white rounded-xl text-sm font-black shadow-lg shadow-gray-200 hover:bg-black transition-all flex items-center" id="save-draft-final-btn">
                         <i class="fas fa-save mr-2"></i>保存草稿
                     </button>
-                    <button type="submit" class="btn-primary px-8 py-3 text-white rounded-lg font-semibold">
+                    <button type="submit" class="px-8 py-3 bg-slate-900 text-white rounded-xl text-sm font-black shadow-xl shadow-gray-200 hover:bg-black transition-all flex items-center">
                         <i class="fas fa-paper-plane mr-2"></i>立即发布
                     </button>
                 </div>
@@ -386,6 +433,26 @@
         function initJobPostingForm() {
             const form = document.getElementById('job-posting-form');
             
+            // 自动快评与自动深度解析联动
+            const autoScreeningToggle = document.getElementById('enable-auto-screening');
+            const deepAnalysisCard = document.getElementById('deep-analysis-card');
+            const deepAnalysisToggle = document.getElementById('enable-deep-analysis');
+
+            if (autoScreeningToggle && deepAnalysisCard) {
+                const updateLinkage = () => {
+                    if (autoScreeningToggle.checked) {
+                        deepAnalysisCard.classList.remove('hidden');
+                    } else {
+                        deepAnalysisCard.classList.add('hidden');
+                        if (deepAnalysisToggle) deepAnalysisToggle.checked = false;
+                    }
+                };
+                
+                autoScreeningToggle.addEventListener('change', updateLinkage);
+                // 初始化状态
+                updateLinkage();
+            }
+
             form.addEventListener('submit', (e) => {
                 e.preventDefault();
                 handleFormSubmit();
@@ -440,7 +507,12 @@
                 education: document.getElementById('education').value,
                 description: document.getElementById('job-description').value,
                 requirements: document.getElementById('job-requirements').value,
-                benefits: Array.from(document.querySelectorAll('input[name="benefits"]:checked')).map(cb => cb.value)
+                benefits: Array.from(document.querySelectorAll('input[name="benefits"]:checked')).map(cb => cb.value),
+                // 新增字段
+                enableAutoScreening: document.getElementById('enable-auto-screening').checked,
+                notifyHighScore: document.getElementById('notify-high-score').checked,
+                highScoreThreshold: parseInt(document.getElementById('high-score-threshold').value) || 85,
+                enableDeepAnalysis: document.getElementById('enable-deep-analysis').checked
             };
         }
 
@@ -552,7 +624,12 @@
                     description: formData.description,
                     requirements: formData.requirements,
                     benefits: formData.benefits, // Send benefits array
-                    status: 'active'
+                    status: 'active',
+                    // 新增智能处理字段
+                    enable_auto_screening: formData.enableAutoScreening,
+                    notify_high_score: formData.notifyHighScore,
+                    high_score_threshold: formData.highScoreThreshold,
+                    enable_deep_analysis: formData.enableDeepAnalysis
                 };
 
                 try {
@@ -634,10 +711,22 @@
         // 页面动画 & 初始化
         document.addEventListener('DOMContentLoaded', async () => {
             const elements = document.querySelectorAll('.fade-in-up');
+            
+            // 使用 Intersection Observer 处理进入视图时的动画
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, { threshold: 0.1 });
+
             elements.forEach((el, index) => {
+                observer.observe(el);
+                // 确保初始元素有延迟显示效果
                 setTimeout(() => {
-                    el.style.opacity = '1';
-                }, index * 200);
+                    el.classList.add('visible');
+                }, index * 100);
             });
 
             // 检查 URL 是否包含 id 参数（编辑模式）
@@ -691,6 +780,20 @@
                         const cb = document.querySelector(`input[name="benefits"][value="${benefit}"]`);
                         if (cb) cb.checked = true;
                     });
+                }
+
+                // 智能处理设置填充
+                if (job.enable_auto_screening !== undefined) {
+                    document.getElementById('enable-auto-screening').checked = !!job.enable_auto_screening;
+                }
+                if (job.notify_high_score !== undefined) {
+                    document.getElementById('notify-high-score').checked = !!job.notify_high_score;
+                }
+                if (job.high_score_threshold !== undefined) {
+                    document.getElementById('high-score-threshold').value = job.high_score_threshold;
+                }
+                if (job.enable_deep_analysis !== undefined) {
+                    document.getElementById('enable-deep-analysis').checked = !!job.enable_deep_analysis;
                 }
                 
                 // 存储当前编辑的 Job ID

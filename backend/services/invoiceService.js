@@ -15,10 +15,10 @@ class InvoiceService {
     try {
       // 获取订单信息
       const order = await Order.findOne({
-        where: { id: orderId, userId },
+        where: { id: orderId, user_id: userId },
         include: [{
           model: User,
-          attributes: ['id', 'email', 'company', 'taxNumber']
+          attributes: ['id', 'email', 'company_name', 'tax_number']
         }]
       });
 
@@ -47,16 +47,16 @@ class InvoiceService {
         amount: order.amount,
         taxAmount: order.amount * 0.06, // 6%税率
         totalAmount: order.amount * 1.06,
-        planType: order.planType,
-        paymentMethod: order.paymentMethod,
-        transactionId: order.transactionId,
+        planType: order.plan,
+        paymentMethod: order.provider,
+        transactionId: order.transaction_id,
         status: 'issued',
         issuedAt: new Date(),
-        buyerName: order.User.company || order.User.email,
-        buyerTaxNumber: order.User.taxNumber || null,
+        buyerName: order.User.company_name || order.User.email,
+        buyerTaxNumber: null, // User模型中没有这个字段
         invoiceDate: moment().format('YYYY-MM-DD'),
-        serviceDescription: `SuperResumeMaster ${order.planType}会员服务`,
-        servicePeriod: this.getServicePeriod(order.planType)
+        serviceDescription: `SuperResumeMaster ${order.plan}会员服务`,
+        servicePeriod: this.getServicePeriod(order.plan)
       });
 
       return invoice;
@@ -83,7 +83,7 @@ class InvoiceService {
         where: { userId },
         include: [{
           model: Order,
-          attributes: ['orderNo', 'createdAt']
+          attributes: ['out_trade_no', 'created_at']
         }],
         order: [['createdAt', 'DESC']],
         limit: parseInt(pageSize),
@@ -110,7 +110,7 @@ class InvoiceService {
         where: { id: invoiceId, userId },
         include: [{
           model: Order,
-          attributes: ['orderNo', 'createdAt', 'paidAt']
+          attributes: ['out_trade_no', 'createdAt', 'paid_at']
         }]
       });
 
@@ -232,10 +232,11 @@ class InvoiceService {
   }
 
   // 获取发票统计信息
-  async getInvoiceStats(userId) {
+  async getInvoiceStats(userId = null) {
     try {
+      const where = userId ? { userId } : {};
       const stats = await Invoice.findAll({
-        where: { userId },
+        where,
         attributes: [
           'status',
           [require('sequelize').fn('COUNT', '*'), 'count'],
@@ -245,11 +246,11 @@ class InvoiceService {
       });
 
       const totalInvoices = await Invoice.count({
-        where: { userId }
+        where
       });
 
       const totalAmount = await Invoice.sum('totalAmount', {
-        where: { userId }
+        where
       });
 
       return {

@@ -820,7 +820,8 @@ class OptimizedResumeParseService {
             /(\d{4}\.\d{1,2}[-–]\d{4}\.\d{1,2}|\d{4}\.\d{1,2}[-–]至今)([^\d\n]{2,30})([^\d\n]{2,20})/i
         ];
 
-        for (const line of lines) {
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
             let match;
             
             match = patterns[11].exec(line);

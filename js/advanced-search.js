@@ -110,20 +110,7 @@ class AdvancedSearch {
 
     async searchInData(query, filters) {
         try {
-            const response = await fetch('/api/resumes/search', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify({ query, filters })
-            });
-            
-            const result = await response.json();
-            if (!result.success) {
-                throw new Error(result.error?.message || '搜索失败');
-            }
-            
+            const result = await window.resumeDataManager.apiRequest('/resumes/search', 'POST', { query, filters }, false);
             return result.data || [];
         } catch (error) {
             console.error('API search failed:', error);

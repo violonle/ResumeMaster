@@ -24,7 +24,7 @@
               <div class="d-flex align-end justify-center mb-8 w-100 ga-4">
                 <div style="width: 72px;">
                   <VImg
-                    :src="`${baseUrl}logo.png`"
+                    src="/logo.png"
                     alt="Logo"
                     contain
                   />
@@ -87,7 +87,7 @@
                     class="mr-4"
                   >
                     <VImg
-                      :src="`${baseUrl}logo.png`"
+                      src="/logo.png"
                       alt="Logo"
                       contain
                     />

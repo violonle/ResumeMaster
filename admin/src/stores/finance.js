@@ -12,8 +12,16 @@ export const useFinanceStore = defineStore('finance', () => {
         loading.value = true
         try {
             const response = await financeAPI.getOrders(params)
-            orders.value = response.data.items
-            totalItems.value = response.data.total
+            // client.js 已经解包了 success:true, data:{...}
+            // 所以这里 response.data 应该是 { items: [], total: ... }
+            if (response.data && response.data.items) {
+                orders.value = response.data.items
+                totalItems.value = response.data.total
+            } else {
+                // 如果没有解包或者结构不对，做一些容错
+                orders.value = []
+                totalItems.value = 0
+            }
             return response.data
         } catch (error) {
             console.error('Failed to fetch orders:', error)

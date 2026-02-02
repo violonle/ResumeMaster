@@ -268,7 +268,7 @@
         const sort = dom.parsing.libraryFilterSort.value;
 
         try {
-            let allResults = await window.resumeDataManager.getTalentPoolResumes();
+            let allResults = await window.resumeDataManager.getTalentPoolResumes(false, false, { isTalentPool: true });
             
             if (query) {
                 const lowerQuery = query.toLowerCase();
@@ -326,10 +326,12 @@
             div.onclick = () => toggleLibrarySelection(item.id, div);
             
             div.innerHTML = `
-                <div class="flex items-center space-x-3">
-                    <div class="w-8 h-8 rounded-full flex items-center justify-center ${isSelected ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500'}">
-                        <i class="fas fa-user"></i>
-                    </div>
+                <div class="flex items-center space-x-3 flex-1 min-w-0">
+                    ${window.ui ? window.ui.renderAvatar(item.avatar, item.name, 'w-8 h-8', 'rounded-lg', true) : `
+                        <div class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400">
+                            <i class="fas fa-user text-xs"></i>
+                        </div>
+                    `}
                     <div>
                         <div class="text-sm font-medium text-gray-900">${item.name || '未命名简历'}</div>
                         <div class="text-xs text-gray-500">${item.position || '未分类'} • ${new Date(item.updated_at || item.created_at).toLocaleDateString()}</div>
@@ -386,17 +388,7 @@
         if (libraryState.tempUploadedFiles.length > 0) {
             const uploadHandler = new ResumeUploadHandler({
                 uploadEndpoint: '/library/upload',
-                apiRequest: async (endpoint, method, data) => {
-                    const response = await fetch(endpoint, {
-                        method: method,
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${localStorage.getItem('token')}`
-                        },
-                        body: JSON.stringify(data)
-                    });
-                    return await response.json();
-                },
+                apiRequest: (endpoint, method, data) => resumeDataManager.apiRequest(endpoint, method, data, false),
                 onSuccess: (result, file) => {
                     uploadedItems.push({
                         id: result.data.id,
@@ -426,16 +418,7 @@
         const libraryItems = [];
         for (const id of libraryState.selectedIds) {
             try {
-                const response = await fetch(`/api/resumes/${id}`, {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    }
-                });
-                
-                const result = await response.json();
-                if (!result.success) {
-                    throw new Error(result.error?.message || '获取简历失败');
-                }
+                const result = await resumeDataManager.apiRequest(`/resumes/${id}`, 'GET', null, false);
                 
                 libraryItems.push({
                     id: result.data.id,
@@ -485,8 +468,12 @@
             div.className = 'flex items-center justify-between p-4 bg-white border border-gray-200 rounded-xl hover:shadow-md transition-shadow';
             div.innerHTML = `
                 <div class="flex items-center space-x-4">
-                    <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">
-                        <i class="fas ${item.source === 'upload' ? 'fa-file-upload' : 'fa-database'}"></i>
+                    <div class="flex-shrink-0">
+                        ${window.ui ? window.ui.renderAvatar(item.avatar, item.name, 'w-10 h-10', 'rounded-lg', true) : `
+                            <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200 shadow-sm">
+                                <i class="fas ${item.source === 'upload' ? 'fa-file-upload' : 'fa-user'}"></i>
+                            </div>
+                        `}
                     </div>
                     <div>
                         <h4 class="font-medium text-gray-900">${item.name}</h4>
@@ -553,18 +540,7 @@
                 
                 try {
                     // Call actual API for analysis
-                    const response = await fetch(`/api/aiAnalysis/analyze/${item.resumeId}`, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                            'Content-Type': 'application/json'
-                        }
-                    });
-                    
-                    const result = await response.json();
-                    if (!result.success) {
-                        throw new Error(result.error?.message || '分析失败');
-                    }
+                    const result = await resumeDataManager.apiRequest(`/aiAnalysis/analyze/${item.resumeId}`, 'POST', null, false);
                     
                     item.status = 'completed';
                     item.analysisResult = result.data;
@@ -691,18 +667,7 @@
                 const formData = new FormData();
                 formData.append('resume', file);
                 
-                const response = await fetch('/api/ai/upload', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    },
-                    body: formData
-                });
-                
-                const result = await response.json();
-                if (!result.success) {
-                    throw new Error(result.error?.message || '上传失败');
-                }
+                const result = await resumeDataManager.apiRequest('/ai/upload', 'POST', formData, false);
                 
                 state.comparison.selectedResumes.push({
                     id: result.data.id,
@@ -745,8 +710,8 @@
              div.className = 'selected-resume-item bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between';
              div.innerHTML = `
                  <div class="flex items-center space-x-3">
-                     <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                         <i class="fas fa-file-alt text-blue-600"></i>
+                     <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200 shadow-sm">
+                         <i class="fas fa-user"></i>
                      </div>
                      <div>
                          <h4 class="font-medium text-gray-900">${item.name}</h4>
@@ -772,20 +737,7 @@
         try {
             const resumeIds = state.comparison.selectedResumes.map(r => r.resumeId);
             
-            const response = await fetch('/api/ai/compare-resumes', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ resumeIds })
-            });
-            
-            const result = await response.json();
-            if (!result.success) {
-                throw new Error(result.error?.message || '对比失败');
-            }
-            
+            const result = await resumeDataManager.apiRequest('/ai/compare-resumes', 'POST', { resumeIds }, false);
             const comparisonResult = result.data;
 
             dom.comparison.resultsSection.classList.remove('hidden');
@@ -933,7 +885,7 @@
             { bgIcon:'bg-blue-100', icon:'text-blue-600' },
             { bgIcon:'bg-green-100', icon:'text-green-600' },
             { bgIcon:'bg-purple-100', icon:'text-purple-600' },
-            { bgIcon:'bg-orange-100', icon:'text-orange-600' }
+            { bgIcon:'bg-indigo-100', icon:'text-indigo-600' }
         ];
         
         const dims = (function(){
@@ -962,7 +914,11 @@
             card.innerHTML = `
                 <div class="flex items-center justify-between mb-4">
                     <div class="flex items-center space-x-3">
-                        <div class="w-12 h-12 ${color.bgIcon} rounded-full flex items-center justify-center"><i class="fas fa-user ${color.icon} text-lg"></i></div>
+                            ${window.ui ? window.ui.renderAvatar(r.avatar, r.name, 'w-12 h-12', 'rounded-lg', true) : `
+                                <div class="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400">
+                                    <i class="fas fa-user text-xl"></i>
+                                </div>
+                            `}
                         <div><h3 class="font-bold text-gray-900">${r.name}</h3>${position}</div>
                     </div>
                     <div class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold">${tag}</div>
@@ -997,7 +953,7 @@
         th0.textContent = '评估维度';
         hr.appendChild(th0);
         
-        const palette = ['text-blue-600','text-green-600','text-purple-600','text-orange-600','text-pink-600'];
+        const palette = ['text-blue-600','text-green-600','text-purple-600','text-indigo-600','text-pink-600'];
         comparisonResult.resumes.forEach((r, idx)=>{
             const th = document.createElement('th');
             th.className = `text-center py-4 px-4 font-semibold ${palette[idx%palette.length]}`;
@@ -1038,7 +994,7 @@
                 const val = typeof raw==='number' ? raw : (typeof raw==='object' ? (raw.score ?? NaN) : NaN);
                 const isNum = typeof val==='number' && !isNaN(val);
                 const pct = isNum ? Math.max(0, Math.min(100, Math.round(val))) : 0;
-                const color = isNum ? ['bg-blue-500','bg-green-500','bg-purple-500','bg-orange-500','bg-pink-500'][idx%5] : 'bg-gray-300';
+                const color = isNum ? ['bg-blue-500','bg-green-500','bg-purple-500','bg-indigo-500','bg-pink-500'][idx%5] : 'bg-gray-300';
                 
                 const td = document.createElement('td');
                 td.className = 'py-4 px-4 text-center';

@@ -97,7 +97,7 @@ class UIComponents {
                 }
                 .notification-success { background: linear-gradient(135deg, #10b981, #059669); }
                 .notification-error { background: linear-gradient(135deg, #ef4444, #dc2626); }
-                .notification-warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
+                .notification-warning { background: linear-gradient(135deg, #6366f1, #4f46e5); }
                 .notification-info { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
             `;
             document.head.appendChild(style);
@@ -243,44 +243,62 @@ class UIComponents {
             if (!loader) {
                 loader = document.createElement('div');
                 loader.id = 'analysis-loader';
-                // 使用 rgba(0,0,0,0.5) 背景和更高层级
-                loader.className = 'fixed inset-0 z-[300] flex items-center justify-center bg-black/50 transition-opacity duration-300 opacity-0 p-4 cursor-pointer';
+                // 使用全屏白色背景+毛玻璃效果，与 resume-tools.html 保持一致
+                loader.className = 'fixed inset-0 z-[300] flex flex-col items-center justify-center bg-white/90 backdrop-blur-md transition-opacity duration-300 opacity-0 p-6';
                 loader.innerHTML = `
-                    <div class="bg-white rounded-[8px] shadow-2xl flex flex-col items-center p-8 max-w-sm w-full animate-in cursor-default relative" onclick="event.stopPropagation()">
-                        <!-- 关闭按钮 -->
-                        <button id="close-analysis-loader" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
-                            <i class="fas fa-times text-xl"></i>
-                        </button>
-                        
-                        <div class="mb-6">
-                            <div class="w-16 h-16 border-4 border-blue-50 border-t-blue-600 rounded-full animate-spin"></div>
+                    <div class="w-20 h-20 relative mb-8">
+                        <div class="absolute inset-0 border-4 border-blue-100 rounded-full"></div>
+                        <div class="absolute inset-0 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <i class="fas fa-robot text-2xl text-blue-600 animate-pulse"></i>
                         </div>
-                        <h3 class="text-xl font-bold text-gray-900 mb-3 text-center">深度解析进行中</h3>
-                        <p class="text-gray-600 text-center mb-4 leading-relaxed">
-                            正在调用大模型进行深度解析，这个过程大约需要30-60秒
-                        </p>
-                        <div class="bg-blue-50 p-4 rounded-lg w-full">
-                            <p class="text-blue-700 text-sm text-center font-medium">
-                                <i class="fas fa-info-circle mr-1"></i>
-                                您可以安全关闭此页面，稍后返回此处查看解析结果
-                            </p>
+                    </div>
+                    
+                    <h3 class="text-xl font-black text-gray-900 mb-2">AI 正在深度解析中...</h3>
+                    <p class="text-gray-500 text-sm mb-4">这可能需要 15-30 秒，请勿刷新页面</p>
+                    
+                    <div id="analysis-long-wait-msg" class="hidden mb-6 text-center">
+                        <p class="text-blue-600 font-bold text-sm mb-1">解析报告正在生成中...</p>
+                        <p class="text-gray-400 text-xs">您可以关闭本页，稍后在“解析记录”中查看，或者刷新当前页。</p>
+                    </div>
+                    
+                    <div class="w-full max-w-md bg-gray-100 h-2 rounded-full overflow-hidden shadow-inner mb-10">
+                        <div class="progress-bar-inner h-full bg-gradient-to-r from-blue-500 to-blue-700 transition-all duration-500 ease-out" style="width: 30%"></div>
+                    </div>
+
+                    <div id="analysis-loading-actions" class="hidden flex items-center gap-4 mb-10">
+                        <button id="analysis-view-results-btn" class="hidden px-6 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100">
+                            查看解析报告
+                        </button>
+                        <a href="javascript:location.reload()" class="px-6 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-50 transition-all">
+                            返回深度解析
+                        </a>
+                        <a href="analysis-records.html" class="px-6 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100">
+                            前往解析记录
+                        </a>
+                    </div>
+                    
+                    <div class="grid grid-cols-3 gap-8 w-full max-w-lg">
+                        <div class="flex flex-col items-center">
+                            <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 mb-2">
+                                <i class="fas fa-file-alt"></i>
+                            </div>
+                            <span class="text-[10px] font-bold text-gray-400 uppercase">读取简历</span>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 mb-2">
+                                <i class="fas fa-brain"></i>
+                            </div>
+                            <span class="text-[10px] font-bold text-gray-400 uppercase">逻辑推理</span>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 mb-2">
+                                <i class="fas fa-chart-bar"></i>
+                            </div>
+                            <span class="text-[10px] font-bold text-gray-400 uppercase">生成报告</span>
                         </div>
                     </div>
                 `;
-                
-                // 绑定关闭按钮事件
-                const closeBtn = loader.querySelector('#close-analysis-loader');
-                if (closeBtn) {
-                    closeBtn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        this.hideLoading();
-                    });
-                }
-
-                // 点击蒙层背景关闭
-                loader.addEventListener('click', () => {
-                    this.hideLoading();
-                });
                 document.body.appendChild(loader);
             }
             
@@ -290,11 +308,27 @@ class UIComponents {
             });
             document.body.style.overflow = 'hidden';
 
-            // 10秒后自动关闭
+            // 2.5秒后显示手动跳转按钮
+            if (this.analysisActionTimer) clearTimeout(this.analysisActionTimer);
+            this.analysisActionTimer = setTimeout(() => {
+                const longWaitMsg = document.getElementById('analysis-long-wait-msg');
+                const loadingActions = document.getElementById('analysis-loading-actions');
+                if (longWaitMsg) {
+                    longWaitMsg.classList.remove('hidden');
+                    longWaitMsg.classList.add('animate-fadeIn');
+                }
+                if (loadingActions) {
+                    loadingActions.classList.remove('hidden');
+                    loadingActions.classList.add('animate-fadeIn');
+                }
+                this.loadingActionsVisible = true;
+            }, 2500);
+
+            // 60秒后自动关闭（保险机制）
             if (this.analysisTimer) clearTimeout(this.analysisTimer);
             this.analysisTimer = setTimeout(() => {
                 this.hideLoading();
-            }, 10000);
+            }, 60000);
 
         } catch (error) {
             console.error('显示深度解析加载状态失败:', error);
@@ -453,7 +487,7 @@ class UIComponents {
         const icons = {
             success: '<div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100"><i class="fas fa-check text-green-600 text-xl"></i></div>',
             error: '<div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100"><i class="fas fa-times text-red-600 text-xl"></i></div>',
-            warning: '<div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-yellow-100"><i class="fas fa-exclamation text-yellow-600 text-xl"></i></div>',
+            warning: '<div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-indigo-100"><i class="fas fa-exclamation text-indigo-600 text-xl"></i></div>',
             info: '<div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-100"><i class="fas fa-info text-blue-600 text-xl"></i></div>'
         };
 
@@ -671,6 +705,58 @@ class UIComponents {
     smoothScrollTo(target) {
         const el = typeof target === 'string' ? document.querySelector(target) : target;
         if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    /**
+     * 渲染头像，如果无头像则显示文字占位符
+     * @param {string} avatarUrl - 头像URL
+     * @param {string} name - 用户名/企业名
+     * @param {string} sizeClass - 尺寸类 (e.g., 'w-12 h-12')
+     * @param {string} roundedClass - 圆角类 (e.g., 'rounded-full')
+     * @param {boolean} isCandidate - 是否为候选人 (候选人头像会略微放大且无边框阴影)
+     */
+    renderAvatar(avatarUrl, name, sizeClass = 'w-10 h-10', roundedClass = 'rounded-full', isCandidate = false) {
+        // 候选人样式定制：放大一点
+        let finalSizeClass = sizeClass;
+        let extraClasses = 'object-cover'; // 移除所有头像的 border 和 shadow-sm
+        
+        if (isCandidate) {
+            // 如果是候选人，且使用的是默认 w-10 尺寸，则放大到 w-12
+            if (sizeClass === 'w-10 h-10') finalSizeClass = 'w-12 h-12';
+            else if (sizeClass === 'w-8 h-8') finalSizeClass = 'w-10 h-10';
+        }
+
+        // 如果有真实的头像URL，则显示图片
+        if (avatarUrl && avatarUrl.trim() !== '' && 
+            !avatarUrl.includes('banner1.jpg') && 
+            !avatarUrl.includes('pravatar.cc') &&
+            !avatarUrl.includes('placeholder')) {
+            return `<img src="${avatarUrl}" alt="${name}" class="${finalSizeClass} ${roundedClass} ${extraClasses}">`;
+        }
+        
+        // 默认头像逻辑
+        let finalAvatarUrl = '';
+        if (isCandidate) {
+            // 候选人：随机分配头像 (01.png - 10.png)
+            // 使用名称进行哈希，确保同一个人的头像是一致的
+            let avatarIndex = 1;
+            if (name) {
+                let hash = 0;
+                for (let i = 0; i < name.length; i++) {
+                    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+                }
+                avatarIndex = Math.abs(hash % 10) + 1;
+            } else {
+                avatarIndex = Math.floor(Math.random() * 10) + 1;
+            }
+            const avatarFile = avatarIndex.toString().padStart(2, '0') + '.png';
+            finalAvatarUrl = `/dist/avatar/${avatarFile}`;
+        } else {
+            // 平台用户：统一使用 dist/avatar01.png
+            finalAvatarUrl = '/dist/avatar01.png';
+        }
+
+        return `<img src="${finalAvatarUrl}" alt="${name}" class="${finalSizeClass} ${roundedClass} ${extraClasses}">`;
     }
 }
 

@@ -8,7 +8,7 @@ export interface InterviewSession {
   totalQuestions: number;
   currentQuestionIndex: number;
   questions: InterviewQuestion[];
-  status: 'CREATED' | 'IN_PROGRESS' | 'COMPLETED' | 'EVALUATED';
+  status: 'PREPARING' | 'CREATED' | 'IN_PROGRESS' | 'COMPLETED' | 'EVALUATED';
   candidateName?: string;
   candidatePhone?: string;
   companyName?: string;

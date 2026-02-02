@@ -10,8 +10,12 @@
     <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="/css/design-system.css">
     <link rel="stylesheet" href="/css/sidebar.css">
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        /* @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap'); */
         
         body { 
             font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif; 
@@ -72,6 +76,95 @@
             border-radius: 2px;
         }
     </style>
+    <script src="../js/sidebar.js"></script>
+    <script src="../js/user-auth.js"></script>
+    <script>
+        // 立即检查认证，避免页面闪烁
+        (function() {
+            try {
+                const userInfoStr = localStorage.getItem('userInfo');
+                if (!userInfoStr) {
+                    window.location.replace('login.html');
+                    return;
+                }
+                const userInfo = JSON.parse(userInfoStr);
+                if (!userInfo || !userInfo.isLoggedIn) {
+                    window.location.replace('login.html');
+                    return;
+                }
+            } catch (e) {
+                console.error('Auth check error:', e);
+                window.location.replace('login.html');
+            }
+        })();
+    </script>
+    <style>
+        /* 隐藏所有可能的全局加载动画，解决页面闪烁和加载过慢的视觉问题 */
+        #global-loader, 
+        #global-loading,
+        .global-loader,
+        .global-loading {
+            display: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
+
+        /* 页面内容初始状态：保持可见但使用平滑过渡 */
+        [id="main-content"] {
+            opacity: 1;
+        }
+        
+        /* 骨架屏样式 */
+        .skeleton-item {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite;
+        }
+        @keyframes skeleton-loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* 头像堆叠样式 */
+        .avatar-stack {
+            display: flex;
+            align-items: center;
+        }
+        .avatar-stack .avatar-item {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            background-color: #f1f3f5;
+            margin-left: -12px;
+            box-shadow: 0 0 0 1px rgba(0,0,0,0.05);
+            transition: all 0.2s ease;
+            object-fit: cover;
+        }
+        .avatar-stack .avatar-item:first-child {
+            margin-left: 0;
+        }
+        .avatar-stack .avatar-item:hover {
+            transform: translateY(-2px) scale(1.1);
+            z-index: 10;
+        }
+        .avatar-stack .avatar-more {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            background-color: #f8f9fa;
+            color: #6c757d;
+            font-size: 10px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: -12px;
+            box-shadow: 0 0 0 1px rgba(0,0,0,0.05);
+        }
+    </style>
 </head>
 <body class="antialiased text-gray-900 selection:bg-blue-100 selection:text-blue-700">
     <aside id="sidebar" class="sidebar-modern"></aside>
@@ -94,11 +187,11 @@
             <!-- 顶部操作栏 -->
             <div class="flex items-center justify-end mb-6">
                 <div class="flex items-center space-x-3">
-                    <a href="job-posting.html" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center">
+                    <a href="job-posting.html" class="px-6 py-3 bg-slate-900 text-white rounded-xl text-sm font-black shadow-lg shadow-gray-200 hover:bg-black transition-all flex items-center">
                         <i class="fas fa-plus mr-2"></i>
                         发布职位
                     </a>
-                    <button id="import-btn" class="bg-white border border-blue-600 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors ml-3">
+                    <button id="import-btn" class="px-6 py-3 bg-white border border-gray-900 text-gray-900 rounded-xl text-sm font-black shadow-sm hover:bg-gray-50 transition-all flex items-center ml-3">
                         <i class="fas fa-cloud-download-alt mr-2"></i>
                         一键导入
                     </button>
@@ -150,7 +243,7 @@
                 <!-- 匹配成功 -->
                 <div class="stat-card p-6 rounded-2xl animate-in" style="animation-delay: 0.4s">
                     <div class="flex items-center space-x-5">
-                        <div class="w-14 h-14 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center text-2xl shadow-sm">
+                        <div class="w-14 h-14 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center text-2xl shadow-sm">
                             <i class="fas fa-handshake"></i>
                         </div>
                         <div>
@@ -244,7 +337,58 @@
                     </div>
                 </div>
                 
-                <div class="divide-y divide-gray-50" id="job-list"></div>
+                <div class="divide-y divide-gray-50" id="job-list">
+                    <!-- 骨架屏占位 -->
+                    <div class="p-0">
+                        <!-- 单个骨架行 -->
+                        <div class="p-4 flex items-center justify-between border-b border-gray-50">
+                            <div class="flex items-center space-x-4 flex-1">
+                                <div class="w-10 h-10 rounded-xl skeleton-item"></div>
+                                <div class="flex-1 space-y-2">
+                                    <div class="h-4 w-1/4 rounded skeleton-item"></div>
+                                    <div class="h-3 w-1/3 rounded skeleton-item"></div>
+                                </div>
+                            </div>
+                            <!-- 居中的头像堆叠占位 -->
+                            <div class="flex items-center px-4 md:px-8 border-l border-gray-50 h-10">
+                                <div class="avatar-stack">
+                                    <div class="avatar-item skeleton-item" style="margin-left: 0"></div>
+                                    <div class="avatar-item skeleton-item"></div>
+                                    <div class="avatar-item skeleton-item"></div>
+                                </div>
+                                <div class="h-3 w-12 rounded skeleton-item ml-3"></div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-8 h-8 rounded-lg skeleton-item"></div>
+                                <div class="w-8 h-8 rounded-lg skeleton-item"></div>
+                                <div class="w-8 h-8 rounded-lg skeleton-item"></div>
+                            </div>
+                        </div>
+                        <!-- 重复骨架行 -->
+                        <div class="p-4 flex items-center justify-between border-b border-gray-50">
+                            <div class="flex items-center space-x-4 flex-1">
+                                <div class="w-10 h-10 rounded-xl skeleton-item"></div>
+                                <div class="flex-1 space-y-2">
+                                    <div class="h-4 w-1/4 rounded skeleton-item"></div>
+                                    <div class="h-3 w-1/3 rounded skeleton-item"></div>
+                                </div>
+                            </div>
+                            <div class="flex items-center px-4 md:px-8 border-l border-gray-50 h-10">
+                                <div class="avatar-stack">
+                                    <div class="avatar-item skeleton-item" style="margin-left: 0"></div>
+                                    <div class="avatar-item skeleton-item"></div>
+                                    <div class="avatar-item skeleton-item"></div>
+                                </div>
+                                <div class="h-3 w-12 rounded skeleton-item ml-3"></div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-8 h-8 rounded-lg skeleton-item"></div>
+                                <div class="w-8 h-8 rounded-lg skeleton-item"></div>
+                                <div class="w-8 h-8 rounded-lg skeleton-item"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 
                 <!-- 分页 -->
                 <div class="bg-gray-50/30 px-6 py-4 border-t border-gray-50">
@@ -276,7 +420,6 @@
 
     <!-- 依赖脚本：确保在页面逻辑之前加载 -->
     <script src="../js/resume-data.js?v=3"></script>
-    <script src="../js/user-auth.js"></script>
     <script src="../js/error-handler.js"></script>
 
     <script>
@@ -290,41 +433,47 @@
     <script>
         // 初始化页面
         document.addEventListener('DOMContentLoaded', function() {
-            initUserAuth();
+            // 初始化侧边栏
+            if (typeof Sidebar !== 'undefined') {
+                Sidebar.init({ mount: '#sidebar', active: 'job' });
+            }
+            
             initTabs();
+            // 直接加载数据，骨架屏会自动被替换
             loadJobs();
         });
+
+        // 全局变量存储职位数据
+        let allJobsData = [];
+        let currentSummary = null;
 
         // 加载职位数据
         async function loadJobs() {
             try {
                 if (!window.resumeDataManager || typeof window.resumeDataManager.getAllJobs !== 'function') {
+                    console.error('[JobManagement] resumeDataManager not initialized');
                     throw new Error('数据管理器未初始化或方法缺失');
                 }
                 
-                // 并行加载职位和候选人数据
-                // 使用 /recruitment/pipeline 接口以获取带有 job_id 的候选人数据
-                const [jobs, pipelineResp] = await Promise.all([
-                    window.resumeDataManager.getAllJobs(),
-                    window.resumeDataManager.apiRequest('/recruitment/pipeline', 'GET', null, true, true).catch(e => ({ data: [] }))
-                ]);
+                // 仅加载职位列表，后端已包含 candidate_count 统计
+                // 传入 false 不显示全局 loading，传入 true 获取完整响应
+                const jobsResp = await window.resumeDataManager.getAllJobs(false, true).catch(e => {
+                    console.warn('获取职位列表失败:', e);
+                    return { data: [], summary: null };
+                });
 
-                const pipelineData = pipelineResp.data || [];
+                allJobsData = Array.isArray(jobsResp.data) ? jobsResp.data : [];
+                currentSummary = jobsResp.summary;
+                
+                // 获取当前激活的标签
+                const activeTab = document.querySelector('[data-tab].active');
+                const status = activeTab ? activeTab.dataset.tab : 'all';
+                
+                // 过滤并渲染
+                filterJobs(status);
+                updateStatistics(allJobsData, currentSummary);
 
-                // 处理候选人数据，转为扁平数组
-                let allCandidates = [];
-                if (Array.isArray(pipelineData)) {
-                    allCandidates = pipelineData;
-                } else if (pipelineData && typeof pipelineData === 'object') {
-                     Object.values(pipelineData).forEach(list => {
-                        if (Array.isArray(list)) {
-                            allCandidates = allCandidates.concat(list);
-                        }
-                    });
-                }
-
-                renderJobs(jobs, allCandidates);
-                updateStatistics(jobs);
+                console.log(`[JobManagement] Loaded ${allJobsData.length} jobs with pre-calculated statistics.`);
             } catch (error) {
                 console.error('加载职位数据失败:', error);
                 // 如果API调用失败，显示错误消息
@@ -366,38 +515,42 @@
             }
 
             jobList.innerHTML = jobs.map(job => {
-                // 获取当前职位的候选人
-                const jobCandidates = allCandidates.filter(c => String(c.job_id || c.jobId) === String(job.id));
-                // 取最新的5个
-                const recentCandidates = jobCandidates.slice(0, 5);
-                const extraCount = jobCandidates.length > 5 ? jobCandidates.length - 5 : 0;
+                // 使用后端返回的统计数据
+                const candidateCount = parseInt(job.candidate_count || 0);
+                const candidateNames = job.candidate_names ? job.candidate_names.split(',').filter(n => n.trim() !== '') : [];
+                const candidateAvatars = job.candidate_avatars ? job.candidate_avatars.split(',') : [];
                 
-                // 生成头像HTML
-                const avatarsHtml = recentCandidates.map(c => {
-                    const name = c.name || c.file_name || '未知';
-                    const initials = name.substring(0, 2);
-                    const colors = ['bg-blue-100 text-blue-600', 'bg-purple-100 text-purple-600', 'bg-green-100 text-green-600', 'bg-amber-100 text-amber-600', 'bg-rose-100 text-rose-600'];
-                    const colorClass = colors[name.charCodeAt(0) % colors.length];
+                // 渲染头像堆叠
+                let avatarsHtml = '';
+                if (candidateNames.length > 0) {
+                    const displayLimit = 3;
+                    const displayCandidates = candidateNames.slice(0, displayLimit).map((name, idx) => ({
+                        name: name,
+                        avatar: candidateAvatars[idx] || ''
+                    }));
                     
-                    return `
-                        <div class="w-8 h-8 rounded-full ${colorClass} flex items-center justify-center text-[10px] font-bold border-2 border-white -ml-2 first:ml-0 shadow-sm" title="${name}">
-                            ${initials}
+                    avatarsHtml = `
+                        <div class="avatar-stack">
+                            ${displayCandidates.map(c => {
+                                if (window.ui && window.ui.renderAvatar) {
+                                    return window.ui.renderAvatar(c.avatar, c.name, 'w-8 h-8 avatar-item', 'rounded-full', true);
+                                }
+                                // 回退方案
+                                return `<div class="avatar-item flex items-center justify-center text-[10px] font-bold text-white bg-blue-600 border-white">${c.name.charAt(0)}</div>`;
+                            }).join('')}
+                            ${candidateCount > displayLimit ? `
+                                <div class="avatar-more">+${candidateCount - displayLimit}</div>
+                            ` : ''}
                         </div>
                     `;
-                }).join('');
-                
-                const moreHtml = extraCount > 0 ? `
-                    <div class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center text-[10px] font-bold border-2 border-white -ml-2 shadow-sm">
-                        +${extraCount}
-                    </div>
-                ` : '';
-                
-                const candidatesSection = jobCandidates.length > 0 ? `
-                    <div class="flex items-center pl-4 pr-4 border-l border-gray-100 h-8 hidden md:flex">
-                        <div class="flex -space-x-2">
-                            ${avatarsHtml}
-                            ${moreHtml}
-                        </div>
+                }
+
+                const candidatesSection = candidateCount > 0 ? `
+                    <div class="flex items-center px-4 md:px-8 border-l border-gray-50 h-10 group/avatars">
+                        ${avatarsHtml}
+                        <span class="text-[11px] font-bold text-gray-400 group-hover/avatars:text-blue-500 transition-colors ${candidateNames.length > 0 ? 'ml-3' : ''}">
+                            ${candidateCount} 位候选人
+                        </span>
                     </div>
                 ` : '';
 
@@ -451,42 +604,42 @@
         }
 
         // 更新统计数据
-        function updateStatistics(jobs) {
+        function updateStatistics(jobs, summary = null) {
             const totalCount = document.getElementById('total-count');
             if (totalCount) {
                 totalCount.textContent = jobs.length;
             }
             const totalEl = document.getElementById('stats-total');
             const activeEl = document.getElementById('stats-active');
-            const resumesEl = document.getElementById('stats-resumes');
+            const resumesEl = document.getElementById('stats-candidates');
             const matchedEl = document.getElementById('stats-matched');
 
-            (async ()=>{
-                try {
-                    const statsResp = await userAuthInstance.apiRequest('/company/recruitment-stats');
-                    const s = statsResp && statsResp.data ? statsResp.data : {};
-                    if (totalEl) totalEl.textContent = s.total ?? jobs.length;
-                    if (activeEl) activeEl.textContent = s.active ?? jobs.filter(j => (j.status||'').toLowerCase() === 'active').length;
-                } catch(e) {
-                    if (totalEl) totalEl.textContent = jobs.length;
-                    if (activeEl) activeEl.textContent = jobs.filter(j => (j.status||'').toLowerCase() === 'active').length;
+            // 1. 职位统计：如果后端提供了 summary 则直接使用，否则从 jobs 数组计算
+            if (summary) {
+                if (totalEl) totalEl.textContent = summary.total_jobs || 0;
+                if (activeEl) activeEl.textContent = summary.active_jobs || 0;
+                if (resumesEl) resumesEl.textContent = summary.total_candidates || 0;
+                if (matchedEl) matchedEl.textContent = summary.matched_candidates || 0;
+            } else {
+                if (totalEl) totalEl.textContent = jobs.length;
+                if (activeEl) {
+                    activeEl.textContent = jobs.filter(j => {
+                        const s = String(j.status || '').toLowerCase();
+                        return s === 'active' || s === '招聘中' || s === 'published';
+                    }).length;
                 }
-                try {
-                    const resumesResp = await userAuthInstance.apiRequest('/resumes');
-                    const resumes = resumesResp && resumesResp.data ? resumesResp.data : [];
-                    if (resumesEl) resumesEl.textContent = resumes.length;
-                } catch(e) {
-                    if (resumesEl) resumesEl.textContent = '—';
-                }
-                if (matchedEl) matchedEl.textContent = jobs.reduce((sum,j)=> sum + (j.matched_count||0), 0);
-            })();
+                
+                // 候选人统计默认显示加载中，如果没有 summary 传入
+                if (resumesEl) resumesEl.textContent = '—';
+                if (matchedEl) matchedEl.textContent = '—';
+            }
         }
 
         // 状态样式
         function getStatusClass(status) {
             switch(status) {
                 case 'active': return 'bg-emerald-50 text-emerald-600 border border-emerald-100';
-                case 'paused': return 'bg-amber-50 text-amber-600 border border-amber-100';
+                case 'paused': return 'bg-blue-50 text-blue-600 border border-blue-100';
                 case 'closed': return 'bg-gray-50 text-gray-500 border border-gray-100';
                 case 'draft': return 'bg-blue-50 text-blue-600 border border-blue-100';
                 default: return 'bg-gray-50 text-gray-500 border border-gray-100';
@@ -606,7 +759,27 @@
         // 根据标签页筛选岗位
         function filterJobs(tabType) {
             console.log('切换到标签页:', tabType);
-            // 这里可以实现实际的筛选逻辑
+            
+            let filtered = allJobsData;
+            if (tabType !== 'all') {
+                filtered = allJobsData.filter(job => {
+                    const status = String(job.status || '').toLowerCase();
+                    // 映射标签到职位状态
+                    if (tabType === 'active') return ['active', '招聘中', 'published'].includes(status);
+                    if (tabType === 'paused') return ['paused', '已暂停'].includes(status);
+                    if (tabType === 'closed') return ['closed', '已关闭'].includes(status);
+                    if (tabType === 'draft') return ['draft', '草稿'].includes(status);
+                    return status === tabType;
+                });
+            }
+            
+            renderJobs(filtered);
+            
+            // 更新职位列表下方的计数
+            const totalCount = document.getElementById('total-count');
+            if (totalCount) {
+                totalCount.textContent = filtered.length;
+            }
         }
 
         // 创建职位
@@ -726,18 +899,6 @@
                 });
             }
         })();
-    </script>
-    <script src="../js/sidebar.js"></script>
-    <script>
-        // 初始化侧边栏
-        document.addEventListener('DOMContentLoaded', function() {
-            if (typeof Sidebar !== 'undefined') {
-                Sidebar.init({ mount: '#sidebar', active: 'job' });
-            }
-            if (typeof HeaderProfile !== 'undefined') {
-                HeaderProfile.init('#header-right-section');
-            }
-        });
     </script>
 </body>
 </html>

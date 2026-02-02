@@ -45,10 +45,61 @@
             background-color: #f9fafb;
         }
         .tab-btn.active {
-            /* Tailwind: bg-blue-50 text-blue-600 shadow-sm */
-            background-color: #eff6ff;
-            color: #2563eb;
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            /* Dark theme active state */
+            background-color: #111827;
+            color: #ffffff;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .tab-card {
+             display: flex;
+             align-items: center;
+             gap: 12px;
+             padding: 12px 16px;
+             border-radius: 16px;
+             border: 1px solid #e5e7eb;
+             background: #ffffff;
+             transition: all 0.2s ease;
+             min-width: 220px;
+         }
+        .tab-card.active {
+            background: #111827;
+            color: #ffffff;
+            border-color: #111827;
+            box-shadow: 0 10px 20px -10px rgba(17, 24, 39, 0.5);
+        }
+        .tab-card .tab-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            background: #f3f4f6;
+            color: #6b7280;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .tab-card.active .tab-icon {
+            background: #1f2937;
+            color: #ffffff;
+        }
+        .tab-card .tab-title {
+            font-weight: 700;
+            font-size: 14px;
+        }
+        .tab-card .tab-desc {
+            font-size: 11px;
+            color: #9ca3af;
+        }
+        .tab-card.active .tab-desc {
+            color: #e5e7eb;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fadeIn {
+            animation: fadeIn 0.5s ease-out forwards;
         }
     </style>
 </head>
@@ -69,7 +120,7 @@
         </div>
     </header>
 
-    <div class="main-content flex h-full gap-6 !pt-[88px] !pb-6 !px-6" id="main-content">
+    <div class="main-content flex h-full gap-6 !pt-[96px] !pb-6 !px-6" id="main-content">
         <!-- Sidebar Left (Candidate Selection) -->
         <div class="sidebar-left w-80 flex-shrink-0 h-full flex flex-col overflow-hidden bg-gray-50/50 rounded-2xl">
             <div class="bg-white rounded-lg shadow-sm border border-gray-100 flex flex-col h-full overflow-hidden">
@@ -119,7 +170,7 @@
 
                 <div class="p-4 border-t border-gray-100 bg-gray-50/30">
                     <button id="analyze-btn" disabled class="w-full bg-blue-600 text-white py-3 rounded-2xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 disabled:opacity-50 disabled:shadow-none flex items-center justify-center">
-                        <i class="fas fa-arrow-right mr-2"></i> 开始解析
+                        <i class="fas fa-arrow-right mr-2"></i> 深度解析
                     </button>
                 </div>
             </div>
@@ -135,9 +186,21 @@
                             解析记录
                         </a>
                     </div>
-                    <div class="flex bg-white p-1 rounded-2xl border border-gray-200">
-                        <button class="tab-btn active px-4 py-2 text-sm rounded-xl font-bold" data-mode="single">单一深度解析</button>
-                        <button class="tab-btn px-4 py-2 text-sm rounded-xl font-bold" data-mode="multi">多人对比解析</button>
+                    <div class="flex items-center gap-3 bg-white border border-gray-200 rounded-2xl p-1 shadow-sm">
+                        <button class="tab-card active" data-mode="single">
+                            <span class="tab-icon"><i class="fas fa-user"></i></span>
+                            <span class="flex flex-col items-start leading-tight">
+                                <span class="tab-title">单一深度解析</span>
+                                <span class="tab-desc">深度解析 + 对比拆分</span>
+                            </span>
+                        </button>
+                        <button class="tab-card" data-mode="multi">
+                            <span class="tab-icon"><i class="fas fa-users"></i></span>
+                            <span class="flex flex-col items-start leading-tight">
+                                <span class="tab-title">多人对比解析</span>
+                                <span class="tab-desc">双人对比 + 结论建议</span>
+                            </span>
+                        </button>
                     </div>
                 </div>
 
@@ -208,12 +271,45 @@
 
                     <!-- AI Analysis Report -->
                     <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
-                        <h4 class="text-base font-bold text-gray-900 mb-5 flex items-center">
-                            <i class="fas fa-file-invoice mr-2 text-blue-600"></i>
-                            AI 深度分析报告
-                        </h4>
+                        <div class="flex items-center justify-between mb-5">
+                            <h4 class="text-base font-bold text-gray-900 flex items-center">
+                                <i class="fas fa-file-invoice mr-2 text-blue-600"></i>
+                                AI 深度分析报告
+                            </h4>
+                            <div class="flex items-center gap-2">
+                                <button id="reanalyze-btn" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-white text-blue-600 hover:bg-blue-50 border border-blue-200">
+                                    <i class="fas fa-microscope mr-1"></i>重新解析
+                                </button>
+                                <button id="exportMdSingleBtn" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200">
+                                    <i class="fas fa-file-code mr-1"></i>导出MD
+                                </button>
+                                <button id="exportPdfSingleBtn" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700">
+                                    <i class="fas fa-file-pdf mr-1"></i>导出PDF
+                                </button>
+                            </div>
+                        </div>
                         <div id="ai-report" class="prose prose-blue prose-sm max-w-none text-gray-600 leading-relaxed">
                             <!-- Dynamic Content -->
+                        </div>
+
+                        <!-- Highlights & Risks (Dynamic) -->
+                        <div id="highlights-risks-container" class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4 hidden">
+                            <div class="bg-slate-50 border border-slate-200 rounded-xl p-5 shadow-sm">
+                                <h5 class="text-sm font-bold text-gray-800 mb-3 flex items-center">
+                                    <i class="fas fa-bolt mr-2 text-emerald-600"></i>核心亮点
+                                </h5>
+                                <ul id="res-highlights" class="space-y-2">
+                                    <!-- Dynamic Items -->
+                                </ul>
+                            </div>
+                            <div class="bg-slate-50 border border-slate-200 rounded-xl p-5 shadow-sm">
+                                <h5 class="text-sm font-bold text-gray-800 mb-3 flex items-center">
+                                    <i class="fas fa-exclamation-triangle mr-2 text-blue-600"></i>风险提示
+                                </h5>
+                                <ul id="res-risks" class="space-y-2">
+                                    <!-- Dynamic Items -->
+                                </ul>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -237,10 +333,29 @@
         </div>
         
         <h3 class="text-xl font-black text-gray-900 mb-2 loading-text">AI 正在深度解析中...</h3>
-        <p class="text-gray-500 text-sm mb-8">这可能需要 15-30 秒，请勿刷新页面</p>
+        <p class="text-gray-500 text-sm mb-4">这可能需要 15-30 秒，请勿刷新页面</p>
+        
+        <!-- 新增：耗时较长时的提示 -->
+        <div id="long-wait-msg" class="hidden mb-6 text-center animate-fadeIn">
+            <p class="text-blue-600 font-bold text-sm mb-1">解析报告正在生成中...</p>
+            <p class="text-gray-400 text-xs">您可以关闭本页，稍后在“解析记录”中查看，或者刷新当前页。</p>
+        </div>
         
         <div class="w-full max-w-md bg-gray-100 h-2 rounded-full overflow-hidden shadow-inner">
             <div class="progress-bar-inner h-full bg-gradient-to-r from-blue-500 to-blue-700 transition-all duration-500 ease-out" style="width: 10%"></div>
+        </div>
+
+        <!-- 新增：跳转按钮 -->
+        <div id="loading-actions" class="hidden mt-10 flex items-center gap-4">
+            <button id="view-results-btn" class="hidden px-6 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100">
+                查看解析报告
+            </button>
+            <a href="javascript:location.reload()" class="px-6 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-50 transition-all">
+                返回深度解析
+            </a>
+            <a href="analysis-records.html" class="px-6 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100">
+                前往解析记录
+            </a>
         </div>
         
         <div class="mt-10 grid grid-cols-3 gap-8 w-full max-w-lg">
@@ -265,7 +380,105 @@
         </div>
     </div>
 
+    <!-- Deep Analysis Modal -->
+    <div id="analysisModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div id="analysis-modal-backdrop" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeAnalysisModal()"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
+                            <i class="fas fa-magic text-blue-600"></i>
+                        </div>
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="analysis-modal-title">深度解析说明</h3>
+                            <div class="mt-2">
+                                <div class="bg-blue-50 p-4 mb-4">
+                                    <div class="flex">
+                                        <div class="flex-shrink-0">
+                                            <i class="fas fa-info-circle text-blue-400"></i>
+                                        </div>
+                                        <div class="ml-3">
+                                            <p id="analysis-modal-message" class="text-sm text-blue-700">
+                                                深度解析将消耗 1 个 AI 点数，通过多维度深度评估候选人与职位的匹配度。
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="space-y-3 text-sm text-gray-600">
+                                    <p class="font-bold text-gray-800">解析维度包含：</p>
+                                    <ul class="list-disc pl-5 space-y-1">
+                                        <li>专业技能深度评估</li>
+                                        <li>项目经验契合度分析</li>
+                                        <li>学历与背景质量评估</li>
+                                        <li>离职原因与稳定性预测</li>
+                                        <li>团队协作与文化匹配度</li>
+                                    </ul>
+                                    <p class="mt-4 italic">解析过程大约需要 10-30 秒，完成后将自动刷新页面显示结果。</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" id="confirmAnalysisBtn" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
+                        立即解析
+                    </button>
+                    <button type="button" onclick="closeAnalysisModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        取消
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 淘汰反馈模态框 -->
+    <div id="rejectModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div id="reject-modal-backdrop" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeRejectModal()"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                            <i class="fas fa-exclamation-triangle text-red-600"></i>
+                        </div>
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">淘汰候选人</h3>
+                            <div class="mt-2">
+                                <p class="text-sm text-gray-500 mb-4">
+                                    请填写淘汰理由（可选），该理由将仅供内部参考。
+                                </p>
+                                <textarea id="rejectReason" rows="3" class="shadow-sm focus:ring-red-500 focus:border-red-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border" placeholder="请输入淘汰理由..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" id="confirmRejectBtn" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
+                        确认淘汰
+                    </button>
+                    <button type="button" onclick="closeRejectModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        取消
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Main Controller for this page -->
     <script src="../js/resume-tools-controller-v2.js"></script>
+    <script>
+        function closeAnalysisModal() {
+            const modal = document.getElementById('analysisModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function closeRejectModal() {
+            const modal = document.getElementById('rejectModal');
+            if (modal) modal.classList.add('hidden');
+        }
+    </script>
 </body>
 </html>

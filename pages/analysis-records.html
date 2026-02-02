@@ -7,13 +7,16 @@
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <script src="../js/tailwindcss.js"></script>
     <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.loli.net">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.loli.net/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Shared Utils -->
     <script src="../js/user-auth.js"></script>
     <script src="../js/header-profile.js"></script>
     <script src="../js/ui-components.js"></script>
     <script src="/js/sidebar.js"></script>
+    <script src="/js/socket-client.js"></script>
 
     <link rel="stylesheet" href="/css/design-system.css">
     <link rel="stylesheet" href="/css/sidebar.css">
@@ -63,6 +66,53 @@
             color: #6b7280;
             border-radius: 4px;
         }
+        .dimension-bar {
+            background: #eff6ff;
+            padding: 4px 6px;
+            border-radius: 8px;
+            border: 1px solid #dbeafe;
+        }
+        .tab-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 16px;
+            border: 1px solid #e5e7eb;
+            background: #ffffff;
+            transition: all 0.2s ease;
+            min-width: 220px;
+        }
+        .tab-card.active {
+            background: #111827;
+            color: #ffffff;
+            border-color: #111827;
+            box-shadow: 0 10px 20px -10px rgba(17, 24, 39, 0.5);
+        }
+        .tab-card .tab-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            background: #f3f4f6;
+            color: #6b7280;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .tab-card.active .tab-icon {
+            background: #1f2937;
+            color: #ffffff;
+        }
+        .tab-card .tab-title {
+            font-weight: 700;
+        }
+        .tab-card .tab-desc {
+            font-size: 11px;
+            color: #9ca3af;
+        }
+        .tab-card.active .tab-desc {
+            color: #e5e7eb;
+        }
     </style>
 </head>
 <body class="bg-gray-50 antialiased text-gray-900 selection:bg-blue-100 selection:text-blue-700">
@@ -89,7 +139,22 @@
         <div class="main-content-area">
             <div class="max-w-[1440px] mx-auto">
                 <div class="flex items-center justify-between mb-8">
-                    <div></div>
+                    <div class="flex items-center gap-3 bg-white border border-gray-200 rounded-2xl p-1 shadow-sm">
+                        <button id="tab-single" class="tab-card active" data-tab="single">
+                            <span class="tab-icon"><i class="fas fa-user"></i></span>
+                            <span class="flex flex-col items-start leading-tight">
+                                <span class="tab-title">单人解析</span>
+                                <span class="tab-desc">深度解析 + 对比拆分</span>
+                            </span>
+                        </button>
+                        <button id="tab-compare" class="tab-card" data-tab="compare">
+                            <span class="tab-icon"><i class="fas fa-users"></i></span>
+                            <span class="flex flex-col items-start leading-tight">
+                                <span class="tab-title">对比解析</span>
+                                <span class="tab-desc">双人对比 + 结论建议</span>
+                            </span>
+                        </button>
+                    </div>
                     <div class="flex space-x-3">
                         <div class="relative">
                             <select id="job-filter" class="pl-4 pr-10 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-white appearance-none min-w-[160px]">
@@ -133,6 +198,11 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
+            // 初始化 UI 组件
+            if (typeof UIComponents !== 'undefined') {
+                window.ui = new UIComponents();
+            }
+
             // 权限检查
             if (!userAuthInstance.isLoggedIn()) {
                 window.location.href = 'login.html?redirect=' + encodeURIComponent(window.location.pathname);
@@ -153,8 +223,11 @@
             const emptyState = document.getElementById('empty-state');
             const searchInput = document.getElementById('record-search');
             const jobFilter = document.getElementById('job-filter');
+            const tabSingle = document.getElementById('tab-single');
+            const tabCompare = document.getElementById('tab-compare');
 
             let allRecords = [];
+            window.activeTab = 'single';
 
             async function fetchJobs() {
                 try {
@@ -186,7 +259,6 @@
                             'Authorization': `Bearer ${token}`
                         }
                     });
-                    const result = await response.json();
                     
                     if (response.status === 401) {
                         userAuthInstance.logout();
@@ -194,8 +266,22 @@
                         return;
                     }
 
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    // 检查内容类型
+                    const contentType = response.headers.get("content-type");
+                    if (!contentType || !contentType.includes("application/json")) {
+                        console.warn('后端未返回 JSON 格式数据');
+                        renderRecords([]);
+                        return;
+                    }
+
+                    const result = await response.json();
+                    
                     if (result.success) {
-                        allRecords = result.data;
+                        allRecords = result.data || [];
                         renderRecords(allRecords);
                     } else {
                         const errorMsg = typeof result.error === 'object' ? (result.error.message || '未知错误') : (result.error || '未知错误');
@@ -227,51 +313,121 @@
                         minute: '2-digit'
                     });
 
-                    const typeTag = record.type === 'single' 
-                        ? '<span class="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-bold rounded uppercase">单人解析</span>'
-                        : '<span class="px-2 py-0.5 bg-purple-50 text-purple-600 text-[10px] font-bold rounded uppercase">对比解析</span>';
+                    const isCompareSummary = record._isComparisonSummary;
+                    const typeTag = isCompareSummary
+                        ? '<span class="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-bold rounded border border-blue-100">对比解析</span>'
+                        : (record.type === 'single' || record.type === 'multi_single')
+                            ? '<span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 text-[10px] font-bold rounded border border-emerald-100">单人解析</span>'
+                            : '<span class="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-bold rounded border border-blue-100">对比拆分</span>';
 
                     const scoreColor = record.overall_score >= 80 ? 'text-green-600 bg-green-50' : 
-                                     record.overall_score >= 60 ? 'text-blue-600 bg-blue-50' : 'text-orange-600 bg-orange-50';
+                                     record.overall_score >= 60 ? 'text-blue-600 bg-blue-50' : 'text-blue-600 bg-blue-50';
 
-                    // 维度简览
                     const dims = record.dimensions || {};
                     const dimHtml = Object.entries(dims).map(([key, val]) => {
                         const dimNames = {
                             skills: '技能', experience: '经验', education: '教育',
-                            stability: '稳定性', potential: '潜力', teamwork: '团队'
+                            project: '项目', stability: '稳定性', potential: '潜力', teamwork: '团队'
                         };
                         return `<span class="dimension-tag">${dimNames[key] || key}: ${val}</span>`;
                     }).join('');
 
+                    if (isCompareSummary) {
+                        const nameList = (record._comparisonNames || []).filter(Boolean);
+                        const titleText = nameList.length ? nameList.join(' vs ') : '对比解析结果';
+                        const summaryText = record._comparisonSummary || record._comparisonRecommendation || '暂无对比摘要';
+                        const chipPalette = [
+                            'bg-blue-50 text-blue-700 border border-blue-100',
+                            'bg-emerald-50 text-emerald-700 border border-emerald-100',
+                            'bg-purple-50 text-purple-700 border border-purple-100',
+                            'bg-blue-50 text-blue-700 border border-blue-100'
+                        ];
+                        const winnerClass = 'bg-blue-50 text-blue-700 border border-blue-100';
+                        const chips = nameList.map((name, idx) => {
+                            const isWinner = record._winnerName && name === record._winnerName;
+                            const className = isWinner ? winnerClass : 'bg-gray-100 text-gray-700 border border-gray-200';
+                            return `<span class="px-2 py-0.5 text-[10px] font-bold rounded ${className}">${name}</span>`;
+                        }).join('');
+
+                        // 对比解析使用多人图标
+                        const avatarHtml = `
+                            <div class="w-12 h-12 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400">
+                                <i class="fas fa-users text-xl"></i>
+                            </div>
+                        `;
+
+                        return `
+                            <div class="portal-card p-5 flex items-center justify-between">
+                                <div class="flex items-center space-x-4 flex-1">
+                                    ${avatarHtml}
+                                    <div class="flex-1">
+                                        <div class="flex items-center space-x-2">
+                                            <h4 class="font-bold text-gray-900">${titleText}</h4>
+                                            ${typeTag}
+                                        </div>
+                                        <div class="flex items-center mt-2 space-x-3">
+                                            <span class="text-xs text-gray-400"><i class="far fa-clock mr-1"></i>${date}</span>
+                                            <div class="flex flex-wrap gap-1">
+                                                ${chips}
+                                            </div>
+                                        </div>
+                                        <div class="text-sm text-gray-500 mt-2 line-clamp-2">${summaryText}</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <a href="analysis-detail.html?id=${record.id}&resume_id=${record.resume_id}" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition-all flex items-center">
+                                        <i class="fas fa-chart-line mr-1"></i>查看解析
+                                    </a>
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    // 单人解析使用头像
+                    const avatarHtml = window.ui ? window.ui.renderAvatar(
+                        record.Resume?.avatar,
+                        record.Resume?.name || record.Resume?.file_name,
+                        'w-12 h-12',
+                        'rounded-lg',
+                        true
+                    ) : `
+                        <div class="w-12 h-12 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400">
+                            <i class="fas fa-file-alt text-xl"></i>
+                        </div>
+                    `;
+
                     return `
                         <div class="portal-card p-5 flex items-center justify-between">
                             <div class="flex items-center space-x-4 flex-1">
-                                <div class="w-12 h-12 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400">
-                                    <i class="fas fa-file-alt text-xl"></i>
-                                </div>
+                                ${avatarHtml}
                                 <div class="flex-1">
                                     <div class="flex items-center space-x-2">
-                                        <h4 class="font-bold text-gray-900">${record.Resume?.file_name || '未知简历'}</h4>
+                                        <h4 class="font-bold text-gray-900">${record.Resume?.name || record.Resume?.file_name || '未知简历'}</h4>
                                         ${typeTag}
                                     </div>
                                     <div class="flex items-center mt-2 space-x-3">
                                         <span class="text-xs text-gray-400"><i class="far fa-clock mr-1"></i>${date}</span>
-                                        <div class="flex space-x-1">
+                                        <div class="flex space-x-1 dimension-bar">
                                             ${dimHtml}
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             
-                            <div class="flex items-center space-x-8">
-                                <div class="text-center">
+                            <div class="flex items-center space-x-4">
+                                <div class="text-center mr-4">
                                     <p class="text-[10px] text-gray-400 uppercase font-bold mb-1 tracking-wider">综合评分</p>
                                     <span class="score-badge ${scoreColor}">${record.overall_score}</span>
                                 </div>
-                                <a href="analysis-detail.html?id=${record.id}" class="px-5 py-2 bg-gray-50 text-gray-700 rounded-lg text-sm font-bold hover:bg-blue-600 hover:text-white transition-all">
-                                    查看详情
-                                </a>
+                                <div class="flex items-center space-x-2">
+                                    <a href="analysis-detail.html?id=${record.id}&resume_id=${record.resume_id}" class="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg text-sm font-bold hover:bg-blue-600 hover:text-white transition-all flex items-center">
+                                        <i class="fas fa-chart-line mr-1"></i>查看解析
+                                    </a>
+                                    <button onclick="handleDeepAnalysis('${record.resume_id}')" class="px-4 py-2 bg-gray-50 text-gray-700 rounded-lg text-sm font-bold hover:bg-blue-600 hover:text-white transition-all flex items-center">
+                                        <i class="fas fa-microscope mr-1"></i>重新分析
+                                    </button>
+                                    
+                                </div>
                             </div>
                         </div>
                     `;
@@ -288,27 +444,293 @@
                 `;
             }
 
-            // 搜索过滤
             function applyFilters() {
                 const term = searchInput.value.toLowerCase();
                 const jobId = jobFilter.value;
-                
-                const filtered = allRecords.filter(r => {
-                    const matchesSearch = (r.Resume?.file_name || '').toLowerCase().includes(term);
-                    const matchesJob = jobId === 'all' || String(r.job_id) === String(jobId);
+                const sourceList = window.activeTab === 'compare' ? buildCompareRecords(allRecords) : buildSingleRecords(allRecords);
+                const filtered = sourceList.filter(r => {
+                    const namePool = r._comparisonNames || [];
+                    const matchesSearch = namePool.some(n => String(n || '').toLowerCase().includes(term)) || (r.Resume?.file_name || '').toLowerCase().includes(term);
+                    const matchesJob = jobId === 'all' || (Array.isArray(r._jobIds) ? r._jobIds.some(id => String(id) === String(jobId)) : String(r.job_id) === String(jobId));
                     return matchesSearch && matchesJob;
                 });
-                
                 renderRecords(filtered);
+            }
+
+            // 构建单人/拆分记录
+            function buildSingleRecords(records) {
+                return records.filter(r => {
+                    // 允许 single (单人深度解析) 和 multi_single (对比拆分)
+                    // 同时允许 type='multi' (通常是对比解析产生的单人记录)，这些记录在列表页会被标记为 "对比拆分"
+                    
+                    if (r.type === 'single' || r.type === 'multi_single') return true;
+                    
+                    // 允许 multi 类型 (作为对比拆分记录显示)
+                    // 修复：用户反馈"对比拆分"记录不显示，是因为之前过滤掉了 type='multi' 的记录
+                    if (r.type === 'multi') return true;
+
+                    // 检查是否有拆分标记 (兼容旧数据)
+                    const details = r.detailed_analysis || r.details || {};
+                    if (details.is_split || details.split_from) return true;
+
+                    return false;
+                });
+            }
+
+            function buildCompareRecords(records) {
+                const groups = new Map();
+                records.filter(r => r.type === 'multi').forEach(r => {
+                    const details = r.detailed_analysis || r.details || {};
+                    const comparison = details.comparison_data || {};
+                    const names = Array.isArray(comparison.candidates) ? comparison.candidates.map(c => c.name || c.file_name).filter(Boolean) : [];
+                    const timeKey = r.analysis_date ? new Date(r.analysis_date).toISOString() : '';
+                    const key = [comparison.comparison_id || comparison.id || '', names.join('|'), comparison.comparison_summary || '', comparison.recommendation || '', timeKey].join('::');
+                    if (!groups.has(key)) {
+                        groups.set(key, { records: [r], comparison, names });
+                    } else {
+                        groups.get(key).records.push(r);
+                    }
+                });
+                return Array.from(groups.values()).map(group => {
+                    const base = group.records[0];
+                    const names = group.names.length ? group.names : group.records.map(r => (r.detailed_analysis?.basic_info?.name) || r.Resume?.file_name || '候选人');
+                    const winner = Array.isArray(group.comparison?.candidates)
+                        ? group.comparison.candidates.reduce((max, c) => {
+                            if (!max || (c.overall_score || 0) > (max.overall_score || 0)) return c;
+                            return max;
+                        }, null)
+                        : null;
+                    return {
+                        ...base,
+                        _isComparisonSummary: true,
+                        _comparisonNames: names,
+                        _comparisonSummary: group.comparison?.comparison_summary || group.comparison?.summary || '',
+                        _comparisonRecommendation: group.comparison?.recommendation || '',
+                        _jobIds: group.records.map(r => r.job_id).filter(Boolean),
+                        _winnerName: winner?.name || winner?.file_name || ''
+                    };
+                });
+            }
+
+            function setActiveTab(tab) {
+                window.activeTab = tab;
+                tabSingle.classList.toggle('active', tab === 'single');
+                tabCompare.classList.toggle('active', tab === 'compare');
+                applyFilters();
             }
 
             searchInput.addEventListener('input', applyFilters);
             jobFilter.addEventListener('change', applyFilters);
+            tabSingle.addEventListener('click', () => setActiveTab('single'));
+            tabCompare.addEventListener('click', () => setActiveTab('compare'));
 
             // 初始加载
             fetchJobs();
             fetchRecords();
         });
+
+        let currentResumeId = null;
+
+        function handleDeepAnalysis(id) {
+            currentResumeId = id;
+            document.getElementById('analysisModal').classList.remove('hidden');
+        }
+
+        function closeAnalysisModal() {
+            document.getElementById('analysisModal').classList.add('hidden');
+            currentResumeId = null;
+        }
+
+        let isProcessing = false;
+
+        async function confirmDeepAnalysis() {
+            if (!currentResumeId || isProcessing) return;
+            
+            isProcessing = true;
+            const btn = event.currentTarget;
+            const originalContent = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-2"></i>处理中...';
+
+            try {
+                // 使用 userAuthInstance.apiRequest 发送解析请求
+                const response = await window.userAuthInstance.apiRequest('/ai/batch-analyze', 'POST', { 
+                    resumeIds: [currentResumeId],
+                    options: { 
+                        scene: 'deep_analysis'
+                    }
+                }, false);
+                
+                closeAnalysisModal();
+                ui.showNotification('深度解析任务已启动，正在后台处理', 'success');
+
+                // 使用 WebSocket 订阅状态
+                if (window.analysisSocket) {
+                    window.analysisSocket.subscribeAnalysis(currentResumeId, {
+                        onCompleted: (data) => {
+                            ui.showNotification('解析完成，即将刷新页面', 'success');
+                            setTimeout(() => location.reload(), 1500);
+                        },
+                        onError: (err) => {
+                            ui.showNotification('解析失败: ' + (err.message || '未知错误'), 'error');
+                        }
+                    });
+                } else {
+                    // 降级：跳转到详情页
+                    setTimeout(() => {
+                        window.location.href = `analysis-detail.html?resume_id=${currentResumeId}&trigger=true`;
+                    }, 500);
+                }
+            } catch (error) {
+                console.error('Deep analysis error:', error);
+                ui.showNotification('启动深度解析失败: ' + (error.message || '请重试'), 'error');
+            } finally {
+                isProcessing = false;
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
+            }
+        }
+
+        function handleReject(id) {
+            currentResumeId = id;
+            document.getElementById('rejectModal').classList.remove('hidden');
+        }
+
+        function closeRejectModal() {
+            document.getElementById('rejectModal').classList.add('hidden');
+            document.getElementById('rejectReason').value = '';
+            currentResumeId = null;
+        }
+
+        async function confirmReject() {
+            if (!currentResumeId) return;
+            
+            const reason = document.getElementById('rejectReason').value;
+            try {
+                ui.showLoading('正在提交...');
+                const token = userAuthInstance.getToken();
+                const response = await fetch(`/api/resumes/${currentResumeId}/status`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ status: 'rejected', reject_reason: reason })
+                });
+                
+                const result = await response.json();
+                ui.hideLoading();
+                if (result.success) {
+                    ui.showNotification('操作成功', 'success');
+                    setTimeout(() => location.reload(), 1000); // 延迟刷新以显示通知
+                } else {
+                    ui.showNotification('操作失败: ' + (result.error || '未知错误'), 'error');
+                }
+            } catch (error) {
+                console.error('Reject error:', error);
+                ui.hideLoading();
+                ui.showNotification('网络请求失败，请稍后重试', 'error');
+            }
+        }
     </script>
+
+    <!-- Reject Modal -->
+    <div id="rejectModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div id="reject-modal-backdrop" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeRejectModal()"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-middle bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-gray-100">
+                <div class="bg-white px-6 pt-6 pb-4 sm:p-8 sm:pb-6">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-50 sm:mx-0 sm:h-12 sm:w-12 border border-red-100">
+                            <i class="fas fa-exclamation-triangle text-red-500 text-xl"></i>
+                        </div>
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-6 sm:text-left w-full">
+                            <h3 class="text-xl leading-6 font-bold text-gray-900" id="modal-title">淘汰候选人</h3>
+                            <div class="mt-4">
+                                <p class="text-sm text-gray-500 mb-4">
+                                    请填写淘汰理由（可选），该理由将仅供内部参考。
+                                </p>
+                                <textarea id="rejectReason" rows="4" class="block w-full text-sm border-gray-200 rounded-xl p-4 border focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all resize-none bg-gray-50" placeholder="请输入淘汰理由..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-6 py-4 sm:px-8 sm:flex sm:flex-row-reverse gap-3">
+                    <button type="button" onclick="confirmReject()" class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-6 py-2.5 bg-red-600 text-sm font-bold text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:w-auto transition-all">
+                        确认淘汰
+                    </button>
+                    <button type="button" onclick="closeRejectModal()" class="mt-3 w-full inline-flex justify-center rounded-xl border border-gray-200 shadow-sm px-6 py-2.5 bg-white text-sm font-bold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 sm:mt-0 sm:w-auto transition-all">
+                        取消
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analysis Modal -->
+    <div id="analysisModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div id="analysis-modal-backdrop" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeAnalysisModal()"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-middle bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-gray-100">
+                <div class="bg-white px-6 pt-6 pb-4 sm:p-8 sm:pb-6">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-50 sm:mx-0 sm:h-12 sm:w-12 border border-blue-100">
+                            <i class="fas fa-magic text-blue-500 text-xl"></i>
+                        </div>
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-6 sm:text-left w-full">
+                            <h3 class="text-xl leading-6 font-bold text-gray-900">深度解析说明</h3>
+                            <div class="mt-4">
+                                <div class="bg-blue-50/50 p-4 mb-6 rounded-xl">
+                                    <div class="flex">
+                                        <div class="flex-shrink-0">
+                                            <i class="fas fa-info-circle text-blue-400"></i>
+                                        </div>
+                                        <div class="ml-3">
+                                            <p class="text-sm text-blue-700 font-medium">
+                                                深度解析将消耗 1 个 AI 点数，通过多维度深度评估候选人与职位的匹配度。
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="space-y-4">
+                                    <p class="text-sm font-bold text-gray-800 flex items-center">
+                                        <span class="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></span>
+                                        解析维度包含：
+                                    </p>
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div class="flex items-center text-sm text-gray-600 bg-gray-50 p-2 rounded-lg">
+                                            <i class="fas fa-check text-green-500 mr-2 text-xs"></i> 专业技能深度评估
+                                        </div>
+                                        <div class="flex items-center text-sm text-gray-600 bg-gray-50 p-2 rounded-lg">
+                                            <i class="fas fa-check text-green-500 mr-2 text-xs"></i> 项目经验契合度
+                                        </div>
+                                        <div class="flex items-center text-sm text-gray-600 bg-gray-50 p-2 rounded-lg">
+                                            <i class="fas fa-check text-green-500 mr-2 text-xs"></i> 学历与背景评估
+                                        </div>
+                                        <div class="flex items-center text-sm text-gray-600 bg-gray-50 p-2 rounded-lg">
+                                            <i class="fas fa-check text-green-500 mr-2 text-xs"></i> 稳定性预测
+                                        </div>
+                                    </div>
+                                    <p class="mt-4 text-xs text-gray-400 italic bg-gray-50 p-3 rounded-lg border border-dashed border-gray-200">
+                                        <i class="far fa-clock mr-1"></i> 解析过程大约需要 10-30 秒，完成后将自动刷新页面显示结果。
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-6 py-4 sm:px-8 sm:flex sm:flex-row-reverse gap-3">
+                    <button type="button" onclick="confirmDeepAnalysis()" class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-6 py-2.5 bg-blue-600 text-sm font-bold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:w-auto transition-all">
+                        立即解析
+                    </button>
+                    <button type="button" onclick="closeAnalysisModal()" class="mt-3 w-full inline-flex justify-center rounded-xl border border-gray-200 shadow-sm px-6 py-2.5 bg-white text-sm font-bold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 sm:mt-0 sm:w-auto transition-all">
+                        取消
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

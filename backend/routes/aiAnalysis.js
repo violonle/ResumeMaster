@@ -62,6 +62,7 @@ const upload = multer({
 
 // 简历分析
 router.post('/analyze', authenticate, Permission.requireSubscription, Permission.checkApiLimit('aiAnalysis'), Permission.rateLimit(200, 60*60*1000), aiController.analyzeResume.bind(aiController));
+router.post('/trigger-polling', authenticate, aiController.triggerDeepAnalysisPolling);
 
 // 获取分析任务状态
 router.get('/status/:resumeId', authenticate, aiController.getAnalysisStatus.bind(aiController));

@@ -74,22 +74,22 @@ export default function InterviewConfigPanel({
           
           {unfinishedSession && !checkingUnfinished && (
             <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="mb-6 p-4 sm:p-5 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-200 rounded-xl"
+              initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+              animate={{ opacity: 1, height: 'auto', marginBottom: 24 }}
+              exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+              className="mb-6 p-4 sm:p-5 bg-gradient-to-r from-indigo-50 to-blue-50 border-2 border-indigo-200 rounded-xl"
             >
               <div className="flex items-start gap-3 mb-4">
-                <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <svg className="w-5 h-5 text-amber-600" viewBox="0 0 24 24" fill="none">
+                <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5 text-indigo-600" viewBox="0 0 24 24" fill="none">
                     <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-amber-900 mb-1 text-sm sm:text-base">检测到未完成的模拟面试</h3>
-                  <p className="text-xs sm:text-sm text-amber-700">
+                  <h3 className="font-semibold text-indigo-900 mb-1 text-sm sm:text-base">检测到未完成的模拟面试</h3>
+                  <p className="text-xs sm:text-sm text-indigo-700">
                 已完成 {unfinishedSession.currentQuestionIndex} / {unfinishedSession.questions.length} 题
               </p>
                 </div>
@@ -97,7 +97,7 @@ export default function InterviewConfigPanel({
               <div className="flex flex-col sm:flex-row gap-3">
                 <motion.button
                   onClick={onContinueUnfinished}
-                  className="flex-1 px-4 py-2.5 bg-amber-500 text-white rounded-lg font-medium hover:bg-amber-600 transition-colors text-sm sm:text-base"
+                  className="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors text-sm sm:text-base"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -105,7 +105,7 @@ export default function InterviewConfigPanel({
                 </motion.button>
                 <motion.button
                   onClick={onStartNew}
-                  className="flex-1 px-4 py-2.5 bg-white border border-amber-300 text-amber-700 rounded-lg font-medium hover:bg-amber-50 transition-colors text-sm sm:text-base"
+                  className="flex-1 px-4 py-2.5 bg-white border border-indigo-300 text-indigo-700 rounded-lg font-medium hover:bg-indigo-50 transition-colors text-sm sm:text-base"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >

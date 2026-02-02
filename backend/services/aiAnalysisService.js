@@ -114,20 +114,34 @@ class AIAnalysisService {
 
             // 映射雷达图字段 (统一前端需要的字段名)
             if (parsedResult.scores_percent) {
+                // 优先支持深度解析的 6 个维度
                 parsedResult.radar_scores = {
-                    job_fit: parsedResult.scores_percent.job_fit || 0,
-                    experience_fit: parsedResult.scores_percent.experience_fit || 0,
-                    learning_ability: parsedResult.scores_percent.learning_ability || 0,
+                    skills: parsedResult.scores_percent.skills || parsedResult.scores_percent.job_fit || 0,
+                    experience: parsedResult.scores_percent.experience || parsedResult.scores_percent.experience_fit || 0,
+                    education: parsedResult.scores_percent.education || 0,
+                    stability: parsedResult.scores_percent.stability || 0,
+                    potential: parsedResult.scores_percent.potential || parsedResult.scores_percent.learning_ability || 0,
                     teamwork: parsedResult.scores_percent.teamwork || 0
                 };
+                
+                // 为了兼容旧版前端，保留原有映射
+                parsedResult.radar_scores.job_fit = parsedResult.radar_scores.skills;
+                parsedResult.radar_scores.experience_fit = parsedResult.radar_scores.experience;
+                parsedResult.radar_scores.learning_ability = parsedResult.radar_scores.potential;
             } else if (parsedResult.dimensions || parsedResult.score_detail || parsedResult.radar_scores) {
                 const src = parsedResult.dimensions || parsedResult.score_detail || parsedResult.radar_scores;
                 parsedResult.radar_scores = {
-                    job_fit: src.skills || src.core_skills || src.job_fit || 0,
-                    experience_fit: src.experience || src.experience_fit || 0,
-                    learning_ability: src.learning_ability || src.potential || 0,
+                    skills: src.skills || src.core_skills || src.job_fit || 0,
+                    experience: src.experience || src.experience_fit || 0,
+                    education: src.education || 0,
+                    stability: src.stability || 0,
+                    potential: src.potential || src.learning_ability || src.potential || 0,
                     teamwork: src.teamwork || 0
                 };
+                // 兼容旧版
+                parsedResult.radar_scores.job_fit = parsedResult.radar_scores.skills;
+                parsedResult.radar_scores.experience_fit = parsedResult.radar_scores.experience;
+                parsedResult.radar_scores.learning_ability = parsedResult.radar_scores.potential;
             }
 
             // 如果没有 radar_scores，提供默认值

@@ -9,7 +9,7 @@
     <script src="/js/user-auth.js"></script>
     <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/sidebar.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.loli.net/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
@@ -27,6 +27,24 @@
         .portal-card:hover {
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             transform: translateY(-2px);
+        }
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.625rem 1.5rem;
+            background-color: #0f172a;
+            color: white;
+            border-radius: 0.75rem;
+            font-weight: 500;
+            transition-property: all;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 150ms;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .btn-primary:hover {
+            background-color: #000000;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
     </style>
 </head>
@@ -61,7 +79,7 @@
                 <div class="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8">
                     <!-- Avatar -->
                     <div class="flex flex-col items-center space-y-3">
-                        <div class="relative group cursor-pointer">
+                        <div class="relative group cursor-pointer" id="avatar-container">
                             <img id="profile-avatar" src="/images/default-avatar.png" alt="Avatar" class="w-24 h-24 rounded-full object-cover border-4 border-gray-50 shadow-sm">
                             <div class="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                 <span class="text-white">📷</span>
@@ -122,7 +140,7 @@
                                 <p class="text-xs text-gray-500 mt-0.5" id="profile-phone">未绑定</p>
                             </div>
                         </div>
-                        <button class="text-sm text-blue-600 font-medium hover:text-blue-700">去绑定</button>
+                        <button onclick="bindPhone()" class="text-sm text-blue-600 font-medium hover:text-blue-700">去绑定</button>
                     </div>
 
                     <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
@@ -135,7 +153,7 @@
                                 <p class="text-xs text-gray-500 mt-0.5">上次修改：3个月前</p>
                             </div>
                         </div>
-                        <button class="text-sm text-blue-600 font-medium hover:text-blue-700">修改密码</button>
+                        <button onclick="changePassword()" class="text-sm text-blue-600 font-medium hover:text-blue-700">修改密码</button>
                     </div>
                 </div>
             </div>
@@ -143,7 +161,7 @@
             <!-- Action Buttons -->
             <div class="flex justify-end space-x-4">
                 <button onclick="window.location.reload()" class="px-6 py-2.5 border border-gray-300 rounded-xl text-gray-700 hover:bg-white transition-all font-medium">取消</button>
-                <button onclick="saveProfile()" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-md hover:shadow-lg transition-all font-medium">保存更改</button>
+                <button onclick="saveProfile()" class="btn-primary">保存更改</button>
             </div>
         </div>
     </main>
@@ -156,25 +174,50 @@
         document.addEventListener('DOMContentLoaded', async () => {
             if (typeof requireAuth === 'function' && !requireAuth('/pages/login.html')) return;
             
-            Sidebar.init({ mount: '#sidebar', active: '' }); // No specific active tab for user profile
+            Sidebar.init({ mount: '#sidebar', active: 'profile' }); 
             HeaderProfile.init('#header-right-section');
             
             loadUserProfile();
         });
+
+        function changePassword() {
+            ui.showNotification('请前往安全设置修改密码', 'info');
+            setTimeout(() => {
+                window.location.href = '/pages/settings.html#security';
+            }, 1000);
+        }
+
+        function bindPhone() {
+            ui.showNotification('请前往安全设置绑定手机', 'info');
+            setTimeout(() => {
+                window.location.href = '/pages/settings.html#security';
+            }, 1000);
+        }
 
         async function loadUserProfile() {
             try {
                 const user = await userAuthInstance.fetchCurrentUser();
                 if (!user) return;
 
-                document.getElementById('profile-name').value = user.name || user.username || '';
+                const displayName = user.name || user.username || 'USER';
+                document.getElementById('profile-name').value = displayName;
                 document.getElementById('profile-email').textContent = user.email || '未设置';
                 document.getElementById('profile-phone').textContent = user.phone || '未绑定';
                 document.getElementById('profile-title').value = user.title || '';
                 document.getElementById('profile-bio').value = user.bio || '';
                 
-                if (user.avatar) {
-                    document.getElementById('profile-avatar').src = user.avatar;
+                // 使用 ui.renderAvatar
+                const avatarContainer = document.getElementById('avatar-container');
+                if (avatarContainer) {
+                    avatarContainer.innerHTML = `
+                        ${ui.renderAvatar(user.avatar, displayName, 'w-24 h-24', 'rounded-full')}
+                        <div class="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span class="text-white">📷</span>
+                        </div>
+                        <input type="file" id="avatar-upload" class="hidden" accept="image/*">
+                    `;
+                    // 重新绑定事件
+                    document.getElementById('avatar-upload').addEventListener('change', handleAvatarChange);
                 }
             } catch (e) {
                 console.error(e);
@@ -213,20 +256,31 @@
         }
 
         // Avatar Upload Handler
-        const avatarInput = document.getElementById('avatar-upload');
-        const avatarImg = document.getElementById('profile-avatar');
-        
-        document.querySelector('.relative.group').addEventListener('click', () => avatarInput.click());
-        
-        avatarInput.addEventListener('change', (e) => {
+        function handleAvatarChange(e) {
             const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
                 reader.onload = (e) => {
-                    avatarImg.src = e.target.result;
-                    // In real app, upload immediately or on save
+                    const avatarContainer = document.getElementById('avatar-container');
+                    const name = document.getElementById('profile-name').value || 'USER';
+                    // 预览新头像
+                    avatarContainer.innerHTML = `
+                        <img src="${e.target.result}" alt="Avatar" class="w-24 h-24 rounded-full object-cover border-4 border-gray-50 shadow-sm">
+                        <div class="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span class="text-white">📷</span>
+                        </div>
+                        <input type="file" id="avatar-upload" class="hidden" accept="image/*">
+                    `;
+                    // 重新绑定事件
+                    document.getElementById('avatar-upload').addEventListener('change', handleAvatarChange);
                 };
                 reader.readAsDataURL(file);
+            }
+        }
+        
+        document.getElementById('avatar-container').addEventListener('click', (e) => {
+            if (e.target.tagName !== 'INPUT') {
+                document.getElementById('avatar-upload').click();
             }
         });
     </script>

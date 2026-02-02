@@ -35,11 +35,11 @@ async function testRecruitmentPipeline() {
 
         const statusGroups = {
             '投递': [],
-            '初筛': [],
+            '快评': [],
             '面试': [],
             'Offer': [],
-            '入职': []
-        };
+            '入职': [],
+            '淘汰': []};
 
         resumes.forEach(resume => {
             const status = resume.recruitment_status || '投递';

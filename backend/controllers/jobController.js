@@ -1,4 +1,4 @@
-const { Job, User } = require('../models');
+const { Job, User, Resume, sequelize } = require('../models');
 const { Op } = require('sequelize');
 const jobImportService = require('../services/jobImportService');
 
@@ -7,33 +7,121 @@ const getAllJobs = async (req, res) => {
   try {
     const { status } = req.query;
     
-    // 多租户隔离逻辑：允许查看自己创建的或所属公司的职位
-    let whereClause = {
-      [Op.or]: req.user.company_id 
-        ? [
+    let whereClause = {};
+    let resumeWhereClause = {};
+    
+    // 如果是管理员或超级管理员，且没有指定特定过滤条件，则可以看到所有职位
+    const isAdmin = req.user.role === 'admin' || req.user.role === 'SUPER_ADMIN';
+    
+    if (!isAdmin) {
+      if (req.user.company_id) {
+        whereClause = {
+          [Op.or]: [
             { company_id: req.user.company_id },
             { user_id: req.user.id }
           ]
-        : [
-            { user_id: req.user.id }
-          ]
-    };
+        };
+        resumeWhereClause = { company_id: req.user.company_id };
+      } else if (req.user.company_name) {
+        const users = await User.findAll({
+          where: { company_name: req.user.company_name },
+          attributes: ['id']
+        });
+        const userIds = users.map(u => u.id);
+        const finalUserIds = userIds.length > 0 ? userIds : [req.user.id];
+        whereClause = { user_id: { [Op.in]: finalUserIds } };
+        resumeWhereClause = { user_id: { [Op.in]: finalUserIds } };
+      } else {
+        whereClause = { user_id: req.user.id };
+        resumeWhereClause = { user_id: req.user.id };
+      }
+    }
     
     if (status) {
       whereClause.status = status;
     }
 
+    // 1. 获取职位列表及其统计
     const jobs = await Job.findAll({
+      attributes: {
+        include: [
+          [
+            sequelize.literal(`(
+              SELECT COUNT(*)
+              FROM resume_jobs AS rj
+              WHERE rj.job_id = Job.id
+            )`),
+            'candidate_count'
+          ],
+          [
+            sequelize.literal(`(
+              SELECT COUNT(*)
+              FROM resume_jobs AS rj
+              WHERE rj.job_id = Job.id AND rj.status = 'applied'
+            )`),
+            'new_candidate_count'
+          ],
+          [
+            sequelize.literal(`(
+              SELECT COUNT(*)
+              FROM resume_jobs AS rj
+              WHERE rj.job_id = Job.id AND rj.status = 'interview'
+            )`),
+            'interview_candidate_count'
+          ],
+          [
+            sequelize.literal(`(
+              SELECT GROUP_CONCAT(COALESCE(NULLIF(r.name, ''), 'H'))
+              FROM resume_jobs AS rj
+              JOIN resumes AS r ON rj.resume_id = r.id
+              WHERE rj.job_id = Job.id
+            )`),
+            'candidate_names'
+          ],
+          [
+            sequelize.literal(`(
+              SELECT GROUP_CONCAT(COALESCE(NULLIF(r.avatar, ''), ''))
+              FROM resume_jobs AS rj
+              JOIN resumes AS r ON rj.resume_id = r.id
+              WHERE rj.job_id = Job.id
+            )`),
+            'candidate_avatars'
+          ]
+        ]
+      },
       where: whereClause,
       order: [['created_at', 'DESC']],
       include: [
-        { model: User, attributes: ['id', 'username', 'avatar'] } // 包含创建者信息
+        { model: User, attributes: ['id', 'username', 'avatar'] }
       ]
+    });
+
+    // 2. 获取全局统计数据（候选人总数和匹配成功数）
+    const totalCandidates = await Resume.count({ where: resumeWhereClause });
+    const matchedCandidates = await Resume.count({ 
+      where: { 
+        ...resumeWhereClause,
+        score: { [Op.gte]: 60 },
+        recruitment_status: { [Op.notIn]: ['淘汰', '放弃'] }
+      } 
+    });
+
+    const activeJobsCount = await Job.count({
+      where: {
+        ...whereClause,
+        status: { [Op.in]: ['active', '招聘中', 'published'] }
+      }
     });
 
     res.json({
       success: true,
-      data: jobs
+      data: jobs,
+      summary: {
+        total_jobs: jobs.length,
+        active_jobs: activeJobsCount,
+        total_candidates: totalCandidates,
+        matched_candidates: matchedCandidates
+      }
     });
   } catch (error) {
     res.status(500).json({
@@ -52,17 +140,26 @@ const getJobById = async (req, res) => {
     const { id } = req.params;
     
     // 多租户隔离逻辑：允许查看自己创建的或所属公司的职位
-    const whereClause = {
-      id,
-      [Op.or]: req.user.company_id 
-        ? [
-            { company_id: req.user.company_id },
-            { user_id: req.user.id }
-          ]
-        : [
-            { user_id: req.user.id }
-          ]
-    };
+    let whereClause;
+    if (req.user.company_id) {
+      whereClause = {
+        id,
+        [Op.or]: [
+          { company_id: req.user.company_id },
+          { user_id: req.user.id }
+        ]
+      };
+    } else if (req.user.company_name) {
+      const { User } = require('../models');
+      const users = await User.findAll({
+        where: { company_name: req.user.company_name },
+        attributes: ['id']
+      });
+      const userIds = users.map(u => u.id);
+      whereClause = { id, user_id: { [Op.in]: userIds.length > 0 ? userIds : [req.user.id] } };
+    } else {
+      whereClause = { id, user_id: req.user.id };
+    }
 
     const job = await Job.findOne({
       where: whereClause,
@@ -102,7 +199,7 @@ const createJob = async (req, res) => {
     const { 
       title, description, requirements, salary_range, location, experience_required, status,
       enable_auto_screening, auto_reject_score, notify_high_score, high_score_threshold, weight_preference,
-      positions_count, expiry_date
+      enable_deep_analysis, positions_count, expiry_date
     } = req.body;
 
     const job = await Job.create({
@@ -115,10 +212,11 @@ const createJob = async (req, res) => {
       location,
       experience_required,
       status,
-      enable_auto_screening: enable_auto_screening || false,
+      enable_auto_screening: enable_auto_screening !== undefined ? enable_auto_screening : true,
       auto_reject_score: auto_reject_score || 60,
-      notify_high_score: notify_high_score || false,
+      notify_high_score: notify_high_score !== undefined ? notify_high_score : true,
       high_score_threshold: high_score_threshold || 85,
+      enable_deep_analysis: enable_deep_analysis !== undefined ? enable_deep_analysis : false,
       weight_preference: weight_preference || 'balanced',
       positions_count: positions_count || 1,
       expiry_date: expiry_date || null
@@ -147,7 +245,7 @@ const updateJob = async (req, res) => {
     const { 
       title, description, requirements, salary_range, location, experience_required, status,
       enable_auto_screening, auto_reject_score, notify_high_score, high_score_threshold, weight_preference,
-      positions_count, expiry_date
+      enable_deep_analysis, positions_count, expiry_date
     } = req.body;
 
     // 多租户隔离逻辑
@@ -158,7 +256,7 @@ const updateJob = async (req, res) => {
     const updateData = { 
       title, description, requirements, salary_range, location, experience_required, status,
       enable_auto_screening, auto_reject_score, notify_high_score, high_score_threshold, weight_preference,
-      positions_count, expiry_date
+      enable_deep_analysis, positions_count, expiry_date
     };
 
     // 过滤掉 undefined 的值，避免覆盖已有数据（如果某些字段没传）

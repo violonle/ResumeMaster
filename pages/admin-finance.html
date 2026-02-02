@@ -13,7 +13,7 @@
     <script src="../js/header-profile.js"></script>
     <link href="/css/sidebar.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        @import url('https://fonts.loli.net/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         
         body { 
             font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif; 
@@ -63,7 +63,7 @@
                         <div class="flex items-center">
                             <div class="flex space-x-3">
                                 <button onclick="exportReport()"
-                                    class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                                    class="bg-slate-900 text-white px-4 py-2 rounded-lg hover:bg-black transition-colors shadow-sm">
                                     <i class="fas fa-file-export mr-2"></i>导出报表
                                 </button>
                             </div>
@@ -270,18 +270,22 @@
         document.addEventListener('DOMContentLoaded', async function () {
             if (!requireAuth('/pages/login.html')) return;
 
-            // 模拟管理员权限检查
-            // const user = userAuthInstance.getCurrentUser();
-            // if (!user || user.role !== 'admin') { ... }
-
-            // 初始化侧边栏，这里我们假设 sidebar.js 会处理未知的 active key
-            if (typeof Sidebar !== 'undefined') {
-                await Sidebar.init({ active: 'finance' });
-            }
             if (typeof HeaderProfile !== 'undefined') {
                 HeaderProfile.init('#header-right-section');
             }
+
+            if (typeof Sidebar !== 'undefined') {
+                Sidebar.init({ mount: '#sidebar', active: 'finance' }).catch(err => console.error('Sidebar init failed:', err));
+            }
         });
+
+        function exportReport() {
+            if (window.ui && window.ui.showNotification) {
+                window.ui.showNotification('财务报表导出中...', 'info');
+            } else {
+                alert('财务报表导出中...');
+            }
+        }
     </script>
 </body>
 

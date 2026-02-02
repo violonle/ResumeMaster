@@ -2,6 +2,7 @@ const rateMap = new Map()
 function ok(ip){ const now=Date.now(); const it=rateMap.get(ip)||{count:0,reset:now+60000}; if(now>it.reset){ it.count=0; it.reset=now+60000 } if(it.count>=60) return false; it.count++; rateMap.set(ip,it); return true }
 const DomesticAIService = require('../services/domesticAIService')
 const { Resume } = require('../models')
+const { Sequelize, Op } = require('sequelize')
 const { extractTextFromFile } = require('../services/textExtractor')
 const aiService = new DomesticAIService()
 
@@ -10,8 +11,20 @@ async function parseFile(req, res) {
         const { resumeId } = req.body
         if (!resumeId) return res.status(400).json({ success: false, error: '缺少 resumeId' })
         
-        const resume = await Resume.findByPk(resumeId)
-        if (!resume) return res.status(404).json({ success: false, error: '简历不存在' })
+        // 构建多租户隔离的查询条件
+        const whereClause = {
+            id: resumeId,
+            [Op.or]: [
+                { user_id: req.user.id },
+                req.user.company_id ? { company_id: req.user.company_id } : null
+            ].filter(Boolean)
+        };
+        
+        const resume = await Resume.findOne({
+            where: whereClause
+        });
+        
+        if (!resume) return res.status(404).json({ success: false, error: '简历不存在或无权访问' })
         
         const text = await extractTextFromFile(resume.file_path)
         if (!text) return res.status(400).json({ success: false, error: '无法提取文本内容' })

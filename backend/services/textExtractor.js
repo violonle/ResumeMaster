@@ -50,7 +50,50 @@ function cleanText(text) {
   return filteredLines.join('\n').trim();
 }
 
+const { Worker } = require('worker_threads');
+
 async function extractTextFromFile(filePath) {
+  const fullPath = resolvePath(filePath);
+  const ext = path.extname(fullPath).toLowerCase();
+  
+  // 对于大文件或 PDF/DOCX，使用 Worker 线程
+  if (['.pdf', '.docx'].includes(ext)) {
+    return new Promise((resolve, reject) => {
+      const worker = new Worker(path.join(__dirname, '../workers/extractorWorker.js'), {
+        workerData: { filePath: fullPath }
+      });
+      
+      const timeout = setTimeout(() => {
+        worker.terminate();
+        console.warn(`[TextExtractor] Worker timed out for ${filePath}`);
+        resolve(''); // 超时返回空字符串，避免阻塞
+      }, 25000);
+
+      worker.on('message', (msg) => {
+        clearTimeout(timeout);
+        if (msg.success) {
+          resolve(msg.text);
+        } else {
+          console.warn(`[TextExtractor] Worker failed: ${msg.error}`);
+          resolve(''); // 失败返回空，尝试其他方法或返回空
+        }
+      });
+
+      worker.on('error', (err) => {
+        clearTimeout(timeout);
+        console.error(`[TextExtractor] Worker error: ${err.message}`);
+        resolve('');
+      });
+
+      worker.on('exit', (code) => {
+        if (code !== 0) {
+           console.warn(`[TextExtractor] Worker stopped with exit code ${code}`);
+        }
+      });
+    });
+  }
+
+  // 其他类型保持原有逻辑
   const timeout = 25000; // 25秒超时
   
   const extractPromise = (async () => {

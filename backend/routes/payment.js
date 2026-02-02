@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const paymentController = require('../controllers/paymentController');
 const { authenticate } = require('../middleware/auth');
+const { authenticateToken, requireAdmin } = require('../middleware/adminAuth');
 
 // 支付相关路由
 
@@ -15,7 +16,10 @@ router.get('/query-status/:orderNo/:paymentMethod', authenticate, paymentControl
 router.get('/user-orders/:userId', authenticate, paymentController.getUserOrders);
 
 // 获取所有订单（管理员）
-router.get('/orders', authenticate, paymentController.getAllOrders);
+router.get('/orders', authenticateToken, requireAdmin, paymentController.getAllOrders);
+
+// 获取支付统计信息（管理员）
+router.get('/stats', authenticateToken, requireAdmin, paymentController.getPaymentStats);
 
 // 申请退款
 router.post('/refund/:orderNo', authenticate, paymentController.refundOrder);

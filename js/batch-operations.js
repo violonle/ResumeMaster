@@ -540,70 +540,37 @@ class BatchOperations {
 
     async importData(data) {
         try {
-            const response = await fetch('/api/resumes/batch-import', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify({ resumes: data })
-            });
-            
-            const result = await response.json();
-            if (!result.success) {
-                throw new Error(result.error?.message || '导入失败');
-            }
-            
+            const result = await window.resumeDataManager.apiRequest('/resumes/batch-import', 'POST', { resumes: data }, false);
             this.addItemsToUI(result.data);
         } catch (error) {
             console.error('Import failed:', error);
             throw error;
         }
-    },
+    }
 
     addItemsToUI(items) {
         console.log('添加项目到UI:', items);
-    },
+    }
 
     async getItemData(itemId) {
         try {
-            const response = await fetch(`/api/resumes/${itemId}`, {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-            
-            const result = await response.json();
-            if (!result.success) {
-                throw new Error(result.error?.message || '获取数据失败');
-            }
-            
+            const result = await window.resumeDataManager.apiRequest(`/resumes/${itemId}`, 'GET', null, false);
             return result.data;
         } catch (error) {
             console.error('Get item failed:', error);
             return null;
         }
-    },
+    }
 
     async getAllItems() {
         try {
-            const response = await fetch('/api/resumes', {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-            
-            const result = await response.json();
-            if (!result.success) {
-                throw new Error(result.error?.message || '获取数据失败');
-            }
-            
+            const result = await window.resumeDataManager.apiRequest('/resumes', 'GET', null, false);
             return result.data || [];
         } catch (error) {
             console.error('Get all items failed:', error);
             return [];
         }
-    },
+    }
 
     showProgress(message, progress) {
         const progressBar = document.getElementById('progress-bar');
@@ -614,21 +581,21 @@ class BatchOperations {
             progressText.textContent = message;
             progressBar.parentElement.classList.remove('hidden');
         }
-    },
+    }
 
     updateProgress(progress) {
         const progressBar = document.getElementById('progress-bar');
         if (progressBar) {
             progressBar.style.width = `${progress}%`;
         }
-    },
+    }
 
     hideProgress() {
         const progressContainer = document.getElementById('progress-container');
         if (progressContainer) {
             progressContainer.classList.add('hidden');
         }
-    },
+    }
 
     showNotification(message, type = 'info') {
         if (window.uiComponents) {
@@ -636,7 +603,7 @@ class BatchOperations {
         } else {
             console.log(`[${type.toUpperCase()}] ${message}`);
         }
-    },
+    }
 
     escapeXML(str) {
         return String(str).replace(/&/g, '&amp;')

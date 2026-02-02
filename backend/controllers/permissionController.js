@@ -193,7 +193,12 @@ class PermissionController {
       const userId = req.user.id;
       const { permission } = req.params;
 
-      const user = await User.findByPk(userId, {
+      const whereClause = {
+        id: userId
+      };
+
+      const user = await User.findOne({
+        where: whereClause,
         include: [{
           model: Company,
           as: 'Company',

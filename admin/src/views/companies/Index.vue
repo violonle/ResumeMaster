@@ -220,6 +220,26 @@
       elevation="0"
       border
     >
+      <VCardText class="d-flex align-center justify-space-between py-3 px-4">
+        <span class="text-medium-emphasis">
+          第 {{ currentPage }}/{{ Math.max(1, Math.ceil(companyStore.totalItems / companyStore.filters.itemsPerPage)) }} 页 · 共 {{ companyStore.totalItems }} 条
+        </span>
+        <div class="d-flex align-center">
+          <VBtn
+            density="comfortable"
+            variant="outlined"
+            class="me-2"
+            :disabled="currentPage <= 1"
+            @click="handlePageChange(Math.max(1, currentPage - 1))"
+          >«</VBtn>
+          <VBtn
+            density="comfortable"
+            variant="outlined"
+            :disabled="currentPage >= Math.max(1, Math.ceil(companyStore.totalItems / companyStore.filters.itemsPerPage))"
+            @click="handlePageChange(Math.min(Math.max(1, Math.ceil(companyStore.totalItems / companyStore.filters.itemsPerPage)), currentPage + 1))"
+          >»</VBtn>
+        </div>
+      </VCardText>
       <VDataTable
         v-model:page="currentPage"
         class="clean-table"

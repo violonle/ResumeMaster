@@ -34,6 +34,8 @@ const { authenticate } = require('./middleware/auth');
 const authController = require('./controllers/authController');
 const { ResumeJob, Job } = require('./models');
 const smsService = require('./services/smsService');
+const autoScreeningService = require('./services/autoScreeningService');
+const deepAnalysisService = require('./services/deepAnalysisService');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -42,6 +44,11 @@ const PORT = process.env.PORT || 3000;
 app.use((req, res, next) => {
   const timestamp = new Date().toISOString();
   const start = Date.now();
+  
+  // 记录请求体（如果是登录请求）
+  if (req.path.includes('/login')) {
+    console.log(`[DEBUG_REQ] ${timestamp} - ${req.method} ${req.url} body:`, JSON.stringify(req.body));
+  }
   
   // 响应结束时记录
   res.on('finish', () => {
@@ -107,6 +114,12 @@ const adminDistPath = path.join(ROOT_DIR, 'admin/dist');
 app.use('/admin', express.static(adminDistPath));
 
 // 1.1 处理面试页面的静态文件 (提升优先级)
+app.get('/i/:id', (req, res) => {
+  const { id } = req.params;
+  console.log(`[ShortURL] Redirecting from /i/${id} to interview.html?resumeJobId=${id}`);
+  res.redirect(`/interview.html?resumeJobId=${id}`);
+});
+
 app.get('/interview.html', (req, res, next) => {
   if (process.env.NODE_ENV !== 'production' && req.headers.host?.includes('3000')) {
     console.log(`[DEBUG] Redirecting interview page from 3000 to 5173 for development`);
@@ -154,6 +167,13 @@ app.use((req, res, next) => {
 });
 
 // 路由
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/admin/prompts')) {
+    console.log('🔍 [PROMPT_ROUTE_MATCH] path:', req.path, 'method:', req.method);
+  }
+  next();
+});
+
 app.get('/api/health', async (req, res) => {
   try {
     const dbStatus = await sequelize.authenticate()
@@ -321,6 +341,7 @@ async function ensureDefaultAdmin() {
 
 async function ensureDemoResumes() {
   try {
+    if (String(process.env.ENABLE_DEMO_SEED || '').toLowerCase() !== 'true') return;
     const phone = '18605355138';
     let user = await User.findOne({ where: { phone } });
     if (!user) {
@@ -445,6 +466,12 @@ const startServer = async () => {
           await sequelize.sync({ force: false, alter: false });
           console.log('[Startup] Database synchronized (Development).');
         }
+        try {
+          const { ensurePostgresViews } = require('./scripts/bootstrap-postgres-views');
+          await ensurePostgresViews(sequelize);
+        } catch (e) {
+          console.warn('[Startup] Ensure Postgres views failed:', e.message);
+        }
         dbConnected = true;
         break; // 连接成功，跳出循环
       } catch (err) {
@@ -465,6 +492,12 @@ const startServer = async () => {
       await ensureDemoResumes();
       await promptService.ensureDefaultPrompts();
       console.log('Initial data verification completed.');
+      
+      // 启动自动快评计划任务
+      autoScreeningService.start();
+      
+      // 启动自动深度解析轮询任务 (每 10 分钟一次)
+      deepAnalysisService.start();
     } catch (e) {
       console.error('Initial data setup failed:', e.message);
     }
@@ -472,91 +505,94 @@ const startServer = async () => {
     // 安全地补充缺失列
     try {
       const dialect = sequelize.getDialect();
-      if (dialect === 'mysql') {
-        const checkAndAddColumn = async (table, column, definition) => {
-          const [results] = await sequelize.query(
-            `SELECT COLUMN_NAME FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = '${table}' AND COLUMN_NAME = '${column}'`
-          );
-          if (results.length === 0) {
-            await sequelize.query(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
-            console.log(`✅ Added missing column: ${table}.${column}`);
-          }
-        };
-
-        const tables = ['users', 'jobs', 'resumes', 'analysis_results', 'orders', 'invoices', 'recruitment_processes', 'user_activities', 'deep_analysis_records'];
-        for (const table of tables) {
-          await checkAndAddColumn(table, 'company_id', 'INTEGER DEFAULT NULL');
-        }
-        
-        await checkAndAddColumn('subscription_plans', 'i18n_names', 'JSON');
-        await checkAndAddColumn('resumes', 'source', 'TEXT');
-        await checkAndAddColumn('resumes', 'is_talent_pool', 'INTEGER DEFAULT 0');
-        await checkAndAddColumn('resumes', 'score', 'INTEGER DEFAULT 0');
-        await checkAndAddColumn('jobs', 'enable_auto_screening', 'BOOLEAN DEFAULT FALSE');
-        await checkAndAddColumn('jobs', 'auto_reject_score', 'INTEGER DEFAULT 60');
-        await checkAndAddColumn('jobs', 'notify_high_score', 'BOOLEAN DEFAULT FALSE');
-        await checkAndAddColumn('jobs', 'high_score_threshold', 'INTEGER DEFAULT 85');
-        await checkAndAddColumn('jobs', 'weight_preference', "ENUM('balanced', 'skills', 'experience', 'education') DEFAULT 'balanced'");
-        
-        await checkAndAddColumn('resumes', 'auto_rejected', 'BOOLEAN DEFAULT FALSE');
-        await checkAndAddColumn('resumes', 'rejection_reason', 'VARCHAR(255) DEFAULT NULL');
-        
-        // 确保 recruitment_status ENUM 包含所有必要的值
+      const checkAndAddColumn = async (table, column, definition) => {
         try {
-          console.log('[Startup] Ensuring recruitment_status ENUM values...');
-          await sequelize.query(`
-            ALTER TABLE resumes MODIFY COLUMN recruitment_status 
-            ENUM('投递', '初筛', '面试', 'Offer', '入职', '放弃', '淘汰') 
-            DEFAULT '投递'
-          `);
-          console.log('✅ Updated recruitment_status ENUM values.');
-        } catch (e) {
-          console.warn('⚠️ Failed to update recruitment_status ENUM:', e.message);
-        }
-        
-        await checkAndAddColumn('interview_sessions', 'expires_at', 'DATETIME DEFAULT NULL');
-      } else if (dialect === 'sqlite') {
-        const checkAndAddColumnSQLite = async (table, column, definition) => {
-          try {
+          if (dialect === 'mysql') {
+            const [results] = await sequelize.query(
+              `SELECT COLUMN_NAME FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = '${table}' AND COLUMN_NAME = '${column}'`
+            );
+            if (results.length === 0) {
+              await sequelize.query(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+              console.log(`✅ [MySQL] Added missing column: ${table}.${column}`);
+            }
+          } else if (dialect === 'sqlite') {
             const [columns] = await sequelize.query(`PRAGMA table_info(${table})`);
             const exists = columns.some(c => c.name === column);
             if (!exists) {
               await sequelize.query(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
               console.log(`✅ [SQLite] Added missing column: ${table}.${column}`);
             }
-          } catch (e) {
-            console.warn(`⚠️ [SQLite] Skipped adding ${table}.${column}: ${e.message}`);
+          } else if (dialect === 'postgres') {
+            const [results] = await sequelize.query(
+              `SELECT column_name FROM information_schema.columns WHERE table_name = '${table}' AND column_name = '${column}'`
+            );
+            if (results.length === 0) {
+              let def = definition;
+              if (definition.includes('JSON')) def = 'JSONB';
+              await sequelize.query(`ALTER TABLE ${table} ADD COLUMN ${column} ${def}`);
+              console.log(`✅ [Postgres] Added missing column: ${table}.${column}`);
+            }
           }
-        };
-
-        const tables = ['users', 'jobs', 'resumes', 'analysis_results', 'orders', 'invoices', 'recruitment_processes', 'user_activities', 'deep_analysis_records'];
-        for (const table of tables) {
-          await checkAndAddColumnSQLite(table, 'company_id', 'INTEGER DEFAULT NULL');
+        } catch (e) {
+          console.warn(`⚠️ Safe column check failed for ${table}.${column}:`, e.message);
         }
-        
-        await checkAndAddColumnSQLite('subscription_plans', 'i18n_names', 'TEXT');
-        await checkAndAddColumnSQLite('resumes', 'source', 'TEXT');
-        await checkAndAddColumnSQLite('resumes', 'is_talent_pool', 'INTEGER DEFAULT 0');
-        await checkAndAddColumnSQLite('resumes', 'score', 'INTEGER DEFAULT 0');
-        
-        // Fix for reported issues
-        await checkAndAddColumnSQLite('jobs', 'enable_auto_screening', 'INTEGER DEFAULT 0');
-        await checkAndAddColumnSQLite('jobs', 'auto_reject_score', 'INTEGER DEFAULT 60');
-        await checkAndAddColumnSQLite('jobs', 'notify_high_score', 'INTEGER DEFAULT 0');
-        await checkAndAddColumnSQLite('jobs', 'high_score_threshold', 'INTEGER DEFAULT 85');
-        await checkAndAddColumnSQLite('jobs', 'weight_preference', "TEXT DEFAULT 'balanced'");
-        
-        await checkAndAddColumnSQLite('resumes', 'auto_rejected', 'INTEGER DEFAULT 0');
-        await checkAndAddColumnSQLite('resumes', 'rejection_reason', 'TEXT DEFAULT NULL');
-        
-        await checkAndAddColumnSQLite('interview_sessions', 'expires_at', 'DATETIME DEFAULT NULL');
+      };
+
+      const tables = ['users', 'jobs', 'resumes', 'analysis_results', 'orders', 'invoices', 'recruitment_processes', 'user_activities', 'deep_analysis_records'];
+      for (const table of tables) {
+        await checkAndAddColumn(table, 'company_id', 'INTEGER DEFAULT NULL');
+      }
+      
+      const jsonDef = dialect === 'mysql' || dialect === 'postgres' ? 'JSON' : 'TEXT';
+      await checkAndAddColumn('subscription_plans', 'i18n_names', jsonDef);
+      await checkAndAddColumn('resumes', 'source', 'TEXT');
+      await checkAndAddColumn('resumes', 'is_talent_pool', 'INTEGER DEFAULT 0');
+      await checkAndAddColumn('resumes', 'score', 'INTEGER DEFAULT 0');
+      await checkAndAddColumn('users', 'real_name', 'VARCHAR(100)');
+      await checkAndAddColumn('jobs', 'enable_auto_screening', dialect === 'mysql' || dialect === 'postgres' ? 'BOOLEAN DEFAULT TRUE' : 'INTEGER DEFAULT 1');
+      await checkAndAddColumn('jobs', 'auto_reject_score', 'INTEGER DEFAULT 60');
+      await checkAndAddColumn('jobs', 'notify_high_score', dialect === 'mysql' || dialect === 'postgres' ? 'BOOLEAN DEFAULT TRUE' : 'INTEGER DEFAULT 1');
+      await checkAndAddColumn('jobs', 'high_score_threshold', 'INTEGER DEFAULT 85');
+      await checkAndAddColumn('jobs', 'enable_deep_analysis', dialect === 'mysql' || dialect === 'postgres' ? 'BOOLEAN DEFAULT FALSE' : 'INTEGER DEFAULT 0');
+      await checkAndAddColumn('resume_jobs', 'deep_analysis_status', dialect === 'mysql' ? "ENUM('none', 'pending', 'processing', 'completed', 'failed') DEFAULT 'none'" : "TEXT DEFAULT 'none'");
+      await checkAndAddColumn('resume_jobs', 'deep_analysis_trigger', dialect === 'mysql' ? "ENUM('manual', 'auto_immediate', 'auto_polling') DEFAULT 'manual'" : "TEXT DEFAULT 'manual'");
+      await checkAndAddColumn('resume_jobs', 'deep_analysis_retry_count', "INTEGER DEFAULT 0");
+      await checkAndAddColumn('resume_jobs', 'deep_analysis_error', "TEXT");
+      await checkAndAddColumn('jobs', 'weight_preference', dialect === 'mysql' ? "ENUM('balanced', 'skills', 'experience', 'education') DEFAULT 'balanced'" : "TEXT DEFAULT 'balanced'");
+      
+      await checkAndAddColumn('resumes', 'auto_rejected', dialect === 'mysql' || dialect === 'postgres' ? 'BOOLEAN DEFAULT FALSE' : 'INTEGER DEFAULT 0');
+      await checkAndAddColumn('resumes', 'rejection_reason', 'VARCHAR(255) DEFAULT NULL');
+      await checkAndAddColumn('companies', 'settings', jsonDef);
+      await checkAndAddColumn('companies', 'logo_url', 'VARCHAR(500) DEFAULT NULL');
+      await checkAndAddColumn('interview_sessions', 'expires_at', 'DATETIME DEFAULT NULL');
+
+      // MySQL 特有的 ENUM 更新
+      if (dialect === 'mysql') {
+        try {
+          await sequelize.query(`
+            ALTER TABLE resumes MODIFY COLUMN recruitment_status 
+            ENUM('投递', '快评', '面试', 'Offer', '入职', '放弃', '淘汰') 
+            DEFAULT '投递'
+          `);
+        } catch (e) { }
       }
     } catch (e) {
       console.error('⚠️ Safe column check failed:', e.message);
     }
 
     const HOST = process.env.HOST || '0.0.0.0';
-    app.listen(PORT, HOST, () => {
+    const http = require('http');
+    const server = http.createServer(app);
+    
+    // 初始化 Socket.io
+    const socketService = require('./services/socketService');
+    socketService.init(server);
+    
+    // 启动异步解析 Worker
+    require('./workers/analysisWorker');
+    console.log('✅ Deep Analysis Worker started.');
+
+    server.listen(PORT, HOST, () => {
       console.log(`Server is running on http://${HOST}:${PORT}`);
       console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 
@@ -582,6 +618,20 @@ const startServer = async () => {
           }
         } catch (e) { console.error('Interview scheduler error:', e.message) }
       }, 60 * 1000);
+
+      // 启动自动快评服务：每分钟执行一次
+      try {
+        autoScreeningService.start(60 * 1000);
+      } catch (e) {
+        console.error('Failed to start AutoScreeningService:', e.message);
+      }
+
+      // 启动自动深度解析轮询任务 (每 10 分钟一次)
+      try {
+        deepAnalysisService.start(10 * 60 * 1000);
+      } catch (e) {
+        console.error('Failed to start DeepAnalysisService:', e.message);
+      }
     });
   } catch (err) {
     console.error('Unable to connect to the database:', err);

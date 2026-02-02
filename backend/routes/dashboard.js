@@ -9,12 +9,21 @@ const aiService = new DomesticAIService();
 // 获取仪表盘统计数据
 router.get('/stats', authenticate, async (req, res) => {
     try {
-        const userId = req.user.id;
-        const companyId = req.user.company_id;
+        const buildAccessClause = (prefix = '') => {
+            const field = (name) => prefix ? `${prefix}.${name}` : name;
+            if (req.user.company_id) {
+                return {
+                    [Op.or]: [
+                        { [field('company_id')]: req.user.company_id },
+                        { [field('user_id')]: req.user.id }
+                    ]
+                };
+            } else {
+                return { [field('user_id')]: req.user.id };
+            }
+        };
 
-        const whereUser = companyId 
-            ? { company_id: companyId }
-            : { user_id: userId };
+        const whereUser = buildAccessClause();
         
         // 1. 候选人总数 (人才库中的简历)
         const totalCandidates = await Resume.count({ 
@@ -38,7 +47,7 @@ router.get('/stats', authenticate, async (req, res) => {
         // 3. 招聘进行中 (发布的职位)
         const activeJobs = await Job.count({
             where: {
-                user_id: userId,
+                ...whereUser,
                 status: 'active'
             }
         });
@@ -51,7 +60,7 @@ router.get('/stats', authenticate, async (req, res) => {
         
         // 查找该用户发布的职位的所有流程记录
         const userJobs = await Job.findAll({
-            where: { user_id: userId },
+            where: whereUser,
             attributes: ['id']
         });
         const jobIds = userJobs.map(j => j.id);
@@ -74,18 +83,27 @@ router.get('/stats', authenticate, async (req, res) => {
             });
         }
 
+        // 统计已快评的简历数量 (status = 'screening')
+        const screenedResumes = await ResumeJob.count({
+            where: {
+                job_id: { [Op.in]: jobIds },
+                status: 'screening'
+            }
+        });
+
         res.json({
             data: {
                 total_candidates: totalCandidates,
                 new_candidates_today: newCandidatesToday,
                 active_jobs: activeJobs,
                 interviews_scheduled: interviewsScheduled,
-                offers_sent: offersSent
+                offers_sent: offersSent,
+                screened_resumes: screenedResumes
             }
         });
     } catch (error) {
         console.error('Get dashboard stats error:', error);
-        res.status(500).json({ error: '获取统计数据失败' });
+        res.status(500).json({ success: false, error: { message: '获取统计数据失败' } });
     }
 });
 
@@ -93,10 +111,11 @@ router.get('/stats', authenticate, async (req, res) => {
 router.get('/tasks', authenticate, async (req, res) => {
     try {
         const userId = req.user.id;
+        const companyId = req.user.company_id;
         
-        // 获取用户发布的职位
+        // 查找该用户发布的职位的所有流程记录
         const userJobs = await Job.findAll({
-            where: { user_id: userId },
+            where: companyId ? { company_id: companyId } : { user_id: userId },
             attributes: ['id', 'title']
         });
         const jobIds = userJobs.map(j => j.id);
@@ -106,11 +125,11 @@ router.get('/tasks', authenticate, async (req, res) => {
         const tasks = [];
 
         if (jobIds.length > 0) {
-            // 1. 待筛选简历 (status = 'applied' or 'screening')
+            // 1. 待快评简历 (status = 'applied')
             const pendingReviews = await ResumeJob.findAll({
                 where: {
                     job_id: { [Op.in]: jobIds },
-                    status: { [Op.in]: ['applied', 'screening'] }
+                    status: 'applied'
                 },
                 limit: 5,
                 order: [['applied_at', 'DESC']],
@@ -120,11 +139,11 @@ router.get('/tasks', authenticate, async (req, res) => {
             if (pendingReviews.length > 0) {
                 tasks.push({
                     type: 'review',
-                    title: '待筛选简历',
+                    title: '待快评简历',
                     count: await ResumeJob.count({
                         where: {
                             job_id: { [Op.in]: jobIds },
-                            status: { [Op.in]: ['applied', 'screening'] }
+                            status: 'applied'
                         }
                     }),
                     priority: 'high',
@@ -140,6 +159,8 @@ router.get('/tasks', authenticate, async (req, res) => {
                         }
                         return {
                             id: p.id,
+                            resumeId: p.resume_id,
+                            score: p.match_score,
                             desc: `${name} - ${jobMap[p.job_id]}`,
                             time: p.created_at
                         };
@@ -147,7 +168,50 @@ router.get('/tasks', authenticate, async (req, res) => {
                 });
             }
 
-            // 2. 待面试
+            // 2. 已快评 (status = 'screening')
+            const recentScreened = await ResumeJob.findAll({
+                where: {
+                    job_id: { [Op.in]: jobIds },
+                    status: 'screening'
+                },
+                limit: 5,
+                order: [['updated_at', 'DESC']],
+                include: [{ model: Resume, attributes: ['file_name', 'parsed_data'] }]
+            });
+
+            if (recentScreened.length > 0) {
+                tasks.push({
+                    type: 'screened',
+                    title: '已快评简历',
+                    count: await ResumeJob.count({
+                        where: {
+                            job_id: { [Op.in]: jobIds },
+                            status: 'screening'
+                        }
+                    }),
+                    priority: 'medium',
+                    link: 'resume-management.html?status=screening',
+                    items: recentScreened.map(p => {
+                        let name = '候选人';
+                        if (p.Resume) {
+                             if (p.Resume.parsed_data && p.Resume.parsed_data.name) {
+                                 name = p.Resume.parsed_data.name;
+                             } else {
+                                 name = p.Resume.file_name;
+                             }
+                        }
+                        return {
+                            id: p.id,
+                            resumeId: p.resume_id,
+                            score: p.match_score,
+                            desc: `${name} - ${jobMap[p.job_id]}`,
+                            time: p.updated_at
+                        };
+                    })
+                });
+            }
+
+            // 3. 待面试
             const interviews = await ResumeJob.findAll({
                 where: {
                     job_id: { [Op.in]: jobIds },
@@ -176,6 +240,8 @@ router.get('/tasks', authenticate, async (req, res) => {
                         }
                         return {
                             id: p.id,
+                            resumeId: p.resume_id,
+                            score: p.match_score,
                             desc: `${name} - ${jobMap[p.job_id]}`,
                             time: p.updated_at
                         };
@@ -211,6 +277,8 @@ router.get('/tasks', authenticate, async (req, res) => {
                         }
                         return {
                             id: p.id,
+                            resumeId: p.resume_id,
+                            score: p.match_score,
                             desc: `${name} - ${jobMap[p.job_id]}`,
                             time: p.updated_at
                         };
@@ -219,10 +287,10 @@ router.get('/tasks', authenticate, async (req, res) => {
             }
         }
 
-        res.json({ data: tasks });
+        res.json({ success: true, data: tasks });
     } catch (error) {
         console.error('Get pending tasks error:', error);
-        res.status(500).json({ error: '获取待办事项失败' });
+        res.status(500).json({ success: false, error: { message: '获取待办事项失败' } });
     }
 });
 
@@ -231,11 +299,12 @@ router.get('/ai-prediction', authenticate, async (req, res) => {
     try {
         const { period } = req.query;
         const userId = req.user.id;
+        const companyId = req.user.company_id;
 
         // 获取用于AI分析的上下文数据
         // 1. 获取用户的活跃职位
         const userJobs = await Job.findAll({
-            where: { user_id: userId },
+            where: companyId ? { company_id: companyId } : { user_id: userId },
             attributes: ['id', 'title', 'department', 'status', 'created_at']
         });
         const jobIds = userJobs.map(j => j.id);
@@ -283,14 +352,30 @@ router.get('/ai-prediction', authenticate, async (req, res) => {
             company_id: req.user.company_id,
             role: req.user.role 
         };
-        
-        const aiResult = await aiService.generateRecruitmentForecast(contextData, userCtx);
+
+        const timeoutMs = 30000; // 增加到 30 秒，给 AI 足够的时间生成内容
+        const timeoutFallback = {
+            success: false,
+            data: {
+                trend_analysis: "预测生成超时，已返回降级结果。请点击“重新分析”重试。",
+                pipeline_health: "处理中",
+                potential_bottlenecks: ["AI 生成时间过长"],
+                suggestions: ["稍后重试", "检查网络连接", "检查 AI 服务配置"]
+            },
+            service: 'TIMEOUT',
+            model: 'timeout'
+        };
+
+        const aiResult = await Promise.race([
+            aiService.generateRecruitmentForecast(contextData, userCtx),
+            new Promise(resolve => setTimeout(() => resolve(timeoutFallback), timeoutMs))
+        ]);
 
         res.json({
+            success: true,
             data: {
-                period,
-                ai_analysis: aiResult.data,
-                // 保留基础统计数据以防前端需要展示
+                period: period || '7d',
+                ai_analysis: aiResult && aiResult.data ? aiResult.data : timeoutFallback.data,
                 stats: {
                     active_jobs: contextData.active_jobs_count,
                     total_candidates: pipelineStats.total_candidates
@@ -302,6 +387,7 @@ router.get('/ai-prediction', authenticate, async (req, res) => {
         console.error('Get AI prediction error:', error);
         // 出错时返回友好的降级数据
         res.json({
+            success: true,
             data: {
                 ai_analysis: {
                     trend_analysis: "暂时无法生成趋势分析，请稍后再试。",

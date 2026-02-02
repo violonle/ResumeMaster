@@ -2,14 +2,16 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const { jwtSecret } = require('../config/auth');
 const { authenticateToken, requireAdmin } = require('../middleware/adminAuth');
-const { User, Company, Subscription, SubscriptionPlan, ModelProvider, ModelKey, SystemConfig, sequelize, AnalysisResult, Order, AuditLog, UserActivity, ResumeJob, Resume, Job } = require('../models');
+const { User, Company, Subscription, SubscriptionPlan, ModelProvider, ModelKey, SystemConfig, sequelize, AnalysisResult, Order, AuditLog, UserActivity, ResumeJob, Resume, Job, DeepAnalysisRecord, InterviewSession } = require('../models');
 const { Op } = require('sequelize');
 const axios = require('axios');
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
 const smsService = require('../services/smsService');
+const { ensurePostgresViews } = require('../scripts/bootstrap-postgres-views');
 
 // 管理员登录
 router.post('/login', async (req, res) => {
@@ -50,7 +52,7 @@ router.post('/login', async (req, res) => {
       }
       const token = jwt.sign(
         { id: user.id, username: user.username, role: 'admin', permissions: perms },
-        process.env.JWT_SECRET || 'dev-secret',
+        process.env.JWT_SECRET || jwtSecret,
         { expiresIn: '24h' }
       );
       return res.json({ token, user: { id: user.id, username: user.username, role: 'admin', permissions: perms } });
@@ -62,7 +64,7 @@ router.post('/login', async (req, res) => {
     try {
       const { username, password } = req.body || {};
       if (username === 'masteradmin' && password === 'Longkou7') {
-        const token = jwt.sign({ id: 0, username: 'masteradmin', role: 'admin', permissions: ['*'] }, process.env.JWT_SECRET || 'dev-secret', { expiresIn: '24h' });
+        const token = jwt.sign({ id: 0, username: 'masteradmin', role: 'admin', permissions: ['*'] }, process.env.JWT_SECRET || jwtSecret, { expiresIn: '24h' });
         return res.json({ token, user: { id: 0, username: 'masteradmin', role: 'admin', permissions: ['*'] } });
       }
     } catch (_) { }
@@ -207,6 +209,17 @@ router.get('/accounts/:id', authenticateToken, requireAdmin, async (req, res) =>
   } catch (error) {
     console.error('Get account error:', error);
     res.status(500).json({ message: '获取账号信息失败' });
+  }
+});
+
+router.post('/pg/refresh-mv', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const dialect = sequelize.getDialect();
+    if (dialect !== 'postgres') return res.status(400).json({ success:false, error:{ code:'NOT_POSTGRES', message:'仅支持 PostgreSQL' } });
+    await ensurePostgresViews(sequelize);
+    return res.json({ success:true });
+  } catch (e) {
+    return res.status(500).json({ success:false, error:{ code:'REFRESH_FAILED', message: e.message } });
   }
 });
 
@@ -408,8 +421,15 @@ router.put('/system/sms', authenticateToken, requireAdmin, async (req, res) => {
 
 router.post('/system/sms/test', authenticateToken, requireAdmin, async (req, res) => {
   try {
-    const { phone, content, templateCode, scenario } = req.body
-    if (!phone) return res.status(400).json({ message: '缺少手机号' })
+    const { phone: rawPhone, content, templateCode, scenario } = req.body
+    if (!rawPhone) return res.status(400).json({ message: '缺少手机号' })
+    
+    // 使用归一化处理手机号
+    const np = smsService.normalizePhone(rawPhone)
+    if (!np.ok) {
+      return res.status(400).json({ success: false, error: { code: 'INVALID_PHONE', message: '手机号格式不正确' } })
+    }
+    const phone = np.phone;
     
     // 获取当前管理员关联的公司名称作为默认值
     let defaultCompanyName = '超级简历'
@@ -422,12 +442,47 @@ router.post('/system/sms/test', authenticateToken, requireAdmin, async (req, res
       }
     }
 
+    const cfg = await smsService.getConfig().catch(() => null)
+    const authTemplateCodes = new Set()
+    if (cfg && cfg.scenarios && cfg.scenarios.auth && cfg.scenarios.auth.templateCode) {
+      authTemplateCodes.add(String(cfg.scenarios.auth.templateCode))
+    } else if (cfg && cfg.templateCode) {
+      authTemplateCodes.add(String(cfg.templateCode))
+    }
+    const isAuthTemplateCode = (code) => {
+      const c = String(code || '')
+      return authTemplateCodes.has(c)
+    }
+    const normalizeAuthParams = (content) => {
+      let codeVal = ''
+      if (content && typeof content === 'object') {
+        if (content.code !== undefined) codeVal = content.code
+        else if (content.Code !== undefined) codeVal = content.Code
+      } else if (content !== undefined && content !== null) {
+        codeVal = content
+      }
+      if (!codeVal) codeVal = '123456'
+      const codeStr = String(codeVal)
+      if (!/^[a-zA-Z0-9]+$/.test(codeStr)) {
+        return { ok: false, message: '验证码模板参数只允许字母或数字' }
+      }
+      return { ok: true, params: { code: codeStr } }
+    }
+
     // 如果提供了 templateCode，则直接调用 sendAliyunSms
     let r;
     if (templateCode) {
       // 优先使用传入的 content，如果 content 是对象则合并，否则使用默认公司名称
-      let params = { company: defaultCompanyName };
-      if (content && typeof content === 'object') {
+      let params = { 
+        company: defaultCompanyName
+      };
+      if (isAuthTemplateCode(templateCode)) {
+        const normalized = normalizeAuthParams(content)
+        if (!normalized.ok) {
+          return res.status(400).json({ success: false, error: { code: 'INVALID_TEMPLATE_PARAM', message: normalized.message } })
+        }
+        params = normalized.params
+      } else if (content && typeof content === 'object') {
         params = { ...params, ...content };
       } else if (content) {
         params.content = content;
@@ -438,9 +493,21 @@ router.post('/system/sms/test', authenticateToken, requireAdmin, async (req, res
     } else if (scenario) {
       // 优先使用用户提供的测试内容
       if (content && typeof content === 'object' && Object.keys(content).length > 0) {
-        const params = { company: defaultCompanyName, ...content }
-        console.log('[Admin] Testing SMS with scenario:', scenario, 'params:', JSON.stringify(params));
-        r = await smsService.sendText(String(phone), params, scenario)
+        if (scenario === 'auth') {
+          const normalized = normalizeAuthParams(content)
+          if (!normalized.ok) {
+            return res.status(400).json({ success: false, error: { code: 'INVALID_TEMPLATE_PARAM', message: normalized.message } })
+          }
+          console.log('[Admin] Testing SMS with scenario:', scenario, 'params:', JSON.stringify(normalized.params));
+          r = await smsService.sendText(String(phone), normalized.params, scenario)
+        } else {
+          const params = { 
+            company: defaultCompanyName, 
+            ...content 
+          }
+          console.log('[Admin] Testing SMS with scenario:', scenario, 'params:', JSON.stringify(params));
+          r = await smsService.sendText(String(phone), params, scenario)
+        }
       } else {
         // 根据场景发送默认测试内容
         if (scenario === 'auth') {
@@ -461,18 +528,20 @@ router.post('/system/sms/test', authenticateToken, requireAdmin, async (req, res
           r = await smsService.sendText(String(phone), {
             name: '张三',
             company: defaultCompanyName,
-            time: timeStr,
-            link: 'https://m.cloujade.com/offer/123'
+            time: timeStr
           }, 'offer')
         } else if (scenario === 'reminder') {
           r = await smsService.sendText(String(phone), {
             time: '15分钟后',
             name: '张三',
             company: defaultCompanyName,
-            url: 'https://m.cloujade.com/i/123'
+            url: 'https://master.cloujade.com?resumeJobId=12345'
           }, 'reminder')
         } else {
-          r = await smsService.sendText(String(phone), content || '这是一条测试短信', scenario)
+          r = await smsService.sendText(String(phone), { 
+            company: defaultCompanyName, 
+            content: content || '这是一条测试短信' 
+          }, scenario)
         }
       }
     } else {
@@ -480,8 +549,8 @@ router.post('/system/sms/test', authenticateToken, requireAdmin, async (req, res
       r = await smsService.sendVerificationCode(String(phone), '123456')
     }
     
-    if (r.success) return res.json({ success: true })
-    return res.status(400).json({ success: false, error: r.error || '发送失败' })
+    if (r && r.sent === true) return res.json({ success: true, data: r })
+    return res.status(400).json({ success: false, error: { code: (r && r.error) || 'SEND_FAILED', message: (r && r.message) || '发送失败' }, data: r })
   } catch (e) {
     console.error('[Admin] Test SMS error:', e)
     res.status(500).json({ message: '测试短信发送失败' })
@@ -495,9 +564,23 @@ router.get('/system/sms/check', authenticateToken, requireAdmin, async (req, res
     if (!cfg.accessKeyId) missing.push('AccessKeyId')
     if (!cfg.accessKeySecret) missing.push('AccessKeySecret')
     if (!cfg.signName) missing.push('SignName')
-    if (!cfg.templateCode) missing.push('TemplateCode')
-    const status = missing.length === 0 ? 'ok' : 'incomplete'
-    res.json({ success: true, data: { provider: cfg.provider, enabled: !!cfg.enabled, signName: cfg.signName || '', templateCode: cfg.templateCode || '', status, missing } })
+    const scenarios = cfg.scenarios || {}
+    const expected = {
+        auth: { required: ['code'], templateCode: (scenarios.auth && scenarios.auth.templateCode) ? String(scenarios.auth.templateCode) : '', fallback: false },
+        interview: { required: ['name', 'company', 'time', 'jobId'], templateCode: (scenarios.interview && scenarios.interview.templateCode) ? String(scenarios.interview.templateCode) : '' },
+        offer: { required: ['name', 'company', 'time'], templateCode: (scenarios.offer && scenarios.offer.templateCode) ? String(scenarios.offer.templateCode) : '' },
+        reminder: { required: ['name', 'company', 'time', 'url'], templateCode: (scenarios.reminder && scenarios.reminder.templateCode) ? String(scenarios.reminder.templateCode) : '' }
+      }
+    if (!expected.auth.templateCode && cfg.templateCode) {
+      expected.auth.templateCode = String(cfg.templateCode)
+      expected.auth.fallback = true
+    }
+    if (!expected.auth.templateCode) missing.push('TemplateCode.auth')
+    if (!expected.interview.templateCode) missing.push('TemplateCode.interview')
+    if (!expected.offer.templateCode) missing.push('TemplateCode.offer')
+    if (!expected.reminder.templateCode) missing.push('TemplateCode.reminder')
+    const status = (!cfg.enabled) ? 'disabled' : (missing.length === 0 ? 'ok' : 'incomplete')
+    res.json({ success: true, data: { provider: cfg.provider, enabled: !!cfg.enabled, signName: cfg.signName || '', status, missing, scenarios: expected } })
   } catch (e) {
     res.status(500).json({ message: '短信配置检查失败' })
   }
@@ -811,6 +894,26 @@ router.patch('/companies/:id', authenticateToken, requireAdmin, async (req, res)
   }
 });
 
+// 企业删除
+router.delete('/companies/:id', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const company = await Company.findByPk(id);
+    if (!company) return res.status(404).json({ message: '企业不存在' });
+    
+    // 检查是否有依赖数据（如职位、简历等）
+    const jobCount = await Job.count({ where: { company_id: id } });
+    if (jobCount > 0) return res.status(400).json({ message: '该企业下有关联职位，无法删除' });
+    
+    await company.destroy();
+    try { await sequelize.models.AuditLog.create({ actor_account_id: req.user?.id || 0, action: 'companies.delete', resource_type: 'Company', resource_id: id, payload: { name: company.name }, ip: req.ip, ua: req.headers['user-agent'] }); } catch (_) { }
+    res.json({ message: '企业删除成功' });
+  } catch (error) {
+    console.error('Delete company error:', error);
+    res.status(500).json({ message: '删除企业失败' });
+  }
+});
+
 // 订阅管理
 router.get('/subscriptions', authenticateToken, requireAdmin, async (req, res) => {
   try {
@@ -1110,8 +1213,8 @@ router.delete('/subscriptions/:id', authenticateToken, requireAdmin, async (req,
     if (!sub) return res.status(404).json({ message: '订阅不存在' });
 
     await sub.destroy();
-    try { await sequelize.models.AuditLog.create({ actor_account_id: req.user?.id || 0, action: 'subscriptions.delete', resource_type: 'Subscription', resource_id: id, payload: {}, ip: req.ip, ua: req.headers['user-agent'] }); } catch (_) { }
-    res.json({ message: '删除成功' });
+    try { await sequelize.models.AuditLog.create({ actor_account_id: req.user?.id || 0, action: 'subscriptions.delete', resource_type: 'Subscription', resource_id: id, payload: { company_id: sub.company_id }, ip: req.ip, ua: req.headers['user-agent'] }); } catch (_) { }
+    res.json({ message: '订阅删除成功' });
   } catch (error) {
     console.error('Delete subscription error:', error);
     res.status(500).json({ message: '删除订阅失败' });
@@ -1486,11 +1589,39 @@ router.get('/jobs', authenticateToken, requireAdmin, async (req, res) => {
 
     res.json({
       total: count,
-      list: rows
+      items: rows
     });
   } catch (error) {
     console.error('Get jobs error:', error);
     res.status(500).json({ message: '获取职位列表失败' });
+  }
+});
+
+// 职位统计
+router.get('/jobs/stats', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const total = await Job.count();
+    const active = await Job.count({ where: { status: 'active' } });
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const newToday = await Job.count({ where: { created_at: { [Op.gte]: todayStart } } });
+    res.json({ total, active, newToday });
+  } catch (error) {
+    res.status(500).json({ message: '获取职位统计失败' });
+  }
+});
+
+// 职位详情
+router.get('/jobs/:id', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const job = await Job.findByPk(req.params.id, {
+      include: [{ model: Company, attributes: ['id', 'name'] }]
+    });
+    if (!job) return res.status(404).json({ message: '职位不存在' });
+    res.json(job);
+  } catch (error) {
+    console.error('Get job detail error:', error);
+    res.status(500).json({ message: '获取职位详情失败' });
   }
 });
 
@@ -1560,7 +1691,7 @@ router.get('/resumes', authenticateToken, requireAdmin, async (req, res) => {
 
     res.json({
       total: count,
-      list: rows.map(item => {
+      items: rows.map(item => {
         // 将绝对路径转换为相对 uploads 目录的路径
         let relativePath = item.file_path;
         if (relativePath) {
@@ -1653,6 +1784,69 @@ router.get('/resumes/:id', authenticateToken, requireAdmin, async (req, res) => 
   } catch (error) {
     console.error('Get resume detail error:', error);
     res.status(500).json({ message: '获取简历详情失败' });
+  }
+});
+
+// 删除简历
+router.delete('/resumes/:id', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const resume = await Resume.findByPk(id);
+    
+    if (!resume) {
+      return res.status(404).json({ message: '简历不存在' });
+    }
+
+    // 删除关联的分析结果
+    await AnalysisResult.destroy({ where: { resume_id: id } });
+    
+    // 删除旧版深度分析记录
+    await DeepAnalysisRecord.destroy({ where: { resume_id: id } });
+    
+    // 删除面试会话
+    await InterviewSession.destroy({ where: { resume_id: id } });
+
+    // 删除简历职位关联
+    await ResumeJob.destroy({ where: { resume_id: id } });
+
+    // 删除简历记录
+    await resume.destroy();
+
+    res.json({ success: true, message: '简历删除成功' });
+  } catch (error) {
+    console.error('Delete resume error:', error);
+    res.status(500).json({ message: '删除简历失败' });
+  }
+});
+
+// 批量删除简历
+router.post('/resumes/batch-delete', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { ids } = req.body;
+    
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ message: '请提供要删除的简历ID列表' });
+    }
+
+    // 删除关联的分析结果
+    await AnalysisResult.destroy({ where: { resume_id: { [Op.in]: ids } } });
+    
+    // 删除旧版深度分析记录
+    await DeepAnalysisRecord.destroy({ where: { resume_id: { [Op.in]: ids } } });
+    
+    // 删除面试会话
+    await InterviewSession.destroy({ where: { resume_id: { [Op.in]: ids } } });
+
+    // 删除简历职位关联
+    await ResumeJob.destroy({ where: { resume_id: { [Op.in]: ids } } });
+
+    // 批量删除简历记录
+    await Resume.destroy({ where: { id: { [Op.in]: ids } } });
+
+    res.json({ success: true, message: `成功删除 ${ids.length} 份简历` });
+  } catch (error) {
+    console.error('Batch delete resumes error:', error);
+    res.status(500).json({ message: '批量删除简历失败' });
   }
 });
 
@@ -1841,9 +2035,105 @@ router.get('/system/permissions', authenticateToken, requireAdmin, async (req, r
     { category: '系统管理', permissions: [{ title: '系统设置', value: 'system.settings', description: '基础/短信/通知设置' }, { title: '查看日志', value: 'system.logs', description: '查询与导出系统日志' }] }
   ])
 });
-router.get('/system/logs', authenticateToken, requireAdmin, async (req, res) => { res.json({ items: [], total: 0 }) });
-router.get('/system/logs/:id', authenticateToken, requireAdmin, async (req, res) => { res.json({ id: req.params.id, level: 'info', module: 'system', user: 'admin', message: '示例日志', timestamp: new Date() }) });
-router.get('/system/logs/export', authenticateToken, requireAdmin, async (req, res) => { res.setHeader('Content-Type', 'text/csv'); res.send('timestamp,level,module,user,message\n') });
+router.get('/system/logs', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { page = 1, limit = 10, search = '', level = '', module = '', startDate, endDate } = req.query;
+    const offset = (page - 1) * limit;
+    const where = {};
+    
+    if (search) {
+      where[Op.or] = [
+        { action: { [Op.like]: `%${search}%` } },
+        { payload: { [Op.like]: `%${search}%` } }
+      ];
+    }
+    
+    if (level) {
+      // 审计日志目前没有 level 字段，如果需要可以增加，这里暂时忽略或按 action 过滤
+    }
+    
+    if (module) {
+      where.resource_type = module;
+    }
+    
+    if (startDate || endDate) {
+      where.occurred_at = {};
+      if (startDate) where.occurred_at[Op.gte] = new Date(startDate);
+      if (endDate) where.occurred_at[Op.lte] = new Date(endDate);
+    }
+
+    const { count, rows } = await (sequelize.models.AuditLog || AuditLog).findAndCountAll({
+      where,
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      order: [['occurred_at', 'DESC']],
+      include: [{ model: User, as: 'Actor', attributes: ['id', 'username'] }]
+    });
+
+    res.json({
+      items: rows.map(l => ({
+        id: l.id,
+        timestamp: l.occurred_at,
+        level: 'info', // 审计日志默认为 info
+        module: l.resource_type,
+        action: l.action,
+        user: l.Actor ? l.Actor.username : 'Unknown',
+        message: `${l.action} on ${l.resource_type} #${l.resource_id}`,
+        payload: l.payload,
+        ip: l.ip
+      })),
+      total: count
+    });
+  } catch (error) {
+    console.error('Get logs error:', error);
+    res.status(500).json({ message: '获取日志失败' });
+  }
+});
+
+router.get('/system/logs/:id', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const log = await (sequelize.models.AuditLog || AuditLog).findByPk(req.params.id, {
+      include: [{ model: User, as: 'Actor', attributes: ['id', 'username'] }]
+    });
+    if (!log) return res.status(404).json({ message: '日志不存在' });
+    res.json({
+      id: log.id,
+      timestamp: log.occurred_at,
+      level: 'info',
+      module: log.resource_type,
+      action: log.action,
+      user: log.Actor ? log.Actor.username : 'Unknown',
+      message: `${log.action} on ${log.resource_type} #${log.resource_id}`,
+      payload: log.payload,
+      ip: log.ip,
+      ua: log.ua
+    });
+  } catch (error) {
+    res.status(500).json({ message: '获取日志详情失败' });
+  }
+});
+
+router.get('/system/logs/export', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const logs = await (sequelize.models.AuditLog || AuditLog).findAll({
+      order: [['occurred_at', 'DESC']],
+      limit: 1000,
+      include: [{ model: User, as: 'Actor', attributes: ['id', 'username'] }]
+    });
+    
+    let csv = 'timestamp,level,module,user,action,message,ip\n';
+    logs.forEach(l => {
+      const user = l.Actor ? l.Actor.username : 'Unknown';
+      csv += `"${l.occurred_at.toISOString()}","info","${l.resource_type}","${user}","${l.action}","${l.action} on ${l.resource_type} #${l.resource_id}","${l.ip || ''}"\n`;
+    });
+    
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename=logs.csv');
+    res.send(csv);
+  } catch (error) {
+    res.status(500).json({ message: '导出日志失败' });
+  }
+});
 
 // 辅助：角色映射
 function mapRole(role) {

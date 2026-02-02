@@ -11,10 +11,47 @@ function iso(){return new Date().toISOString().replace(/\.(\d{3})Z$/,'Z')}
 const SCENARIOS = {
   AUTH: 'auth',           // 登录/注册验证码
   INTERVIEW: 'interview', // 面试邀请
-  OFFER: 'offer'          // Offer发送通知
+  OFFER: 'offer',         // Offer发送通知
+  REMINDER: 'reminder'    // 面试催单通知
+}
+
+function normalizePhone(input){
+  const raw = input === null || input === undefined ? '' : String(input);
+  const s = raw.replace(/\s+/g, '');
+  if (!s) return { ok: false, raw, phone: '', reason: 'EMPTY' };
+  let digits = s.replace(/[^\d]/g, '');
+  
+  // 处理常见的 +86 或 86 前缀
+  if (digits.length === 13 && digits.startsWith('86')) {
+    digits = digits.slice(2);
+  } else if (digits.length > 13 && digits.startsWith('0086')) {
+    digits = digits.slice(4);
+  }
+  
+  // 匹配 11 位中国大陆手机号
+  const m = digits.match(/1[3-9]\d{9}/);
+  if (!m) return { ok: false, raw, phone: '', reason: 'INVALID' };
+  return { ok: true, raw, phone: m[0], reason: '' };
+}
+
+function buildResult({ success, attempted, sent, skipped, mock, provider, scenario, templateCode, error, message, data }){
+  return {
+    success: !!success,
+    attempted: !!attempted,
+    sent: !!sent,
+    skipped: !!skipped,
+    mock: !!mock,
+    provider: provider || 'aliyun',
+    scenario: scenario || null,
+    templateCode: templateCode || '',
+    error: error || '',
+    message: message || '',
+    data: data
+  }
 }
 
 async function getConfig(){
+  let enabledFromConfig = process.env.SMS_ENABLED !== undefined
   const cfg = {
     provider: process.env.SMS_PROVIDER || 'aliyun',
     accessKeyId: process.env.ALIYUN_SMS_ACCESS_KEY_ID || process.env.ALIYUN_ACCESS_KEY_ID || '',
@@ -25,7 +62,8 @@ async function getConfig(){
     scenarios: {
       auth: { templateCode: process.env.ALIYUN_SMS_TEMPLATE_CODE_AUTH || '' },
       interview: { templateCode: process.env.ALIYUN_SMS_TEMPLATE_CODE_INTERVIEW || '' },
-      offer: { templateCode: process.env.ALIYUN_SMS_TEMPLATE_CODE_OFFER || '' }
+      offer: { templateCode: process.env.ALIYUN_SMS_TEMPLATE_CODE_OFFER || '' },
+      reminder: { templateCode: process.env.ALIYUN_SMS_TEMPLATE_CODE_REMINDER || '' }
     },
     portalUrl: process.env.PORTAL_URL || 'https://master.cloujade.com'
   }
@@ -43,10 +81,6 @@ async function getConfig(){
           if(v.signName) cfg.signName = v.signName;
           if(v.templateCode) cfg.templateCode = v.templateCode;
           if(v.scenarios) {
-            // Backward compatibility for 'reminder' -> 'offer'
-            if (v.scenarios.reminder && !v.scenarios.offer) {
-              v.scenarios.offer = v.scenarios.reminder;
-            }
             cfg.scenarios = { ...cfg.scenarios, ...v.scenarios };
           }
         }catch(_){/* ignore */}
@@ -57,6 +91,7 @@ async function getConfig(){
       // This ensures that configurations made in the Admin Panel (SystemConfig) always override file-based .env settings.
       const keys = [
         'sms.provider','sms.accessKeyId','sms.accessKeySecret','sms.signName','sms.enabled', 'settings',
+        'sms.templateCode',
         'sms.auth.templateCode',
         'sms.interview.templateCode',
         'sms.offer.templateCode',
@@ -77,13 +112,17 @@ async function getConfig(){
         if (r.key==='sms.accessKeyId' && val && val !== '***') cfg.accessKeyId = val
         if (r.key==='sms.accessKeySecret' && val && val !== '***') cfg.accessKeySecret = val
         if (r.key==='sms.signName' && val) cfg.signName = val
-        if (r.key==='sms.enabled') cfg.enabled = val === 'true'
+        if (r.key==='sms.templateCode' && val) cfg.templateCode = val
+        if (r.key==='sms.enabled') {
+          cfg.enabled = val === 'true'
+          enabledFromConfig = true
+        }
         
         // Scenario specific - Overwriting Env values with DB values if they exist
         if (r.key==='sms.auth.templateCode' && val) cfg.scenarios.auth.templateCode = val
         if (r.key==='sms.interview.templateCode' && val) cfg.scenarios.interview.templateCode = val
         if (r.key==='sms.offer.templateCode' && val) cfg.scenarios.offer.templateCode = val
-        if (r.key==='sms.reminder.templateCode' && val && !cfg.scenarios.offer.templateCode) cfg.scenarios.offer.templateCode = val
+        if (r.key==='sms.reminder.templateCode' && val) cfg.scenarios.reminder.templateCode = val
       }
 
       // Smart correction for common user mistakes
@@ -102,6 +141,10 @@ async function getConfig(){
     }
   }catch(e){
     console.error('[SMS] getConfig error:', e)
+  }
+
+  if (!enabledFromConfig && !cfg.enabled && cfg.accessKeyId && cfg.accessKeySecret && cfg.signName) {
+    cfg.enabled = true
   }
   
   // Debug log (masked)
@@ -134,48 +177,49 @@ async function sendAliyunSms(phone, signName, templateCode, templateParam, scena
   // If no tpl found, and no scenario provided, it might be a direct call with tpl in templateCode param
   if (!tpl) tpl = cfg.templateCode // This is just a fallback for legacy support if needed
   
-  if (!id || !secret) {
-    console.warn('[SMS] Config missing (AccessKeyId/Secret). Using MOCK mode.');
-    console.log(`[SMS MOCK] To: ${phone}`);
-    console.log(`[SMS MOCK] Template: ${tpl || 'DEFAULT'}`);
-    console.log(`[SMS MOCK] Params: ${JSON.stringify(templateParam)}`);
-    return { success: true, mock: true };
-  }
   if (!cfg.enabled) {
     console.warn('[SMS] Service is DISABLED in settings.');
-    return { success: false, error: 'DISABLED', message: '短信服务未开启' };
-  }
-  if (!sign) return { success:false, error:'CONFIG_MISSING_SIGN' }
-  
-  // Try to create template if missing (ONLY for AUTH/DEFAULT scenario)
-  if (!tpl && (!scenario || scenario === SCENARIOS.AUTH)) {
-    try {
-      console.log('[SMS] Template code missing for AUTH, attempting to create default template...')
-      const init = await createAliyunTemplate('登录/注册验证码', '您的验证码为：${code}，5分钟内有效。若非本人操作请忽略。', 0, '系统自动创建')
-      if (init && init.success && init.data && init.data.TemplateCode) {
-        tpl = init.data.TemplateCode
-        console.log('[SMS] Created default template:', tpl)
-        try {
-          const SystemConfig = sequelize.models.SystemConfig
-          if (SystemConfig) {
-            const row = await SystemConfig.findOne({ where: { key: 'sms.templateCode' } })
-            if (row) await row.update({ value: String(tpl) })
-            else await SystemConfig.create({ key: 'sms.templateCode', value: String(tpl) })
-          }
-        } catch(_){}
-      } else {
-        console.error('[SMS] Failed to create default template:', init)
-        // Don't return error here, let it fall through to param check, though it will likely fail
-      }
-    } catch(e) {
-      console.error('[SMS] Error creating default template:', e)
-    }
+    return buildResult({ success: false, attempted: false, sent: false, skipped: true, mock: false, provider: cfg.provider, scenario, templateCode: tpl, error: 'DISABLED', message: '短信服务未开启' });
   }
 
+  if (!sign) return buildResult({ success: false, attempted: false, sent: false, skipped: true, mock: false, provider: cfg.provider, scenario, templateCode: tpl, error: 'CONFIG_MISSING_SIGN', message: '短信通道未配置：缺少签名' })
   if (!tpl) {
     console.error(`[SMS] Missing template code for scenario: ${scenario || 'default'}`);
-    return { success: false, error: 'CONFIG_MISSING_TEMPLATE', message: `未配置${scenario || '短信'}模板` };
+    return buildResult({ success: false, attempted: false, sent: false, skipped: true, mock: false, provider: cfg.provider, scenario, templateCode: tpl, error: 'CONFIG_MISSING_TEMPLATE', message: `未配置${scenario || '短信'}模板` });
   }
+
+  const np = normalizePhone(phone)
+  if (!np.ok) {
+    return buildResult({ success: false, attempted: false, sent: false, skipped: true, mock: false, provider: cfg.provider, scenario, templateCode: tpl, error: 'INVALID_PHONE', message: '手机号不合法' })
+  }
+  const normalizedPhone = np.phone
+
+  if (!id || !secret) {
+    console.warn('[SMS] Config missing (AccessKeyId/Secret).');
+    return buildResult({ success: false, attempted: false, sent: false, skipped: true, mock: false, provider: cfg.provider, scenario, templateCode: tpl, error: 'CONFIG_MISSING_KEYS', message: '短信通道未配置：缺少AccessKey' });
+  }
+
+  // Ensure templateParam is an object for potential merging
+  let finalParams = typeof templateParam === 'object' && templateParam !== null ? { ...templateParam } : {};
+  
+  // Fill company if missing (essential for most templates)
+  if (!finalParams.company) {
+      finalParams.company = cfg.siteName || '某公司';
+    }
+  // Fill name if missing
+  if (!finalParams.name) {
+    finalParams.name = '候选人';
+  }
+  
+  // Backward compatibility: fill other aliases if not present (optional, keep minimal)
+  if (!finalParams.companyName) finalParams.companyName = finalParams.company;
+  if (!finalParams.siteName) finalParams.siteName = finalParams.company;
+  if (!finalParams.date && finalParams.time) finalParams.date = finalParams.time;
+  if (!finalParams.url && finalParams.link) finalParams.url = finalParams.link;
+  if (!finalParams.address && finalParams.link) finalParams.address = finalParams.link;
+  if (!finalParams.location && finalParams.link) finalParams.location = finalParams.link;
+  if (!finalParams.job && finalParams.jobTitle) finalParams.job = finalParams.jobTitle;
+  if (!finalParams.jobTitle && finalParams.job) finalParams.jobTitle = finalParams.job;
   
   const p = {
     Format:'JSON',
@@ -187,10 +231,10 @@ async function sendAliyunSms(phone, signName, templateCode, templateParam, scena
     Version:'2017-05-25',
     Action:'SendSms',
     RegionId:'cn-hangzhou',
-    PhoneNumbers:phone,
+    PhoneNumbers:normalizedPhone,
     SignName:sign,
     TemplateCode:tpl,
-    TemplateParam:typeof templateParam==='string'? templateParam : JSON.stringify(templateParam||{})
+    TemplateParam: JSON.stringify(finalParams)
   }
   const ks = Object.keys(p).sort()
   const q = ks.map(k=>`${enc(k)}=${enc(p[k])}`).join('&')
@@ -198,14 +242,21 @@ async function sendAliyunSms(phone, signName, templateCode, templateParam, scena
   const sig = crypto.createHmac('sha1', secret+'&').update(s).digest('base64')
   const url = 'https://dysmsapi.aliyuncs.com/?Signature='+enc(sig)+'&'+q
   try{
-    console.log(`[SMS] Sending to ${phone} with template ${tpl} sign ${sign} params:`, p.TemplateParam)
+    const maskedUrl = url.replace(/AccessKeyId=[^&]*/, 'AccessKeyId=***').replace(/Signature=[^&]*/, 'Signature=***');
+    console.log(`[SMS] Sending to ${normalizedPhone} (raw: ${phone}) with template ${tpl} sign ${sign} params:`, p.TemplateParam)
+    console.log(`[SMS] Aliyun Request URL (masked): ${maskedUrl}`);
     const res = await axios.get(url, { timeout:10000 })
     const ok = res.data && res.data.Code === 'OK'
-    console.log('[SMS] Aliyun response:', JSON.stringify(res.data));
-    return ok? { success:true, data:res.data } : { success:false, error:res.data && res.data.Message || 'SEND_FAILED', data:res.data }
+    console.log(`[SMS] Aliyun Response for ${normalizedPhone}:`, JSON.stringify(res.data));
+    if (!ok) {
+      console.error(`[SMS] Aliyun Error for ${normalizedPhone}: ${res.data?.Code} - ${res.data?.Message}`);
+    }
+    return ok
+      ? buildResult({ success: true, attempted: true, sent: true, skipped: false, mock: false, provider: cfg.provider, scenario, templateCode: tpl, error: '', message: '', data: res.data })
+      : buildResult({ success: false, attempted: true, sent: false, skipped: false, mock: false, provider: cfg.provider, scenario, templateCode: tpl, error: (res.data && res.data.Code) || 'SEND_FAILED', message: (res.data && res.data.Message) || 'SEND_FAILED', data: res.data })
   }catch(e){
     console.error('[SMS] Aliyun error:', e.message, e.response && e.response.data);
-    return { success:false, error:e.message }
+    return buildResult({ success: false, attempted: true, sent: false, skipped: false, mock: false, provider: cfg.provider, scenario, templateCode: tpl, error: 'HTTP_ERROR', message: e.message, data: e.response && e.response.data })
   }
 }
 
@@ -213,6 +264,10 @@ async function sendVerificationCode(phone, code, ip = null){
   console.log(`[SMS] sendVerificationCode phone=${phone} code=${code}`);
   
   try {
+    const codeStr = String(code || '');
+    if (!/^[a-zA-Z0-9]+$/.test(codeStr)) {
+      return { success: false, error: 'INVALID_CODE', message: '验证码仅支持字母或数字' };
+    }
     const VerificationCode = sequelize.models.VerificationCode;
     if (VerificationCode) {
       // 1. Check rate limit (1 minute)
@@ -223,8 +278,17 @@ async function sendVerificationCode(phone, code, ip = null){
       
       if (lastCode) {
         const diff = Date.now() - new Date(lastCode.created_at).getTime();
-        if (diff < 60 * 1000) {
-          return { success: false, error: 'RATE_LIMIT_EXCEEDED', message: '请勿频繁发送验证码' };
+        // 在生产环境下严格执行60秒限制；开发环境下放宽
+        const isDev = process.env.NODE_ENV !== 'production';
+        const limit = isDev ? 2 * 1000 : 60 * 1000; // 开发环境缩短到2秒
+        
+        if (diff < limit) {
+          // 如果上一次发送失败了，允许立即重试
+          if (lastCode.status === 'failed') {
+             // allow retry
+          } else {
+            return { success: false, error: 'RATE_LIMIT_EXCEEDED', message: '请勿频繁发送验证码' };
+          }
         }
       }
       
@@ -238,26 +302,43 @@ async function sendVerificationCode(phone, code, ip = null){
         }
       });
       
-      if (count >= 10) {
+      const dailyLimit = (process.env.NODE_ENV !== 'production') ? 100 : 10;
+      if (count >= dailyLimit) {
         return { success: false, error: 'DAILY_LIMIT_EXCEEDED', message: '今日验证码发送次数已达上限' };
       }
       
       // 3. Save to DB
-      await VerificationCode.create({
+      const record = await VerificationCode.create({
         phone,
         code,
         type: 'login',
-        status: 'sent',
+        status: 'pending',
         ip,
         expires_at: new Date(Date.now() + 5 * 60 * 1000) // 5 minutes validity
       });
+
+      const result = await sendAliyunSms(phone, null, null, { code: String(code) }, SCENARIOS.AUTH);
+      
+      // Update status based on result
+      if (result && result.success) {
+      await record.update({ status: 'sent' });
+      return { success: true, message: result.message || '验证码已发送', sent: !!result.sent, mock: !!result.mock };
+    } else {
+      await record.update({ status: 'failed' });
+      // 如果是 Mock 模式，也认为是成功，方便开发测试
+      if (result && result.mock) {
+        return { success: true, message: result.message || '开发环境验证码(Mock)', sent: false, mock: true };
+      }
+      return { success: false, error: 'SMS_SEND_FAILED', message: result.message || '发送失败', detail: result.error, sent: false, mock: false };
+    }
     }
   } catch (err) {
-    console.error('[SMS] Rate limit check failed:', err);
+    console.error('[SMS] Send verification code failed:', err);
+    return { success: false, error: 'SEND_ERROR', message: err.message };
   }
 
-  // Try to cover common template variable names
-  return sendAliyunSms(phone, null, null, { code, number: code, verifyCode: code, content: code }, SCENARIOS.AUTH)
+  // Fallback if model not found
+  return sendAliyunSms(phone, null, null, { code: String(code) }, SCENARIOS.AUTH)
 }
 
 async function sendText(phone, content, scenario = null){
@@ -308,4 +389,4 @@ async function createAliyunTemplate(name, content, type = 0, remark = '系统自
   }
 }
 
-module.exports = { SCENARIOS, getConfig, sendAliyunSms, sendVerificationCode, sendText, createAliyunTemplate }
+module.exports = { SCENARIOS, getConfig, sendAliyunSms, sendVerificationCode, sendText, createAliyunTemplate, normalizePhone }

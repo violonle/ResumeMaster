@@ -10,14 +10,14 @@ class DashboardCharts {
             primary: '#3B82F6',
             secondary: '#8B5CF6',
             success: '#10B981',
-            warning: '#F59E0B',
+            warning: '#6366F1',
             error: '#EF4444',
             info: '#06B6D4',
             gradient: {
                 blue: ['#3B82F6', '#1D4ED8'],
                 purple: ['#8B5CF6', '#5B21B6'],
                 green: ['#10B981', '#047857'],
-                orange: ['#F59E0B', '#D97706']
+                indigo: ['#6366F1', '#4F46E5']
             }
         };
         this.init();
@@ -30,9 +30,12 @@ class DashboardCharts {
     loadChartJS() {
         if (typeof Chart === 'undefined') {
             const script = document.createElement('script');
-            script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js';
+            script.src = '/js/chart.min.js';
             script.onload = () => {
                 this.initializeCharts();
+            };
+            script.onerror = () => {
+                console.error('Chart.js 加载失败:', script.src);
             };
             document.head.appendChild(script);
         } else {

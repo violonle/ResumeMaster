@@ -16,6 +16,7 @@
     "axios": "^1.6.0",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.20.2",
+    "bullmq": "^5.67.2",
     "cheerio": "^1.0.0-rc.12",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
@@ -24,6 +25,7 @@
     "form-data": "^4.0.5",
     "gm": "^1.25.1",
     "imapflow": "^1.1.1",
+    "ioredis": "^5.9.2",
     "jsonwebtoken": "^9.0.2",
     "mailparser": "^3.9.0",
     "mammoth": "^1.6.0",
@@ -36,14 +38,17 @@
     "openai": "^6.15.0",
     "pdf-parse": "^1.1.1",
     "pdf2pic": "^3.2.0",
+    "pg": "^8.17.2",
+    "pg-hstore": "^2.3.4",
     "playwright": "^1.57.0",
     "puppeteer": "^24.34.0",
     "sequelize": "^6.32.1",
-    "sqlite3": "^5.1.7",
+    "socket.io": "^4.8.3",
     "textract": "^2.5.0",
     "xml2js": "^0.6.2"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1"
+    "nodemon": "^3.0.1",
+    "sqlite3": "^5.1.7"
   }
 }

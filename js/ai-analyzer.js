@@ -71,7 +71,7 @@ class AIResumeAnalyzer {
         }
 
         try {
-            const response = await resumeDataManager.apiRequest('/ai/analyze', 'POST', {
+            const response = await window.resumeDataManager.apiRequest('/ai/analyze', 'POST', {
                 resumeText: content,
                 jobDescription: targetJob ? JSON.stringify(targetJob) : null,
                 options: { scene: 'deep_analysis' }
@@ -116,19 +116,7 @@ class AIResumeAnalyzer {
                 formData.append('targetJob', JSON.stringify(targetJob));
             }
 
-            const response = await fetch(`${resumeDataManager.apiBaseUrl}/ai/upload`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${resumeDataManager.token}`
-                },
-                body: formData
-            });
-
-            const uploadResult = await response.json();
-
-            if (!uploadResult.success) {
-                throw new Error(uploadResult.error?.message || '文件上传失败');
-            }
+            const uploadResult = await window.resumeDataManager.apiRequest('/ai/upload', 'POST', formData, false);
 
             if (progressCallback) {
                 progressCallback({
@@ -139,7 +127,7 @@ class AIResumeAnalyzer {
                 });
             }
 
-            // 优化：如果后端已经自动触发了分析（场景化自动初筛），则直接进入轮询
+            // 优化：如果后端已经自动触发了分析（场景化自动快评），则直接进入轮询
             if (uploadResult.data && uploadResult.data.isAnalyzing) {
                 console.log('[AI Analyzer] Backend auto-triggered analysis, starting poll...');
                 const data = await this.pollAnalysisResult(uploadResult.data.resumeId);
@@ -149,7 +137,7 @@ class AIResumeAnalyzer {
                 return data;
             }
 
-            const analysisResponse = await resumeDataManager.apiRequest('/ai/analyze', 'POST', {
+            const analysisResponse = await window.resumeDataManager.apiRequest('/ai/analyze', 'POST', {
                 resumeId: uploadResult.data.resumeId,
                 jobDescription: targetJob ? JSON.stringify(targetJob) : null,
                 options: { scene: 'deep_analysis' }
@@ -180,8 +168,14 @@ class AIResumeAnalyzer {
 
     /**
      * 分析已有简历
+     * @param {string} resumeId - 简历ID
+     * @param {Object} targetJob - 目标职位
+     * @param {Function} progressCallback - 进度回调
+     * @param {boolean} force - 是否强制重新解析
+     * @param {Object} preservedDimensions - 需要保持不变的维度得分
+     * @param {number} preservedScore - 需要保持不变的总分
      */
-    async analyzeExistingResume(resumeId, targetJob = null, progressCallback = null) {
+    async analyzeExistingResume(resumeId, targetJob = null, progressCallback = null, force = false, preservedDimensions = null, preservedScore = null) {
         if (progressCallback) {
             progressCallback({
                 step: 1,
@@ -192,15 +186,27 @@ class AIResumeAnalyzer {
         }
 
         try {
-            const response = await resumeDataManager.apiRequest('/ai/analyze', 'POST', {
+            const requestBody = {
                 resumeId: resumeId,
                 jobDescription: targetJob ? JSON.stringify(targetJob) : null,
                 options: { scene: 'deep_analysis' }
-            }, true, true); // Added silent=true
+            };
+            
+            if (force) {
+                requestBody.force = true;
+                if (preservedDimensions) {
+                    requestBody.preservedDimensions = preservedDimensions;
+                }
+                if (preservedScore !== null && preservedScore !== undefined) {
+                    requestBody.preservedScore = preservedScore;
+                }
+            }
+
+            const response = await resumeDataManager.apiRequest('/ai/analyze', 'POST', requestBody, true, true); // Added silent=true
 
             if (response.success) {
                 if (response.status === 'processing') {
-                    const data = await this.pollAnalysisResult(resumeId);
+                    const data = await this.pollAnalysisResult(resumeId, progressCallback);
                     if (progressCallback) {
                         progressCallback({ step: 3, total: 3, message: 'AI分析完成', progress: 100 });
                     }
@@ -220,13 +226,26 @@ class AIResumeAnalyzer {
         }
     }
 
-    async pollAnalysisResult(resumeId) {
+    async pollAnalysisResult(resumeId, progressCallback = null) {
         let attempts = 0;
         const MAX_ATTEMPTS = 120;
         let delayMs = 2000;
         const MAX_DELAY_MS = 10000;
         while (attempts < MAX_ATTEMPTS) {
             attempts++;
+            
+            if (progressCallback) {
+                // Progress from 33% to 95% based on attempts
+                // Assuming it takes about 10-15 attempts (20-30s) normally
+                const simulatedProgress = Math.min(95, 33 + (attempts * 5));
+                progressCallback({
+                    step: 2,
+                    total: 3,
+                    message: `正在进行 AI 逻辑推理 (第 ${attempts} 轮)...`,
+                    progress: simulatedProgress
+                });
+            }
+
             try {
                 // 使用 silent=true 避免轮询期间的正常错误（如结果未生成）触发警示框或控制台报错
                 const statusRes = await resumeDataManager.apiRequest(`/ai/status/${resumeId}`, 'GET', null, false, true);
@@ -235,13 +254,25 @@ class AIResumeAnalyzer {
                     if (status === 'analyzed') {
                         const resultRes = await resumeDataManager.apiRequest(`/ai/result/${resumeId}`, 'GET', null, false, true);
                         if (resultRes && resultRes.success && resultRes.data) {
-                            // 增加严格校验：确保返回的结果属于当前请求的 resumeId
                             const resultData = resultRes.data;
                             const returnedId = resultData.resume_id || resultData.id;
+                            
+                            // 增加校验：如果状态是 analyzed 但核心数据（总分或报告）仍然完全为空，
+                            // 则可能还在数据库写入中，继续轮询一会
+                            const hasReport = resultData.summary || resultData.hiring_advice || 
+                                             (resultData.detailed_analysis && Object.keys(resultData.detailed_analysis).length > 0);
+                            // 维度得分不全为 0
+                            const hasDimensions = resultData.dimensions && Object.values(resultData.dimensions).some(v => v > 0);
+                            const hasScore = resultData.overall_score > 0;
+
                             if (String(returnedId) === String(resumeId)) {
-                                return resultData;
-                            } else {
-                                console.warn(`[Poll] Received data for wrong resumeId. Expected: ${resumeId}, Got: ${returnedId}`);
+                                // 只有当报告、总分、维度分都有数据时，才认为分析真正完成
+                                if (hasReport && (hasScore || hasDimensions)) {
+                                    return resultData;
+                                }
+                                console.log(`[Poll] Result found but seems incomplete, waiting... (Attempt ${attempts})`, {
+                                    hasReport, hasScore, hasDimensions
+                                });
                             }
                         }
                     } else if (status === 'failed') {

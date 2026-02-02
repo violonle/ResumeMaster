@@ -6,12 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>数据分析仪表板 - 争湃·简历大师</title>
     <script src="../js/tailwindcss.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <script src="/js/chart.min.js"></script>
     <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="/css/design-system.css">
     <link rel="stylesheet" href="/css/sidebar.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        @import url('https://fonts.loli.net/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         
         body { 
             font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif; 
@@ -149,13 +149,13 @@
 
                 <div class="metric-card p-6 rounded-2xl">
                     <div class="flex items-center space-x-5">
-                        <div class="w-14 h-14 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center text-2xl">
+                        <div class="w-14 h-14 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center text-2xl">
                             <i class="fas fa-coins"></i>
                         </div>
                         <div>
                             <p class="text-[11px] font-black text-gray-500 uppercase tracking-widest mb-1">月收入</p>
                             <h3 class="text-2xl font-black text-gray-900">—</h3>
-                            <p class="text-[10px] font-black text-amber-600 mt-0.5">—</p>
+                            <p class="text-[10px] font-black text-blue-600 mt-0.5">—</p>
                         </div>
                     </div>
                 </div>
@@ -229,7 +229,7 @@
                 <div class="glass-card">
                     <div class="flex items-center justify-between mb-8">
                         <div class="flex items-center space-x-3">
-                            <div class="w-10 h-10 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center">
+                            <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
                                 <i class="fas fa-layer-group"></i>
                             </div>
                             <div>
@@ -237,7 +237,7 @@
                                 <p class="text-xs font-black text-gray-400">不同模版的受欢迎程度</p>
                             </div>
                         </div>
-                        <button class="p-2 text-gray-400 hover:text-amber-600 transition-colors" data-export-chart="templateUsage">
+                        <button class="p-2 text-gray-400 hover:text-blue-600 transition-colors" data-export-chart="templateUsage">
                             <i class="fas fa-download"></i>
                         </button>
                     </div>
@@ -291,8 +291,6 @@
             </div>
         </div>
     </main>
-
-    <div id="notification-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
 
     <script src="/js/sidebar.js"></script>
     <script>

@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const { jwtSecret } = require('../config/auth');
 
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
@@ -8,9 +9,15 @@ const authenticateToken = (req, res, next) => {
     return res.status(401).json({ message: '访问令牌缺失' });
   }
 
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+  const secret = process.env.JWT_SECRET || jwtSecret;
+  jwt.verify(token, secret, (err, user) => {
     if (err) {
-      return res.status(403).json({ message: '访问令牌无效' });
+      console.error('[AdminAuth] JWT Verify Error:', err.message, 'Secret used:', secret.substring(0, 3) + '...');
+      return res.status(403).json({ 
+        message: '访问令牌无效', 
+        error: err.message,
+        code: 'INVALID_TOKEN'
+      });
     }
     req.user = user;
     next();

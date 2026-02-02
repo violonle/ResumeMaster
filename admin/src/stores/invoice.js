@@ -13,7 +13,7 @@ export const useInvoiceStore = defineStore('invoice', () => {
         loading.value = true
         try {
             const response = await invoiceAPI.getList(params)
-            invoices.value = response.data.invoices
+            invoices.value = response.data.items
             totalItems.value = response.data.total
             return response.data
         } catch (error) {

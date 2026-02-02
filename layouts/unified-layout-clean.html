@@ -6,7 +6,7 @@
     <title>{{PAGE_TITLE}} - 简历助手</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdn.staticfile.org/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@fontsource/inter/index.css" rel="stylesheet">
     <link href="/css/unified-design-system.css" rel="stylesheet">
     <style>
         body {
@@ -334,158 +334,6 @@
             }
         }
         
-        /* 通知样式 */
-        .notification-container {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-            max-width: 400px;
-        }
-        
-        .notification {
-            background-color: var(--bg-primary);
-            border: 1px solid var(--border-light);
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-lg);
-            padding: var(--space-md);
-            margin-bottom: var(--space-sm);
-            display: flex;
-            align-items: flex-start;
-            gap: var(--space-md);
-            animation: slideInRight 0.3s ease;
-        }
-        
-        .notification.success {
-            border-left: 4px solid var(--success-color);
-        }
-        
-        .notification.error {
-            border-left: 4px solid var(--error-color);
-        }
-        
-        .notification.warning {
-            border-left: 4px solid var(--warning-color);
-        }
-        
-        .notification.info {
-            border-left: 4px solid var(--info-color);
-        }
-        
-        .notification-icon {
-            flex-shrink: 0;
-            width: 20px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-        }
-        
-        .notification.success .notification-icon {
-            background-color: var(--success-bg);
-            color: var(--success-color);
-        }
-        
-        .notification.error .notification-icon {
-            background-color: var(--error-bg);
-            color: var(--error-color);
-        }
-        
-        .notification.warning .notification-icon {
-            background-color: var(--warning-bg);
-            color: var(--warning-color);
-        }
-        
-        .notification.info .notification-icon {
-            background-color: var(--info-bg);
-            color: var(--info-color);
-        }
-        
-        .notification-content {
-            flex: 1;
-        }
-        
-        .notification-title {
-            font-weight: var(--font-weight-medium);
-            color: var(--text-primary);
-            margin-bottom: var(--space-xs);
-        }
-        
-        .notification-message {
-            font-size: var(--font-size-sm);
-            color: var(--text-secondary);
-            line-height: var(--line-height-normal);
-        }
-        
-        .notification-close {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            cursor: pointer;
-            padding: 0;
-            font-size: var(--font-size-base);
-            transition: color 0.2s ease;
-        }
-        
-        .notification-close:hover {
-            color: var(--text-secondary);
-        }
-        
-        @keyframes slideInRight {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-        
-        /* 加载遮罩 */
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(255, 255, 255, 0.8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            backdrop-filter: blur(4px);
-        }
-        
-        .loading-content {
-            background-color: var(--bg-primary);
-            padding: var(--space-xl);
-            border-radius: var(--radius-xl);
-            box-shadow: var(--shadow-xl);
-            text-align: center;
-        }
-        
-        .loading-spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid var(--border-light);
-            border-top: 3px solid var(--primary-color);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto var(--space-md) auto;
-        }
-        
-        .loading-text {
-            color: var(--text-secondary);
-            font-size: var(--font-size-sm);
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
         /* 内容动画 */
         .content-fade-in {
             animation: fadeInUp 0.4s ease-out;
@@ -649,17 +497,6 @@
         </footer>
     </div>
 
-    <!-- 通知容器 -->
-    <div class="notification-container" id="notification-container"></div>
-
-    <!-- 加载遮罩 -->
-    <div class="loading-overlay hidden" id="loading-overlay">
-        <div class="loading-content">
-            <div class="loading-spinner"></div>
-            <p class="loading-text">加载中...</p>
-        </div>
-    </div>
-
     <!-- 脚本文件 -->
     <script src="/js/ui-components.js"></script>
     <script src="/js/resume-templates.js"></script>
@@ -781,61 +618,23 @@
 
             // 公共方法
             showNotification(message, type = 'info') {
-                this.createNotification(message, type);
-            }
-
-            createNotification(message, type = 'info') {
-                const container = document.getElementById('notification-container');
-                const notification = document.createElement('div');
-                notification.className = `notification ${type}`;
-                
-                const icons = {
-                    success: 'fa-check-circle',
-                    error: 'fa-exclamation-circle',
-                    warning: 'fa-exclamation-triangle',
-                    info: 'fa-info-circle'
-                };
-                
-                const titles = {
-                    success: '成功',
-                    error: '错误',
-                    warning: '警告',
-                    info: '提示'
-                };
-                
-                notification.innerHTML = `
-                    <div class="notification-icon">
-                        <i class="fas ${icons[type]}"></i>
-                    </div>
-                    <div class="notification-content">
-                        <div class="notification-title">${titles[type]}</div>
-                        <div class="notification-message">${message}</div>
-                    </div>
-                    <button class="notification-close" onclick="this.parentElement.remove()">
-                        <i class="fas fa-times"></i>
-                    </button>
-                `;
-                
-                container.appendChild(notification);
-                
-                // 自动移除通知
-                setTimeout(() => {
-                    if (notification.parentElement) {
-                        notification.remove();
-                    }
-                }, 5000);
+                if (window.uiComponents) {
+                    window.uiComponents.showNotification(message, type);
+                } else {
+                    console.log(`[Notification] ${type}: ${message}`);
+                }
             }
 
             showLoading(message = '加载中...') {
-                const overlay = document.getElementById('loading-overlay');
-                const textElement = overlay.querySelector('.loading-text');
-                textElement.textContent = message;
-                overlay.classList.remove('hidden');
+                if (window.uiComponents) {
+                    window.uiComponents.showLoading(message);
+                }
             }
 
             hideLoading() {
-                const overlay = document.getElementById('loading-overlay');
-                overlay.classList.add('hidden');
+                if (window.uiComponents) {
+                    window.uiComponents.hideLoading();
+                }
             }
 
             // 页面跳转

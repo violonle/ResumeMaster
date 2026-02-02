@@ -211,7 +211,7 @@ const loadRoles = async () => {
   loading.value = true
   try {
     const res = await systemAPI.getRoles()
-    const list = res.data || res
+    const list = res.data?.items || res.data || res
     roles.value = (Array.isArray(list) ? list : []).filter(r => allowedKeys.includes(r.key))
   } finally { loading.value = false }
 }
@@ -219,7 +219,7 @@ const loadRoles = async () => {
 const loadPermissions = async () => {
   try {
     const res = await systemAPI.getPermissions()
-    permissionsDict.value = res.data || res
+    permissionsDict.value = res.data?.items || res.data || res
   } catch (_) { permissionsDict.value = { groups:{}, all:[] } }
 }
 

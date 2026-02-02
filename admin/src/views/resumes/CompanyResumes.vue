@@ -268,7 +268,7 @@ const loadItems = async (options = {}) => {
     if (itemsPerPage) filters.limit = itemsPerPage
 
     const { data } = await resumeAPI.getList(filters)
-    items.value = data.list
+    items.value = data.items
     total.value = data.total
   } catch (error) {
     console.error('Failed to load resumes:', error)

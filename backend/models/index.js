@@ -215,6 +215,11 @@ const Resume = sequelize.define('Resume', {
     allowNull: true,
     comment: '邮箱'
   },
+  avatar: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+    comment: '头像URL'
+  },
   location: {
     type: DataTypes.STRING(200),
     allowNull: true,
@@ -271,7 +276,7 @@ const Resume = sequelize.define('Resume', {
     comment: '项目经历'
   },
   recruitment_status: {
-    type: DataTypes.ENUM('投递', '初筛', '面试', 'Offer', '入职', '放弃', '淘汰'),
+    type: DataTypes.ENUM('投递', '快评', '面试', 'Offer', '入职', '放弃', '淘汰'),
     defaultValue: '投递',
     comment: '招聘流程状态'
   },
@@ -337,6 +342,14 @@ const AnalysisResult = sequelize.define('AnalysisResult', {
       key: 'id'
     }
   },
+  job_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'jobs',
+      key: 'id'
+    }
+  },
   analysis_date: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW
@@ -345,6 +358,10 @@ const AnalysisResult = sequelize.define('AnalysisResult', {
     type: DataTypes.INTEGER,
     allowNull: true,
     comment: '所属公司ID'
+  },
+  type: {
+    type: DataTypes.ENUM('single', 'multi'),
+    defaultValue: 'single'
   },
   overall_score: {
     type: DataTypes.INTEGER,
@@ -427,6 +444,12 @@ const AnalysisResult = sequelize.define('AnalysisResult', {
       fields: ['user_id']
     },
     {
+      fields: ['job_id']
+    },
+    {
+      fields: ['type']
+    },
+    {
       fields: ['analysis_date']
     },
     {
@@ -438,76 +461,6 @@ const AnalysisResult = sequelize.define('AnalysisResult', {
   ]
 });
 
-// 深度解析记录表 (Deep Analysis Records) - 新建
-const DeepAnalysisRecord = sequelize.define('DeepAnalysisRecord', {
-  id: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true
-  },
-  user_id: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: 'users',
-      key: 'id'
-    }
-  },
-  resume_id: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: 'resumes',
-      key: 'id'
-    }
-  },
-  job_id: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
-    references: {
-      model: 'jobs',
-      key: 'id'
-    }
-  },
-  company_id: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
-    comment: '所属公司ID'
-  },
-  type: {
-    type: DataTypes.ENUM('single', 'multi'),
-    defaultValue: 'single'
-  },
-  overall_score: {
-    type: DataTypes.INTEGER,
-    allowNull: false
-  },
-  dimensions: {
-    type: DataTypes.JSON,
-    allowNull: false,
-    comment: '包含 skills, experience, education, stability, potential, teamwork 六个维度'
-  },
-  details: {
-    type: DataTypes.JSON,
-    allowNull: false,
-    comment: '完整的 AI 解析结果'
-  },
-  analysis_date: {
-    type: DataTypes.DATE,
-    defaultValue: DataTypes.NOW
-  }
-}, {
-  tableName: 'deep_analysis_records',
-  timestamps: true,
-  createdAt: 'analysis_date',
-  updatedAt: 'updated_at',
-  indexes: [
-    { fields: ['user_id'] },
-    { fields: ['resume_id'] },
-    { fields: ['type'] },
-    { fields: ['overall_score'] }
-  ]
-});
 
 // 职位模型
 const Job = sequelize.define('Job', {
@@ -610,23 +563,28 @@ const Job = sequelize.define('Job', {
   },
   enable_auto_screening: {
     type: DataTypes.BOOLEAN,
-    defaultValue: false,
-    comment: '是否开启全自动初筛'
+    defaultValue: true,
+    comment: '是否开启全自动快评'
   },
   auto_reject_score: {
     type: DataTypes.INTEGER,
     defaultValue: 60,
-    comment: '自动初筛淘汰分数线'
+    comment: '自动快评淘汰分数线'
   },
   notify_high_score: {
     type: DataTypes.BOOLEAN,
-    defaultValue: false,
+    defaultValue: true,
     comment: '是否开启高分通知'
   },
   high_score_threshold: {
     type: DataTypes.INTEGER,
     defaultValue: 85,
     comment: '高分通知阈值'
+  },
+  enable_deep_analysis: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    comment: '是否自动开启深度解析'
   },
   weight_preference: {
     type: DataTypes.ENUM('balanced', 'skills', 'experience', 'education'),
@@ -1004,6 +962,26 @@ const ResumeJob = sequelize.define('ResumeJob', {
       max: 100
     }
   },
+  deep_analysis_status: {
+    type: DataTypes.ENUM('none', 'pending', 'processing', 'completed', 'failed'),
+    defaultValue: 'none',
+    comment: '深度解析状态：none-未开启, pending-等待队列, processing-处理中, completed-已完成, failed-失败'
+  },
+  deep_analysis_trigger: {
+    type: DataTypes.ENUM('manual', 'auto_immediate', 'auto_polling'),
+    defaultValue: 'manual',
+    comment: '触发来源：manual-手动, auto_immediate-即时触发, auto_polling-轮询触发'
+  },
+  deep_analysis_retry_count: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+    comment: '重试次数'
+  },
+  deep_analysis_error: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    comment: '最后一次错误信息'
+  },
   recruiter_notes: {
     type: DataTypes.TEXT,
     allowNull: true
@@ -1160,12 +1138,14 @@ const Company = sequelize.define('Company', {
   founding_year: { type: DataTypes.STRING(10), allowNull: true },
   website: { type: DataTypes.STRING(200), allowNull: true },
   description: { type: DataTypes.TEXT, allowNull: true },
+  logo_url: { type: DataTypes.STRING(500), allowNull: true },
   contact_account_id: { type: DataTypes.INTEGER, allowNull: true },
   is_verified: { type: DataTypes.BOOLEAN, defaultValue: false },
   verification_status: { type: DataTypes.ENUM('none', 'pending', 'verified', 'rejected'), defaultValue: 'none' },
   verification_info: { type: DataTypes.JSON, allowNull: true, defaultValue: {} },
   code: { type: DataTypes.STRING(50), allowNull: true, unique: true },
-  status: { type: DataTypes.ENUM('active', 'inactive'), defaultValue: 'active' }
+  status: { type: DataTypes.ENUM('active', 'inactive'), defaultValue: 'active' },
+  settings: { type: DataTypes.JSON, allowNull: true, defaultValue: {} }
 }, {
   tableName: 'companies',
   timestamps: true,
@@ -1231,8 +1211,12 @@ const InterviewSession = sequelize.define('InterviewSession', {
     defaultValue: []
   },
   status: {
-    type: DataTypes.ENUM('CREATED', 'IN_PROGRESS', 'COMPLETED', 'EVALUATED'),
+    type: DataTypes.ENUM('CREATED', 'IN_PROGRESS', 'COMPLETED', 'EVALUATED', 'PREPARING'),
     defaultValue: 'CREATED'
+  },
+  company_name: {
+    type: DataTypes.STRING,
+    allowNull: true
   },
   expires_at: {
     type: DataTypes.DATE,
@@ -1249,18 +1233,44 @@ const InterviewSession = sequelize.define('InterviewSession', {
   updatedAt: 'updated_at'
 });
 
+// 深度分析记录模型 (用于兼容旧版演示数据)
+const DeepAnalysisRecord = sequelize.define('DeepAnalysisRecord', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  resume_id: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'resumes',
+      key: 'id'
+    }
+  },
+  analysis_data: {
+    type: DataTypes.JSON,
+    allowNull: true
+  },
+  created_at: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
+  }
+}, {
+  tableName: 'deep_analysis_records',
+  timestamps: false
+});
+
 // 定义模型关系
 User.hasMany(Resume, { foreignKey: 'user_id', onDelete: 'CASCADE' });
 Resume.belongsTo(User, { foreignKey: 'user_id' });
 
-Resume.hasMany(AnalysisResult, { foreignKey: 'resume_id', onDelete: 'CASCADE' });
-AnalysisResult.belongsTo(Resume, { foreignKey: 'resume_id' });
-AnalysisResult.belongsTo(User, { foreignKey: 'user_id' });
+Resume.hasMany(AnalysisResult, { foreignKey: 'resume_id', as: 'AnalysisResults', onDelete: 'CASCADE' });
+AnalysisResult.belongsTo(Resume, { foreignKey: 'resume_id', as: 'Resume' });
+AnalysisResult.belongsTo(User, { foreignKey: 'user_id', as: 'User' });
+AnalysisResult.belongsTo(Job, { foreignKey: 'job_id', as: 'Job' });
+Job.hasMany(AnalysisResult, { foreignKey: 'job_id', as: 'AnalysisResults' });
 
-Resume.hasMany(DeepAnalysisRecord, { foreignKey: 'resume_id', onDelete: 'CASCADE' });
-DeepAnalysisRecord.belongsTo(Resume, { foreignKey: 'resume_id' });
-DeepAnalysisRecord.belongsTo(User, { foreignKey: 'user_id' });
-DeepAnalysisRecord.belongsTo(Job, { foreignKey: 'job_id' });
 
 User.hasMany(Job, { foreignKey: 'user_id', onDelete: 'CASCADE' });
 Job.belongsTo(User, { foreignKey: 'user_id' });
@@ -1320,8 +1330,6 @@ Company.hasMany(Invoice, { foreignKey: 'company_id', as: 'Invoices' });
 RecruitmentProcess.belongsTo(Company, { foreignKey: 'company_id', as: 'Company' });
 Company.hasMany(RecruitmentProcess, { foreignKey: 'company_id', as: 'RecruitmentProcesses' });
 
-DeepAnalysisRecord.belongsTo(Company, { foreignKey: 'company_id', as: 'Company' });
-Company.hasMany(DeepAnalysisRecord, { foreignKey: 'company_id', as: 'DeepAnalysisRecords' });
 
 UserActivity.belongsTo(Company, { foreignKey: 'company_id', as: 'Company' });
 Company.hasMany(UserActivity, { foreignKey: 'company_id', as: 'UserActivities' });
@@ -1332,20 +1340,24 @@ CompanyMember.belongsTo(Company, { foreignKey: 'company_id' });
 User.hasMany(CompanyMember, { foreignKey: 'user_id', as: 'CompanyMemberships' });
 CompanyMember.belongsTo(User, { foreignKey: 'user_id' });
 
+Resume.hasMany(DeepAnalysisRecord, { foreignKey: 'resume_id', onDelete: 'CASCADE' });
+DeepAnalysisRecord.belongsTo(Resume, { foreignKey: 'resume_id' });
+
 module.exports = {
   User,
   Resume,
   AnalysisResult,
+  DeepAnalysisRecord,
   Job,
   Order,
   RecruitmentProcess,
   ResumeJob,
   UserActivity,
-  DeepAnalysisRecord,
   SystemConfig,
   Company,
   CompanyMember,
   InterviewSession,
+  Invoice,
   // 新增模型开始
   // 订阅模型（公司维度）
   Subscription: (() => {

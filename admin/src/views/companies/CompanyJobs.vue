@@ -419,7 +419,7 @@ const loadItems = async (options = {}) => {
     if (itemsPerPage) filters.limit = itemsPerPage
 
     const { data } = await jobAPI.getList(filters)
-    items.value = data.list
+    items.value = data.items
     total.value = data.total
   } catch (error) {
     console.error('Failed to load jobs:', error)

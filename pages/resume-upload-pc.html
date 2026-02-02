@@ -7,7 +7,7 @@
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <script src="../js/tailwindcss.js"></script>
     <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/js/chart.min.js"></script>
     <script src="https://cdn.staticfile.org/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.staticfile.org/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
@@ -18,7 +18,7 @@
     <script src="../js/resume-upload-handler.js"></script>
     <link rel="stylesheet" href="/css/design-system.css">
     <link rel="stylesheet" href="/css/sidebar.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.loli.net/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --font-family-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
@@ -349,7 +349,7 @@
                             <ul id="sar-strengths" class="list-disc list-inside space-y-2 text-sm text-gray-700 pl-2"></ul>
                         </div>
                         <div class="bg-white rounded-2xl p-6 border shadow-sm">
-                            <h4 class="font-semibold text-orange-800 mb-3 bg-orange-50 p-2 rounded text-center">潜在不足</h4>
+                            <h4 class="font-semibold text-rose-800 mb-3 bg-rose-50 p-2 rounded text-center">潜在不足</h4>
                             <ul id="sar-weaknesses" class="list-disc list-inside space-y-2 text-sm text-gray-700 pl-2"></ul>
                         </div>
                         <div class="bg-white rounded-2xl p-6 border shadow-sm">
@@ -435,8 +435,8 @@
                             </div>
                             <div id="modal-file-list" class="space-y-2"></div>
                         </div>
-                        <button id="modal-import-from-link-btn" class="mt-6 w-full p-4 border-2 border-dashed border-gray-200 rounded-xl hover:border-orange-300 hover:bg-orange-50 transition-all">
-                            <div class="flex items-center justify-center space-x-2 text-orange-600">
+                        <button id="modal-import-from-link-btn" class="mt-6 w-full p-4 border-2 border-dashed border-gray-200 rounded-xl hover:border-blue-300 hover:bg-blue-50 transition-all">
+                            <div class="flex items-center justify-center space-x-2 text-blue-600">
                                 <i class="fas fa-link"></i>
                                 <span>链接导入</span>
                             </div>
@@ -1282,10 +1282,18 @@
                         '<div class="flex-shrink-0 w-20 text-center">' +
                             '<div class="text-xs text-gray-500">' + this.formatDate(resume.uploadTime) + '</div>' +
                         '</div>' +
-                        '<div class="flex-shrink-0">' +
-                            '<button class="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors" ' +
+                        '<div class="flex-shrink-0 flex items-center space-x-2">' +
+                            '<button class="px-2 py-1 text-xs bg-white border border-blue-600 text-blue-600 rounded hover:bg-blue-50 transition-colors" ' +
+                            'onclick="event.stopPropagation(); window.resumeUploader.handleDeepAnalysis(' + resume.id + ')">' +
+                            '分析' +
+                            '</button>' +
+                            '<button class="px-2 py-1 text-xs bg-white border border-gray-300 text-gray-600 rounded hover:bg-gray-50 transition-colors" ' +
                             'onclick="event.stopPropagation(); window.resumeUploader.viewResume(' + resume.id + ')">' +
                             '查看' +
+                            '</button>' +
+                            '<button class="px-2 py-1 text-xs bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors" ' +
+                            'onclick="event.stopPropagation(); window.resumeUploader.handleReject(' + resume.id + ')">' +
+                            '<i class="fas fa-user-times"></i>' +
                             '</button>' +
                         '</div>' +
                     '</div>';
@@ -1365,6 +1373,80 @@
                 }
             }
 
+            // 深度解析交互
+            handleDeepAnalysis(resumeId) {
+                this.currentAnalysisId = resumeId;
+                const modal = document.getElementById('analysisModal');
+                if (modal) {
+                    modal.classList.remove('hidden');
+                }
+            }
+
+            closeAnalysisModal() {
+                const modal = document.getElementById('analysisModal');
+                if (modal) {
+                    modal.classList.add('hidden');
+                }
+            }
+
+            async confirmDeepAnalysis() {
+                if (!this.currentAnalysisId) return;
+                const resumeId = this.currentAnalysisId;
+                this.closeAnalysisModal();
+                
+                // 设置为当前要分析的简历并启动
+                this.analysisListResumes.clear();
+                const resume = this.allResumes.find(r => r.id === resumeId);
+                if (resume) {
+                    this.analysisListResumes.add(resume);
+                    await this.startAnalysis();
+                }
+            }
+
+            // 淘汰交互
+            handleReject(id) {
+                this.currentRejectId = id;
+                const modal = document.getElementById('rejectModal');
+                if (modal) {
+                    modal.classList.remove('hidden');
+                    const reasonInput = document.getElementById('rejectReason');
+                    if (reasonInput) reasonInput.value = '';
+                }
+            }
+
+            closeRejectModal() {
+                const modal = document.getElementById('rejectModal');
+                if (modal) {
+                    modal.classList.add('hidden');
+                }
+            }
+
+            async confirmReject() {
+                if (!this.currentRejectId) return;
+                const reasonInput = document.getElementById('rejectReason');
+                const notes = reasonInput ? reasonInput.value : '';
+                
+                try {
+                    const result = await userAuthInstance.apiRequest(`/resumes/${this.currentRejectId}/status`, 'PUT', { 
+                        status: '淘汰',
+                        notes: notes
+                    });
+                    
+                    if (result.success) {
+                        ui.showNotification('已淘汰简历', 'success');
+                        this.closeRejectModal();
+                        // 刷新列表
+                        await this.prepareRealResumes();
+                        this.loadResumeList();
+                    } else {
+                        ui.showNotification('操作失败: ' + (result.error?.message || result.error || '未知错误'), 'error');
+                    }
+                } catch (e) {
+                    console.error(e);
+                    ui.showNotification('网络错误', 'error');
+                }
+            }
+
             // 开始分析
             async startAnalysis() {
                 var self = this;
@@ -1409,7 +1491,7 @@
                         throw new Error('API not initialized');
                     }
                     
-                    const res = await api.apiRequest('/ai/analyze', 'POST', { resumeId: resume.id });
+                    const res = await api.apiRequest('/ai/analyze', 'POST', { resumeId: resume.id, force: true, options: { scene: 'deep_analysis' } });
                     
                     console.log('Analysis response:', res);
                     
@@ -2177,7 +2259,7 @@
                         
                         // Basic Info from Parsing
                         if (result.basic_info) {
-                             html += '<div><h3 class="text-lg font-semibold mb-3 border-l-4 border-blue-500 pl-3">基本信息</h3>';
+                             html += '<div><h3 class="text-lg font-semibold mb-3 pl-3">基本信息</h3>';
                              html += '<div class="grid grid-cols-2 gap-4 text-sm">';
                              html += `<div><span class="text-gray-500">姓名：</span>${result.basic_info.name || '-'}</div>`;
                              html += `<div><span class="text-gray-500">邮箱：</span>${result.basic_info.email || '-'}</div>`;
@@ -2190,10 +2272,10 @@
                         
                         // Work Experience
                         if (result.work_experience && result.work_experience.length) {
-                            html += '<div><h3 class="text-lg font-semibold mb-3 border-l-4 border-blue-500 pl-3">工作经历</h3>';
+                            html += '<div><h3 class="text-lg font-semibold mb-3 pl-3">工作经历</h3>';
                             html += '<div class="space-y-4">';
                             result.work_experience.forEach(exp => {
-                                html += '<div class="border-l-2 border-gray-200 pl-4 pb-4 relative">';
+                                html += '<div class="pl-4 pb-4 relative">';
                                 html += '<div class="absolute -left-1.5 top-1.5 w-3 h-3 bg-gray-300 rounded-full"></div>';
                                 html += `<div class="font-medium text-gray-900">${exp.company || '未知公司'}</div>`;
                                 html += `<div class="text-sm text-gray-600 mb-1">${exp.position || '未知职位'} | ${exp.duration || '-'}</div>`;
@@ -2205,10 +2287,10 @@
                         
                         // Education
                         if (result.education && result.education.length) {
-                            html += '<div><h3 class="text-lg font-semibold mb-3 border-l-4 border-blue-500 pl-3">教育经历</h3>';
+                            html += '<div><h3 class="text-lg font-semibold mb-3 pl-3">教育经历</h3>';
                             html += '<div class="space-y-4">';
                             result.education.forEach(edu => {
-                                html += '<div class="border-l-2 border-gray-200 pl-4 pb-4 relative">';
+                                html += '<div class="pl-4 pb-4 relative">';
                                 html += '<div class="absolute -left-1.5 top-1.5 w-3 h-3 bg-gray-300 rounded-full"></div>';
                                 html += `<div class="font-medium text-gray-900">${edu.school || '未知学校'}</div>`;
                                 html += `<div class="text-sm text-gray-600 mb-1">${edu.major || '未知专业'} | ${edu.degree || '-'} | ${edu.duration || '-'}</div>`;
@@ -2883,5 +2965,91 @@
             document.body.appendChild(s);
         })();
     </script>
+    <!-- 淘汰原因模态框 -->
+    <div id="rejectModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="window.resumeUploader.closeRejectModal()"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                            <i class="fas fa-exclamation-triangle text-red-600"></i>
+                        </div>
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">淘汰候选人</h3>
+                            <div class="mt-2">
+                                <p class="text-sm text-gray-500 mb-4">
+                                    请填写淘汰理由（可选），该理由将仅供内部参考。
+                                </p>
+                                <textarea id="rejectReason" rows="3" class="shadow-sm focus:ring-red-500 focus:border-red-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border" placeholder="请输入淘汰理由..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" onclick="window.resumeUploader.confirmReject()" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
+                        确认淘汰
+                    </button>
+                    <button type="button" onclick="window.resumeUploader.closeRejectModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        取消
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 深度解析说明模态框 -->
+    <div id="analysisModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="window.resumeUploader.closeAnalysisModal()"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
+                            <i class="fas fa-magic text-blue-600"></i>
+                        </div>
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900">深度解析说明</h3>
+                            <div class="mt-2">
+                                <div class="bg-blue-50 p-4 mb-4">
+                                    <div class="flex">
+                                        <div class="flex-shrink-0">
+                                            <i class="fas fa-info-circle text-blue-400"></i>
+                                        </div>
+                                        <div class="ml-3">
+                                            <p class="text-sm text-blue-700">
+                                                深度解析将消耗 1 个 AI 点数，通过多维度深度评估候选人与职位的匹配度。
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="space-y-3 text-sm text-gray-600">
+                                    <p class="font-bold text-gray-800">解析维度包含：</p>
+                                    <ul class="list-disc pl-5 space-y-1">
+                                        <li>专业技能深度评估</li>
+                                        <li>项目经验契合度分析</li>
+                                        <li>学历与背景质量评估</li>
+                                        <li>离职原因与稳定性预测</li>
+                                        <li>团队协作与文化匹配度</li>
+                                    </ul>
+                                    <p class="mt-4 italic">解析过程大约需要 10-30 秒，完成后将自动刷新页面显示结果。</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" onclick="window.resumeUploader.confirmDeepAnalysis()" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
+                        立即解析
+                    </button>
+                    <button type="button" onclick="window.resumeUploader.closeAnalysisModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        取消
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

@@ -52,7 +52,7 @@ class ResumeTemplateSystem {
                     colors: {
                         primary: '#7c3aed',
                         secondary: '#ec4899',
-                        accent: '#f59e0b'
+                        accent: '#3b82f6'
                     },
                     fonts: {
                         heading: 'Playfair Display',
@@ -305,7 +305,7 @@ class ResumeTemplateSystem {
     generateAcademicResearcherPreview() {
         return `
             <div class="template-preview academic-researcher">
-                <div class="preview-header bg-amber-700 text-white p-4">
+                <div class="preview-header bg-indigo-900 text-white p-4">
                     <h3 class="text-lg font-bold">周八</h3>
                     <p class="text-sm opacity-90">研究员 / 副教授</p>
                 </div>
@@ -321,9 +321,9 @@ class ResumeTemplateSystem {
                     <div>
                         <h4 class="font-semibold text-gray-800 mb-1">研究领域</h4>
                         <div class="flex flex-wrap gap-1">
-                            <span class="bg-amber-100 text-amber-800 text-xs px-2 py-1 rounded">深度学习</span>
-                            <span class="bg-amber-100 text-amber-800 text-xs px-2 py-1 rounded">医疗AI</span>
-                            <span class="bg-amber-100 text-amber-800 text-xs px-2 py-1 rounded">计算机视觉</span>
+                            <span class="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded">深度学习</span>
+                            <span class="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded">医疗AI</span>
+                            <span class="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded">计算机视觉</span>
                         </div>
                     </div>
                 </div>

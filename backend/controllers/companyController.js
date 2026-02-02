@@ -4,16 +4,27 @@ const { Op } = require('sequelize');
 // 获取公司团队成员（同 company_name）
 const getCompanyTeam = async (req, res) => {
   try {
-    const companyName = req.user?.company_name || null;
-    if (!companyName) {
-      return res.status(200).json({ success: true, data: [] });
+    const { company_id, company_name } = req.user || {};
+    
+    let where = {};
+    if (company_id) {
+      where = { company_id };
+    } else if (company_name) {
+      where = { company_name };
+    } else {
+      // 没有任何公司标识，只返回自己
+      const me = await User.findByPk(req.user.id, {
+        attributes: ['id', 'username', 'email', 'avatar', 'role', 'company_name']
+      });
+      return res.status(200).json({ success: true, data: [me] });
     }
 
     const team = await User.findAll({
-      where: { company_name: companyName },
+      where,
       attributes: ['id', 'username', 'email', 'avatar', 'role', 'company_name']
     });
 
+    console.log(`[CompanyController] getCompanyTeam: found ${team.length} members for company_id=${company_id}`);
     res.json({ success: true, data: team });
   } catch (error) {
     res.status(500).json({
@@ -103,7 +114,7 @@ const getRecruitmentStats = async (req, res) => {
             // 映射中文状态到英文键名
             const statusMap = {
                 '投递': 'applied',
-                '初筛': 'screening',
+                '快评': 'screening',
                 '面试': 'interview',
                 'offer': 'offer',
                 '入职': 'hired',
@@ -221,7 +232,7 @@ const getPublicCompanyProfile = async (req, res) => {
 
     const company = await Company.findOne({ 
       where: { id },
-      attributes: ['id', 'name', 'industry', 'size', 'website', 'description', 'logo_url', 'established_date', 'address', 'verification_status']
+      attributes: ['id', 'name', 'industry', 'size', 'website', 'description', 'logo_url', 'founding_year', 'address', 'verification_status']
     });
 
     if (!company) {
@@ -343,15 +354,33 @@ module.exports = {
     try {
       const companyId = req.user?.company_id || null;
       const companyName = req.user?.company_name || null;
+      
       let company = null;
       if (companyId) {
-        company = await Company.findOne({ where: { id: companyId } });
-      } else if (companyName) {
+        company = await Company.findByPk(companyId);
+      } 
+      
+      if (!company && companyName) {
         company = await Company.findOne({ where: { name: companyName } });
       }
+
       if (!company) {
-        return res.json({ success: true, data: null });
+        return res.json({ 
+          success: true, 
+          data: { 
+            name: companyName || '',
+            industry: '',
+            address: '',
+            size: '',
+            founding_year: '',
+            website: '',
+            description: '',
+            contact_name: '',
+            contact_phone: ''
+          } 
+        });
       }
+
       res.json({ success: true, data: company });
     } catch (error) {
       res.status(500).json({ success: false, error: { code: 'COMPANY_PROFILE_ERROR', message: error.message } });
@@ -359,7 +388,16 @@ module.exports = {
   },
   async upsertCompanyProfile(req, res) {
     try {
-      const { name, industry, province, city, district, address, contact_name, contact_phone, size, founding_year, website, description } = req.body || {};
+      const { 
+        name, industry, province, city, district, address, 
+        contact_name, contact_phone, size, founding_year, 
+        website, description, settings, logo_url,
+        company_size, founded_year // 兼容前端字段名
+      } = req.body || {};
+
+      const finalSize = size || company_size;
+      const finalFoundedYear = founding_year || founded_year;
+
       if (!name || String(name).trim().length === 0) {
         return res.status(400).json({ success: false, error: { code: 'INVALID_COMPANY', message: '企业名称不能为空' } });
       }
@@ -373,13 +411,22 @@ module.exports = {
         company = await Company.findOne({ where: { name } });
       }
 
+      const updateData = {
+        name, industry, province, city, district, address, 
+        contact_name, contact_phone, 
+        size: finalSize, 
+        founding_year: finalFoundedYear, 
+        website, description, logo_url,
+        contact_account_id: req.user.id,
+        verification_info: { contact_name, contact_phone }
+      };
+
+      if (settings) {
+        updateData.settings = typeof settings === 'string' ? JSON.parse(settings) : settings;
+      }
+
       if (!company) {
-        company = await Company.create({
-          name, industry, province, city, district, address, 
-          contact_name, contact_phone, size, founding_year, website, description,
-          contact_account_id: req.user.id,
-          verification_info: { contact_name, contact_phone }
-        });
+        company = await Company.create(updateData);
         
         // Add as admin member
         await CompanyMember.create({
@@ -389,12 +436,7 @@ module.exports = {
             status: 'active'
         });
       } else {
-        await company.update({
-          name, industry, province, city, district, address, 
-          contact_name, contact_phone, size, founding_year, website, description,
-          contact_account_id: req.user.id,
-          verification_info: { ...(company.verification_info || {}), contact_name, contact_phone }
-        });
+        await company.update(updateData);
       }
 
       // 更新用户的公司关联信息
@@ -434,7 +476,7 @@ module.exports = {
       applications.forEach(app => {
         const status = (app.status || '').toLowerCase();
         
-        // 筛选通过率统计 (只要进入了初筛及之后的阶段都算通过筛选)
+        // 筛选通过率统计 (只要进入了快评及之后的阶段都算通过筛选)
         if (['screening', 'interview', 'offer', 'hired'].includes(status)) {
           totalScreening++;
         }

@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>登录 - 争湃·简历大师</title>
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="../js/tailwindcss.js"></script>
     <script src="../js/ui-components.js"></script>
     <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
@@ -24,7 +26,7 @@
         <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-100/30 rounded-full -mr-32 -mt-32 blur-3xl"></div>
         <div class="z-10 w-full max-w-xl">
             <div class="flex items-center space-x-4 mb-6">
-                <img src="../public/logo.png" alt="争湃·简历大师" class="h-12 w-auto">
+                <img src="/logo.png" alt="争湃·简历大师" class="h-12 w-auto">
                 <h1 class="text-3xl font-black text-blue-700 tracking-tight">争湃·简历大师</h1>
             </div>
             <h2 class="text-5xl font-black text-gray-900 leading-[1.1] mb-8">
@@ -127,17 +129,11 @@
         </div>
     </div>
 
-    <!-- 加载提示 -->
-    <div id="loadingModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
-        <div class="bg-white rounded-2xl p-6 flex items-center space-x-3 shadow-2xl">
-            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-            <span class="text-gray-700 font-bold">验证中...</span>
-        </div>
-    </div>
-
     <script src="../js/user-auth.js"></script>
     <script>
-        const loadingModal = document.getElementById('loadingModal');
+        // 初始化 UI 组件
+        const ui = new UIComponents();
+        
         const phoneInput = document.getElementById('phoneInput');
         const codeInput = document.getElementById('codeInput');
         const sendCodeBtn = document.getElementById('sendCodeBtn');
@@ -152,6 +148,19 @@
         const passwordLoginBtn = document.getElementById('passwordLoginBtn');
 
         const userAuth = (typeof userAuthInstance !== 'undefined' ? userAuthInstance : new UserAuth());
+        
+        emailPhoneInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                passwordLoginBtn.click();
+            }
+        });
+        passwordInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                passwordLoginBtn.click();
+            }
+        });
 
         function startCountdown(button){ let n=60; button.disabled=true; const originalText = button.textContent; const tick=()=>{ button.textContent=`${n}秒后重发`; if(n<=0){ button.disabled=false; button.textContent=originalText; return;} n--; setTimeout(tick,1000)}; tick(); }
 
@@ -186,13 +195,11 @@
         sendCodeBtn.addEventListener('click', async () => {
             const phone = phoneInput.value.trim();
             if (!phone) {
-                if(typeof ui !== 'undefined') ui.showNotification('请输入手机号码', 'warning');
-                else alert('请输入手机号码');
+                ui.showNotification('请输入手机号码', 'warning');
                 return;
             }
             if (!/^1[3-9]\d{9}$/.test(phone)) {
-                if(typeof ui !== 'undefined') ui.showNotification('手机号码格式不正确', 'warning');
-                else alert('手机号码格式不正确');
+                ui.showNotification('手机号码格式不正确', 'warning');
                 return;
             }
 
@@ -200,18 +207,15 @@
                 sendCodeBtn.disabled = true;
                 const result = await userAuth.sendVerificationCode(phone);
                 if (result.success) {
-                    if(typeof ui !== 'undefined') ui.showNotification('验证码已发送', 'success');
-                    else alert('验证码已发送: ' + (result.code || '')); // Dev mode hint
+                    ui.showNotification('验证码已发送', 'success');
                     startCountdown(sendCodeBtn);
                 } else {
-                    if(typeof ui !== 'undefined') ui.showNotification(result.message || '发送失败', 'error');
-                    else alert(result.message || '发送失败');
+                    ui.showNotification(result.message || '发送失败', 'error');
                     sendCodeBtn.disabled = false;
                 }
             } catch (error) {
                 console.error(error);
-                if(typeof ui !== 'undefined') ui.showNotification('发送失败，请稍后重试', 'error');
-                else alert('发送失败');
+                ui.showNotification('发送失败，请稍后重试', 'error');
                 sendCodeBtn.disabled = false;
             }
         });
@@ -222,31 +226,28 @@
             const code = codeInput.value.trim();
 
             if (!phone || !code) {
-                if(typeof ui !== 'undefined') ui.showNotification('请填写手机号和验证码', 'warning');
-                else alert('请填写手机号和验证码');
+                ui.showNotification('请填写手机号和验证码', 'warning');
                 return;
             }
 
-            loadingModal.classList.remove('hidden');
+            ui.showLoading('验证中...');
 
             try {
                 const result = await userAuth.loginWithPhone(phone, code);
-                loadingModal.classList.add('hidden');
+                ui.hideLoading();
 
                 if (result.success) {
-                    if(typeof ui !== 'undefined') ui.showNotification('登录成功', 'success');
+                    ui.showNotification('登录成功', 'success');
                     setTimeout(() => {
                         window.location.href = 'dashboard.html';
                     }, 500);
                 } else {
-                    if(typeof ui !== 'undefined') ui.showNotification(result.message || '登录失败', 'error');
-                    else alert(result.message || '登录失败');
+                    ui.showNotification(result.message || '登录失败', 'error');
                 }
             } catch (e) {
-                loadingModal.classList.add('hidden');
+                ui.hideLoading();
                 console.error(e);
-                if(typeof ui !== 'undefined') ui.showNotification('请求失败，请稍后重试', 'error');
-                else alert('请求失败');
+                ui.showNotification('请求失败，请稍后重试', 'error');
             }
         });
 
@@ -256,33 +257,38 @@
             const password = passwordInput.value.trim();
 
             if (!identifier || !password) {
-                if(typeof ui !== 'undefined') ui.showNotification('请输入账号和密码', 'warning');
-                else alert('请输入账号和密码');
+                ui.showNotification('请输入账号和密码', 'warning');
                 return;
             }
 
-            loadingModal.classList.remove('hidden');
+            ui.showLoading('登录中...');
             
             try {
                 const result = await userAuth.login(identifier, password);
-                loadingModal.classList.add('hidden');
+                ui.hideLoading();
 
                 if (result.success) {
-                    if(typeof ui !== 'undefined') ui.showNotification('登录成功', 'success');
+                    ui.showNotification('登录成功', 'success');
                     setTimeout(() => {
                         window.location.href = 'dashboard.html';
                     }, 500);
                 } else {
                     const msg = result.message || '登录失败';
-                    const finalMsg = (/未注册|不存在/.test(msg)) ? '您还不是注册用户，请注册' : '密码错误，请重试';
-                    if(typeof ui !== 'undefined') ui.showNotification(finalMsg, 'error');
-                    else alert(finalMsg);
+                    // 改进错误提示，避免误导用户是密码错误
+                    let finalMsg = msg;
+                    if (/未注册|不存在/.test(msg)) {
+                        finalMsg = '您还不是注册用户，请注册';
+                    } else if (/密码错误|INVALID_CREDENTIALS/.test(msg)) {
+                        finalMsg = '密码错误，请重试';
+                    } else if (msg.includes('Failed to fetch') || msg.includes('network error')) {
+                        finalMsg = '网络连接失败，请检查后端服务是否启动';
+                    }
+                    ui.showNotification(finalMsg, 'error');
                 }
             } catch (e) {
-                loadingModal.classList.add('hidden');
+                ui.hideLoading();
                 console.error(e);
-                if(typeof ui !== 'undefined') ui.showNotification('请求失败，请稍后重试', 'error');
-                else alert('请求失败');
+                ui.showNotification('请求失败，请稍后重试', 'error');
             }
         });
     </script>

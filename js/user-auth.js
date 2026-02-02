@@ -13,12 +13,11 @@ class UserAuth {
         // 3. 生产环境下（域名访问），统一使用相对路径 /api
         const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
         const isBackendPort = window.location.port === '3000';
+        this.apiBaseUrl = '/api';
         
-        if (isLocal && !isBackendPort) {
-            this.apiBaseUrl = 'http://localhost:3000/api';
-        } else {
-            this.apiBaseUrl = '/api';
-        }
+        // 只有在明确需要直接连接后端（非代理模式）时才使用 fallback
+        // 在 Vite 代理模式下，不需要 fallback 到 3000，因为 3000 会引起跨域问题且不带 Cookie
+        this.fallbackApiBaseUrl = (isLocal && !isBackendPort && !window.location.port) ? 'http://localhost:3000/api' : null;
         
         console.log('🚀 UserAuth initialized with apiBaseUrl:', this.apiBaseUrl);
         this.init();
@@ -37,6 +36,41 @@ class UserAuth {
                 this.restoreUserSession();
             }
         });
+
+        // 监听未授权事件
+        window.addEventListener('apiUnauthorized', (e) => {
+            console.warn('收到未授权 API 请求通知:', e.detail);
+            this.handleUnauthorized(e.detail);
+        });
+    }
+
+    /**
+     * 处理未授权情况
+     */
+    handleUnauthorized(detail) {
+        // 如果已经处理过（比如在同一页面有多个并发请求失败），避免重复处理
+        if (this._handlingUnauthorized) return;
+        this._handlingUnauthorized = true;
+
+        // 清除本地状态
+        this.logout(true);
+
+        // 提示用户
+        if (typeof ErrorHandler !== 'undefined') {
+            ErrorHandler.showError('您的会话已过期，请重新登录');
+        } else {
+            alert('您的会话已过期，请重新登录');
+        }
+
+        // 延迟跳转，让用户看清提示
+        setTimeout(() => {
+            this._handlingUnauthorized = false;
+            const currentPath = window.location.pathname;
+            // 如果已经在登录页，不要重复跳转
+            if (!currentPath.includes('login.html')) {
+                window.location.href = '/pages/login.html?redirect=' + encodeURIComponent(window.location.href);
+            }
+        }, 1500);
     }
 
     // 与 ResumeDataManager 同步令牌
@@ -67,44 +101,48 @@ class UserAuth {
             ErrorHandler.showLoading(true);
         }
 
-        const headers = {
-            'Content-Type': 'application/json'
-        };
+        const isForm = (data && typeof FormData !== 'undefined' && data instanceof FormData);
+        const headers = isForm ? {} : { 'Content-Type': 'application/json' };
 
         // 如果有令牌，添加到请求头
         if (this.token) {
-            headers['Authorization'] = `Bearer ${this.token}`;
+            headers['Authorization'] = `Bearer ${this.token.trim()}`;
+            console.log('🔑 Sending Token:', this.token.substring(0, 15) + '...', 'Length:', this.token.length);
+        } else {
+            console.warn('⚠️ No token found in UserAuth instance');
         }
 
         const options = {
             method,
-            headers
+            headers,
+            cache: method === 'GET' ? 'no-store' : 'default'
         };
 
         // 如果有数据，添加到请求体
         if (data) {
-            options.body = JSON.stringify(data);
+            options.body = isForm ? data : JSON.stringify(data);
         }
 
         const tryRequest = async (base) => {
             const url = `${base}${endpoint}`;
-            console.log('🔍 API请求详情:', { url, method, headers, data: data ? JSON.parse(options.body) : null });
+            console.log('🔍 API请求详情:', { url, method, headers, isForm });
             const response = await fetch(url, options);
             const text = await response.text();
 
             console.log('📥 原始响应:', {
                 status: response.status,
                 statusText: response.statusText,
-                headers: Object.fromEntries(response.headers.entries()),
-                body: text
+                body: text.substring(0, 100) + (text.length > 100 ? '...' : '')
             });
 
             let result;
             try {
                 result = JSON.parse(text);
             } catch (parseError) {
-                console.error('❌ JSON解析失败:', parseError);
-                console.error('❌ 原始响应内容:', text);
+                // 仅在非尝试主路径时记录警告，避免控制台充满红色的 JSON 解析错误
+                if (base !== this.apiBaseUrl) {
+                    console.warn(`⚠️ [API] ${base} 返回了非 JSON 响应，将尝试下一个备选地址。`);
+                }
                 throw new Error(`服务器返回了非JSON响应: ${text.substring(0, 200)}...`);
             }
 
@@ -138,7 +176,7 @@ class UserAuth {
             return result;
         };
 
-        const bases = [this.apiBaseUrl, '/api'].filter(Boolean);
+        const bases = [this.apiBaseUrl, this.fallbackApiBaseUrl, '/api'].filter(Boolean);
         let lastError;
         for (const base of bases) {
             try {
@@ -151,10 +189,12 @@ class UserAuth {
             }
         }
         if (showLoading && typeof ErrorHandler !== 'undefined') { ErrorHandler.showLoading(false); }
-        console.error('❌ API请求失败:', lastError);
-        if (lastError && lastError.url) { console.error('❌ 请求URL:', lastError.url); }
-        if (!silent && typeof ErrorHandler !== 'undefined') { 
-            ErrorHandler.showError(lastError && lastError.message ? lastError.message : '请求失败，请稍后重试'); 
+        // 减少冗余日志，仅在非静默模式下记录主要错误
+        if (!silent) {
+            console.error(`❌ [API Error] ${lastError.status || '400'} | ${lastError.message} | URL: ${lastError.url || endpoint}`);
+            if (typeof ErrorHandler !== 'undefined') { 
+                ErrorHandler.showError(lastError); 
+            }
         }
         throw lastError;
     }
@@ -182,7 +222,6 @@ class UserAuth {
                 message: (result && result.error && result.error.message) || '登录失败'
             };
         } catch (error) {
-            console.error('登录错误:', error);
             return {
                 success: false,
                 message: error.message || '登录过程中发生错误'
@@ -254,7 +293,6 @@ class UserAuth {
             }
 
         } catch (error) {
-            console.error('注册错误:', error);
             return {
                 success: false,
                 message: error.message || '注册过程中发生错误'
@@ -269,19 +307,47 @@ class UserAuth {
         const user = this.currentUser;
 
         try {
-            // 发送登出请求到服务器（可选，通常服务器端不处理JWT的登出）
-            fetch(`${this.apiBaseUrl}/auth/logout`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${this.token}`,
-                    'Content-Type': 'application/json'
-                }
-            }).catch(err => console.error('登出请求失败:', err));
+            const token = this.token;
+            if (token) {
+                const bases = [this.apiBaseUrl, this.fallbackApiBaseUrl, '/api']
+                    .filter((v, i, arr) => v && arr.indexOf(v) === i);
+                bases.some(base => {
+                    try {
+                        fetch(`${base}/auth/logout`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            }
+                        }).catch(err => {
+                            if (err && err.name !== 'AbortError') {
+                                console.warn('登出请求失败:', err);
+                            }
+                        });
+                        return true;
+                    } catch (err) {
+                        return false;
+                    }
+                });
+            }
         } catch (e) {
-            console.error('登出请求错误:', e);
+            console.warn('登出请求错误:', e);
         }
 
         // 清除本地存储
+        try {
+            // 清除 AI 预测缓存
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('ai_prediction_')) {
+                    localStorage.removeItem(key);
+                    i--; // 索引回退
+                }
+            }
+        } catch (e) {
+            console.warn('清除 AI 预测缓存失败:', e);
+        }
+
         localStorage.removeItem('userInfo');
         localStorage.removeItem('token');
         sessionStorage.clear();
@@ -369,7 +435,6 @@ class UserAuth {
             }
 
         } catch (error) {
-            console.error('更新用户信息错误:', error);
             return {
                 success: false,
                 message: error.message || '更新失败'
@@ -380,20 +445,12 @@ class UserAuth {
     async uploadAvatar(fileOrBlob) {
         const fd = new FormData();
         fd.append('avatar', fileOrBlob, 'avatar.png');
-        const headers = {};
-        if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
-        const bases = [this.apiBaseUrl, '/api'];
-        let lastError;
-        for (const base of bases) {
-            try {
-                const res = await fetch(`${base}/auth/user/avatar`, { method: 'POST', headers, body: fd });
-                const text = await res.text();
-                const json = JSON.parse(text);
-                if (!res.ok) throw new Error(json && json.error && json.error.message ? json.error.message : '上传失败');
-                return json;
-            } catch (e) { lastError = e; }
+        try {
+            const result = await this.apiRequest('/auth/user/avatar', 'POST', fd);
+            return result;
+        } catch (error) {
+            throw error;
         }
-        throw lastError || new Error('上传失败');
     }
 
     /**
@@ -421,7 +478,6 @@ class UserAuth {
             const result = await this.apiRequest('/auth/set-password', 'POST', { password: newPassword });
             return result;
         } catch (error) {
-            console.error('设置密码错误:', error);
             return {
                 success: false,
                 message: error.message || '设置密码失败'
@@ -439,7 +495,6 @@ class UserAuth {
             const result = await this.apiRequest('/auth/send-code', 'POST', { phone });
             return result;
         } catch (error) {
-            console.error('发送验证码错误:', error);
             return {
                 success: false,
                 message: error.message || '发送验证码失败'
@@ -481,11 +536,48 @@ class UserAuth {
                 };
             }
         } catch (error) {
-            console.error('手机号登录错误:', error);
             return {
                 success: false,
                 message: error.message || '登录失败'
             };
+        }
+    }
+
+    /**
+     * 检查当前会话（验证令牌有效性并更新本地用户信息）
+     */
+    async checkAuth() {
+        if (!this.token) return false;
+        
+        try {
+            const result = await this.apiRequest('/auth/user', 'GET', null, false, true);
+            if (result && result.success && result.data && result.data.user) {
+                this.currentUser = result.data.user;
+                this.saveUserSession();
+                
+                // 触发同步事件
+                window.dispatchEvent(new CustomEvent('userRestore', { detail: this.currentUser }));
+                return true;
+            }
+            return false;
+        } catch (error) {
+            // checkAuth 通常是静默执行的，不输出错误日志
+            return false;
+        }
+    }
+
+    /**
+     * 保存用户会话到本地存储
+     */
+    saveUserSession() {
+        if (this.currentUser && this.token) {
+            const userInfo = {
+                user: this.currentUser,
+                token: this.token,
+                isLoggedIn: true,
+                lastUpdate: new Date().getTime()
+            };
+            localStorage.setItem('userInfo', JSON.stringify(userInfo));
         }
     }
 

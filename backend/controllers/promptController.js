@@ -6,9 +6,11 @@ class PromptController {
   // Get all prompt templates
   async list(req, res) {
     try {
+      console.log('🚀 [PROMPT_DEBUG] list requested by user:', req.user?.id, 'role:', req.user?.role);
       const templates = await PromptTemplate.findAll({
         order: [['category', 'ASC'], ['key', 'ASC']]
       });
+      console.log('🚀 [PROMPT_DEBUG] found templates count:', templates.length);
       res.json({ success: true, data: templates });
     } catch (error) {
       logger.error('Failed to list prompt templates:', error);

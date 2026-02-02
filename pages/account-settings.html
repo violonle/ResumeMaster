@@ -12,28 +12,53 @@
     <script src="/js/user-auth.js"></script>
     <link rel="stylesheet" href="/css/sidebar.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        /* 移除错误的 @reference "tailwindcss"; */
+        @import url('https://fonts.loli.net/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         
         body { 
             font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif; 
-            background-color: #fdfdfd;
+            background-color: #f8fafc;
         }
 
-        .portal-card {
-            background: #ffffff;
-            border: 1px solid #f1f3f5;
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            border-radius: 0.75rem;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
-        .portal-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
-            border-color: #e5e7eb;
+        .settings-nav-item {
+            @apply flex items-center px-4 py-3 rounded-xl transition-all duration-200 text-sm font-semibold;
         }
 
-        .brand-title { white-space: normal !important; }
+        .settings-nav-item.active {
+            @apply bg-blue-50 text-blue-600 shadow-sm shadow-blue-100;
+        }
+
+        .settings-nav-item:not(.active) {
+            @apply text-slate-500 hover:bg-slate-50 hover:text-slate-900;
+        }
+
+        .section-card {
+            @apply bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden transition-all duration-300;
+        }
+
+        .section-card:hover {
+            @apply shadow-md shadow-slate-200/50 border-slate-300/60;
+        }
+
+        .input-group label {
+            @apply block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2;
+        }
+
+        .display-value {
+            @apply text-sm font-semibold text-slate-900;
+        }
+
+        .modal-backdrop {
+            @apply fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4;
+        }
+
+        .btn-primary {
+            @apply px-4 py-2 bg-slate-900 text-white rounded-xl hover:bg-black transition-all text-sm font-bold shadow-lg shadow-slate-200;
+        }
+
+        .btn-secondary {
+            @apply px-4 py-2 bg-white text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 transition-all text-sm font-bold;
+        }
     </style>
 </head>
 
@@ -53,186 +78,214 @@
             </div>
         </div>
     </header>
-    <main id="main" class="main-content pt-20 p-6">
-        <div class="max-w-[1440px] mx-auto py-8">
-            <div class="flex flex-col md:flex-row gap-6">
+    <main id="main" class="main-content pt-20">
+        <div class="max-w-[1200px] mx-auto p-6 md:p-8">
+            <!-- Page Header -->
+            <div class="mb-8">
+                <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight">账号设置</h2>
+                <p class="text-sm font-bold text-slate-500 mt-1">管理您的个人身份、偏好与安全设置</p>
+            </div>
+
+            <div class="flex flex-col lg:flex-row gap-8">
                 <!-- Settings Sidebar -->
-                <aside class="w-full md:w-64 flex-shrink-0">
-                    <div class="bg-white rounded-xl shadow-sm overflow-hidden sticky top-24">
-                        <nav class="flex flex-col space-y-1 py-2">
-                            <a href="#basic" id="nav-basic" class="flex items-center px-6 py-4 bg-blue-50 text-blue-600 border-l-4 border-blue-600 font-medium transition-colors">
-                                <span class="w-6">👤</span> 个人信息
+                <aside class="w-full lg:w-72 flex-shrink-0">
+                    <div class="bg-white rounded-2xl border border-slate-200/60 p-3 sticky top-24 shadow-sm">
+                        <nav class="space-y-1">
+                            <a href="#basic" id="nav-basic" class="settings-nav-item active">
+                                <i class="fa-solid fa-circle-user w-5 mr-3 opacity-70"></i> 个人信息
                             </a>
-                            <a href="#security" id="nav-security" class="flex items-center px-6 py-4 text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-l-4 border-transparent transition-colors">
-                                <span class="w-6">🛡️</span> 账号安全
+                            <a href="#security" id="nav-security" class="settings-nav-item">
+                                <i class="fa-solid fa-shield-halved w-5 mr-3 opacity-70"></i> 账号安全
                             </a>
-                            <a href="#privacy" id="nav-privacy" class="flex items-center px-6 py-4 text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-l-4 border-transparent transition-colors">
-                                <span class="w-6">🔒</span> 隐私设置
+                            <a href="#privacy" id="nav-privacy" class="settings-nav-item">
+                                <i class="fa-solid fa-lock w-5 mr-3 opacity-70"></i> 隐私设置
+                            </a>
+                            <div class="my-3 border-t border-slate-100"></div>
+                            <a href="/pages/subscription.html" class="settings-nav-item">
+                                <i class="fa-solid fa-credit-card w-5 mr-3 opacity-70"></i> 订阅计划
                             </a>
                         </nav>
                     </div>
                 </aside>
 
                 <!-- Content Area -->
-                <div class="flex-1 space-y-6">
-                    <!-- Personal Info Card -->
-                    <div id="basic-section" class="bg-white rounded-xl shadow-sm p-6 md:p-8">
-                        <div class="flex justify-between items-start mb-6">
-                             <div>
-                                <h2 class="text-xl font-bold text-gray-900">个人信息</h2>
-                                <p class="text-sm text-gray-500 mt-1">管理您的个人资料和联系方式</p>
+                <div class="flex-1 space-y-8">
+                    <!-- Personal Info Section -->
+                    <section id="basic-section" class="section-card">
+                        <div class="px-8 py-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/30">
+                            <div>
+                                <h3 class="text-lg font-black text-slate-900 tracking-tight">个人信息</h3>
+                                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Profile Information</p>
                             </div>
-                            <button onclick="openPersonalEditModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shadow-sm">
-                                <span class="mr-2">📝</span>编辑
+                            <button onclick="openPersonalEditModal()" class="btn-primary">
+                                <i class="fa-solid fa-pen-to-square mr-2"></i>编辑信息
                             </button>
                         </div>
                         
-                        <div class="flex flex-col sm:flex-row items-center sm:items-start mb-8 pb-8 border-b border-gray-100">
-                            <div class="relative group">
-                                <div class="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-3xl overflow-hidden">
-                                    <i class="fas fa-user" id="avatar-icon"></i>
+                        <div class="p-8">
+                            <div class="flex flex-col sm:flex-row items-center sm:items-start mb-10 gap-8">
+                                <div class="relative group">
+                                    <div class="w-28 h-28 bg-blue-50 rounded-3xl border-2 border-white shadow-xl shadow-blue-100/50 flex items-center justify-center text-blue-600 text-4xl overflow-hidden ring-4 ring-blue-50/50">
+                                        <i class="fas fa-user" id="avatar-icon"></i>
+                                    </div>
+                                    <button class="absolute -bottom-2 -right-2 bg-white rounded-2xl p-2.5 shadow-xl border border-slate-100 text-slate-400 hover:text-blue-600 transition-all group-hover:scale-110">
+                                        <i class="fas fa-camera text-xs"></i>
+                                    </button>
                                 </div>
-                                <button class="absolute bottom-0 right-0 bg-white rounded-full p-2 shadow-md border border-gray-200 text-gray-600 hover:text-blue-600 transition-colors">
-                                    <i class="fas fa-camera text-xs"></i>
-                                </button>
-                            </div>
-                            <div class="mt-4 sm:mt-2 sm:ml-6 text-center sm:text-left">
-                                <h3 class="text-lg font-bold text-gray-900" data-personal-name>—</h3>
-                                <p class="text-gray-500" data-personal-position>未设置职位</p>
-                                <div class="mt-2 flex flex-wrap justify-center sm:justify-start gap-2">
-                                    <span class="px-2 py-1 bg-gray-100 rounded text-xs text-gray-600">ID: <span data-personal-id>—</span></span>
-                                    <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">已验证</span>
+                                <div class="mt-2 text-center sm:text-left flex-1">
+                                    <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                                        <h3 class="text-2xl font-black text-slate-900" data-personal-name>—</h3>
+                                        <span class="inline-flex px-2.5 py-1 bg-green-50 text-green-600 rounded-lg text-[10px] font-black uppercase tracking-wider border border-green-100 self-center sm:self-auto">
+                                            <i class="fa-solid fa-circle-check mr-1.5"></i>已认证用户
+                                        </span>
+                                    </div>
+                                    <p class="text-sm font-bold text-slate-500 mt-1.5" data-personal-position>未设置职位</p>
+                                    
+                                    <div class="mt-6 flex flex-wrap justify-center sm:justify-start gap-4">
+                                        <div class="flex flex-col">
+                                            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">用户 ID</span>
+                                            <span class="text-xs font-bold text-slate-900 px-3 py-1.5 bg-slate-50 rounded-lg border border-slate-100" data-personal-id>—</span>
+                                        </div>
+                                        <div class="flex flex-col">
+                                            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">注册时间</span>
+                                            <span class="text-xs font-bold text-slate-900 px-3 py-1.5 bg-slate-50 rounded-lg border border-slate-100">2023-10-12</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-500 mb-1">用户名</label>
-                                <div class="text-gray-900 font-medium" data-personal-name-inline>—</div>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-500 mb-1">职位头衔</label>
-                                <div class="text-gray-900 font-medium" data-personal-position-inline>—</div>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-500 mb-1">联系电话</label>
-                                <div class="flex items-center">
-                                    <span class="text-gray-900 font-medium mr-2" data-personal-phone>—</span>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+                                <div class="input-group">
+                                    <label>显示名称</label>
+                                    <div class="display-value flex items-center p-3.5 bg-slate-50 rounded-xl border border-slate-100/50" data-personal-name-inline>—</div>
                                 </div>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-500 mb-1">电子邮箱</label>
-                                <div class="flex items-center">
-                                    <span class="text-gray-900 font-medium mr-2" data-personal-email>—</span>
-                                    <span class="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">已绑定</span>
+                                <div class="input-group">
+                                    <label>当前职位</label>
+                                    <div class="display-value flex items-center p-3.5 bg-slate-50 rounded-xl border border-slate-100/50" data-personal-position-inline>—</div>
                                 </div>
-                            </div>
-                             <div>
-                                <label class="block text-sm font-medium text-gray-500 mb-1">所属公司</label>
-                                <div class="text-gray-900 font-medium" data-personal-company>—</div>
+                                <div class="input-group">
+                                    <label>联系电话</label>
+                                    <div class="display-value flex items-center p-3.5 bg-slate-50 rounded-xl border border-slate-100/50">
+                                        <span data-personal-phone>—</span>
+                                        <i class="fa-solid fa-circle-check text-green-500 ml-auto opacity-50"></i>
+                                    </div>
+                                </div>
+                                <div class="input-group">
+                                    <label>电子邮箱</label>
+                                    <div class="display-value flex items-center p-3.5 bg-slate-50 rounded-xl border border-slate-100/50">
+                                        <span data-personal-email>—</span>
+                                        <span class="ml-auto text-[10px] font-black text-green-600 bg-green-50 px-2 py-1 rounded-md border border-green-100 uppercase">Primary</span>
+                                    </div>
+                                </div>
+                                <div class="input-group md:col-span-2">
+                                    <label>所属企业</label>
+                                    <div class="display-value flex items-center p-3.5 bg-slate-50 rounded-xl border border-slate-100/50">
+                                        <i class="fa-solid fa-building-user text-blue-500 mr-3"></i>
+                                        <span data-personal-company>—</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    </section>
 
                     <!-- Security Section -->
-                    <div id="security-section" class="bg-white rounded-xl shadow-sm p-6 md:p-8">
-                        <div class="mb-6">
-                            <h2 class="text-xl font-bold text-gray-900">账号安全</h2>
-                            <p class="text-sm text-gray-500 mt-1">保护您的账号安全</p>
+                    <section id="security-section" class="section-card">
+                        <div class="px-8 py-6 border-b border-slate-50 bg-slate-50/30">
+                            <h3 class="text-lg font-black text-slate-900 tracking-tight">账号安全</h3>
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Security Settings</p>
                         </div>
                         
-                        <div class="space-y-6">
-                            <div class="flex items-center justify-between py-4 border-b border-gray-100">
+                        <div class="p-8 space-y-2">
+                            <div class="flex items-center justify-between py-6 group">
                                 <div class="flex items-center">
-                                    <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 mr-4">
-                                        <i class="fas fa-key"></i>
+                                    <div class="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-all border border-slate-100/50 mr-5 shadow-sm">
+                                        <i class="fa-solid fa-key text-lg"></i>
                                     </div>
                                     <div>
-                                        <h4 class="text-base font-medium text-gray-900">登录密码</h4>
-                                        <p class="text-sm text-gray-500">建议定期修改密码以保护账号安全</p>
+                                        <h4 class="text-sm font-black text-slate-900">登录密码</h4>
+                                        <p class="text-xs font-bold text-slate-400 mt-0.5">上次修改于 3 个月前</p>
                                     </div>
                                 </div>
-                                <button onclick="openChangePasswordModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
-                                    修改
+                                <button onclick="openChangePasswordModal()" class="btn-secondary">
+                                    修改密码
                                 </button>
                             </div>
                             
-                            <div class="flex items-center justify-between py-4 border-b border-gray-100">
+                            <div class="flex items-center justify-between py-6 border-t border-slate-50 group">
                                 <div class="flex items-center">
-                                    <div class="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-600 mr-4">
-                                        <i class="fas fa-mobile-alt"></i>
+                                    <div class="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-purple-50 group-hover:text-purple-600 transition-all border border-slate-100/50 mr-5 shadow-sm">
+                                        <i class="fa-solid fa-shield-check text-lg"></i>
                                     </div>
                                     <div>
-                                        <h4 class="text-base font-medium text-gray-900">两步验证</h4>
-                                        <p class="text-sm text-gray-500">开启后，登录时需要验证手机验证码</p>
+                                        <h4 class="text-sm font-black text-slate-900">两步验证 (2FA)</h4>
+                                        <p class="text-xs font-bold text-slate-400 mt-0.5">为您的账号添加额外的安全层</p>
                                     </div>
-                                </div>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" value="" class="sr-only peer">
-                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                                </label>
-                            </div>
-
-                             <div class="flex items-center justify-between py-4">
-                                <div class="flex items-center">
-                                    <div class="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center text-green-600 mr-4">
-                                        <i class="fas fa-history"></i>
-                                    </div>
-                                    <div>
-                                        <h4 class="text-base font-medium text-gray-900">登录历史</h4>
-                                        <p class="text-sm text-gray-500">查看最近的登录记录</p>
-                                    </div>
-                                </div>
-                                <button class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
-                                    查看
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Privacy Section -->
-                    <div id="privacy-section" class="portal-card p-6 md:p-8 hidden">
-                        <div class="mb-6">
-                            <h2 class="text-xl font-bold text-gray-900">隐私设置</h2>
-                            <p class="text-sm text-gray-500 mt-1">管理您的数据隐私和可见性</p>
-                        </div>
-                        
-                        <div class="space-y-6">
-                            <div class="flex items-center justify-between py-4 border-b border-gray-100">
-                                <div>
-                                    <h4 class="text-base font-medium text-gray-900">简历对外可见</h4>
-                                    <p class="text-sm text-gray-500">开启后，招聘企业可以搜索并查看您的简历</p>
-                                </div>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" checked class="sr-only peer">
-                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                                </label>
-                            </div>
-
-                            <div class="flex items-center justify-between py-4 border-b border-gray-100">
-                                <div>
-                                    <h4 class="text-base font-medium text-gray-900">搜索引擎收录</h4>
-                                    <p class="text-sm text-gray-500">允许搜索引擎（如百度、Google）收录您的公开主页</p>
                                 </div>
                                 <label class="relative inline-flex items-center cursor-pointer">
                                     <input type="checkbox" class="sr-only peer">
-                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                    <div class="w-12 h-6.5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                                 </label>
                             </div>
 
-                            <div class="flex items-center justify-between py-4">
-                                <div>
-                                    <h4 class="text-base font-medium text-gray-900">个性化推荐</h4>
-                                    <p class="text-sm text-gray-500">根据您的浏览记录为您推荐相关职位</p>
+                             <div class="flex items-center justify-between py-6 border-t border-slate-50 group">
+                                <div class="flex items-center">
+                                    <div class="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-all border border-slate-100/50 mr-5 shadow-sm">
+                                        <i class="fa-solid fa-clock-rotate-left text-lg"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-black text-slate-900">登录审计</h4>
+                                        <p class="text-xs font-bold text-slate-400 mt-0.5">查看最近活跃的设备与地点</p>
+                                    </div>
+                                </div>
+                                <button class="btn-secondary">
+                                    管理记录
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Privacy Section -->
+                    <section id="privacy-section" class="section-card">
+                        <div class="px-8 py-6 border-b border-slate-50 bg-slate-50/30">
+                            <h3 class="text-lg font-black text-slate-900 tracking-tight">隐私设置</h3>
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Privacy & Preferences</p>
+                        </div>
+                        
+                        <div class="p-8 space-y-2">
+                            <div class="flex items-center justify-between py-6 group">
+                                <div class="flex-1 pr-8">
+                                    <h4 class="text-sm font-black text-slate-900">简历对外可见性</h4>
+                                    <p class="text-xs font-bold text-slate-400 mt-1 leading-relaxed">开启后，招聘企业可以在人才库中搜索并查看您的简历资料</p>
                                 </div>
                                 <label class="relative inline-flex items-center cursor-pointer">
                                     <input type="checkbox" checked class="sr-only peer">
-                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                    <div class="w-12 h-6.5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                </label>
+                            </div>
+
+                            <div class="flex items-center justify-between py-6 border-t border-slate-50 group">
+                                <div class="flex-1 pr-8">
+                                    <h4 class="text-sm font-black text-slate-900">搜索引擎收录</h4>
+                                    <p class="text-xs font-bold text-slate-400 mt-1 leading-relaxed">允许百度、Google 等搜索引擎收录并展示您的公开职业主页</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" class="sr-only peer">
+                                    <div class="w-12 h-6.5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                </label>
+                            </div>
+
+                            <div class="flex items-center justify-between py-6 border-t border-slate-50 group">
+                                <div class="flex-1 pr-8">
+                                    <h4 class="text-sm font-black text-slate-900">AI 智能职业建议</h4>
+                                    <p class="text-xs font-bold text-slate-400 mt-1 leading-relaxed">根据您的简历内容，利用 AI 为您提供个性化的职业成长建议与职位推荐</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" checked class="sr-only peer">
+                                    <div class="w-12 h-6.5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                                 </label>
                             </div>
                         </div>
-                    </div>
+                    </section>
                 </div>
             </div>
         </div>

@@ -43,6 +43,26 @@ export default function InterviewRunner({ resumeText, resumeId, resumeJobId, ses
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialSessionId, resumeId, resumeJobId]);
 
+  // 轮询会话状态
+  useEffect(() => {
+    if (!session || session.status !== 'PREPARING') return;
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const updatedSession = await interviewApi.getSession(session.sessionId);
+        if (updatedSession.status !== 'PREPARING') {
+          // 状态已更新，恢复会话（这将更新 session、currentQuestion 和 messages）
+          restoreSession(updatedSession);
+          clearInterval(pollInterval);
+        }
+      } catch (err) {
+        console.error('轮询会话状态失败:', err);
+      }
+    }, 2000); // 每2秒轮询一次
+
+    return () => clearInterval(pollInterval);
+  }, [session]);
+
   const initBySessionId = async (sid: string) => {
     setIsLoading(true);
     try {
@@ -278,6 +298,21 @@ export default function InterviewRunner({ resumeText, resumeId, resumeJobId, ses
               <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
               <h3 className="text-lg font-medium text-gray-900">正在生成面试题目</h3>
               <p className="text-sm text-gray-500 mt-2">基于您的简历，我们正在为您量身定制面试方案...</p>
+            </div>
+          ) : session?.status === 'PREPARING' ? (
+             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-blue-50/30">
+                <div className="relative mb-6">
+                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center animate-pulse">
+                        <span className="text-2xl">🤖</span>
+                    </div>
+                    <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-sm">
+                        <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">面试官正在阅读您的简历...</h3>
+                <p className="text-gray-500 max-w-sm mx-auto leading-relaxed">
+                    AI 面试官正在分析您的经历并准备专属问题，这通常需要 10-30 秒，请稍候。
+                </p>
             </div>
           ) : session ? (
             <InterviewChatPanel

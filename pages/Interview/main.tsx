@@ -23,30 +23,41 @@ const App = () => {
     companyName?: string;
   } | null>(null);
   const [confirmed, setConfirmed] = useState(false);
+  const [isCompleted, setIsCompleted] = useState(false);
 
   useEffect(() => {
     console.log('🚀 App useEffect init...');
     const init = async () => {
       try {
+        // 1. 解析参数 (兼容 search 和 hash)
         const urlParams = new URLSearchParams(window.location.search);
-        const idParam = urlParams.get('id') || urlParams.get('sessionId');
-        const rjIdParam = urlParams.get('resumeJobId');
-        const resumeIdParam = urlParams.get('resumeId');
+        
+        // 兼容某些路由模式下参数在 hash 里的情况
+        let hashParams = new URLSearchParams();
+        if (window.location.hash.includes('?')) {
+          hashParams = new URLSearchParams(window.location.hash.split('?')[1]);
+        }
 
-        console.log('🔍 URL Params:', { idParam, rjIdParam, resumeIdParam });
+        const idParam = urlParams.get('id') || urlParams.get('sessionId') || hashParams.get('id') || hashParams.get('sessionId');
+        const rjIdParam = urlParams.get('resumeJobId') || hashParams.get('resumeJobId');
+        const resumeIdParam = urlParams.get('resumeId') || hashParams.get('resumeId');
+
+        console.log('🔍 URL Params parsed:', { idParam, rjIdParam, resumeIdParam });
 
         if (!idParam && !rjIdParam && !resumeIdParam) {
-          console.error('❌ No valid params found in URL');
+          console.error('❌ No valid params found in URL. URL:', window.location.href);
           setError('未找到面试信息，请检查链接是否正确');
           setLoading(false);
           return;
         }
 
         let session;
+        // 如果提供了 sessionId (UUID 格式，通常长度 > 10)
         if (idParam && idParam.length > 10) {
           console.log('📡 Fetching session by sessionId:', idParam);
           session = await interviewApi.getSession(idParam);
         } else {
+          // 否则认为是 resumeId 或 resumeJobId
           const rId = parseInt(resumeIdParam || (idParam && idParam.length <= 10 ? idParam : '0'));
           const rjId = parseInt(rjIdParam || '0');
           
@@ -149,7 +160,7 @@ const App = () => {
                 <Building2 className="w-4 h-4" />
                 <span>面试单位</span>
               </div>
-              <span className="text-xl font-bold text-gray-900">{resumeData.companyName || '未设置'}</span>
+              <span className="text-xl font-bold text-gray-900">{resumeData.companyName || '某公司'}</span>
             </div>
 
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 pb-6 border-b border-gray-200/60">
@@ -209,12 +220,31 @@ const App = () => {
     );
   }
 
-  return <InterviewRunner 
-    resumeText={resumeData.text} 
-    sessionId={resumeData.sessionId!} 
-    onBack={() => window.history.back()}
-    onComplete={() => console.log('面试结束')}
-  />;
+  return (
+    <>
+      <InterviewRunner 
+        resumeText={resumeData.text} 
+        sessionId={resumeData.sessionId!} 
+        onBack={() => window.history.back()}
+        onComplete={() => setIsCompleted(true)}
+      />
+
+      {/* Completion Modal */}
+      {isCompleted && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+          <div className="bg-white rounded-[2rem] shadow-2xl p-8 sm:p-12 max-w-md w-full text-center border border-gray-100 transform scale-100 animate-in zoom-in-95 duration-300">
+            <div className="w-20 h-20 bg-green-50 rounded-[2rem] flex items-center justify-center mx-auto mb-6 text-green-500 shadow-sm">
+              <CheckCircle className="w-10 h-10" />
+            </div>
+            <h2 className="text-2xl font-black text-gray-900 mb-4 tracking-tight">面试结束</h2>
+            <p className="text-gray-500 font-medium leading-relaxed text-lg">
+              您已经回答完毕，谢谢您的参与。<br/>稍后我们会与您联系。
+            </p>
+          </div>
+        </div>
+      )}
+    </>
+  );
 };
 
 const container = document.getElementById('root');

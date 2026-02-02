@@ -252,6 +252,17 @@ class UIComponents {
             this.setupNotificationSystem();
             return this.showNotification(message, type, duration);
         }
+
+        let msg = message;
+        if (msg && typeof msg === 'object') {
+            if (typeof msg.message === 'string') {
+                msg = msg.code ? `${msg.code}: ${msg.message}` : msg.message;
+            } else {
+                try { msg = JSON.stringify(msg); } catch (_) { msg = String(msg); }
+            }
+        }
+        if (msg === null || msg === undefined) msg = '';
+        if (typeof msg !== 'string') msg = String(msg);
         
         const notification = document.createElement('div');
         const icons = {
@@ -264,7 +275,7 @@ class UIComponents {
         notification.className = `ui-notification ui-notification-${type}`;
         notification.innerHTML = `
             <div style="font-weight: bold; font-size: 1.2rem;">${icons[type]}</div>
-            <div style="flex: 1; font-weight: 500;">${message}</div>
+            <div style="flex: 1; font-weight: 500;">${msg}</div>
             <button class="ui-notification-close">✕</button>
         `;
         

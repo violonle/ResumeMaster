@@ -6,7 +6,7 @@ INSERT INTO resumes (user_id, company_id, name, file_name, file_size, file_type,
 '{"name":"张伟","email":"zhangwei@example.com","phone":"13800138001","jobTitle":"前端开发工程师","position":"前端开发工程师","education":[{"degree":"本科","school":"清华大学"}],"experience":[{"company":"阿里巴巴","position":"前端工程师"}],"skills":["Vue.js","React","TypeScript","Node.js"]}',
 '["Vue.js","React","前端开发"]', datetime('now')),
 
-(2, 5, '李娜', '产品经理_李娜.docx', 204800, 'docx', '/uploads/resumes/test2.docx', 'analyzed', '初筛', datetime('now', '-1 day'),
+(2, 5, '李娜', '产品经理_李娜.docx', 204800, 'docx', '/uploads/resumes/test2.docx', 'analyzed', '快评', datetime('now', '-1 day'),
 '{"name":"李娜","email":"lina@example.com","phone":"13800138002","jobTitle":"产品经理","position":"产品经理","education":[{"degree":"硕士","school":"北京大学"}],"experience":[{"company":"腾讯","position":"产品经理"}],"skills":["产品规划","需求分析","Axure","Figma"]}',
 '["产品经理","Axure","Figma"]', datetime('now', '-1 day')),
 
@@ -30,7 +30,7 @@ INSERT INTO resumes (user_id, company_id, name, file_name, file_size, file_type,
 '{"name":"孙婷","email":"sunting@example.com","phone":"13800138007","jobTitle":"数据分析师","position":"数据分析师","education":[{"degree":"硕士","school":"复旦大学"}],"experience":[{"company":"网易","position":"数据分析师"}],"skills":["Python","SQL","Tableau","PowerBI"]}',
 '["数据分析","Python","SQL"]', datetime('now', '-6 hours')),
 
-(2, 5, '周杰', '运维工程师_周杰.pdf', 237568, 'pdf', '/uploads/resumes/test8.pdf', 'analyzed', '初筛', datetime('now', '-12 hours'),
+(2, 5, '周杰', '运维工程师_周杰.pdf', 237568, 'pdf', '/uploads/resumes/test8.pdf', 'analyzed', '快评', datetime('now', '-12 hours'),
 '{"name":"周杰","email":"zhoujie@example.com","phone":"13800138008","jobTitle":"运维工程师","position":"运维工程师","education":[{"degree":"本科","school":"南京大学"}],"experience":[{"company":"滴滴","position":"运维工程师"}],"skills":["Linux","Docker","Kubernetes","Jenkins"]}',
 '["运维","Linux","Docker"]', datetime('now', '-12 hours')),
 

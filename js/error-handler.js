@@ -10,6 +10,11 @@ class ErrorHandler {
      * @param {string} elementId - 可选的元素ID，用于显示错误消息
      */
     static showError(message, elementId = null) {
+        // 如果 message 是对象且包含 status，尝试作为 API 错误处理
+        if (typeof message === 'object' && message !== null && (message.status || message.message)) {
+            return this.handleApiError(message);
+        }
+
         if (elementId) {
             // 在指定元素中显示错误
             const element = document.getElementById(elementId);
@@ -29,20 +34,81 @@ class ErrorHandler {
             if (!errorDiv) {
                 errorDiv = document.createElement('div');
                 errorDiv.id = 'global-error-message';
-                errorDiv.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 max-w-sm';
+                errorDiv.className = 'fixed top-6 right-6 bg-white border-l-4 border-red-500 text-gray-900 px-6 py-4 rounded-xl shadow-2xl z-[100] max-w-sm transform translate-x-full transition-transform duration-300 ease-out flex items-center space-x-3';
                 document.body.appendChild(errorDiv);
+                
+                // 添加图标
+                const icon = document.createElement('div');
+                icon.className = 'w-10 h-10 bg-red-50 text-red-500 rounded-xl flex items-center justify-center flex-shrink-0';
+                icon.innerHTML = '<i class="fas fa-circle-xmark text-lg"></i>';
+                errorDiv.appendChild(icon);
+                
+                const content = document.createElement('div');
+                content.className = 'flex-1';
+                
+                const title = document.createElement('h4');
+                title.className = 'text-sm font-black text-gray-900 mb-0.5';
+                title.textContent = '操作失败';
+                content.appendChild(title);
+                
+                const text = document.createElement('p');
+                text.id = 'global-error-text';
+                text.className = 'text-xs font-bold text-gray-500 leading-relaxed';
+                content.appendChild(text);
+                
+                errorDiv.appendChild(content);
             }
             
-            errorDiv.textContent = message;
-            errorDiv.style.display = 'block';
+            const errorText = document.getElementById('global-error-text');
+            if (errorText) errorText.textContent = message;
+            
+            errorDiv.style.display = 'flex';
+            setTimeout(() => {
+                errorDiv.classList.remove('translate-x-full');
+            }, 10);
             
             // 5秒后自动隐藏
-            setTimeout(() => {
-                if (errorDiv) {
+            if (window._errorTimer) clearTimeout(window._errorTimer);
+            window._errorTimer = setTimeout(() => {
+                errorDiv.classList.add('translate-x-full');
+                setTimeout(() => {
                     errorDiv.style.display = 'none';
-                }
+                }, 300);
             }, 5000);
         }
+    }
+
+    /**
+     * 处理 API 错误并返回友好提示
+     * @param {Object} error - 错误对象
+     * @returns {string} - 友好提示消息
+     */
+    static handleApiError(error) {
+        let message = '请求发生未知错误，请稍后重试';
+        
+        if (error && error.status) {
+            switch (error.status) {
+                case 400: message = error.message || '请求参数有误，请检查输入'; break;
+                case 401: message = '您的会话已过期，请重新登录'; break;
+                case 403: message = '您没有权限执行此操作'; break;
+                case 404: message = '请求的资源不存在'; break;
+                case 500: message = '服务器内部错误，请稍后重试'; break;
+                case 502: message = '网关错误，服务器可能正在维护'; break;
+                case 503: message = '服务暂不可用，请稍后再试'; break;
+                case 504: message = '请求超时，请检查网络连接'; break;
+                default: message = error.message || `请求失败 (${error.status})`;
+            }
+        } else if (error && error.message) {
+            if (error.message.includes('Failed to fetch')) {
+                message = '网络连接失败，请检查您的网络';
+            } else {
+                message = error.message;
+            }
+        }
+        
+        // 调用显示错误
+        this.showError(message);
+        return message;
     }
     
     /**
@@ -70,18 +136,46 @@ class ErrorHandler {
             if (!successDiv) {
                 successDiv = document.createElement('div');
                 successDiv.id = 'global-success-message';
-                successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 max-w-sm';
+                successDiv.className = 'fixed top-6 right-6 bg-white border-l-4 border-emerald-500 text-gray-900 px-6 py-4 rounded-xl shadow-2xl z-[100] max-w-sm transform translate-x-full transition-transform duration-300 ease-out flex items-center space-x-3';
                 document.body.appendChild(successDiv);
+                
+                // 添加图标
+                const icon = document.createElement('div');
+                icon.className = 'w-10 h-10 bg-emerald-50 text-emerald-500 rounded-xl flex items-center justify-center flex-shrink-0';
+                icon.innerHTML = '<i class="fas fa-circle-check text-lg"></i>';
+                successDiv.appendChild(icon);
+                
+                const content = document.createElement('div');
+                content.className = 'flex-1';
+                
+                const title = document.createElement('h4');
+                title.className = 'text-sm font-black text-gray-900 mb-0.5';
+                title.textContent = '操作成功';
+                content.appendChild(title);
+                
+                const text = document.createElement('p');
+                text.id = 'global-success-text';
+                text.className = 'text-xs font-bold text-gray-500 leading-relaxed';
+                content.appendChild(text);
+                
+                successDiv.appendChild(content);
             }
             
-            successDiv.textContent = message;
-            successDiv.style.display = 'block';
+            const successText = document.getElementById('global-success-text');
+            if (successText) successText.textContent = message;
+            
+            successDiv.style.display = 'flex';
+            setTimeout(() => {
+                successDiv.classList.remove('translate-x-full');
+            }, 10);
             
             // 3秒后自动隐藏
-            setTimeout(() => {
-                if (successDiv) {
+            if (window._successTimer) clearTimeout(window._successTimer);
+            window._successTimer = setTimeout(() => {
+                successDiv.classList.add('translate-x-full');
+                setTimeout(() => {
                     successDiv.style.display = 'none';
-                }
+                }, 300);
             }, 3000);
         }
     }
@@ -97,20 +191,25 @@ class ErrorHandler {
             if (!loadingDiv) {
                 loadingDiv = document.createElement('div');
                 loadingDiv.id = 'global-loading';
-                loadingDiv.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+                loadingDiv.className = 'fixed inset-0 bg-gray-900/40 backdrop-blur-sm flex items-center justify-center z-[200] transition-opacity duration-300';
                 loadingDiv.innerHTML = `
-                    <div class="bg-white p-6 rounded-lg shadow-xl flex items-center">
-                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mr-4"></div>
-                        <span class="text-gray-700">${message}</span>
+                    <div class="bg-white p-8 rounded-3xl shadow-2xl flex flex-col items-center space-y-4 max-w-xs w-full">
+                        <div class="relative w-16 h-16">
+                            <div class="absolute inset-0 rounded-full border-4 border-blue-50"></div>
+                            <div class="absolute inset-0 rounded-full border-4 border-blue-600 border-t-transparent animate-spin"></div>
+                        </div>
+                        <div class="text-center">
+                            <h4 class="text-sm font-black text-gray-900 mb-1">正在处理</h4>
+                            <p class="text-xs font-bold text-gray-500 loading-message">${message}</p>
+                        </div>
                     </div>
                 `;
                 document.body.appendChild(loadingDiv);
             } else {
                 loadingDiv.style.display = 'flex';
-                // 更新消息
-                const messageSpan = loadingDiv.querySelector('span');
-                if (messageSpan) {
-                    messageSpan.textContent = message;
+                const messageP = loadingDiv.querySelector('.loading-message');
+                if (messageP) {
+                    messageP.textContent = message;
                 }
             }
         } else if (loadingDiv) {

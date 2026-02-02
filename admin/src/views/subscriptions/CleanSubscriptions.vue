@@ -455,7 +455,7 @@ onMounted(async () => {
   }
   try {
     const res = await companyStore.fetchCompanies({ itemsPerPage: 100 })
-    companies.value = res.items || companyStore.companies
+    companies.value = res.items || res.data?.items || companyStore.companies
   } catch (_) { companies.value = companyStore.companies }
 })
 

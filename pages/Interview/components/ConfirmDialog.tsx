@@ -33,7 +33,7 @@ export default function ConfirmDialog({
   const variantStyles = {
     danger: 'bg-red-600 shadow-red-600/20 hover:bg-red-700',
     primary: 'bg-blue-600 shadow-blue-600/20 hover:bg-blue-700',
-    warning: 'bg-orange-500 shadow-orange-500/20 hover:bg-orange-600'
+    warning: 'bg-indigo-600 shadow-indigo-600/20 hover:bg-indigo-700'
   };
 
   return (

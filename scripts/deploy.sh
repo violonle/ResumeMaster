@@ -27,8 +27,12 @@ docker save $IMAGE_NAME:latest | ssh $SERVER_USER@$SERVER_IP "docker load"
 echo ">>> 正在远程重启服务器容器 (强制重新创建)..."
 ssh $SERVER_USER@$SERVER_IP "cd $PROJECT_PATH && docker-compose -f docker-compose.prod.yml up -d --force-recreate"
 
-# 5. 同步演示账号到服务器数据库
-echo ">>> 正在同步演示账号到服务器数据库..."
-ssh $SERVER_USER@$SERVER_IP "cd $PROJECT_PATH && docker-compose -f docker-compose.prod.yml exec -T app node scripts/add-demo-user.js"
+# 5. 同步演示账号到服务器数据库（默认关闭）
+if [ "$SYNC_DEMO" = "1" ]; then
+  echo ">>> 正在同步演示账号到服务器数据库..."
+  ssh $SERVER_USER@$SERVER_IP "cd $PROJECT_PATH && docker-compose -f docker-compose.prod.yml exec -T app ENABLE_DEMO_SEED=true node scripts/add-demo-user.js"
+else
+  echo ">>> 跳过同步演示账号（如需开启：SYNC_DEMO=1 ./scripts/deploy.sh）"
+fi
 
 echo "✅ 部署完成！"

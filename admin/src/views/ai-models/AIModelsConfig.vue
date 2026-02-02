@@ -211,7 +211,7 @@
         </VWindowItem>
 
         <VWindowItem value="prompts">
-          <PromptManager />
+          <PromptManager v-if="activeTab === 'prompts'" />
         </VWindowItem>
       </VWindow>
     </VCard>
@@ -648,7 +648,7 @@ const loadProviderDialogModels = async (provider) => {
   if (!provider) { availableModels.value = []; return }
   try {
     const res = await aiModelAPI.listProviderModels(provider)
-    const models = (res?.data?.data) || []
+    const models = res?.data || []
     availableModels.value = models
     
     // 同步到 providersList 中，以便策略配置能选到
@@ -664,7 +664,7 @@ const loadModelsForProvider = async (provider) => {
   if (!provider) { createModelOptions.value = []; return }
   try {
     const res = await aiModelAPI.listProviderModels(provider)
-    const models = (res?.data?.data) || []
+    const models = res?.data || []
     createModelOptions.value = models
   } catch { createModelOptions.value = [] }
 }

@@ -8,11 +8,12 @@ if (typeof window.ResumeDataManager !== 'undefined') return;
 
 class ResumeDataManagerInternal {
     constructor() {
-        const ua = (window.userAuthInstance && window.userAuthInstance.apiBaseUrl) ? window.userAuthInstance.apiBaseUrl : null;
-        // 确保默认API路径为 /api，避免尝试 http://localhost:5001/api 这种错误端口
-        // 如果 userAuthInstance 已经正确配置了 /api (见 user-auth.js 的修复)，这里会继承
-        // 如果没有，我们强制默认为 /api
-        this.apiBaseUrl = ua || '/api';
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const isBackendPort = window.location.port === '3000';
+        
+        this.apiBaseUrl = '/api';
+        this.fallbackApiBaseUrl = (isLocal && !isBackendPort) ? 'http://localhost:3000/api' : '/api';
+        
         this.token = null;
         this.init();
     }
@@ -44,6 +45,18 @@ class ResumeDataManagerInternal {
      * @param {boolean} silent - 是否不显示错误通知
      * @returns {Promise} - API响应
      */
+    // 状态转换工具
+    toCN(s) {
+        const k = String(s || '').toLowerCase();
+        if (k === 'applied' || k === '投递' || k === 'new' || k === '') return '投递';
+        if (k === 'screening' || k === '快评' || k === '已快评' || k === '已快评_alias' || k === 'passed') return '快评';
+        if (k === 'interview' || k === '面试') return '面试';
+        if (k === 'offer' || k === '已发offer') return 'Offer';
+        if (k === 'hired' || k === '入职' || k === '已入职' || k === '已录用') return '入职';
+        if (k === 'rejected' || k === '淘汰' || k === '已淘汰') return '淘汰';
+        return '投递';
+    }
+
     async apiRequest(endpoint, method = 'GET', data = null, showLoading = true, silent = false) {
         if (showLoading && typeof ErrorHandler !== 'undefined') {
             ErrorHandler.showLoading(true);
@@ -51,11 +64,37 @@ class ResumeDataManagerInternal {
 
         const isForm = (data && typeof FormData !== 'undefined' && data instanceof FormData);
         const headers = isForm ? {} : { 'Content-Type': 'application/json' };
-        const lsToken = (function () { try { return (JSON.parse(localStorage.getItem('userInfo') || '{}').token) || null } catch (_) { return null } })();
-        const uaToken = (typeof userAuthInstance !== 'undefined' && typeof userAuthInstance.getToken === 'function') ? (userAuthInstance.getToken() || null) : null;
-        const token = uaToken || this.token || lsToken;
-        if (token) headers['Authorization'] = `Bearer ${token}`;
-        const options = { method, headers };
+        
+        // 增强 Token 获取逻辑
+        let token = this.token;
+
+        // 1. 尝试从 userAuthInstance 获取 (优先 window 全局实例)
+        if (!token && typeof window.userAuthInstance !== 'undefined' && typeof window.userAuthInstance.getToken === 'function') {
+            token = window.userAuthInstance.getToken();
+        }
+        // 2. 尝试从局部 userAuthInstance 获取
+        if (!token && typeof userAuthInstance !== 'undefined' && typeof userAuthInstance.getToken === 'function') {
+            token = userAuthInstance.getToken();
+        }
+        // 3. 尝试从 localStorage 获取
+        if (!token) {
+            try {
+                const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+                token = userInfo.token;
+            } catch (_) {}
+        }
+        // 4. 尝试从 localStorage 直接获取 token (旧兼容)
+        if (!token) {
+            token = localStorage.getItem('token');
+        }
+
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        } else {
+            console.warn('[ResumeDataManager] API请求缺失Token:', endpoint);
+        }
+
+        const options = { method, headers, cache: method === 'GET' ? 'no-store' : 'default' };
         if (data) options.body = isForm ? data : JSON.stringify(data);
 
         const tryRequest = async (base) => {
@@ -65,7 +104,8 @@ class ResumeDataManagerInternal {
             try {
                 result = text ? JSON.parse(text) : {};
             } catch (e) {
-                console.error('JSON解析失败:', e, 'Response:', text.substring(0, 200));
+                // 仅记录警告，避免控制台充满红色的 JSON 解析错误
+                console.warn(`⚠️ [API] ${base} 返回了非 JSON 响应，将尝试下一个备选地址。`);
                 // 如果是404/500且返回HTML，这里会捕获
                 const err = new Error(response.ok ? '服务器返回了非JSON格式的数据' : `请求失败 (${response.status})`);
                 err.status = response.status;
@@ -89,10 +129,7 @@ class ResumeDataManagerInternal {
             return result;
         };
 
-        const bases = [];
-        const primary = this.apiBaseUrl;
-        bases.push(primary);
-        if (primary !== '/api') bases.push('/api');
+        const bases = [this.apiBaseUrl, this.fallbackApiBaseUrl, '/api'].filter((v, i, arr) => v && arr.indexOf(v) === i);
 
         let lastError;
         for (const b of bases) {
@@ -100,6 +137,25 @@ class ResumeDataManagerInternal {
                 const res = await tryRequest(b);
                 this.apiBaseUrl = b;
                 if (showLoading && typeof ErrorHandler !== 'undefined') { ErrorHandler.showLoading(false); }
+                
+                // 全局兼容：如果返回结果中有 recruitment_status，尝试转换
+                if (res && res.data) {
+                    const processItem = (item) => {
+                        if (item && typeof item === 'object' && 'recruitment_status' in item) {
+                            item.recruitment_status = this.toCN(item.recruitment_status);
+                        }
+                        return item;
+                    };
+                    if (Array.isArray(res.data)) {
+                        res.data.forEach(processItem);
+                    } else if (typeof res.data === 'object') {
+                        Object.values(res.data).forEach(val => {
+                            if (Array.isArray(val)) val.forEach(processItem);
+                            else processItem(val);
+                        });
+                    }
+                }
+                
                 return res;
             } catch (e) {
                 lastError = e;
@@ -109,9 +165,8 @@ class ResumeDataManagerInternal {
         }
         if (showLoading && typeof ErrorHandler !== 'undefined') { ErrorHandler.showLoading(false); }
         if (!silent) {
-            console.error('API请求失败:', lastError);
             if (typeof ErrorHandler !== 'undefined') {
-                ErrorHandler.showError(lastError && lastError.message ? lastError.message : '请求失败，请稍后重试');
+                ErrorHandler.showError(lastError);
             }
         }
         throw lastError;
@@ -178,12 +233,24 @@ class ResumeDataManagerInternal {
         return result.data;
     }
 
-    async getTalentPoolResumes(groupByStatus = false, silent = false) {
-        const endpoint = groupByStatus ? '/library/resumes?groupByStatus=true' : '/library/resumes';
-        const result = await this.apiRequest(endpoint, 'GET', null, true, silent);
-        // 添加调试信息
-        console.log('从API获取的人才库数据:', result.data);
-        return result.data;
+    async getTalentPoolResumes(groupByStatus = false, silent = false, query = {}) {
+        const qs = new URLSearchParams();
+        if (groupByStatus) qs.set('groupByStatus', 'true');
+        
+        // 遍历 query 对象，将所有参数添加到 URLSearchParams
+        Object.keys(query).forEach(key => {
+            if (query[key] !== undefined && query[key] !== null) {
+                qs.set(key, String(query[key]));
+            }
+        });
+
+        // 兼容旧字段
+        if (query.isTalentPool === true || query.is_talent_pool === true || query.isTalentPool === 'true' || query.is_talent_pool === 'true') {
+            qs.set('is_talent_pool', 'true');
+        }
+        
+        const result = await this.apiRequest(`/library/resumes?${qs.toString()}`, 'GET', null, true, silent);
+        return (result && result.data) ? result.data : [];
     }
 
     /**
@@ -201,17 +268,25 @@ class ResumeDataManagerInternal {
      * @param {string} jobId - 职位ID (可选)
      * @param {string} status - 状态 (可选)
      * @param {boolean} silent - 是否不显示错误通知
-     * @returns {Promise<Array>} - 流程数据
+     * @returns {Promise<Object>} - 流程数据 (按状态分组)
      */
-    async getRecruitmentPipeline(jobId = null, status = null, silent = false) {
-        if (jobId) {
-            let endpoint = `/recruitment/pipeline?jobId=${jobId}`;
-            if (status) endpoint += `&status=${status}`;
-            const result = await this.apiRequest(endpoint, 'GET', null, true, silent);
-            return result.data;
+    async getRecruitmentPipeline(jobId = null, options = null, silent = false) {
+        // 统一使用 getTalentPoolResumes 并开启 groupByStatus=true
+        // 这样可以确保"全部岗位"和"特定岗位"的数据来源一致，且都包含人才库中的简历
+        const query = {
+            include_rejected: true // 招聘看板必须包含已淘汰的数据，否则淘汰池会显示为空
+        };
+        
+        if (jobId && jobId !== 'all') {
+            query.jobId = jobId;
         }
-        // 否则使用统一的人才库API获取招聘流程数据
-        return this.getTalentPoolResumes(true, silent);
+        
+        if (options && typeof options === 'object') {
+            if (options.status) query.status = options.status;
+            if (options.q) query.q = options.q;
+        }
+
+        return this.getTalentPoolResumes(true, silent, query);
     }
 
     /**
@@ -223,8 +298,8 @@ class ResumeDataManagerInternal {
      */
     async updateRecruitmentStatus(id, status, notes = null) {
         try {
-            const data = { recruitment_status: status };
-            const result = await this.apiRequest(`/resumes/${id}`, 'PUT', data);
+            const data = { status, notes };
+            const result = await this.apiRequest(`/recruitment/candidates/${id}/status`, 'POST', data);
             return result.data;
         } catch (error) {
             console.error('更新招聘状态失败:', error);
@@ -234,13 +309,13 @@ class ResumeDataManagerInternal {
 
     /**
      * 安排面试
-     * @param {string} id - 记录ID
+     * @param {string} id - 记录ID (ResumeJob ID)
      * @param {Object} interviewData - 面试数据 {datetime, channel, location, note}
      * @returns {Promise<Object>} - 结果
      */
     async scheduleInterview(id, interviewData) {
         try {
-            const result = await this.apiRequest(`/resumes/${id}/interview`, 'POST', interviewData);
+            const result = await this.apiRequest(`/recruitment/candidates/${id}/schedule-interview`, 'POST', interviewData);
             return result.data;
         } catch (error) {
             console.error('安排面试失败:', error);
@@ -250,13 +325,13 @@ class ResumeDataManagerInternal {
 
     /**
      * 发送Offer
-     * @param {string} id - 记录ID
+     * @param {string} id - 记录ID (ResumeJob ID)
      * @param {Object} offerData - Offer数据 {phone, email, message}
      * @returns {Promise<Object>} - 结果
      */
     async sendOffer(id, offerData) {
         try {
-            const result = await this.apiRequest(`/resumes/${id}/offer`, 'POST', offerData);
+            const result = await this.apiRequest(`/recruitment/candidates/${id}/send-offer`, 'POST', offerData);
             return result.data;
         } catch (error) {
             console.error('发送Offer失败:', error);
@@ -312,11 +387,13 @@ class ResumeDataManagerInternal {
 
     /**
      * 获取所有职位
-     * @returns {Promise<Array>} - 职位数组
+     * @param {boolean} showLoading - 是否显示加载状态
+     * @param {boolean} fullResponse - 是否返回完整响应（包含统计数据）
+     * @returns {Promise<Array|Object>} - 职位数组或完整响应
      */
-    async getAllJobs() {
-        const result = await this.apiRequest('/jobs');
-        return result.data;
+    async getAllJobs(showLoading = true, fullResponse = false) {
+        const result = await this.apiRequest('/jobs', 'GET', null, showLoading);
+        return fullResponse ? result : result.data;
     }
 
     /**
@@ -398,15 +475,23 @@ class ResumeDataManagerInternal {
     }
 
     /**
-     * 更新简历招聘流程状态 (投递, 初筛, 面试, Offer, 入职, 放弃, 淘汰)
+     * 更新简历招聘流程状态 (投递, 快评, 面试, Offer, 入职, 放弃, 淘汰)
      * @param {string} resumeId - 简历ID
      * @param {string} status - 新招聘状态
      * @returns {Promise<boolean>} - 更新是否成功
      */
-    async updateResumeRecruitmentStatus(resumeId, status) {
+    /**
+     * 更新简历招聘状态 (人才库专用)
+     * @param {string} resumeId - 简历ID
+     * @param {string} status - 状态 (中文)
+     * @param {string} notes - 备注 (可选)
+     * @returns {Promise<boolean>}
+     */
+    async updateResumeRecruitmentStatus(resumeId, status, notes = null) {
         try {
-            await this.apiRequest(`/resumes/${resumeId}`, 'PUT', {
-                recruitment_status: status
+            await this.apiRequest(`/resumes/${resumeId}/status`, 'PUT', {
+                status: status,
+                notes: notes
             });
             return true;
         } catch (error) {
@@ -570,6 +655,6 @@ window.ResumeDataManager = ResumeDataManagerInternal;
 })();
 
 // 创建全局实例
-if (!window.resumeDataManager) {
+if (!window.resumeDataManager || typeof window.resumeDataManager.updateResumeRecruitmentStatus !== 'function') {
     window.resumeDataManager = new window.ResumeDataManager();
 }

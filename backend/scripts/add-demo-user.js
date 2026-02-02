@@ -1,18 +1,23 @@
 /**
  * 创建演示账号脚本
  * 用户名: demo
- * 密码: test123
+ * 密码: demo123
  */
+require('dotenv').config();
 const { sequelize, User } = require('../models');
 const bcrypt = require('bcryptjs');
 const seedDemo = require('./seed-demo');
 
 async function addDemoUser() {
     try {
+        if (String(process.env.ENABLE_DEMO_SEED || '').toLowerCase() !== 'true') {
+            console.log('ENABLE_DEMO_SEED is not true, skip demo user seeding.');
+            process.exit(0);
+        }
         console.log('--- 开始创建演示账号 ---');
         
         const username = 'demo';
-        const password = 'test123';
+        const password = 'demo123';
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // 1. 检查账号是否已存在

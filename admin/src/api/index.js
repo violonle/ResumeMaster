@@ -40,6 +40,8 @@ export const resumeAPI = {
   getList: (params) => apiClient.get('/admin/resumes', { params }),
   getDetail: (id) => apiClient.get(`/admin/resumes/${id}`),
   getStats: () => apiClient.get('/admin/resumes/stats'),
+  delete: (id) => apiClient.delete(`/admin/resumes/${id}`),
+  batchDelete: (ids) => apiClient.post('/admin/resumes/batch-delete', { ids }),
 }
 
 export const subscriptionAPI = {
@@ -96,6 +98,20 @@ export const interviewAPI = {
   getSession: (sessionId) => apiClient.get(`/interview/sessions/${sessionId}`),
 }
 
+export const financeAPI = {
+  getOrders: (params) => apiClient.get('/payment/orders', { params }),
+  getStats: () => apiClient.get('/payment/stats'),
+}
+
+export const invoiceAPI = {
+  getList: (params) => apiClient.get('/invoices/all', { params }),
+  getDetail: (id) => apiClient.get(`/invoices/${id}`),
+  create: (data) => apiClient.post('/invoices/create', data),
+  update: (id, data) => apiClient.put(`/invoices/${id}`, data),
+  red: (id, data) => apiClient.post(`/invoices/${id}/red`, data),
+  getStats: () => apiClient.get('/invoices/stats'),
+}
+
 export const systemAPI = {
   // 系统设置
   getSettings: () => apiClient.get('/admin/system/settings'),
@@ -133,18 +149,4 @@ export const dashboardAPI = {
   getStats: () => apiClient.get('/admin/dashboard/stats'),
   getChartData: (type) => apiClient.get(`/admin/dashboard/charts/${type}`),
   getRecentActivities: () => apiClient.get('/admin/dashboard/activities'),
-}
-
-export const financeAPI = {
-  getOrders: (params) => apiClient.get('/payment/orders', { params }),
-  getStats: () => apiClient.get('/payment/stats'), // Need to implement this backend endpoint if not exists, or use orders count
-}
-
-export const invoiceAPI = {
-  getList: (params) => apiClient.get('/invoices/all', { params }),
-  getDetail: (id) => apiClient.get(`/invoices/${id}`),
-  create: (data) => apiClient.post('/invoices', data),
-  update: (id, data) => apiClient.put(`/invoices/${id}`, data),
-  red: (id, data) => apiClient.post(`/invoices/${id}/red`, data),
-  getStats: () => apiClient.get('/invoices/stats'),
 }

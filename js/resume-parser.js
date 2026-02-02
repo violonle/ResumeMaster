@@ -324,19 +324,7 @@ class ResumeParser {
         formData.append('file', file);
         
         try {
-            const response = await fetch('/api/ai/upload', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: formData
-            });
-            
-            const result = await response.json();
-            if (!result.success) {
-                throw new Error(result.error?.message || '解析失败');
-            }
-            
+            const result = await resumeDataManager.apiRequest('/ai/upload', 'POST', formData, false);
             return result.data;
         } catch (error) {
             console.error('简历解析失败:', error);

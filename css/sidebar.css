@@ -56,6 +56,16 @@
     gap: 2rem; /* portal space-y-8 */
 }
 
+.sidebar-inner nav {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.sidebar-inner nav::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+}
+
 .sidebar-section {
     display: flex;
     flex-direction: column;
@@ -229,15 +239,16 @@
 }
 
 .sub-action-btn.highlight {
-    background: #eff6ff;
-    color: #2563eb;
-    border-color: #dbeafe;
+    background: #0f172a;
+    color: #ffffff;
+    border-color: #0f172a;
 }
 
 .sub-action-btn.highlight:hover {
-    background: #2563eb;
+    background: #000000;
     color: #ffffff;
-    border-color: #2563eb;
+    border-color: #000000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 #sidebar-logout-btn {
@@ -254,8 +265,8 @@ header.fixed, .header-fixed, .top-navigation.fixed {
 body.sidebar-collapsed-root header.fixed, 
 body.sidebar-collapsed-root .header-fixed,
 body.sidebar-collapsed-root .top-navigation.fixed {
-    left: 80px !important;
-    width: calc(100% - 80px) !important;
+    left: 72px !important;
+    width: calc(100% - 72px) !important;
 }
 
 /* Main Content Layout */
@@ -274,8 +285,18 @@ body.sidebar-collapsed-root .top-navigation.fixed {
 }
 
 /* Sidebar Collapsed State */
-.sidebar-collapsed {
-    width: 80px !important;
+aside#sidebar.sidebar-collapsed,
+#sidebar.sidebar-collapsed,
+.sidebar-modern.sidebar-collapsed {
+    width: 72px !important;
+    min-width: 72px !important;
+    max-width: 72px !important;
+}
+
+body.sidebar-collapsed-root #sidebar {
+    width: 72px !important;
+    min-width: 72px !important;
+    max-width: 72px !important;
 }
 
 .sidebar-collapsed .item-content,
@@ -295,6 +316,16 @@ body.sidebar-collapsed-root .top-navigation.fixed {
     display: none !important;
 }
 
+.sidebar-collapsed .sidebar-inner nav {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+.sidebar-collapsed .sidebar-footer {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
 .sidebar-collapsed #sidebar-toggle {
     display: flex;
     width: 2.25rem; /* 匹配 logo-icon 宽度 */
@@ -302,6 +333,40 @@ body.sidebar-collapsed-root .top-navigation.fixed {
     color: #111827;
     background: #f9fafb;
     border-radius: 0.75rem;
+    margin: 0 auto; /* 居中显示 */
+}
+
+/* 居中导航图标并优化收起态背景 */
+.sidebar-collapsed .nav-item-modern,
+.sidebar-collapsed .quick-action-button {
+    justify-content: center;
+    padding: 0.75rem 0;
+    width: 48px !important;
+    height: 48px !important;
+    margin: 0.25rem auto !important;
+    border-radius: 12px !important;
+}
+
+body.sidebar-collapsed-root #sidebar .nav-item-modern,
+body.sidebar-collapsed-root #sidebar .quick-action-button {
+    width: 48px !important;
+    height: 48px !important;
+    margin: 0.25rem auto !important;
+    border-radius: 12px !important;
+}
+
+.sidebar-collapsed .nav-item-modern i,
+.sidebar-collapsed .quick-action-button i {
+    margin: 0;
+}
+
+.sidebar-collapsed .nav-item-modern.active::before {
+    display: none; /* 收起态不再显示左侧长条，改用整体高亮背景 */
+}
+
+/* 隐藏收起状态下的子标题 */
+.sidebar-collapsed .item-sub {
+    display: none !important;
 }
 
 .sidebar-collapsed #sidebar-logout-btn {
@@ -375,23 +440,24 @@ body.sidebar-collapsed-root .top-navigation.fixed {
 
 /* Custom Scrollbar */
 .sidebar-modern nav::-webkit-scrollbar {
-    width: 4px;
+    width: 0;
+    height: 0;
 }
 .sidebar-modern nav::-webkit-scrollbar-track {
     background: transparent;
 }
 .sidebar-modern nav::-webkit-scrollbar-thumb {
-    background: #e5e7eb;
-    border-radius: 4px;
+    background: transparent;
+    border-radius: 0;
 }
 .sidebar-modern nav::-webkit-scrollbar-thumb:hover {
-    background: #d1d5db;
+    background: transparent;
 }
 
 .main-content-collapsed {
-    margin-left: 80px !important;
+    margin-left: 72px !important;
 }
 
 body.sidebar-collapsed-root .main-content {
-    margin-left: 80px !important;
+    margin-left: 72px !important;
 }

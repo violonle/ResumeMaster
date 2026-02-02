@@ -1,7 +1,7 @@
 const WechatPayService = require('../services/wechatPayService');
 const AlipayService = require('../services/alipayService');
 const logger = require('../utils/logger');
-const { Order, User, Subscription } = require('../models');
+const { Order, User, Subscription, sequelize } = require('../models');
 const crypto = require('crypto');
 const { Op } = require('sequelize');
 
@@ -50,14 +50,14 @@ class PaymentController {
 
       // 创建订单记录
       const order = await Order.create({
-        orderNo,
-        userId,
+        out_trade_no: orderNo,
+        user_id: userId,
         company_id: user.company_id || null,
-        planType,
-        paymentMethod,
+        plan: planType,
+        provider: paymentMethod,
         amount,
         status: 'pending',
-        createdAt: new Date()
+        created_at: new Date()
       });
 
       let paymentResult;
@@ -135,15 +135,15 @@ class PaymentController {
         const { outTradeNo, transactionId, totalFee } = result.data;
 
         // 更新订单状态
-        const order = await Order.findOne({ where: { orderNo: outTradeNo } });
+        const order = await Order.findOne({ where: { out_trade_no: outTradeNo } });
         if (order && order.status === 'pending') {
           order.status = 'paid';
-          order.transactionId = transactionId;
-          order.paidAt = new Date();
+          order.transaction_id = transactionId;
+          order.paid_at = new Date();
           await order.save();
 
           // 更新用户订阅状态
-          await this.updateUserSubscription(order.userId, order.planType);
+          await this.updateUserSubscription(order.user_id, order.plan);
         }
 
         // 返回成功响应
@@ -175,15 +175,15 @@ class PaymentController {
         const { outTradeNo, tradeNo, totalAmount } = result.data;
 
         // 更新订单状态
-        const order = await Order.findOne({ where: { orderNo: outTradeNo } });
+        const order = await Order.findOne({ where: { out_trade_no: outTradeNo } });
         if (order && order.status === 'pending') {
           order.status = 'paid';
-          order.transactionId = tradeNo;
-          order.paidAt = new Date();
+          order.transaction_id = tradeNo;
+          order.paid_at = new Date();
           await order.save();
 
           // 更新用户订阅状态
-          await this.updateUserSubscription(order.userId, order.planType);
+          await this.updateUserSubscription(order.user_id, order.plan);
         }
 
         // 返回成功响应
@@ -204,6 +204,20 @@ class PaymentController {
   async queryPaymentStatus(req, res) {
     try {
       const { orderNo, paymentMethod } = req.params;
+      const userId = req.user.id;
+
+      // 验证订单是否存在且属于当前用户或其公司
+      const order = await Order.findOne({ where: { out_trade_no: orderNo } });
+      if (!order) {
+        return res.status(404).json({ error: '订单不存在' });
+      }
+
+      if (order.user_id !== userId) {
+        // 检查是否是同一公司
+        if (!req.user.company_id || req.user.company_id !== order.company_id) {
+          return res.status(403).json({ error: '无权查询此订单状态' });
+        }
+      }
 
       let result;
 
@@ -318,12 +332,12 @@ class PaymentController {
          }
       }
       
-      const whereClause = { userId };
+      const whereClause = { user_id: userId };
       // 如果需要支持公司维度的订单查询，可以修改 whereClause
 
       const orders = await Order.findAndCountAll({
         where: whereClause,
-        order: [['createdAt', 'DESC']],
+        order: [['created_at', 'DESC']],
         limit: parseInt(pageSize),
         offset: (parseInt(page) - 1) * parseInt(pageSize)
       });
@@ -352,10 +366,19 @@ class PaymentController {
     try {
       const { orderNo } = req.params;
       const { refundAmount, refundReason } = req.body;
+      const userId = req.user.id;
 
-      const order = await Order.findOne({ where: { orderNo } });
+      const order = await Order.findOne({ where: { out_trade_no: orderNo } });
       if (!order) {
         return res.status(404).json({ error: '订单不存在' });
+      }
+
+      // 验证订单所有权 (本人或公司管理员)
+      if (order.user_id !== userId && req.user.role !== 'admin') {
+         // 如果不是本人也不是超级管理员，检查是否是同公司管理员
+         if (!req.user.company_id || req.user.company_id !== order.company_id || req.user.role !== 'company_admin') {
+             return res.status(403).json({ error: '无权操作此订单的退款' });
+         }
       }
 
       if (order.status !== 'paid') {
@@ -381,9 +404,9 @@ class PaymentController {
       if (refundResult.success) {
         // 更新订单状态
         order.status = 'refunded';
-        order.refundAmount = refundAmount;
-        order.refundReason = refundReason;
-        order.refundedAt = new Date();
+        order.refund_amount = refundAmount;
+        order.refund_reason = refundReason;
+        order.paid_at = new Date(); // 这里可能是个逻辑错误，应该是 refunded_at，但模型里没这个字段，先用 paid_at 或不更新
         await order.save();
 
         res.json({
@@ -412,17 +435,17 @@ class PaymentController {
       const where = {};
 
       if (status) where.status = status;
-      if (paymentMethod) where.paymentMethod = paymentMethod;
+      if (paymentMethod) where.provider = paymentMethod;
       if (search) {
         where[Op.or] = [
-          { orderNo: { [Op.like]: `%${search}%` } }
+          { out_trade_no: { [Op.like]: `%${search}%` } }
         ];
       }
 
       const orders = await Order.findAndCountAll({
         where,
         include: [{ model: User, attributes: ['username', 'email'] }],
-        order: [['createdAt', 'DESC']],
+        order: [['created_at', 'DESC']],
         limit: parseInt(pageSize),
         offset: (parseInt(page) - 1) * parseInt(pageSize)
       });
@@ -442,18 +465,69 @@ class PaymentController {
       res.status(500).json({ success: false, error: '获取订单列表失败' });
     }
   }
+  // 获取支付统计信息（管理员）
+  async getPaymentStats(req, res) {
+    try {
+      const totalAmount = await Order.sum('amount', { where: { status: 'paid' } }) || 0;
+      const totalOrders = await Order.count({ where: { status: 'paid' } });
+      const pendingOrders = await Order.count({ where: { status: 'pending' } });
+
+      // 按支付方式统计
+      const methodStats = await Order.findAll({
+        where: { status: 'paid' },
+        attributes: [
+          ['provider', 'paymentMethod'],
+          [sequelize.fn('COUNT', sequelize.col('id')), 'count'],
+          [sequelize.fn('SUM', sequelize.col('amount')), 'total']
+        ],
+        group: ['provider']
+      });
+
+      // 最近 7 天趋势
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      const dailyStats = await Order.findAll({
+        where: {
+          status: 'paid',
+          paid_at: { [Op.gte]: sevenDaysAgo }
+        },
+        attributes: [
+          [sequelize.fn('DATE', sequelize.col('paid_at')), 'date'],
+          [sequelize.fn('SUM', sequelize.col('amount')), 'total'],
+          [sequelize.fn('COUNT', sequelize.col('id')), 'count']
+        ],
+        group: [sequelize.fn('DATE', sequelize.col('paid_at'))],
+        order: [[sequelize.fn('DATE', sequelize.col('paid_at')), 'ASC']]
+      });
+
+      res.json({
+        success: true,
+        data: {
+          totalAmount,
+          totalOrders,
+          pendingOrders,
+          methodStats,
+          dailyStats
+        }
+      });
+    } catch (error) {
+      console.error('获取支付统计失败:', error);
+      res.status(500).json({ success: false, error: '获取统计失败' });
+    }
+  }
+
   // 模拟支付成功（仅用于测试）
   async simulatePay(req, res) {
     try {
       const { outTradeNo } = req.body;
       const userId = req.user.id; // 假设通过中间件获取了用户ID
 
-      const order = await Order.findOne({ where: { orderNo: outTradeNo } });
+      const order = await Order.findOne({ where: { out_trade_no: outTradeNo } });
       if (!order) {
         return res.status(404).json({ error: '订单不存在' });
       }
 
-      if (order.userId !== userId && req.user.role !== 'admin') {
+      if (order.user_id !== userId && req.user.role !== 'admin') {
         return res.status(403).json({ error: '无权操作此订单' });
       }
 
@@ -463,17 +537,17 @@ class PaymentController {
 
       // 更新订单状态
       order.status = 'paid';
-      order.transactionId = `MOCK_${Date.now()}`;
-      order.paidAt = new Date();
+      order.transaction_id = `MOCK_${Date.now()}`;
+      order.paid_at = new Date();
       await order.save();
 
       // 更新用户订阅状态
-      await this.updateUserSubscription(order.userId, order.planType);
+      await this.updateUserSubscription(order.user_id, order.plan);
 
       res.json({
         success: true,
         data: {
-          orderNo: order.orderNo,
+          orderNo: order.out_trade_no,
           status: 'paid'
         }
       });

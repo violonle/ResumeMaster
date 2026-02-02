@@ -7,8 +7,14 @@
     <script src="../js/tailwindcss.js"></script>
     <script src="../js/ui-components.js"></script>
     <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/sidebar.css">
+    <link rel="stylesheet" href="/css/design-system.css">
+    <script src="../js/user-auth.js"></script>
+    <script src="../js/resume-data.js?v=2"></script>
+    <script src="../js/socket-client.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -63,9 +69,6 @@
         .score-average { background-color: #f59e0b; color: white; }
         .score-poor { background-color: #ef4444; color: white; }
         .tag { display: inline-block; padding: 2px 8px; background: #f3f4f6; color: #6b7280; border-radius: 12px; font-size: 0.75rem; margin-right: 4px; margin-bottom: 4px; }
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,.5); z-index: 1000; }
-        .modal.show { display: flex; align-items: center; justify-content: center; }
-        .modal-content { background: white; border-radius: 16px; max-width: 90vw; max-height: 90vh; overflow-y: auto; }
         .main-content { margin-left: 280px; padding: 24px; }
         .sidebar-collapsed-root .main-content { margin-left: 60px !important; }
         @media (max-width:768px){ .main-content{ margin-left:0 !important; padding:24px } }
@@ -226,8 +229,11 @@
                     <button class="flex-1 bg-blue-50 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors" onclick="viewResume('李四_全栈开发.pdf')">
                         <i class="fas fa-eye mr-1"></i> 查看
                     </button>
-                    <button class="flex-1 bg-white border border-blue-600 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors">
-                        <i class="fas fa-chart-bar mr-1"></i> 分析
+                    <button class="flex-1 bg-white border border-blue-600 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors" onclick="handleDeepAnalysis(1)">
+                        <i class="fas fa-chart-bar mr-1"></i> 深度解析
+                    </button>
+                    <button class="bg-red-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-700 transition-colors" onclick="handleReject(1)">
+                        <i class="fas fa-user-times"></i>
                     </button>
                     <button class="bg-gray-50 text-gray-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">
                         <i class="fas fa-ellipsis-h"></i>
@@ -267,8 +273,11 @@
                     <button class="flex-1 bg-blue-50 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors" onclick="viewResume('张三_前端开发.pdf')">
                         <i class="fas fa-eye mr-1"></i> 查看
                     </button>
-                    <button class="flex-1 bg-white border border-blue-600 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors">
-                        <i class="fas fa-chart-bar mr-1"></i> 分析
+                    <button class="flex-1 bg-white border border-blue-600 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors" onclick="handleDeepAnalysis(2)">
+                        <i class="fas fa-chart-bar mr-1"></i> 深度解析
+                    </button>
+                    <button class="bg-red-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-700 transition-colors" onclick="handleReject(2)">
+                        <i class="fas fa-user-times"></i>
                     </button>
                     <button class="bg-gray-50 text-gray-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">
                         <i class="fas fa-ellipsis-h"></i>
@@ -308,8 +317,11 @@
                     <button class="flex-1 bg-blue-50 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors" onclick="viewResume('王五_后端开发.pdf')">
                         <i class="fas fa-eye mr-1"></i> 查看
                     </button>
-                    <button class="flex-1 bg-white border border-blue-600 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors">
-                        <i class="fas fa-chart-bar mr-1"></i> 分析
+                    <button class="flex-1 bg-white border border-blue-600 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors" onclick="handleDeepAnalysis(3)">
+                        <i class="fas fa-chart-bar mr-1"></i> 深度解析
+                    </button>
+                    <button class="bg-red-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-700 transition-colors" onclick="handleReject(3)">
+                        <i class="fas fa-user-times"></i>
                     </button>
                     <button class="bg-gray-50 text-gray-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">
                         <i class="fas fa-ellipsis-h"></i>
@@ -349,8 +361,11 @@
                     <button class="flex-1 bg-blue-50 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors" onclick="viewResume('赵六_架构师.pdf')">
                         <i class="fas fa-eye mr-1"></i> 查看
                     </button>
-                    <button class="flex-1 bg-white border border-blue-600 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors">
+                    <button class="flex-1 bg-white border border-blue-600 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors" onclick="handleDeepAnalysis(4)">
                         <i class="fas fa-chart-bar mr-1"></i> 分析
+                    </button>
+                    <button class="bg-red-50 text-red-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors" onclick="handleReject(4)">
+                        <i class="fas fa-user-times"></i>
                     </button>
                     <button class="bg-gray-50 text-gray-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">
                         <i class="fas fa-ellipsis-h"></i>
@@ -390,8 +405,11 @@
                     <button class="flex-1 bg-blue-50 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors" onclick="viewResume('孙七_初级开发.pdf')">
                         <i class="fas fa-eye mr-1"></i> 查看
                     </button>
-                    <button class="flex-1 bg-white border border-blue-600 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors">
+                    <button class="flex-1 bg-white border border-blue-600 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors" onclick="handleDeepAnalysis(5)">
                         <i class="fas fa-chart-bar mr-1"></i> 分析
+                    </button>
+                    <button class="bg-red-50 text-red-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors" onclick="handleReject(5)">
+                        <i class="fas fa-user-times"></i>
                     </button>
                     <button class="bg-gray-50 text-gray-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">
                         <i class="fas fa-ellipsis-h"></i>
@@ -431,8 +449,11 @@
                     <button class="flex-1 bg-blue-50 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors" onclick="viewResume('周八_产品经理.pdf')">
                         <i class="fas fa-eye mr-1"></i> 查看
                     </button>
-                    <button class="flex-1 bg-white border border-blue-600 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors">
+                    <button class="flex-1 bg-white border border-blue-600 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors" onclick="handleDeepAnalysis(6)">
                         <i class="fas fa-chart-bar mr-1"></i> 分析
+                    </button>
+                    <button class="bg-red-50 text-red-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors" onclick="handleReject(6)">
+                        <i class="fas fa-user-times"></i>
                     </button>
                     <button class="bg-gray-50 text-gray-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">
                         <i class="fas fa-ellipsis-h"></i>
@@ -463,56 +484,69 @@
         </div>
     </main>
     
-    <!-- 简历预览模态框 -->
-    <div id="resumeModal" class="modal">
-        <div class="modal-content w-full max-w-4xl p-8">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-gray-900" id="modalTitle">简历预览</h2>
-                <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                </button>
-            </div>
-            
-            <div class="bg-gray-100 rounded-xl p-8 text-center">
-                <div class="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-12 h-12 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/>
-                    </svg>
+    <!-- 简历预览弹窗 -->
+    <div id="resumeModal" class="fixed inset-0 z-50 hidden overflow-y-auto" role="dialog" aria-modal="true">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeModal()"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-middle bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full border border-gray-100">
+                <div class="bg-white px-6 pt-6 pb-4 sm:p-8 sm:pb-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold text-gray-900" id="modalTitle">简历预览</h3>
+                        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-500 transition-colors">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="text-center py-12 bg-gray-50 rounded-xl border border-gray-100">
+                        <div class="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-12 h-12 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-900 mb-2" id="resumeFileName">简历文件名</h3>
+                        <p class="text-gray-500 mb-8">简历预览功能正在开发中，敬请期待...</p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-left px-6">
+                            <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+                                <h4 class="font-bold text-gray-900 mb-3 flex items-center">
+                                    <i class="fas fa-info-circle text-blue-500 mr-2"></i>基本信息
+                                </h4>
+                                <ul class="text-sm text-gray-600 space-y-2">
+                                    <li class="flex justify-between"><span>文件大小</span><span class="font-medium">2.3 MB</span></li>
+                                    <li class="flex justify-between"><span>文件格式</span><span class="font-medium">PDF</span></li>
+                                    <li class="flex justify-between"><span>页数</span><span class="font-medium">2页</span></li>
+                                    <li class="flex justify-between"><span>上传时间</span><span class="font-medium">2024-01-15</span></li>
+                                </ul>
+                            </div>
+                            
+                            <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+                                <h4 class="font-bold text-gray-900 mb-3 flex items-center">
+                                    <i class="fas fa-chart-pie text-indigo-500 mr-2"></i>分析结果
+                                </h4>
+                                <ul class="text-sm text-gray-600 space-y-2">
+                                    <li class="flex justify-between"><span>综合评分</span><span class="font-bold text-blue-600 text-base">92分</span></li>
+                                    <li class="flex justify-between"><span>经验匹配</span><span class="font-medium">90%</span></li>
+                                    <li class="flex justify-between"><span>发展潜力</span><span class="font-medium">88%</span></li>
+                                </ul>
+                            </div>
+                            
+                            <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+                                <h4 class="font-bold text-gray-900 mb-3 flex items-center">
+                                    <i class="fas fa-history text-emerald-500 mr-2"></i>操作记录
+                                </h4>
+                                <ul class="text-sm text-gray-600 space-y-2">
+                                    <li class="flex justify-between"><span>最后查看</span><span class="font-medium">今天 14:30</span></li>
+                                    <li class="flex justify-between"><span>分析次数</span><span class="font-medium">3次</span></li>
+                                    <li class="flex justify-between"><span>对比次数</span><span class="font-medium">2次</span></li>
+                                    <li class="flex justify-between"><span>导出次数</span><span class="font-medium">1次</span></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <h3 class="text-xl font-semibold text-gray-900 mb-2" id="resumeFileName">简历文件名</h3>
-                <p class="text-gray-600 mb-6">简历预览功能正在开发中，敬请期待...</p>
-                
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
-                    <div class="bg-white rounded-lg p-4">
-                        <h4 class="font-semibold text-gray-900 mb-2">基本信息</h4>
-                        <ul class="text-sm text-gray-600 space-y-1">
-                            <li>• 文件大小：2.3 MB</li>
-                            <li>• 文件格式：PDF</li>
-                            <li>• 页数：2页</li>
-                            <li>• 上传时间：2024-01-15</li>
-                        </ul>
-                    </div>
-                    
-                    <div class="bg-white rounded-lg p-4">
-                        <h4 class="font-semibold text-gray-900 mb-2">分析结果</h4>
-                        <ul class="text-sm text-gray-600 space-y-1">
-                            <li>• 综合评分：92分</li>
-                            <li>• 经验匹配：90%</li>
-                            <li>• 发展潜力：88%</li>
-                        </ul>
-                    </div>
-                    
-                    <div class="bg-white rounded-lg p-4">
-                        <h4 class="font-semibold text-gray-900 mb-2">操作记录</h4>
-                        <ul class="text-sm text-gray-600 space-y-1">
-                            <li>• 最后查看：今天 14:30</li>
-                            <li>• 分析次数：3次</li>
-                            <li>• 对比次数：2次</li>
-                            <li>• 导出次数：1次</li>
-                        </ul>
-                    </div>
+                <div class="bg-gray-50 px-6 py-4 sm:px-8 sm:flex sm:flex-row-reverse">
+                    <button type="button" onclick="closeModal()" class="w-full inline-flex justify-center rounded-xl border border-gray-200 shadow-sm px-6 py-2.5 bg-white text-sm font-bold text-gray-700 hover:bg-gray-50 transition-all sm:w-auto">关闭</button>
                 </div>
             </div>
         </div>
@@ -567,11 +601,11 @@
         function viewResume(fileName) {
             document.getElementById('modalTitle').textContent = '简历预览 - ' + fileName;
             document.getElementById('resumeFileName').textContent = fileName;
-            document.getElementById('resumeModal').classList.add('show');
+            document.getElementById('resumeModal').classList.remove('hidden');
         }
         
         function closeModal() {
-            document.getElementById('resumeModal').classList.remove('show');
+            document.getElementById('resumeModal').classList.add('hidden');
         }
         
         // 点击模态框外部关闭
@@ -696,6 +730,226 @@
             // Initial sort
             sortResumes();
         });
+    </script>
+    <!-- 淘汰反馈弹窗 -->
+    <div id="rejectModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeRejectModal()"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-middle bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-gray-100">
+                <div class="bg-white px-6 pt-6 pb-4 sm:p-8 sm:pb-6">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-50 sm:mx-0 sm:h-12 sm:w-12 border border-red-100">
+                            <i class="fas fa-exclamation-triangle text-red-500 text-xl"></i>
+                        </div>
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-6 sm:text-left w-full">
+                            <h3 class="text-xl leading-6 font-bold text-gray-900" id="modal-title">淘汰候选人</h3>
+                            <div class="mt-4">
+                                <p class="text-sm text-gray-500 mb-4">请填写淘汰原因，这将有助于优化 AI 推荐模型。</p>
+                                <textarea id="rejectReason" rows="4" class="block w-full text-sm border-gray-200 rounded-xl p-4 border focus:ring-red-500 focus:border-red-500 transition-all resize-none bg-gray-50" placeholder="请输入淘汰原因（选填）"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-6 py-4 sm:px-8 sm:flex sm:flex-row-reverse gap-3">
+                    <button type="button" onclick="confirmReject()" class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-6 py-2.5 bg-red-600 text-sm font-bold text-white hover:bg-red-700 transition-all sm:w-auto">确认淘汰</button>
+                    <button type="button" onclick="closeRejectModal()" class="mt-3 w-full inline-flex justify-center rounded-xl border border-gray-200 shadow-sm px-6 py-2.5 bg-white text-sm font-bold text-gray-700 hover:bg-gray-50 transition-all sm:mt-0 sm:w-auto">取消</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 深度解析说明弹窗 -->
+    <div id="analysisModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeAnalysisModal()"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-middle bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-gray-100">
+                <div class="bg-white px-6 pt-6 pb-4 sm:p-8 sm:pb-6">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-50 sm:mx-0 sm:h-12 sm:w-12 border border-blue-100">
+                            <i class="fas fa-magic text-blue-500 text-xl"></i>
+                        </div>
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-6 sm:text-left w-full">
+                            <h3 class="text-xl leading-6 font-bold text-gray-900">深度解析说明</h3>
+                            <div class="mt-4">
+                                <div class="bg-blue-50 p-4 mb-6 rounded-xl">
+                                    <div class="flex">
+                                        <div class="flex-shrink-0">
+                                            <i class="fas fa-info-circle text-blue-400"></i>
+                                        </div>
+                                        <div class="ml-3">
+                                            <p class="text-sm text-blue-700 font-medium">
+                                                深度解析将消耗 1 个 AI 点数，通过多维度深度评估候选人与职位的匹配度。
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="space-y-4 text-sm text-gray-600">
+                                    <p class="font-bold text-gray-800 text-base">解析维度包含：</p>
+                                    <ul class="space-y-3">
+                                        <li class="flex items-center"><i class="fas fa-check-circle text-emerald-500 mr-3"></i>专业技能深度评估</li>
+                                        <li class="flex items-center"><i class="fas fa-check-circle text-emerald-500 mr-3"></i>项目经验契合度分析</li>
+                                        <li class="flex items-center"><i class="fas fa-check-circle text-emerald-500 mr-3"></i>学历与背景质量评估</li>
+                                        <li class="flex items-center"><i class="fas fa-check-circle text-emerald-500 mr-3"></i>离职原因与稳定性预测</li>
+                                        <li class="flex items-center"><i class="fas fa-check-circle text-emerald-500 mr-3"></i>团队协作与文化匹配度</li>
+                                    </ul>
+                                    <p class="mt-6 italic text-gray-400">解析过程大约需要 10-30 秒，完成后将自动刷新页面显示结果。</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-6 py-4 sm:px-8 sm:flex sm:flex-row-reverse gap-3">
+                    <button type="button" onclick="confirmDeepAnalysis()" class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-6 py-2.5 bg-blue-600 text-sm font-bold text-white hover:bg-blue-700 transition-all sm:w-auto">
+                        立即解析
+                    </button>
+                    <button type="button" onclick="closeAnalysisModal()" class="mt-3 w-full inline-flex justify-center rounded-xl border border-gray-200 shadow-sm px-6 py-2.5 bg-white text-sm font-bold text-gray-700 hover:bg-gray-50 transition-all sm:mt-0 sm:w-auto">
+                        取消
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 深度解析相关功能
+        let currentAnalysisId = null;
+        let currentRejectId = null;
+
+        function handleReject(resumeId) {
+            currentRejectId = resumeId;
+            const modal = document.getElementById('rejectModal');
+            if (resumeId) {
+                modal.classList.remove('hidden');
+                const reasonInput = document.getElementById('rejectReason');
+                if (reasonInput) {
+                    reasonInput.value = '';
+                    setTimeout(() => reasonInput.focus(), 100);
+                }
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function closeRejectModal() {
+            handleReject(null);
+        }
+
+        function closeAnalysisModal() {
+            handleDeepAnalysis(null);
+        }
+
+        async function confirmReject() {
+            if (!currentRejectId) return;
+            
+            const reasonInput = document.getElementById('rejectReason');
+            const reason = reasonInput ? reasonInput.value : '';
+
+            // 关闭弹窗
+            closeRejectModal();
+
+            // 显示加载状态
+            ui.showLoading('正在处理...');
+
+            try {
+                // 使用 userAuthInstance.apiRequest 发送淘汰请求
+                const response = await window.userAuthInstance.apiRequest(`/resumes/${currentRejectId}/status`, 'PUT', { 
+                    status: '淘汰',
+                    reason: reason
+                }, false);
+                
+                ui.showNotification('已成功淘汰该候选人', 'success');
+
+                // 自动刷新当前页面，以更新状态
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+                
+            } catch (error) {
+                console.error('淘汰操作失败:', error);
+                ui.hideLoading();
+                ui.showNotification('操作失败: ' + (error.message || '未知错误'), 'error');
+            }
+        }
+
+        function handleDeepAnalysis(resumeId) {
+            currentAnalysisId = resumeId;
+            const modal = document.getElementById('analysisModal');
+            if (resumeId) {
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        let isProcessing = false;
+
+        async function confirmDeepAnalysis() {
+            if (!currentAnalysisId || isProcessing) return;
+
+            isProcessing = true;
+            const btn = event.currentTarget;
+            const originalContent = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-2"></i>处理中...';
+
+            try {
+                // 使用 userAuthInstance.apiRequest 发送解析请求
+                const response = await window.userAuthInstance.apiRequest('/ai/batch-analyze', 'POST', { 
+                    resumeIds: [currentAnalysisId],
+                    options: { 
+                        scene: 'deep_analysis'
+                    }
+                }, false);
+                
+                handleDeepAnalysis(null); // 关闭弹窗
+                ui.showNotification('深度解析任务已启动，正在后台处理', 'success');
+
+                // 使用 WebSocket 订阅状态
+                if (window.analysisSocket) {
+                    window.analysisSocket.subscribeAnalysis(currentAnalysisId, {
+                        onCompleted: (data) => {
+                            ui.showNotification('简历解析完成', 'success');
+                            // 刷新页面或更新 UI
+                            setTimeout(() => window.location.reload(), 1500);
+                        },
+                        onError: (err) => {
+                            ui.showNotification('解析失败: ' + (err.message || '未知错误'), 'error');
+                        }
+                    });
+                } else {
+                    // 降级到轮询
+                    startPolling(currentAnalysisId);
+                }
+                
+            } catch (error) {
+                console.error('深度解析请求失败:', error);
+                ui.showNotification('解析失败: ' + (error.message || '未知错误'), 'error');
+            } finally {
+                isProcessing = false;
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
+            }
+        }
+
+        function startPolling(resumeId) {
+            const pollStatus = async () => {
+                const maxTries = 30;
+                for (let t = 0; t < maxTries; t++) {
+                    try {
+                        const latest = await window.resumeDataManager.getLatestAnalysis(resumeId);
+                        if (latest && (latest.overall_score != null || latest.report)) {
+                            ui.showNotification('解析完成', 'success');
+                            setTimeout(() => window.location.reload(), 1500);
+                            return;
+                        }
+                    } catch (_) {}
+                    await new Promise(res => setTimeout(res, 2000));
+                }
+            };
+            pollStatus();
+        }
     </script>
     <script src="/js/sidebar.js"></script>
     <script>

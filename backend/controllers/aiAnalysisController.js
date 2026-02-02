@@ -4,11 +4,14 @@
  */
 const AIAnalysisService = require('../services/aiAnalysisService');
 const OptimizedResumeParseService = require('../services/optimizedResumeParseService');
+const DomesticAIService = require('../services/domesticAIService');
 const { Resume } = require('../models');
 const multer = require('multer');
 const path = require('path');
 const { extractTextFromFile } = require('../services/textExtractor');
 const aiController = require('./aiController');
+
+const domesticAIService = new DomesticAIService();
 
 // 配置multer用于文件上传
 const storage = multer.diskStorage({
@@ -84,7 +87,32 @@ const uploadAndParseDocument = async (req, res) => {
             const parseService = new OptimizedResumeParseService();
             const fileType = path.extname(fileName).replace('.', '').toLowerCase() || 'txt';
             parsedData = await parseService.parseResumeContent(resumeContent, fileType);
-            console.log('简历解析结果:', JSON.stringify({
+            
+            // 核心优化：如果关键信息缺失，触发 AI 结构化提取
+            const isCoreMissing = !parsedData.name || parsedData.name === '姓名' || parsedData.name === '未知' || 
+                                 !parsedData.phone || !parsedData.email;
+            
+            if (isCoreMissing) {
+                console.log(`[AIAnalysisController] Core info missing for ${fileName}, triggering AI structured extraction...`);
+                const aiResult = await domesticAIService.extractStructuredData(resumeContent, req.user);
+                if (aiResult.success && aiResult.data) {
+                    console.log(`[AIAnalysisController] AI structured extraction success for ${fileName}:`, {
+                        name: aiResult.data.name,
+                        phone: aiResult.data.phone,
+                        email: aiResult.data.email
+                    });
+                    // 合并 AI 结果
+                    parsedData = {
+                        ...parsedData,
+                        ...aiResult.data,
+                        name: aiResult.data.name || parsedData.name,
+                        phone: aiResult.data.phone || parsedData.phone,
+                        email: aiResult.data.email || parsedData.email
+                    };
+                }
+            }
+
+            console.log('简历最终解析结果:', JSON.stringify({
                 name: parsedData.name,
                 email: parsedData.email,
                 phone: parsedData.phone,
@@ -99,6 +127,8 @@ const uploadAndParseDocument = async (req, res) => {
         }
 
         // 保存简历到数据库
+        const resumeName = (parsedData.name && parsedData.name !== '姓名' && parsedData.name !== '未知') ? parsedData.name : fileName;
+        
         const resume = await Resume.create({
             user_id: req.user.id,
             file_name: fileName,
@@ -110,7 +140,7 @@ const uploadAndParseDocument = async (req, res) => {
             raw_text: resumeContent,
             status: 'uploaded',
             // 从解析数据中提取各个字段
-            name: parsedData.name || null,
+            name: resumeName,
             phone: parsedData.phone || null,
             email: parsedData.email || null,
             location: parsedData.location || parsedData.city || parsedData.expectCity || null,
@@ -129,15 +159,15 @@ const uploadAndParseDocument = async (req, res) => {
         // 清理临时文件
         require('fs').unlink(filePath, () => {});
 
-        // 场景化自动初筛：如果有目标职位，自动触发分析
-        if (targetJobObj) {
-            console.log(`[Auto-Screen] Automatically triggering analysis for resume ${resume.id}`);
-            // 异步触发，不阻塞响应
-            aiController.processAnalysisBackground(resume.id, resumeContent, targetJobObj, req.user)
-                .catch(err => console.error('[Auto-Screen] Background analysis failed:', err));
-            
-            // 标记状态为处理中（虽然数据库可能是 uploaded，但前端可以知道正在处理）
-            resume.status = 'processing'; 
+        // 自动快评（仅综合匹配度，不触发深度解析）
+        try {
+            console.log(`[Auto-Screen] Automatically triggering quick screening for resume ${resume.id}`);
+            aiController.processAnalysisBackground(resume.id, resumeContent, targetJobObj || null, req.user, { scene: 'resume_quick_score' })
+                .catch(err => console.error('[Auto-Screen] Background quick screening failed:', err));
+            resume.status = 'processing';
+            await resume.update({ status: 'processing' });
+        } catch (e) {
+            console.error('[Auto-Screen] Trigger failed:', e);
         }
 
         res.json({
@@ -149,9 +179,9 @@ const uploadAndParseDocument = async (req, res) => {
                 contentLength: resumeContent.length,
                 content: resumeContent.substring(0, 500) + '...', // 返回部分内容预览
                 targetJob: targetJobObj,
-                isAnalyzing: !!targetJobObj // 告知前端正在进行后台分析
+                isAnalyzing: true
             },
-            message: targetJobObj ? '文档上传成功，正在自动进行AI初筛...' : '文档上传和解析成功'
+            message: '文档上传成功，正在自动进行AI快评...'
         });
 
     } catch (error) {
@@ -178,11 +208,17 @@ const analyzeResumeWithAI = async (req, res) => {
         
         // 如果提供了resumeId，从数据库获取
         if (resumeId) {
+            // 构建多租户隔离的查询条件
+            const whereClause = {
+                id: resumeId,
+                [Op.or]: [
+                    { user_id: req.user.id },
+                    req.user.company_id ? { company_id: req.user.company_id } : null
+                ].filter(Boolean)
+            };
+
             const resume = await Resume.findOne({
-                where: { 
-                    id: resumeId, 
-                    user_id: req.user.id 
-                }
+                where: whereClause
             });
 
             if (!resume) {
@@ -303,11 +339,17 @@ const batchAnalyzeResumes = async (req, res) => {
         const jobDescription = options?.jobDescription || '';
         
         for (const resumeId of resumeIds) {
+            // 构建多租户隔离的查询条件
+            const whereClause = {
+                id: resumeId,
+                [Op.or]: [
+                    { user_id: req.user.id },
+                    req.user.company_id ? { company_id: req.user.company_id } : null
+                ].filter(Boolean)
+            };
+
             const resume = await Resume.findOne({
-                where: { 
-                    id: resumeId, 
-                    user_id: req.user.id 
-                }
+                where: whereClause
             });
 
             if (resume) {
@@ -332,8 +374,17 @@ const batchAnalyzeResumes = async (req, res) => {
         // 批量分析
         const results = await aiAnalysisService.batchAnalyzeResumes(resumes, options);
 
+        // 获取职位设置（如果是在特定职位上下文）
+        let targetJob = null;
+        if (options && options.jobId) {
+            try {
+                targetJob = await Job.findByPk(options.jobId);
+            } catch (e) {
+                console.error('获取目标职位失败:', e);
+            }
+        }
+
         // 保存批量分析结果到数据库
-        const { AnalysisResult } = require('../models');
         for (const result of results) {
             if (result.success && result.data) {
                 const analysisResult = result.data;
@@ -341,7 +392,13 @@ const batchAnalyzeResumes = async (req, res) => {
 
                 // 检查是否已有分析结果
                 const existingAnalysis = await AnalysisResult.findOne({
-                    where: { resume_id: resumeId },
+                    where: { 
+                        resume_id: resumeId,
+                        [Op.or]: [
+                            { user_id: req.user.id },
+                            req.user.company_id ? { company_id: req.user.company_id } : null
+                        ].filter(Boolean)
+                    },
                     order: [['analysis_date', 'DESC']]
                 });
 
@@ -359,6 +416,7 @@ const batchAnalyzeResumes = async (req, res) => {
                     await AnalysisResult.create({
                         resume_id: resumeId,
                         user_id: req.user.id,
+                        company_id: req.user.company_id || null,
                         analysis_date: new Date(),
                         overall_score: analysisResult.overall_score,
                         dimensions: analysisResult.dimensions,
@@ -370,14 +428,81 @@ const batchAnalyzeResumes = async (req, res) => {
                     });
                 }
 
-                // 更新简历表的状态和分数
+                // 准备更新简历的数据
+                const resumeUpdateData = {
+                    status: 'analyzed',
+                    score: analysisResult.overall_score,
+                    last_analysis_date: new Date()
+                };
+
+                // 应用自动快评逻辑 (仅当在职位上下文中且开启了自动快评)
+                let recruitmentStatus = undefined;
+                let autoRejected = false;
+                let rejectionReason = null;
+
+                if (targetJob && targetJob.enable_auto_screening) {
+                    const score = analysisResult.overall_score || 0;
+                    const rejectScore = targetJob.auto_reject_score || 60;
+                    
+                    // 默认状态设为快评（只要分析了）
+                    recruitmentStatus = '快评';
+                    
+                    if (score < rejectScore) {
+                        recruitmentStatus = '淘汰';
+                        autoRejected = true;
+                        rejectionReason = `自动淘汰：评分 ${score} (低于 ${rejectScore})`;
+                        
+                        resumeUpdateData.auto_rejected = true;
+                        resumeUpdateData.rejection_reason = rejectionReason;
+                    }
+                    
+                    resumeUpdateData.recruitment_status = recruitmentStatus;
+                }
+
+                // 更新简历表
                 await Resume.update(
+                    resumeUpdateData,
                     { 
-                        status: 'analyzed',
-                        score: analysisResult.overall_score
-                    },
-                    { where: { id: resumeId } }
+                        where: { 
+                            id: resumeId,
+                            [Op.or]: [
+                                { user_id: req.user.id },
+                                req.user.company_id ? { company_id: req.user.company_id } : null
+                            ].filter(Boolean)
+                        } 
+                    }
                 );
+
+                // 同步更新 ResumeJob 关联表 (如果是职位上下文)
+                if (targetJob) {
+                    try {
+                        const resumeJobUpdateData = {
+                            match_score: analysisResult.overall_score
+                        };
+                        
+                        if (recruitmentStatus) {
+                            // 映射状态到 ResumeJob status
+                            // '淘汰' -> 'rejected'
+                            // '快评' -> 'screening'
+                            resumeJobUpdateData.status = (recruitmentStatus === '淘汰') ? 'rejected' : 'screening';
+                            if (rejectionReason) {
+                                resumeJobUpdateData.notes = rejectionReason;
+                            }
+                        }
+
+                        await ResumeJob.update(
+                            resumeJobUpdateData,
+                            {
+                                where: {
+                                    resume_id: resumeId,
+                                    job_id: targetJob.id
+                                }
+                            }
+                        );
+                    } catch (rjErr) {
+                        console.error(`更新 ResumeJob 失败 (resumeId: ${resumeId}, jobId: ${targetJob.id}):`, rjErr);
+                    }
+                }
             }
         }
 

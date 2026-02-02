@@ -1,21 +1,107 @@
-const { ResumeJob, Resume, Job, User, Company } = require('../models')
+const { ResumeJob, Resume, Job, User, Company, AnalysisResult } = require('../models')
 const sms = require('../services/smsService')
 const emailService = require('../services/emailService')
 const emailImport = require('../services/emailImportService')
+const autoScreeningService = require('../services/autoScreeningService')
 
 function safeJson(obj){
   try{ return typeof obj==='string' ? JSON.parse(obj) : (obj||{}) }catch(_){ return {} }
+}
+
+function normalizeRecruitmentStatus(input){
+  let rawValue = input
+  if (rawValue && typeof rawValue === 'object') {
+    if (rawValue.status) rawValue = rawValue.status
+    else if (rawValue.value) rawValue = rawValue.value
+  }
+  const raw = String(rawValue || '').trim()
+  const lower = raw.toLowerCase()
+  const cnToEn = {
+    '待快评': 'applied',
+    '新投递': 'applied',
+    '投递': 'applied',
+    '已快评': 'screening',
+    '快评': 'screening',
+    '面试': 'interview',
+    '面试中': 'interview',
+    'offer': 'offer',
+    '已发offer': 'offer',
+    '入职': 'hired',
+    '已入职': 'hired',
+    '已录用': 'hired',
+    '淘汰': 'rejected',
+    '放弃': 'rejected'
+  }
+  if (cnToEn[raw]) return cnToEn[raw]
+  if (cnToEn[lower]) return cnToEn[lower]
+  if (lower.includes('淘汰') || raw.includes('淘汰') || lower.includes('放弃') || raw.includes('放弃')) return 'rejected'
+  if (lower.includes('快评') || raw.includes('快评')) return 'screening'
+  if (lower.includes('面试') || raw.includes('面试')) return 'interview'
+  if (lower.includes('offer') || raw.includes('offer')) return 'offer'
+  if (lower.includes('入职') || raw.includes('入职') || lower.includes('录用') || raw.includes('录用')) return 'hired'
+  if (lower.includes('投递') || raw.includes('投递') || lower.includes('applied')) return 'applied'
+  return lower
+}
+
+async function findResumeJobByCandidateId(req, id){
+  if (!id) return null
+  const rjById = await ResumeJob.findOne({ where:{ id }, include: [Resume, Job] })
+  if (rjById) return rjById
+  const rjByResume = await ResumeJob.findOne({ 
+    where:{ resume_id: id }, 
+    include: [Resume, Job],
+    order: [['updated_at','DESC'], ['applied_at','DESC']]
+  })
+  if (!rjByResume) return null
+  if (await ensureOwnership(req, rjByResume)) return rjByResume
+  return null
+}
+
+async function cleanupOrphanResumeJob(req, resumeJob){
+  if (!resumeJob) return false
+  let owned = false
+  if (req.user.company_id) {
+    if (resumeJob.job_id) {
+      const job = await Job.findOne({ where: { id: resumeJob.job_id } })
+      if (job && String(job.company_id) === String(req.user.company_id)) owned = true
+    }
+    if (!owned && String(resumeJob.user_id) === String(req.user.id)) owned = true
+  } else {
+    if (String(resumeJob.user_id) === String(req.user.id)) owned = true
+  }
+  if (!owned) return false
+  await ResumeJob.destroy({ where: { id: resumeJob.id } })
+  return true
+}
+
+async function resolveResumeForJob(req, resumeJob){
+  if (!resumeJob) return { resume: null }
+  let resume = resumeJob.Resume || null
+  if (!resume && resumeJob.resume_id) {
+    resume = await Resume.findByPk(resumeJob.resume_id)
+  }
+  if (!resume) {
+    await cleanupOrphanResumeJob(req, resumeJob)
+    return { resume: null }
+  }
+  return { resume }
 }
 
 async function ensureOwnership(req, resumeJob){
   if (!resumeJob) return false
   // 多租户隔离：如果是企业用户，检查 company_id；如果是个人用户，检查 user_id
   if (req.user.company_id) {
-    // 这里假设 resumeJob 关联的 Job 属于同一公司
-    // 需要查询关联的 Job 或 Resume 来确认 company_id
-    // 简化处理：查询 resumeJob 关联的 Job
-    const job = await Job.findOne({ where: { id: resumeJob.job_id } });
-    return job && job.company_id === req.user.company_id;
+    // 优先检查 Job 表
+    if (resumeJob.job_id) {
+      const job = await Job.findOne({ where: { id: resumeJob.job_id } });
+      if (job && job.company_id === req.user.company_id) return true;
+    }
+    // 兜底检查 Resume 表
+    if (resumeJob.resume_id) {
+      const resume = await Resume.findOne({ where: { id: resumeJob.resume_id } });
+      if (resume && resume.company_id === req.user.company_id) return true;
+    }
+    return false;
   }
   return String(resumeJob.user_id) === String(req.user.id)
 }
@@ -24,12 +110,17 @@ exports.updateStatus = async (req, res) => {
   try{
     const { id } = req.params
     const { status, notes } = req.body || {}
+    const normalizedStatus = normalizeRecruitmentStatus(status)
     const allowed = ['applied', 'screening','interview','offer','hired','rejected']
-    if (!allowed.includes(String(status||'').toLowerCase())){
+    if (!allowed.includes(String(normalizedStatus||'').toLowerCase())){
       return res.status(400).json({ success:false, error:{ code:'INVALID_STATUS', message:'无效状态' } })
     }
-    const rj = await ResumeJob.findOne({ where:{ id } })
-    if (!rj || !(await ensureOwnership(req, rj))){
+    const rj = await findResumeJobByCandidateId(req, id)
+    if (!rj){
+      return res.status(404).json({ success:false, error:{ code:'NOT_FOUND', message:'候选记录不存在' } })
+    }
+    const { resume } = await resolveResumeForJob(req, rj)
+    if (!resume || !(await ensureOwnership(req, rj))){
       return res.status(404).json({ success:false, error:{ code:'NOT_FOUND', message:'候选记录不存在' } })
     }
     
@@ -42,29 +133,47 @@ exports.updateStatus = async (req, res) => {
     const rn = safeJson(rj.recruiter_notes)
     if (notes) rn.notes = notes
     
-    // 如果恢复为非淘汰状态，则清除 Resume 表上的 auto_rejected 标记
-    if (status !== 'rejected') {
-      try {
-        await Resume.update(
-          { auto_rejected: false, rejection_reason: null, recruitment_status: '投递' },
-          { where: { id: rj.resume_id } }
-        );
-      } catch (resumeErr) {
-        console.error('清除简历自动淘汰标记失败:', resumeErr);
+    // 同步更新 Resume 表的 recruitment_status
+    try {
+      const resumeStatusMap = {
+        'applied': '待快评',
+        'screening': '已快评',
+        'interview': '面试',
+        'offer': 'Offer',
+        'hired': '入职',
+        'rejected': '淘汰'
+      };
+      
+      const resumeUpdateData = { 
+        recruitment_status: resumeStatusMap[normalizedStatus] || normalizedStatus 
+      };
+      
+      // 如果恢复为非淘汰状态，则清除 Resume 表上的 auto_rejected 标记
+      if (normalizedStatus !== 'rejected') {
+        resumeUpdateData.auto_rejected = false;
+        resumeUpdateData.rejection_reason = null;
       }
-    } else {
-      // 如果设置为淘汰状态，同步更新 Resume 表的 recruitment_status
-      try {
-        await Resume.update(
-          { recruitment_status: '淘汰' },
-          { where: { id: rj.resume_id } }
-        );
-      } catch (resumeErr) {
-        console.error('同步简历淘汰状态失败:', resumeErr);
-      }
+      
+      await require('../models').Resume.update(
+        resumeUpdateData,
+        { where: { id: rj.resume_id } }
+      );
+    } catch (resumeErr) {
+      console.error('同步状态到简历失败:', resumeErr);
     }
 
-    await rj.update({ status, recruiter_notes: JSON.stringify(rn) })
+    const prev = rj.status
+    await rj.update({ status: normalizedStatus, recruiter_notes: JSON.stringify(rn) })
+    try {
+      await require('../models').UserActivity.create({
+        user_id: req.user.id,
+        company_id: req.user.company_id || null,
+        action: 'candidate_status_update',
+        resource_type: 'ResumeJob',
+        resource_id: rj.id,
+        details: { from: prev, to: status }
+      })
+    } catch (_) {}
     return res.json({ success:true, data:{ id:rj.id, status:rj.status } })
   }catch(e){
     return res.status(500).json({ success:false, error:{ code:'STATUS_UPDATE_ERROR', message:e.message } })
@@ -74,14 +183,29 @@ exports.updateStatus = async (req, res) => {
 exports.scheduleInterview = async (req, res) => {
   try{
     const { id } = req.params
-    const { datetime, channel, location, notes, aiQuestionCount } = req.body || {}
+    const { datetime, channel, location, notes, aiQuestionCount, phone: providedPhone, email: providedEmail } = req.body || {}
     if (!datetime){
       return res.status(400).json({ success:false, error:{ code:'INVALID_TIME', message:'缺少面试时间' } })
     }
-    const rj = await ResumeJob.findOne({ where:{ id }, include: [Resume] })
-    if (!rj || !(await ensureOwnership(req, rj))){
+    const rj = await findResumeJobByCandidateId(req, id)
+    if (!rj){
       return res.status(404).json({ success:false, error:{ code:'NOT_FOUND', message:'候选记录不存在' } })
     }
+    const { resume } = await resolveResumeForJob(req, rj)
+    if (!resume || !(await ensureOwnership(req, rj))){
+      return res.status(404).json({ success:false, error:{ code:'NOT_FOUND', message:'候选记录不存在' } })
+    }
+
+    // 自动获取联系方式
+    const parsedData = resume.parsed_data && typeof resume.parsed_data === 'string' 
+        ? JSON.parse(resume.parsed_data) 
+        : (resume.parsed_data || {});
+        
+    let finalPhone = providedPhone || resume.phone || parsedData.phone || parsedData.mobile || (parsedData.basic_info && parsedData.basic_info.phone) || '';
+    let finalEmail = providedEmail || resume.email || parsedData.email || (parsedData.basic_info && parsedData.basic_info.email) || '';
+    
+    console.log(`[RecruitmentController] Contact info resolved for Resume ${resume.id}: phone=${finalPhone}, email=${finalEmail}`);
+
     const rn = safeJson(rj.recruiter_notes)
     rn.interview = { 
       datetime, 
@@ -92,40 +216,77 @@ exports.scheduleInterview = async (req, res) => {
     }
     await rj.update({ status:'interview', recruiter_notes: JSON.stringify(rn) })
 
+    // 同步更新 Resume 表的 recruitment_status 为 '面试'
+    try {
+      await require('../models').Resume.update(
+        { recruitment_status: '面试' },
+        { where: { id: rj.resume_id } }
+      );
+      console.log(`[RecruitmentController] Updated Resume ${rj.resume_id} recruitment_status to '面试'`);
+    } catch (resumeErr) {
+      console.error('同步面试状态到简历失败:', resumeErr);
+    }
+
     // 发送面试通知（短信 + 邮件）
     try {
-      const resume = rj.Resume;
-      // 尝试从不同结构中获取电话、姓名和邮箱
-      const parsed = resume ? (resume.parsed_data || {}) : {};
-      const basicInfo = parsed.basic_info || {};
-      const phone = parsed.phone || basicInfo.phone || parsed.mobile || basicInfo.mobile;
-      const email = parsed.email || basicInfo.email || resume.email; // 也可以检查 resume 模型上的直接字段
-      const name = parsed.name || basicInfo.name || '候选人';
+      // 如果是快速安排面试且已经发送过通知，则不再发送
+      if (req.body._skipNotification) {
+        console.log(`[RecruitmentController] Skipping notification as requested`);
+        return res.json({ success: true, data: rj });
+      }
 
-      const timeStr = new Date(datetime).toLocaleString('zh-CN', { hour12: false });
+      let parsed = resume ? (resume.parsed_data || {}) : {};
+      if (typeof parsed === 'string') { try { parsed = JSON.parse(parsed); } catch (_) { parsed = {}; } }
+      const basicInfo = parsed.basic_info || parsed.personalInfo || parsed || {};
+      
+      // 提取手机号
+      let phone = providedPhone || '';
+      
+      if (phone) {
+        const np = sms.normalizePhone(phone);
+        if (np.ok) phone = np.phone;
+        else phone = ''; // 如果不合法则清空
+      }
+      
+      if (!phone) {
+        const candidatePhone = resume.phone || parsed.phone || basicInfo.phone || parsed.mobile || basicInfo.mobile || '';
+        const np = sms.normalizePhone(candidatePhone);
+        if (np.ok) phone = np.phone;
+      }
+      
+      if (!phone && resume.raw_text) {
+        const m = String(resume.raw_text).match(/1[3-9]\d{9}/);
+        if (m) phone = m[0];
+      }
+
+      const email = finalEmail || resume.email || parsed.email || basicInfo.email || ''; 
+      const name = resume.name || parsed.name || basicInfo.name || '候选人';
+
+      const timeDate = new Date(datetime);
+      const timeStr = `${timeDate.getMonth() + 1}月${timeDate.getDate()}日 ${String(timeDate.getHours()).padStart(2, '0')}:${String(timeDate.getMinutes()).padStart(2, '0')}`;
       const typeStr = channel === 'video' ? '视频面试' : (channel === 'phone' ? '线上面试' : '现场面试');
       
       // 生成面试链接
       const smsCfg = await sms.getConfig();
-      // 获取门户地址，确保末尾没有斜杠
       const portalUrl = (smsCfg.portalUrl || 'https://master.cloujade.com').replace(/\/$/, '');
-      
-      // 注意：这里使用 /interview.html 作为独立页面，避开根目录 index.html 的登录拦截
-      const interviewLink = `${portalUrl}/interview.html?resumeJobId=${rj.id}`;
-
-      // 准备短信模板变量 (对应阿里云最终模板: ${name}, ${time}, ${jobId})
-      const smsParams = {
-        name: name,
-        time: timeStr,
-        jobId: rj.id,
-        link: interviewLink // 增加 link 参数，以防模板支持
-      };
+      const interviewLink = `${portalUrl}/i/${rj.id}`;
 
       // 1. 发送短信
       if (phone) {
-        // 如果后台配置了模板，则发送 JSON 格式的变量；如果没有模板，sendText 会降级发送 content
-        const fallbackContent = `【争湃简历大师】${name}您好，您的AI线上面试安排在 ${timeStr}。面试链接：${interviewLink} 。请点击后进行线上答题面试。`;
-        await sms.sendText(String(phone), JSON.stringify(smsParams), sms.SCENARIOS.INTERVIEW);
+        const company = (req.user && req.user.company_name) || smsCfg.siteName || '某公司';
+        const smsParams = {
+          name: name,
+          company: company,
+          time: timeStr,
+          link: interviewLink,
+          jobId: String(rj.id)
+        };
+        const smsResult = await sms.sendText(String(phone), smsParams, sms.SCENARIOS.INTERVIEW);
+        rn.interview = rn.interview || {};
+        rn.interview.sms = smsResult;
+        await rj.update({ recruiter_notes: JSON.stringify(rn) });
+      } else {
+        console.warn(`[RecruitmentController] No valid 11-digit phone number found for candidate ${id}. Found: ${phone}`);
       }
 
       // 2. 发送邮件
@@ -180,8 +341,12 @@ exports.setInterviewResult = async (req, res) => {
     if (!allowed.includes(String(result||'').toLowerCase())){
       return res.status(400).json({ success:false, error:{ code:'INVALID_RESULT', message:'面试结果仅支持 pass/fail' } })
     }
-    const rj = await ResumeJob.findOne({ where:{ id } })
-    if (!rj || !(await ensureOwnership(req, rj))){
+    const rj = await findResumeJobByCandidateId(req, id)
+    if (!rj){
+      return res.status(404).json({ success:false, error:{ code:'NOT_FOUND', message:'候选记录不存在' } })
+    }
+    const { resume } = await resolveResumeForJob(req, rj)
+    if (!resume || !(await ensureOwnership(req, rj))){
       return res.status(404).json({ success:false, error:{ code:'NOT_FOUND', message:'候选记录不存在' } })
     }
     const rn = safeJson(rj.recruiter_notes)
@@ -190,7 +355,22 @@ exports.setInterviewResult = async (req, res) => {
     rn.interview.result_note = notes||''
     const nextStatus = result==='pass' ? 'offer' : 'rejected'
     await rj.update({ status: nextStatus, recruiter_notes: JSON.stringify(rn) })
-    return res.json({ success:true, data:{ id:rj.id, status: nextStatus } })
+    
+    // 同步更新 Resume 表的 recruitment_status
+    try {
+      const resumeStatusMap = {
+        'offer': 'Offer',
+        'rejected': '淘汰'
+      };
+      await require('../models').Resume.update(
+        { recruitment_status: resumeStatusMap[nextStatus] || nextStatus },
+        { where: { id: rj.resume_id } }
+      );
+    } catch (resumeErr) {
+      console.error('同步面试结果状态到简历失败:', resumeErr);
+    }
+
+    return res.json({ success:true, data:{ id:rj.id, status:nextStatus } })
   }catch(e){
     return res.status(500).json({ success:false, error:{ code:'RESULT_ERROR', message:e.message } })
   }
@@ -200,8 +380,12 @@ exports.sendOffer = async (req, res) => {
   try{
     const { id } = req.params
     const { phone, email, message } = req.body || {}
-    const rj = await ResumeJob.findOne({ where:{ id }, include: [Resume, Job] })
-    if (!rj || !(await ensureOwnership(req, rj))){
+    const rj = await findResumeJobByCandidateId(req, id)
+    if (!rj){
+      return res.status(404).json({ success:false, error:{ code:'NOT_FOUND', message:'候选记录不存在' } })
+    }
+    const { resume } = await resolveResumeForJob(req, rj)
+    if (!resume || !(await ensureOwnership(req, rj))){
       return res.status(404).json({ success:false, error:{ code:'NOT_FOUND', message:'候选记录不存在' } })
     }
     const rn = safeJson(rj.recruiter_notes)
@@ -209,14 +393,19 @@ exports.sendOffer = async (req, res) => {
     rn.offer.sent_at = new Date().toISOString()
     rn.offer.message = message || '恭喜您通过面试，我们向您发出录用意向。'
     const offerMessage = rn.offer.message
-    const resume = rj.Resume
     const job = rj.Job
-    const parsed = resume ? (resume.parsed_data || {}) : {}
-    const basicInfo = parsed.basic_info || {}
+    let parsed = resume ? (resume.parsed_data || {}) : {}
+    if (typeof parsed === 'string') { try { parsed = JSON.parse(parsed); } catch (_) { parsed = {} } }
+    const basicInfo = parsed.basic_info || parsed.personalInfo || parsed || {}
 
-    const targetPhone = phone || parsed.phone || basicInfo.phone || parsed.mobile || basicInfo.mobile || (resume && resume.phone) || ''
+    let targetPhone = phone || resume.phone || parsed.phone || basicInfo.phone || parsed.mobile || basicInfo.mobile || ''
+    if (targetPhone) {
+      const np = sms.normalizePhone(targetPhone);
+      if (np.ok) targetPhone = np.phone;
+      else targetPhone = '';
+    }
     const targetEmail = email || parsed.email || basicInfo.email || (resume && resume.email) || ''
-    const candidateName = parsed.name || basicInfo.name || '候选人'
+    const candidateName = resume.name || parsed.name || basicInfo.name || '候选人'
 
     let companyName = (req.user && req.user.company_name) ? String(req.user.company_name) : ''
     try {
@@ -235,12 +424,20 @@ exports.sendOffer = async (req, res) => {
     let smsRes = null
     if (targetPhone) {
       try {
-        smsRes = await sms.sendText(String(targetPhone), { name: candidateName, company: companyName, time: timeStr }, sms.SCENARIOS.OFFER)
+        const smsParams = {
+          name: candidateName,
+          company: companyName,
+          time: timeStr,
+          job: rj.Job?.title || '应聘职位'
+        };
+        smsRes = await sms.sendText(targetPhone, smsParams, sms.SCENARIOS.OFFER)
       } catch (e) {
-        smsRes = { success: false, error: e.message || 'SMS_SEND_ERROR' }
+        smsRes = { success: false, attempted: true, sent: false, skipped: false, error: 'SMS_SEND_ERROR', message: e.message || 'SMS_SEND_ERROR' }
       }
+    } else {
+      smsRes = { success: false, attempted: false, sent: false, skipped: true, error: 'NO_PHONE', message: '未找到电话号码' }
     }
-    rn.offer.sms = smsRes || { success:false }
+    rn.offer.sms = smsRes
 
     let emailRes = null
     if (targetEmail) {
@@ -286,13 +483,28 @@ exports.sendOffer = async (req, res) => {
 exports.markHired = async (req, res) => {
   try{
     const { id } = req.params
-    const rj = await ResumeJob.findOne({ where:{ id } })
-    if (!rj || !(await ensureOwnership(req, rj))){
+    const rj = await findResumeJobByCandidateId(req, id)
+    if (!rj){
+      return res.status(404).json({ success:false, error:{ code:'NOT_FOUND', message:'候选记录不存在' } })
+    }
+    const { resume } = await resolveResumeForJob(req, rj)
+    if (!resume || !(await ensureOwnership(req, rj))){
       return res.status(404).json({ success:false, error:{ code:'NOT_FOUND', message:'候选记录不存在' } })
     }
     const rn = safeJson(rj.recruiter_notes)
     rn.onboard = { at: new Date().toISOString() }
     await rj.update({ status:'hired', recruiter_notes: JSON.stringify(rn) })
+
+    // 同步更新 Resume 表的 recruitment_status 为 '入职'
+    try {
+      await require('../models').Resume.update(
+        { recruitment_status: '入职' },
+        { where: { id: rj.resume_id } }
+      );
+    } catch (resumeErr) {
+      console.error('同步入职状态到简历失败:', resumeErr);
+    }
+
     return res.json({ success:true, data:{ id:rj.id, status:'hired' } })
   }catch(e){
     return res.status(500).json({ success:false, error:{ code:'HIRE_ERROR', message:e.message } })
@@ -372,6 +584,17 @@ exports.importEmailAndScreen = async (req, res) => {
   }
 }
 
+function normalizeStatus(s){
+  const k = String(s||'').trim().toLowerCase()
+  if (k==='投递'||k==='待快评'||k==='待初筛'||k==='new'||k==='') return 'applied'
+  if (k==='快评'||k==='已快评'||k==='初筛'||k==='已初筛'||k==='通过初筛'||k==='passed'||k==='screening') return 'screening'
+  if (k==='面试'||k==='interview') return 'interview'
+  if (k==='已发offer'||k==='offer') return 'offer'
+  if (k==='入职'||k==='已入职'||k==='已录用'||k==='hired') return 'hired'
+  if (k==='淘汰'||k==='已淘汰'||k==='rejected') return 'rejected'
+  return k||'applied'
+}
+
 exports.getPipeline = async (req, res) => {
   try{
     const { jobId, status } = req.query || {}
@@ -402,30 +625,61 @@ exports.getPipeline = async (req, res) => {
        if (jobId) where.job_id = jobId;
     }
 
-    if (status) where.status = status
-    const rows = await ResumeJob.findAll({ where, include:[{ model: Resume }, { model: Job }], order:[['updated_at','DESC']] })
+    if (status) where.status = normalizeStatus(status)
+    const rows = await ResumeJob.findAll({ where, include:[
+      { model: Resume, include: [
+        { model: AnalysisResult, as: 'AnalysisResults', limit: 1, order: [['analysis_date', 'DESC']] }
+      ] },
+      { model: Job }
+    ], order:[['updated_at','DESC']] })
     
     // 使用 Map 进行去重，确保同一个职位下同一个简历只出现一次
     const uniqueMap = new Map();
     rows.forEach(r => {
       const key = `${r.resume_id}-${r.job_id}`;
       if (!uniqueMap.has(key)) {
-        uniqueMap.set(key, { 
-          id: r.id, 
-          resume_id: r.resume_id, 
-          job_id: r.job_id, 
-          status: r.status, 
-          file_name: r.Resume && r.Resume.file_name, 
-          name: (r.Resume && r.Resume.parsed_data && r.Resume.parsed_data.name) || (r.Resume && r.Resume.name) || null, 
-          job_title: r.Job && r.Job.title, 
-          skills: (r.Resume && r.Resume.parsed_data && r.Resume.parsed_data.skills) || [], 
+        const latestAnalysis = Array.isArray(r.Resume?.AnalysisResults) && r.Resume.AnalysisResults.length>0 ? r.Resume.AnalysisResults[0] : null;
+        const unifiedScore = (r.match_score!=null && r.match_score>0) ? r.match_score : (latestAnalysis && latestAnalysis.overall_score ? latestAnalysis.overall_score : 0);
+        const analysisJson = latestAnalysis ? { 
+          id: latestAnalysis.id, 
+          overall_score: latestAnalysis.overall_score || 0, 
+          dimensions: (function() {
+            const dims = latestAnalysis.dimensions || {};
+            // 如果是字符串，尝试解析
+            const parsedDims = typeof dims === 'string' ? (function() { try { return JSON.parse(dims); } catch(e) { return {}; } })() : dims;
+            // 确保包含前端需要的标准维度
+            return {
+              skills: parsedDims.skills || parsedDims.core_skills || parsedDims.job_fit || 0,
+              experience: parsedDims.experience || parsedDims.experience_fit || 0,
+              education: parsedDims.education || 0,
+              stability: parsedDims.stability || 0,
+              potential: parsedDims.potential || parsedDims.learning_ability || 0,
+              teamwork: parsedDims.teamwork || 0
+            };
+          })()
+        } : null;
+        
+        uniqueMap.set(key, {
+          id: r.id,
+          resume_id: r.resume_id,
+          job_id: r.job_id,
+          status: normalizeStatus(r.status),
+          file_name: r.Resume ? r.Resume.file_name : null,
+          name: (r.Resume && r.Resume.parsed_data && r.Resume.parsed_data.name) || (r.Resume && r.Resume.name) || null,
+          job_title: r.Job ? r.Job.title : null,
+          skills: (r.Resume && r.Resume.parsed_data && r.Resume.parsed_data.skills) || [],
           education: (r.Resume && r.Resume.parsed_data && r.Resume.parsed_data.education) || [],
           experience: (r.Resume && r.Resume.parsed_data && r.Resume.parsed_data.workExperience) || [],
-          score: r.match_score || 0,
+          score: unifiedScore,
+          analysis: analysisJson,
+          deep_analysis_status: r.deep_analysis_status,
+          deep_analysis_trigger: r.deep_analysis_trigger,
+          deep_analysis_error: r.deep_analysis_error,
           created_at: r.applied_at,
-          auto_rejected: r.Resume && r.Resume.auto_rejected,
+          has_deep_analysis: !!latestAnalysis,
+          auto_rejected: !!(r.Resume && r.Resume.auto_rejected),
           rejection_reason: (r.Resume && r.Resume.rejection_reason) || r.notes
-        });
+        })
       }
     });
     
@@ -434,21 +688,102 @@ exports.getPipeline = async (req, res) => {
   }catch(e){ return res.status(500).json({ success:false, error:{ code:'PIPELINE_ERROR', message:e.message } }) }
 }
 
-exports.linkResumes = async (req, res) => {
-  try{
-    const { jobId, resumeIds } = req.body || {}
-    if (!jobId || !Array.isArray(resumeIds) || resumeIds.length===0){ return res.status(400).json({ success:false, error:{ code:'INVALID_INPUT', message:'缺少职位或简历ID' } }) }
-    const job = await Job.findOne({ where:{ id: jobId, user_id: req.user.id } })
-    if (!job) return res.status(404).json({ success:false, error:{ code:'JOB_NOT_FOUND', message:'职位不存在' } })
-    const resumes = await Resume.findAll({ where:{ id: resumeIds } })
-    const created = []
-    for (const r of resumes){
-      const [row, ok] = await ResumeJob.findOrCreate({ where:{ resume_id: r.id, job_id: job.id }, defaults:{ resume_id: r.id, job_id: job.id, user_id: req.user.id, status:'applied', match_score: computeMatchScore(r.parsed_data||{}, job) } })
-      if (ok) created.push({ id: row.id, resume_id: r.id })
-    }
-    return res.json({ success:true, data:{ createdCount: created.length, created } })
-  }catch(e){ return res.status(500).json({ success:false, error:{ code:'LINK_ERROR', message:e.message } }) }
+exports.getPipelineView = async (req, res) => {
+  return exports.getPipeline(req, res);
 }
+
+exports.linkResumes = async (req, res) => {
+  try {
+    const { jobId, resumeIds } = req.body || {}
+    if (!jobId || !Array.isArray(resumeIds) || resumeIds.length === 0) {
+      return res.status(400).json({ success: false, error: { code: 'INVALID_INPUT', message: '缺少参数' } })
+    }
+
+    const whereClause = req.user.company_id 
+      ? { id: jobId, company_id: req.user.company_id } 
+      : { id: jobId, user_id: req.user.id };
+    const job = await Job.findOne({ where: whereClause })
+    if (!job) {
+      return res.status(404).json({ success: false, error: { code: 'JOB_NOT_FOUND', message: '职位不存在' } })
+    }
+
+    const results = []
+    for (const rid of resumeIds) {
+      const [rj, created] = await ResumeJob.findOrCreate({
+        where: { job_id: jobId, resume_id: rid },
+        defaults: {
+          user_id: req.user.id,
+          company_id: req.user.company_id || null,
+          status: 'applied'
+        }
+      })
+      
+      // 立即触发自动快评 (Requirement 1)
+      if (created && jobId) {
+          autoScreeningService.triggerImmediateScreening(rid, jobId).catch(err => {
+              console.error('[RecruitmentController] 批量关联时触发即时快评失败:', err);
+          });
+      }
+
+      results.push({ id: rid, resume_job_id: rj.id, created })
+    }
+
+    return res.json({ success: true, data: results })
+  } catch (e) {
+    return res.status(500).json({ success: false, error: { code: 'LINK_ERROR', message: e.message } })
+  }
+}
+
+exports.applyToJob = async (req, res) => {
+  try {
+    const { id } = req.params; // resumeId
+    const { jobId } = req.body;
+    
+    if (!jobId) {
+      return res.status(400).json({ success: false, error: { message: '缺少 jobId' } });
+    }
+
+    // 检查职位所有权
+    const jobWhere = req.user.company_id 
+      ? { id: jobId, company_id: req.user.company_id } 
+      : { id: jobId, user_id: req.user.id };
+    const job = await Job.findOne({ where: jobWhere });
+    if (!job) {
+      return res.status(404).json({ success: false, error: { message: '职位不存在' } });
+    }
+
+    // 检查简历所有权
+    const resumeWhere = req.user.company_id 
+      ? { id: id, company_id: req.user.company_id } 
+      : { id: id, user_id: req.user.id };
+    const resume = await Resume.findOne({ where: resumeWhere });
+    if (!resume) {
+      return res.status(404).json({ success: false, error: { message: '简历不存在' } });
+    }
+
+    // 创建或更新关联
+    const [rj, created] = await ResumeJob.findOrCreate({
+      where: { job_id: jobId, resume_id: id },
+      defaults: {
+        user_id: req.user.id,
+        company_id: req.user.company_id || null,
+        status: 'applied'
+      }
+    });
+
+    // 立即触发自动快评 (Requirement 1)
+    if (created && jobId) {
+        autoScreeningService.triggerImmediateScreening(id, jobId).catch(err => {
+            console.error('[RecruitmentController] 触发即时快评失败:', err);
+        });
+    }
+
+    return res.json({ success: true, data: { resume_job_id: rj.id, created } });
+  } catch (e) {
+    console.error('applyToJob error:', e);
+    return res.status(500).json({ success: false, error: { message: e.message } });
+  }
+};
 
 exports.getStats = async (req, res) => {
   try{

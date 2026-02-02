@@ -11,12 +11,19 @@
         selectedResumes: [],         // Selected resume objects from library
         uploadedFiles: [],           // Files uploaded in the current session
         isAnalyzing: false,
+        forceNextAnalysis: false, // 是否强制重新解析
         analysisResult: null,
         comparisonResult: null,
         talentPool: [],              // All resumes from the talent pool
         jobs: [],                    // All jobs from the database
-        selectedJobId: 'all'         // Currently selected job for filtering
+        selectedJobId: 'all',        // Currently selected job for filtering
+        pendingSingleAction: null,
+        loadingTimer: null,          // 载入界面跳转按钮定时器
+        loadingActionsVisible: false // 是否已显示手动跳转按钮
     };
+
+    const deepAnalysisCompletenessCache = new Map();
+    const deepAnalysisCompletenessInFlight = new Set();
 
     // DOM Elements Cache
     const dom = {
@@ -34,7 +41,7 @@
         fileList: document.getElementById('file-list'),
         
         // Main Area Header
-        analysisModeTabs: document.querySelectorAll('.main-content-area .tab-btn'),
+        analysisModeTabs: document.querySelectorAll('.main-content-area .tab-card'),
         analyzeBtn: document.getElementById('analyze-btn'),
         
         // Content Sections
@@ -49,7 +56,14 @@
         resScore: document.getElementById('res-score'),
         radarContainer: document.getElementById('radar-container'),
         scoreCards: document.getElementById('score-cards'),
-        aiReport: document.getElementById('ai-report')
+        aiReport: document.getElementById('ai-report'),
+        highlightsRisksContainer: document.getElementById('highlights-risks-container'),
+        resHighlights: document.getElementById('res-highlights'),
+        resRisks: document.getElementById('res-risks'),
+        reanalyzeBtn: document.getElementById('reanalyze-btn'),
+        exportMdSingleBtn: document.getElementById('exportMdSingleBtn'),
+        exportPdfSingleBtn: document.getElementById('exportPdfSingleBtn'),
+        viewResultsBtn: document.getElementById('view-results-btn')
     };
 
     async function init() {
@@ -95,9 +109,14 @@
         }, 300));
 
         // Analysis Mode Switching
-        dom.analysisModeTabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                const mode = tab.dataset.mode;
+        const modeTabs = document.querySelectorAll('[data-mode]');
+        modeTabs.forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                // Find the closest button element in case the click was on an inner element
+                const button = e.target.closest('button');
+                if (!button) return;
+                
+                const mode = button.dataset.mode;
                 switchAnalysisMode(mode);
             });
         });
@@ -125,7 +144,128 @@
         }
 
         // Analyze Button
-        dom.analyzeBtn.addEventListener('click', startAnalysis);
+        dom.analyzeBtn.addEventListener('click', onAnalyzeBtnClick);
+
+        // Re-analyze Button
+        if (dom.reanalyzeBtn) {
+            dom.reanalyzeBtn.addEventListener('click', async () => {
+                const target = state.selectedResumes[0] || state.uploadedFiles[0];
+                const resumeId = target ? (target.id || target.resumeId) : (state.analysisResult ? (state.analysisResult.resume_id || state.analysisResult.id) : null);
+                
+                if (!resumeId) {
+                    alert('无法获取简历ID，请选择简历后再试');
+                    return;
+                }
+
+                if (!confirm('确定要重新解析吗？这将强制消耗 AI 额度重新生成报告。')) return;
+
+                try {
+                    // Update button UI state
+                    const originalContent = dom.reanalyzeBtn.innerHTML;
+                    dom.reanalyzeBtn.disabled = true;
+                    dom.reanalyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>重新解析中...';
+
+                    // Set force flag and trigger analysis
+                    state.forceNextAnalysis = true;
+                    
+                    // 提取当前维度得分，以便在重新解析时保持不变
+                    let currentDimensions = null;
+                    let currentOverallScore = null;
+                    if (state.analysisResult) {
+                        const normalized = normalizeResult(state.analysisResult);
+                        if (normalized) {
+                            if (normalized.dimensions) {
+                                currentDimensions = normalized.dimensions;
+                            }
+                            if (normalized.overallScore) {
+                                currentOverallScore = normalized.overallScore;
+                            }
+                            console.log('[Re-analyze] Preserving current metrics:', { 
+                                dimensions: currentDimensions, 
+                                score: currentOverallScore 
+                            });
+                        }
+                    }
+                    
+                    // Directly call startAnalysis which handles the overlay and progress
+                    await startAnalysis(currentDimensions, currentOverallScore);
+                    
+                    // Reset UI and flags
+                    state.forceNextAnalysis = false;
+                    dom.reanalyzeBtn.disabled = false;
+                    dom.reanalyzeBtn.innerHTML = originalContent;
+                } catch (error) {
+                    console.error('Re-analyze error:', error);
+                    state.forceNextAnalysis = false;
+                    dom.reanalyzeBtn.disabled = false;
+                    dom.reanalyzeBtn.innerHTML = '<i class="fas fa-microscope mr-1"></i>重新解析';
+                    alert('重新解析失败，请稍后重试');
+                }
+            });
+        }
+
+        // Export MD Button
+        if (dom.exportMdSingleBtn) {
+            dom.exportMdSingleBtn.addEventListener('click', () => {
+                if (!state.analysisResult) {
+                    alert('请先完成解析后再导出');
+                    return;
+                }
+                const md = buildMarkdown();
+                const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                const nameText = dom.resName ? dom.resName.textContent : '简历解析报告';
+                const dateStr = new Date().toISOString().slice(0,10);
+                a.download = `${nameText}_${dateStr}.md`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            });
+        }
+
+        // PDF Export for Single Results
+        if (dom.exportPdfSingleBtn) {
+            dom.exportPdfSingleBtn.addEventListener('click', (e) => {
+                const name = dom.resName ? dom.resName.textContent : '简历分析报告';
+                const dateStr = new Date().toISOString().slice(0, 10);
+                exportToPdf('single-analysis-results', `${name}_深度分析报告_${dateStr}.pdf`, e.currentTarget);
+            });
+        }
+
+        // Modal Confirm Button
+        const confirmAnalysisBtn = document.getElementById('confirmAnalysisBtn');
+        if (confirmAnalysisBtn) {
+            confirmAnalysisBtn.addEventListener('click', () => {
+                const modal = document.getElementById('analysisModal');
+                if (modal) modal.classList.add('hidden');
+                
+                // 核心修复：单一解析模式下，不再跳转到详情页，而是直接在当前页面进行解析
+                // 这样符合用户“在 resume-tools.html 生成内容”的预期
+                if (state.analysisMode === 'single' && state.pendingSingleAction && state.pendingSingleAction.type === 'view_existing' && state.pendingSingleAction.resumeId) {
+                     // 如果是查看已有结果，可以直接跳转到详情页，或者在当前页渲染（取决于需求）
+                     // 这里为了体验一致性，我们选择在当前页渲染
+                     openExistingAnalysis({ id: state.pendingSingleAction.resumeId });
+                     return;
+                }
+                
+                startAnalysis();
+            });
+        }
+
+        if (dom.viewResultsBtn) {
+            dom.viewResultsBtn.addEventListener('click', () => {
+                dom.loadingOverlay.classList.add('hidden');
+                const targetId = state.analysisMode === 'single' ? 'single-analysis-results' : 'multi-analysis-results';
+                document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                
+                // 重置相关状态
+                state.loadingActionsVisible = false;
+                if (dom.viewResultsBtn) dom.viewResultsBtn.classList.add('hidden');
+            });
+        }
     }
 
     // --- State & UI Logic ---
@@ -167,9 +307,8 @@
     async function loadTalentPool() {
         if (!window.resumeDataManager) return;
         try {
-            state.talentPool = await window.resumeDataManager.getTalentPoolResumes(false, true); // Added silent=true
+            state.talentPool = await window.resumeDataManager.getTalentPoolResumes(false, true, { isTalentPool: true });
         } catch (e) {
-            console.error('Failed to load talent pool:', e);
             state.talentPool = [];
         }
     }
@@ -180,7 +319,6 @@
             const result = await window.resumeDataManager.apiRequest('/jobs', 'GET', null, true, true); // Added silent=true
             state.jobs = result.data || [];
         } catch (e) {
-            console.error('Failed to load jobs:', e);
             state.jobs = [];
         }
     }
@@ -226,14 +364,27 @@
             return name.includes(query) || pos.includes(query) || jobTitles.includes(query);
         });
 
+        // Sort: Unanalyzed first, then analyzed
+        // We use overall_score, is_analyzed, or backend status flags as indicators
+        const sorted = [...filtered].sort((a, b) => {
+            const aAnalyzed = !!(a.has_deep_analysis || (a.analysis && a.analysis.overall_score > 0) || a.is_analyzed || (a.overall_score && a.overall_score > 0) || a.status === 'analyzed');
+            const bAnalyzed = !!(b.has_deep_analysis || (b.analysis && b.analysis.overall_score > 0) || b.is_analyzed || (b.overall_score && b.overall_score > 0) || b.status === 'analyzed');
+            if (aAnalyzed === bAnalyzed) return 0;
+            return aAnalyzed ? 1 : -1;
+        });
+
         dom.candidateList.innerHTML = '';
-        if (filtered.length === 0) {
+        if (sorted.length === 0) {
             dom.candidateList.innerHTML = '<div class="text-center py-8 text-gray-400 text-sm">暂无匹配候选人</div>';
             return;
         }
 
-        filtered.forEach(c => {
+        sorted.forEach(c => {
             const isSelected = state.selectedResumes.some(r => r.id === c.id);
+
+            const cachedCompleteness = deepAnalysisCompletenessCache.get(String(c.id));
+            const isDeepAnalysisComplete = cachedCompleteness === true;
+
             const div = document.createElement('div');
             div.className = `candidate-item p-3 mb-3 rounded-xl border transition-all cursor-pointer ${isSelected ? 'selected' : 'border-gray-100 hover:border-blue-200 bg-gray-50/50 hover:bg-white hover:shadow-md'}`;
             
@@ -253,10 +404,26 @@
                 if (job) displayPosition = job.title;
             }
             
+            // Determine action element: Radio/Checkbox or View Analysis link
+            let actionHtml = '';
+            if (state.analysisMode === 'single' && isDeepAnalysisComplete) {
+                actionHtml = `
+                    <a href="analysis-detail.html?resume_id=${c.id}&trigger=true" class="text-[10px] font-bold text-blue-600 hover:text-blue-700 hover:underline flex items-center whitespace-nowrap bg-blue-50 px-2 py-1 rounded-lg border border-blue-100 transition-all">
+                        <i class="fas fa-chart-line mr-1"></i>查看解析
+                    </a>
+                `;
+            } else {
+                actionHtml = `
+                    <input type="${state.analysisMode === 'single' ? 'radio' : 'checkbox'}" 
+                           class="w-5 h-5 text-blue-600 accent-blue-600 bg-gray-50 border-gray-200 focus:ring-blue-500 focus:ring-2 checked:bg-blue-600 checked:border-transparent ${state.analysisMode === 'single' ? 'rounded-full' : 'rounded'} transition-all"
+                           ${isSelected ? 'checked' : ''}>
+                `;
+            }
+            
             div.innerHTML = `
                 <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 rounded-full bg-white border border-gray-100 flex items-center justify-center text-gray-400 shadow-sm">
-                        <i class="fas fa-user"></i>
+                    <div class="flex-shrink-0">
+                        ${window.ui.renderAvatar(c.avatar, c.name || '未命名', 'w-10 h-10', 'rounded-full', true)}
                     </div>
                     <div class="flex-1 min-w-0">
                         <div class="text-sm font-bold text-gray-900 truncate">${c.name || '未命名'}</div>
@@ -267,16 +434,40 @@
                         </div>
                     </div>
                     <div class="flex items-center justify-center ml-2">
-                        <input type="${state.analysisMode === 'single' ? 'radio' : 'checkbox'}" 
-                               class="w-5 h-5 text-blue-600 accent-blue-600 bg-gray-50 border-gray-200 focus:ring-blue-500 focus:ring-2 checked:bg-blue-600 checked:border-transparent ${state.analysisMode === 'single' ? 'rounded-full' : 'rounded'} pointer-events-none transition-all"
-                               ${isSelected ? 'checked' : ''}>
+                        ${actionHtml}
                     </div>
                 </div>
             `;
             
-            div.onclick = () => toggleCandidateSelection(c);
+            // If analyzed in single mode, clicking the item should probably just go to the link, 
+            // but the user might want to select it for re-analysis?
+            // "如已解析，则不显示单选radio，用‘查看解析’的链接来替代"
+            // This implies you can't select it for analysis if it's already analyzed.
+            if (state.analysisMode === 'single' && isDeepAnalysisComplete) {
+                const open = (e) => {
+                    if (e && (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey)) return;
+                    if (e) e.preventDefault();
+                    openExistingAnalysis(c);
+                };
+                const link = div.querySelector('a');
+                if (link) {
+                    link.addEventListener('click', open);
+                }
+                div.onclick = (e) => {
+                    if (e.target.tagName === 'A' || e.target.closest('a')) return;
+                    open(e);
+                };
+            } else {
+                div.onclick = () => {
+                    toggleCandidateSelection(c);
+                };
+            }
             dom.candidateList.appendChild(div);
         });
+
+        if (state.analysisMode === 'single') {
+            prefetchDeepAnalysisCompleteness(sorted.map(c => String(c.id)));
+        }
     }
 
     function toggleCandidateSelection(candidate) {
@@ -289,7 +480,8 @@
             // In multi mode, multiple can be selected
             if (index === -1) {
                 if (state.selectedResumes.length >= 5) {
-                    ui.showNotification('最多只能对比5份简历', 'warning');
+                    // ui.showNotification('最多只能对比5份简历', 'warning');
+                    alert('最多只能对比5份简历');
                     return;
                 }
                 state.selectedResumes.push(candidate);
@@ -300,6 +492,9 @@
         
         renderCandidateList();
         updateAnalyzeBtn();
+        showEmptyState();
+        state.analysisResult = null;
+        state.comparisonResult = null;
     }
 
     function handleFileUpload(fileList) {
@@ -309,7 +504,8 @@
         });
 
         if (files.length === 0) {
-            ui.showNotification('请上传10MB以内的PDF/DOC/DOCX/TXT文件', 'warning');
+            // ui.showNotification('请上传10MB以内的PDF/DOC/DOCX/TXT文件', 'warning');
+            alert('请上传10MB以内的PDF/DOC/DOCX/TXT文件');
             return;
         }
 
@@ -381,98 +577,230 @@
         dom.multiResults.classList.add('hidden');
     }
 
+    async function onAnalyzeBtnClick() {
+        if (state.analysisMode !== 'single') {
+            const modal = document.getElementById('analysisModal');
+            if (modal) modal.classList.remove('hidden');
+            state.pendingSingleAction = null;
+            return;
+        }
+
+        const target = state.selectedResumes[0] || null;
+        if (!target || !target.id) return;
+
+        const rid = String(target.id);
+        const name = String(target.name || '该候选人');
+        const modal = document.getElementById('analysisModal');
+        const titleEl = document.getElementById('analysis-modal-title');
+        const msgEl = document.getElementById('analysis-modal-message');
+        const confirmBtn = document.getElementById('confirmAnalysisBtn');
+
+        const isComplete = await fetchDeepAnalysisCompleteness(rid);
+
+        if (isComplete) {
+            state.pendingSingleAction = { type: 'view_existing', resumeId: rid, name };
+            if (titleEl) titleEl.textContent = '深度解析已存在';
+            if (msgEl) msgEl.textContent = `${name} 已进行过深度解析，您可直接查看解析结果。`;
+            if (confirmBtn) confirmBtn.textContent = '查看结果';
+        } else {
+            state.pendingSingleAction = { type: 'start_new', resumeId: rid, name };
+            if (titleEl) titleEl.textContent = '深度解析说明';
+            if (msgEl) msgEl.textContent = '深度解析将消耗 1 个 AI 点数，通过多维度深度评估候选人与职位的匹配度。';
+            if (confirmBtn) confirmBtn.textContent = '立即解析';
+        }
+
+        if (modal) modal.classList.remove('hidden');
+    }
+
+    async function openExistingAnalysis(candidate) {
+        if (!candidate || !candidate.id) return;
+        
+        // 为了统一体验和解决“内容为空”的问题，点击历史记录也跳转到统一的详情页
+        window.location.href = `analysis-detail.html?resume_id=${encodeURIComponent(String(candidate.id))}`;
+    }
+
     // --- Analysis Logic ---
 
-    async function startAnalysis() {
-        if (state.isAnalyzing) return;
+    async function startAnalysis(preservedDimensions = null, preservedScore = null) {
+        if (state.isAnalyzing) {
+            return;
+        }
         
         state.isAnalyzing = true;
-        dom.analyzeBtn.disabled = true;
-        dom.loadingOverlay.classList.remove('hidden');
+        if (dom.analyzeBtn) dom.analyzeBtn.disabled = true;
+        
+        // 重置手动操作状态
+        state.loadingActionsVisible = false;
+        if (dom.viewResultsBtn) dom.viewResultsBtn.classList.add('hidden');
+        const longWaitMsg = document.getElementById('long-wait-msg');
+        if (longWaitMsg) {
+            longWaitMsg.innerHTML = '<p class="text-blue-600 font-bold text-sm mb-1">解析报告正在生成中...</p><p class="text-gray-400 text-xs">您可以关闭本页，稍后在“解析记录”中查看，或者刷新当前页。</p>';
+        }
+
+        // Ensure overlay is available (re-query if necessary)
+        if (!dom.loadingOverlay) {
+            dom.loadingOverlay = document.getElementById('loading-overlay');
+        }
+
+        if (dom.loadingOverlay) {
+            dom.loadingOverlay.classList.remove('hidden');
+            
+            // 2.5秒后显示跳转按钮
+            if (state.loadingTimer) clearTimeout(state.loadingTimer);
+            state.loadingTimer = setTimeout(() => {
+                state.loadingActionsVisible = true;
+                const longWaitMsg = document.getElementById('long-wait-msg');
+                const loadingActions = document.getElementById('loading-actions');
+                if (longWaitMsg) longWaitMsg.classList.remove('hidden');
+                if (loadingActions) loadingActions.classList.remove('hidden');
+            }, 2500);
+        } else {
+            console.error('[startAnalysis] Loading overlay element not found!');
+        }
         
         // 更新进度提示 (Initial)
-        updateLoadingProgress('正在准备分析环境...', 10);
+        const initialMsg = state.forceNextAnalysis ? '正在重新解析中...' : '正在准备分析环境...';
+        updateLoadingProgress(initialMsg, 10);
         
         try {
+            const target = state.selectedResumes[0] || state.uploadedFiles[0];
+            console.info('[ResumeTools] Trigger analysis:', state.analysisMode, target ? (target.id || target.name || '') : '');
+            
+            // 核心修复：确保在单人模式下选中了候选人
+            if (state.analysisMode === 'single' && !target) {
+                throw new Error('请先选择一位候选人');
+            }
+
             if (state.analysisMode === 'single') {
-                await performSingleAnalysis();
+                await performSingleAnalysis(preservedDimensions, preservedScore);
             } else {
                 await performMultiAnalysis();
             }
             
-            // 成功后滚动到结果区域
+            // 成功后处理
+            const longWaitMsgDone = document.getElementById('long-wait-msg');
+            if (state.loadingActionsVisible && longWaitMsgDone) {
+                longWaitMsgDone.innerHTML = '<p class="text-emerald-600 font-bold text-sm mb-1">分析已完成！</p><p class="text-gray-400 text-xs">正在为您展示解析结果...</p>';
+                longWaitMsgDone.classList.remove('hidden');
+            }
+
             setTimeout(() => {
+                if (dom.loadingOverlay) dom.loadingOverlay.classList.add('hidden');
+                state.loadingActionsVisible = false;
+                if (dom.viewResultsBtn) dom.viewResultsBtn.classList.add('hidden');
+                const longWaitMsg = document.getElementById('long-wait-msg');
+                const loadingActions = document.getElementById('loading-actions');
+                if (longWaitMsg) longWaitMsg.classList.add('hidden');
+                if (loadingActions) loadingActions.classList.add('hidden');
                 const targetId = state.analysisMode === 'single' ? 'single-analysis-results' : 'multi-analysis-results';
                 document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 300);
+            }, 400);
 
         } catch (e) {
             console.error('Analysis failed:', e);
             // 遵循用户规则：UI上要有相应的 Loading 和 Error 状态反馈
             if (typeof ui !== 'undefined' && ui.showNotification) {
                 ui.showNotification(e.message || '分析过程中出现错误，请检查网络或重试', 'error');
-            } else {
-                alert('分析失败: ' + (e.message || '未知错误'));
+            }
+            
+            // 关键修复：当分析失败时，更新遮罩状态而不是让其卡住
+            if (state.loadingActionsVisible && dom.loadingOverlay) {
+                const longWaitMsg = document.getElementById('long-wait-msg');
+                const loadingText = dom.loadingOverlay.querySelector('.loading-text');
+                if (loadingText) loadingText.textContent = '分析失败';
+                
+                if (longWaitMsg) {
+                    longWaitMsg.innerHTML = `<p class="text-rose-500 font-bold text-sm mb-1">分析失败</p><p class="text-gray-400 text-xs">${e.message || '请稍后重试'}</p>`;
+                    longWaitMsg.classList.remove('hidden');
+                }
+                
+                // 3秒后自动关闭遮罩
+                setTimeout(() => {
+                    dom.loadingOverlay.classList.add('hidden');
+                }, 3000);
             }
         } finally {
             state.isAnalyzing = false;
-            dom.loadingOverlay.classList.add('hidden');
+            state.forceNextAnalysis = false; // 重置强制重新解析标志
+            
+            // 清理定时器
+            if (state.loadingTimer) {
+                clearTimeout(state.loadingTimer);
+                state.loadingTimer = null;
+            }
+            
+            // 只有在未显示手动操作区域时才自动关闭遮罩
+            if (!state.loadingActionsVisible) {
+                const longWaitMsg = document.getElementById('long-wait-msg');
+                const loadingActions = document.getElementById('loading-actions');
+                if (longWaitMsg) longWaitMsg.classList.add('hidden');
+                if (loadingActions) loadingActions.classList.add('hidden');
+                dom.loadingOverlay.classList.add('hidden');
+            }
+            
             updateAnalyzeBtn();
         }
     }
 
     function updateLoadingProgress(message, progress) {
+        if (!dom.loadingOverlay) {
+            dom.loadingOverlay = document.getElementById('loading-overlay');
+        }
+        if (!dom.loadingOverlay) return;
+
         const loadingText = dom.loadingOverlay.querySelector('.loading-text');
         const progressBar = dom.loadingOverlay.querySelector('.progress-bar-inner');
+        const longWaitMsg = document.getElementById('long-wait-msg');
+        const loadingActions = document.getElementById('loading-actions');
+
         if (loadingText) loadingText.textContent = message;
         if (progressBar) progressBar.style.width = `${progress}%`;
     }
 
-    async function performSingleAnalysis() {
-        let result;
+    async function performSingleAnalysis(preservedDimensions = null, preservedScore = null) {
         const target = state.selectedResumes[0] || state.uploadedFiles[0];
+        const isForce = state.forceNextAnalysis;
         
-        // Find the selected job object if any
-        const selectedJob = state.jobs.find(j => j.id == state.selectedJobId) || null;
-        
-        // 1. 优先检查是否已经存在深度解析结果 (不再仅依赖初筛分数)
-        if (state.selectedResumes.length > 0 && target.id) {
-            updateLoadingProgress('正在检索历史分析记录...', 15);
-            const existingResult = await window.aiAnalyzer.checkExistingAnalysis(target.id);
-            
-            // 核心修复：只有当存在有效结果（总分大于0且有维度分数）时才跳过 AI 调用
-            const normalized = normalizeResult(existingResult);
-            const hasDimensions = normalized && normalized.dimensions && 
-                                 Object.values(normalized.dimensions).some(v => v > 0);
-            
-            if (normalized && normalized.overallScore > 0 && hasDimensions) {
-                console.log('[SingleAnalysis] Found existing valid result with dimensions, skipping AI call');
-                updateLoadingProgress('发现历史记录，正在渲染...', 100);
-                state.analysisResult = existingResult;
-                renderSingleResults(existingResult);
-                return;
-            } else if (existingResult) {
-                console.log('[SingleAnalysis] Existing result found but it is incomplete (no dimensions or 0 score), re-analyzing...');
-            }
+        // 1. 如果是已有的库内简历，直接跳转到详情页触发解析
+        if (target.id) {
+            updateLoadingProgress('正在跳转到详情页...', 90);
+            setTimeout(() => {
+                let url = `analysis-detail.html?resume_id=${encodeURIComponent(String(target.id))}&trigger=true`;
+                if (isForce) url += '&force=true';
+                window.location.href = url;
+            }, 500);
+            return;
         }
 
-        updateLoadingProgress('正在读取简历内容...', 30);
-        
-        if (state.selectedResumes.length > 0) {
-            // Analyze existing resume
-            result = await window.aiAnalyzer.analyzeExistingResume(target.id, selectedJob, (p) => {
-                updateLoadingProgress(p.message || '正在分析中...', 30 + (p.progress * 0.6));
-            });
-        } else {
-            // Analyze uploaded file
-            result = await window.aiAnalyzer.analyzeFile(target, selectedJob, (p) => {
-                updateLoadingProgress(p.message || '正在分析中...', 30 + (p.progress * 0.6));
-            });
+        // 2. 如果是上传的新文件，先上传获取 ID，再跳转
+        updateLoadingProgress('正在上传文件...', 30);
+        try {
+            const formData = new FormData();
+            formData.append('file', target);
+            
+            // 获取选中的职位信息
+            const selectedJob = state.jobs.find(j => j.id == state.selectedJobId);
+            if (selectedJob) {
+                formData.append('targetJob', JSON.stringify({
+                    id: selectedJob.id,
+                    title: selectedJob.title,
+                    description: selectedJob.description
+                }));
+            }
+
+            const uploadResult = await window.resumeDataManager.apiRequest('/ai/upload', 'POST', formData, false);
+            if (uploadResult && uploadResult.success && uploadResult.data && uploadResult.data.resumeId) {
+                updateLoadingProgress('上传成功，正在跳转...', 90);
+                setTimeout(() => {
+                    window.location.href = `analysis-detail.html?resume_id=${encodeURIComponent(String(uploadResult.data.resumeId))}&trigger=true`;
+                }, 500);
+            } else {
+                throw new Error(uploadResult.error || '文件上传失败');
+            }
+        } catch (error) {
+            console.error('Upload failed:', error);
+            throw error;
         }
-        
-        updateLoadingProgress('分析完成，正在渲染结果...', 100);
-        state.analysisResult = result;
-        renderSingleResults(result);
     }
 
     async function performMultiAnalysis() {
@@ -484,7 +812,6 @@
         
         // For uploaded files, we need to upload them first to get IDs
         if (state.uploadedFiles.length > 0) {
-            console.log('[MultiAnalysis] Uploading files:', state.uploadedFiles.length);
             let fileIdx = 0;
             for (const file of state.uploadedFiles) {
                 fileIdx++;
@@ -494,7 +821,7 @@
                     const formData = new FormData();
                     formData.append('file', file);
                     
-                    // 核心优化：传递目标职位上下文，触发后端自动初筛
+                    // 核心优化：传递目标职位上下文，触发后端自动快评
                     if (selectedJob) {
                         formData.append('targetJob', JSON.stringify(selectedJob));
                     }
@@ -507,7 +834,6 @@
                             id: uploadRes.data.resumeId,
                             name: file.name.replace(/\.[^/.]+$/, "") // Remove extension
                         });
-                        console.log(`[MultiAnalysis] File uploaded: ${file.name} -> ${uploadRes.data.resumeId}`);
                     } else {
                         throw new Error(`文件 ${file.name} 上传失败`);
                     }
@@ -519,7 +845,6 @@
         }
         
         const resumeIds = resumesInfo.map(r => r.id);
-        console.log('[MultiAnalysis] Starting comparison for IDs:', resumeIds);
         
         if (resumeIds.length < 2) {
             throw new Error('请至少选择或上传 2 份简历进行对比');
@@ -529,12 +854,10 @@
         
         // Pass a dummy progress callback to show it's working
         const result = await window.aiAnalyzer.compareResumes(resumeIds, selectedJob, (p) => {
-            console.log(`[MultiAnalysis] Progress: ${p.progress}% - ${p.message}`);
             updateLoadingProgress(p.message || '正在对比分析...', 40 + (p.progress * 0.5));
         });
         
         updateLoadingProgress('对比分析完成，正在渲染报告...', 100);
-        console.log('[MultiAnalysis] Comparison result received:', result);
         state.comparisonResult = result;
         window.lastComparisonResult = result; // Set global for debugging
         renderMultiResults(result, resumesInfo);
@@ -554,7 +877,7 @@
      * @property {number} dimensions.skills - 技能
      * @property {number} dimensions.experience - 经验
      * @property {number} dimensions.education - 学历
-     * @property {number} dimensions.stability - 稳定性
+     * @property {number} dimensions.project - 项目履历匹配
      * @property {number} dimensions.potential - 潜力
      * @property {number} dimensions.teamwork - 团队协作
      * @property {string|Object} report - AI 报告内容
@@ -570,8 +893,32 @@
     function normalizeResult(data) {
         if (!data) return null;
         
-        // 核心修复：多层次嗅探后端返回的数据结构
-        const resultData = data.data || data.analysis || data.result || data;
+        let resultData = data;
+        if (resultData && typeof resultData === 'object' && resultData.data && typeof resultData.data === 'object') {
+            resultData = resultData.data;
+        }
+        if (resultData && typeof resultData === 'object' && resultData.analysis) {
+            const analysisObj = (resultData.analysis && typeof resultData.analysis === 'object') ? resultData.analysis : {};
+            const merged = { ...analysisObj };
+            if (resultData.overall_score !== undefined) merged.overall_score = resultData.overall_score;
+            if (resultData.total_score !== undefined) merged.total_score = resultData.total_score;
+            if (resultData.score !== undefined) merged.score = resultData.score;
+            if (resultData.dimensions !== undefined) merged.dimensions = resultData.dimensions;
+            if (resultData.scores_percent !== undefined) merged.scores_percent = resultData.scores_percent;
+            if (resultData.radar_scores !== undefined) merged.radar_scores = resultData.radar_scores;
+            if (resultData.evaluation_report !== undefined) merged.evaluation_report = resultData.evaluation_report;
+            if (resultData.analysis_report !== undefined) merged.analysis_report = resultData.analysis_report;
+            if (resultData.report !== undefined) merged.report = resultData.report;
+            if (resultData.detailed_analysis !== undefined) merged.detailed_analysis = resultData.detailed_analysis;
+            if (resultData.details !== undefined) merged.details = resultData.details;
+            if (resultData.summary !== undefined) merged.summary = resultData.summary;
+            if (resultData.strengths !== undefined) merged.strengths = resultData.strengths;
+            if (resultData.weaknesses !== undefined) merged.weaknesses = resultData.weaknesses;
+            if (resultData.suggestions !== undefined) merged.suggestions = resultData.suggestions;
+            resultData = merged;
+        } else if (resultData && typeof resultData === 'object' && (resultData.result || resultData.analysis)) {
+            resultData = resultData.result || resultData.analysis;
+        }
         
         // 1. 基础信息归一化
         const info = resultData.basic_info || resultData.parsed_data?.basic_info || resultData.parsedData?.personalInfo || {};
@@ -599,11 +946,19 @@
                          resultData.score_detail || 
                          resultData.match_details || 
                          {};
+        let normalizedRawScores = rawScores;
+        if (typeof normalizedRawScores === 'string') {
+            try {
+                normalizedRawScores = JSON.parse(normalizedRawScores);
+            } catch (_) {
+                normalizedRawScores = {};
+            }
+        }
         
         const getVal = (keys) => {
             for (const key of keys) {
-                if (rawScores[key] !== undefined) {
-                    const val = typeof rawScores[key] === 'object' ? parseInt(rawScores[key].score || rawScores[key].value || 0) : parseInt(rawScores[key]);
+                if (normalizedRawScores[key] !== undefined) {
+                    const val = typeof normalizedRawScores[key] === 'object' ? parseInt(normalizedRawScores[key].score || normalizedRawScores[key].value || 0) : parseInt(normalizedRawScores[key]);
                     if (!isNaN(val)) return val;
                 }
             }
@@ -614,25 +969,51 @@
             skills: getVal(['skills', 'skill_match', 'professional', '专业技能', '技能评分', '技能匹配']),
             experience: getVal(['experience', 'experience_match', 'background', '工作经验', '经验契合', '经验评分']),
             education: getVal(['education', 'education_background', 'academic', '学历背景', '教育背景', '学历评分']),
-            stability: getVal(['stability', 'work_stability', 'tenure', '稳定性', '离职风险', '职业稳定性']),
+            project: getVal(['project', 'project_match', 'project_fit', 'project_experience', '项目履历匹配', '项目经验', '履历匹配']),
             potential: getVal(['potential', 'growth_potential', 'development', '发展潜力', '潜力评分', '成长性']),
             teamwork: getVal(['teamwork', 'collaboration', 'social', '团队协作', '协作能力', '团队精神'])
         };
 
         // 4. AI 报告归一化
-        const report = resultData.evaluation_report || 
-                      resultData.analysis_report || 
-                      resultData.report || 
-                      resultData.evaluation || 
+        let details = resultData.detailed_analysis || resultData.details || {};
+        if (typeof details === 'string') {
+            try { details = JSON.parse(details); } catch (_) { details = {}; }
+        }
+        const report =
+                      resultData.evaluation_report ||
+                      resultData.analysis_report ||
+                      resultData.report ||
+                      details.evaluation_report ||
+                      details.analysis_report ||
+                      details.report ||
+                      resultData.evaluation ||
                       resultData.feedback ||
-                      resultData.advice || 
+                      resultData.advice ||
                       '暂无详细报告内容';
+
+        // 5. 亮点与风险提取 (Extra highlights and risks)
+        const highlights =
+            resultData.highlights ||
+            resultData.strengths ||
+            (resultData.evaluation_report && resultData.evaluation_report.strengths) ||
+            (details.evaluation_report && details.evaluation_report.strengths) ||
+            details.strengths ||
+            [];
+        const risks =
+            resultData.risks ||
+            resultData.weaknesses ||
+            (resultData.evaluation_report && resultData.evaluation_report.weaknesses) ||
+            (details.evaluation_report && details.evaluation_report.weaknesses) ||
+            details.weaknesses ||
+            [];
 
         return {
             basicInfo,
             overallScore,
             dimensions,
             report,
+            highlights: Array.isArray(highlights) ? highlights : [],
+            risks: Array.isArray(risks) ? risks : [],
             raw: resultData // 保留原始数据以备不时之需
         };
     }
@@ -642,11 +1023,19 @@
             const data = normalizeResult(rawData);
             if (!data) return;
             
+            // 关键修复：增加最终数据完整性校验，如果总分和维度分均为0，说明数据尚未就绪
+            const hasDimensions = Object.values(data.dimensions).some(v => v > 0);
+            if (data.overallScore === 0 && !hasDimensions && (!data.report || data.report === '暂无详细报告内容')) {
+                console.warn('[Render] Data seems empty, skipping render to avoid blank page.');
+                if (typeof ui !== 'undefined' && ui.showNotification) {
+                    ui.showNotification('分析结果尚未完全准备好，请稍等或刷新页面', 'warning');
+                }
+                return;
+            }
+            
             dom.emptyState.classList.add('hidden');
             dom.multiResults.classList.add('hidden');
             dom.singleResults.classList.remove('hidden');
-            
-            console.log('Rendering single results with normalized data:', data);
             
             // 1. 基础信息 (Basic Info)
             if (dom.resName) dom.resName.textContent = data.basicInfo.name;
@@ -668,6 +1057,26 @@
             // 5. AI 报告内容 (AI Report)
             renderAIReport(data.report);
             
+            // 6. 亮点与风险 (Highlights & Risks)
+            if (dom.highlightsRisksContainer) {
+                if (data.highlights.length > 0 || data.risks.length > 0) {
+                    dom.highlightsRisksContainer.classList.remove('hidden');
+                    
+                    if (dom.resHighlights) {
+                        dom.resHighlights.innerHTML = data.highlights.length > 0 
+                            ? data.highlights.map(h => `<li class="flex items-start text-sm text-gray-700 leading-relaxed"><i class="fas fa-check-circle text-emerald-500 mt-1 mr-2 text-[10px]"></i>${h}</li>`).join('')
+                            : '<li class="text-xs text-gray-400 italic">暂无亮点</li>';
+                    }
+                    
+                    if (dom.resRisks) {
+                        dom.resRisks.innerHTML = data.risks.length > 0
+                            ? data.risks.map(r => `<li class="flex items-start text-sm text-gray-700 leading-relaxed"><i class="fas fa-exclamation-circle text-rose-500 mt-1 mr-2 text-[10px]"></i>${r}</li>`).join('')
+                            : '<li class="text-xs text-gray-400 italic">暂无风险</li>';
+                    }
+                } else {
+                    dom.highlightsRisksContainer.classList.add('hidden');
+                }
+            }
         } catch (err) {
             console.error('Error in renderSingleResults:', err);
             if (typeof ui !== 'undefined' && ui.showNotification) {
@@ -688,12 +1097,12 @@
             radarChart.destroy();
         }
 
-        const labels = ['专业技能', '经验契合', '学历背景', '稳定性', '潜力', '团队协作'];
+        const labels = ['专业技能', '经验契合', '项目履历', '学历背景', '发展潜力', '团队协作'];
         const values = [
             scores.skills || 0,
             scores.experience || 0,
+            scores.project || 0,
             scores.education || 0,
-            scores.stability || 0,
             scores.potential || 0,
             scores.teamwork || 0
         ];
@@ -747,8 +1156,8 @@
         const dimensions = [
             { key: 'skills', label: '技能匹配', icon: 'fa-tools', bgColor: 'bg-blue-50', textColor: 'text-blue-600' },
             { key: 'experience', label: '经验契合', icon: 'fa-briefcase', bgColor: 'bg-blue-50', textColor: 'text-blue-600' },
+            { key: 'project', label: '项目履历匹配', icon: 'fa-project-diagram', bgColor: 'bg-blue-50', textColor: 'text-blue-600' },
             { key: 'education', label: '学历背景', icon: 'fa-graduation-cap', bgColor: 'bg-blue-50', textColor: 'text-blue-600' },
-            { key: 'stability', label: '离职稳定性', icon: 'fa-anchor', bgColor: 'bg-blue-50', textColor: 'text-blue-600' },
             { key: 'potential', label: '发展潜力', icon: 'fa-rocket', bgColor: 'bg-blue-50', textColor: 'text-blue-600' },
             { key: 'teamwork', label: '团队协作', icon: 'fa-users', bgColor: 'bg-blue-50', textColor: 'text-blue-600' }
         ];
@@ -801,83 +1210,180 @@
             return;
         }
 
+        const keyMap = {
+            'summary': '能力总结',
+            'strengths': '核心优势',
+            'weaknesses': '不足之处',
+            'suggestions': '改进建议',
+            'hiring_advice': '录用建议',
+            'parsed_data': '解析详情',
+            'basic_info': '基础信息',
+            'skills': '技能评估',
+            'experience': '经验分析',
+            'education': '教育背景',
+            'evaluation_report': '深度评估报告',
+            'highlights': '核心亮点',
+            'risks': '风险提示'
+        };
+
         if (typeof report === 'string') {
-            // Convert simple markdown-like content to HTML
-            const html = report
-                .replace(/### (.*)/g, '<h4 class="text-lg font-bold text-gray-900 mt-6 mb-3">$1</h4>')
-                .replace(/## (.*)/g, '<h3 class="text-xl font-bold text-gray-900 mt-8 mb-4">$1</h3>')
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                .replace(/\n/g, '<br>');
-            dom.aiReport.innerHTML = html;
-        } else if (typeof report === 'object' && report !== null) {
-            // If report is structured object
-            let html = '';
-            
-            // 综合评价 (Summary) - 支持更多字段名
-            const summary = report.summary || report.hiring_advice || report.overall_evaluation || report.content || '';
-            if (summary) {
-                html += `<div class="bg-blue-50/50 p-6 rounded-2xl border border-blue-100 mb-8">
-                    <h4 class="text-blue-900 font-bold mb-2 flex items-center">
-                        <i class="fas fa-quote-left mr-2 text-blue-400"></i>
-                        综合评价
-                    </h4>
-                    <p class="text-blue-800 leading-relaxed text-sm">${summary}</p>
-                </div>`;
-            }
-            
-            // 核心优势 (Strengths)
-            const strengths = report.strengths || report.core_strengths || report.highlights || [];
-            if (Array.isArray(strengths) && strengths.length > 0) {
-                html += `<div class="mb-8">
-                    <h4 class="text-gray-900 font-bold mb-4 flex items-center">
-                        <i class="fas fa-check-circle mr-2 text-green-500"></i>
-                        核心优势
-                    </h4>
-                    <ul class="space-y-3">
-                        ${strengths.map(s => `<li class="flex items-start text-sm">
-                            <span class="w-1.5 h-1.5 rounded-full bg-green-500 mt-1.5 mr-3 flex-shrink-0"></span>
-                            <span>${s}</span>
-                        </li>`).join('')}
-                    </ul>
-                </div>`;
+            // 核心修复：如果检测到对比解析的内容出现在单人详情中，拦截并提示
+            if (report.includes('对比分析报告') || report.includes('候选人对比') || report.includes('两位候选人')) {
+                console.warn('[Security] Detected multi-analysis report content in single view');
+                dom.aiReport.innerHTML = `
+                    <div class="p-8 bg-blue-50 rounded-2xl border border-blue-100 text-center">
+                        <i class="fas fa-exclamation-triangle text-blue-500 text-3xl mb-4"></i>
+                        <h4 class="text-blue-900 font-bold mb-2">报告类型不匹配</h4>
+                        <p class="text-blue-700 text-sm mb-6">当前展示的是对比分析报告，建议重新生成针对该候选人的深度解析报告以获得更精准的评估。</p>
+                        <button id="re-analyze-btn" class="px-6 py-2 bg-blue-500 text-white rounded-lg font-bold hover:bg-blue-600 transition-colors">
+                            立即重新分析
+                        </button>
+                    </div>
+                `;
+                const reBtn = document.getElementById('re-analyze-btn');
+                if (reBtn) reBtn.onclick = () => startAnalysis();
+                return;
             }
 
-            // 潜在风险 (Weaknesses/Risks)
-            const weaknesses = report.weaknesses || report.potential_issues || report.risks || report.shortcomings || [];
-            if (Array.isArray(weaknesses) && weaknesses.length > 0) {
-                html += `<div class="mb-8">
-                    <h4 class="text-gray-900 font-bold mb-4 flex items-center">
-                        <i class="fas fa-exclamation-triangle mr-2 text-red-400"></i>
-                        潜在风险
-                    </h4>
-                    <ul class="space-y-3">
-                        ${weaknesses.map(w => `<li class="flex items-start text-sm">
-                            <span class="w-1.5 h-1.5 rounded-full bg-red-400 mt-1.5 mr-3 flex-shrink-0"></span>
-                            <span>${w}</span>
-                        </li>`).join('')}
-                    </ul>
-                </div>`;
-            }
+            // Convert simple markdown-like content to HTML with enhanced styling
+            dom.aiReport.innerHTML = report.split('\n').map(line => {
+                let content = line.trim();
+                if (!content) return '';
+                
+                // 处理可能出现的 [object Object] 异常
+                if (content.includes('[object Object]')) return '';
+
+                if (content.startsWith('###')) {
+                    const rawText = content.replace(/^###\s*/, '').trim();
+                    const title = keyMap[rawText.toLowerCase()] || rawText;
+                    return `<h4 class="text-lg font-bold text-gray-900 mt-8 mb-4 flex items-center tracking-tight">
+                                <span class="w-1.5 h-5 bg-blue-600 rounded-full mr-3"></span>${title}
+                            </h4>`;
+                }
+                if (content.startsWith('##')) {
+                    const rawText = content.replace(/^##\s*/, '').trim();
+                    const title = keyMap[rawText.toLowerCase()] || rawText;
+                    return `<h3 class="text-xl font-extrabold text-gray-900 mt-10 mb-5 tracking-tight">${title}</h3>`;
+                }
+                if (content.startsWith('# ')) {
+                    const rawText = content.replace(/^#\s*/, '').trim();
+                    const title = keyMap[rawText.toLowerCase()] || rawText;
+                    return `<h2 class="text-2xl font-black text-gray-900 mt-12 mb-6 tracking-tighter border-b pb-2">${title}</h2>`;
+                }
+                if (content.startsWith('- ') || content.startsWith('* ')) {
+                    const text = content.replace(/^[-*]\s*/, '').trim();
+                    return `<div class="flex items-start mb-3 pl-1">
+                                <i class="fas fa-circle text-[6px] text-blue-500 mt-2.5 mr-3 flex-shrink-0"></i>
+                                <span class="text-gray-600 leading-relaxed">${text}</span>
+                            </div>`;
+                }
+                
+                // 加粗处理 **text**
+                const formattedContent = content.replace(/\*\*(.*?)\*\*/g, '<strong class="text-gray-900 font-bold">$1</strong>');
+                return `<p class="text-gray-600 leading-relaxed mb-4 pl-1">${formattedContent}</p>`;
+            }).join('');
+        } else if (typeof report === 'object' && report !== null) {
+            // If report is structured object, use the enhanced object rendering logic
+            let html = '';
             
-            // 改进建议 (Suggestions)
-            const suggestions = report.suggestions || report.career_advice || report.improvement_suggestions || [];
-            if (Array.isArray(suggestions) && suggestions.length > 0) {
-                html += `<div class="mb-8">
-                    <h4 class="text-gray-900 font-bold mb-4 flex items-center">
-                        <i class="fas fa-lightbulb mr-2 text-yellow-500"></i>
-                        改进建议
-                    </h4>
-                    <ul class="space-y-3">
-                        ${suggestions.map(s => `<li class="flex items-start text-sm">
-                            <span class="w-1.5 h-1.5 rounded-full bg-yellow-500 mt-1.5 mr-3 flex-shrink-0"></span>
-                            <span>${s}</span>
-                        </li>`).join('')}
-                    </ul>
-                </div>`;
+            // Handle summary separately if exists for prominence
+            const summary = report.summary || report.evaluation || '';
+            if (summary) {
+                html += `
+                    <div class="mb-10 p-6 bg-blue-50/50 rounded-2xl border border-blue-100 shadow-sm relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 bg-blue-600/5 rounded-full transition-transform group-hover:scale-110"></div>
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-md">
+                                <i class="fas fa-robot text-sm"></i>
+                            </div>
+                            <div>
+                                <h5 class="text-base font-bold text-gray-900">AI 综合评价</h5>
+                                <p class="text-[10px] text-blue-600 font-bold uppercase tracking-widest">Executive Summary</p>
+                            </div>
+                        </div>
+                        <div class="text-sm text-gray-700 leading-relaxed whitespace-pre-line relative z-10">${typeof summary === 'string' ? summary : JSON.stringify(summary)}</div>
+                    </div>
+                `;
             }
-            
-            if (!html) html = '<div class="text-center py-10 text-gray-400">报告内容解析中或为空</div>';
-            dom.aiReport.innerHTML = html;
+
+            for (const [key, value] of Object.entries(report)) {
+                if (key === 'basic_info' || key === 'parsed_data' || key === 'summary' || key === 'evaluation') continue;
+                
+                const title = keyMap[key] || key;
+                
+                // 针对“录用建议”进行特殊样式优化
+                if (key === 'hiring_advice') {
+                    let grade = '';
+                    let cnLevel = '';
+                    let advice = '';
+
+                    let adviceObj = value;
+                    if (typeof value === 'string' && value.trim().startsWith('{')) {
+                        try { adviceObj = JSON.parse(value); } catch(e){}
+                    }
+
+                    if (typeof adviceObj === 'object' && adviceObj !== null) {
+                        grade = adviceObj.grade || '';
+                        cnLevel = adviceObj.comment || '';
+                        const reason = adviceObj.reason || '';
+                        advice = reason || '';
+                    } else {
+                        advice = typeof value === 'string' ? value : JSON.stringify(value);
+                        // 尝试匹配等级（支持 A, B+, B, C, 推荐, 建议录用 等）
+                        const gradeMatch = advice.match(/^([A-DS][+-]?|推荐|强烈推荐|建议录用|不予考虑|慎重考虑)[:：\s]?(.*)/i);
+                        if (gradeMatch) {
+                            grade = gradeMatch[1];
+                            advice = gradeMatch[2];
+                        }
+                    }
+
+                    html += `
+                        <div class="mb-10 last:mb-0">
+                            <h4 class="text-lg font-bold text-gray-900 mb-4 flex items-center tracking-tight">
+                                <span class="w-1.5 h-5 bg-emerald-600 rounded-full mr-3"></span>${title}
+                            </h4>
+                            <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
+                                <div class="flex flex-col md:flex-row md:items-start gap-6">
+                                    ${grade ? `
+                                    <div class="flex-shrink-0 flex flex-col items-center justify-center min-w-[120px] px-4 py-6 bg-gray-900 rounded-2xl shadow-lg">
+                                        <span class="text-[10px] text-gray-400 font-bold uppercase mb-2 tracking-widest">推荐等级</span>
+                                        <span class="text-5xl font-black text-white leading-none">${grade}</span>
+                                        ${cnLevel ? `<span class="text-[11px] font-bold text-emerald-400 mt-3 text-center leading-tight px-1">${cnLevel}</span>` : ''}
+                                    </div>
+                                    ` : ''}
+                                    <div class="flex-1">
+                                        <div class="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-2 flex items-center">
+                                            <i class="fas fa-comment-dots mr-2"></i>核心录用理由
+                                        </div>
+                                        <div class="text-gray-700 leading-relaxed text-sm md:text-base whitespace-pre-line">
+                                            ${advice}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>`;
+                } else {
+                    html += `
+                        <div class="mb-8 last:mb-0">
+                            <h4 class="text-lg font-bold text-gray-900 mb-4 flex items-center tracking-tight">
+                                <span class="w-1.5 h-5 bg-blue-600 rounded-full mr-3"></span>${title}
+                            </h4>
+                            <div class="text-gray-600 leading-relaxed pl-4 ml-1">
+                                ${Array.isArray(value) 
+                                    ? `<div class="space-y-3">
+                                        ${value.map(item => `
+                                            <div class="flex items-start">
+                                                <i class="fas fa-check-circle text-blue-500 mt-1.5 mr-3 text-xs flex-shrink-0"></i>
+                                                <span class="text-gray-600">${item}</span>
+                                            </div>`).join('')}
+                                           </div>`
+                                    : (typeof value === 'string' ? `<p class="whitespace-pre-line">${value}</p>` : `<pre class="text-xs bg-gray-50 p-3 rounded-lg overflow-x-auto">${JSON.stringify(value, null, 2)}</pre>`)
+                                }
+                            </div>
+                        </div>`;
+                }
+            }
+            dom.aiReport.innerHTML = html || '<p class="text-gray-400 italic">暂无报告内容</p>';
         } else {
             dom.aiReport.innerHTML = '<div class="text-center py-10 text-gray-400">暂无详细报告内容</div>';
         }
@@ -893,14 +1399,14 @@
             multiRadarChart.destroy();
         }
 
-        const labels = ['专业技能', '经验契合', '学历背景', '稳定性', '潜力', '团队协作'];
+        const labels = ['专业技能', '经验契合', '项目履历', '学历背景', '发展潜力', '团队协作'];
         const datasets = people.map((p, i) => ({
             label: p.name,
             data: [
                 p.scores_percent.skills || 0,
                 p.scores_percent.experience || 0,
+                p.scores_percent.project || p.scores_percent.stability || 0,
                 p.scores_percent.education || 0,
-                p.scores_percent.stability || 0,
                 p.scores_percent.potential || 0,
                 p.scores_percent.teamwork || 0
             ],
@@ -941,8 +1447,6 @@
  */
 function renderMultiResults(data, selectedResumes = []) {
     try {
-        console.log('[RenderMulti] Starting with data:', data, 'selectedResumes:', selectedResumes);
-        
         dom.emptyState.classList.add('hidden');
         dom.singleResults.classList.add('hidden');
         dom.multiResults.classList.remove('hidden');
@@ -952,7 +1456,6 @@ function renderMultiResults(data, selectedResumes = []) {
         
         // 如果数据是字符串，尝试解析 (针对可能的解析残留)
         if (typeof resultData === 'string') {
-            console.log('[RenderMulti] resultData is string, attempting to parse');
             try {
                 // 尝试清理 Markdown 代码块
                 let cleanData = resultData.replace(/```(?:json)?\s*([\s\S]*?)\s*```/i, '$1').trim();
@@ -971,12 +1474,9 @@ function renderMultiResults(data, selectedResumes = []) {
         if (!resultData || (typeof resultData !== 'object') || Object.keys(resultData).length === 0) {
             dom.multiResults.innerHTML = `
                 <div class="text-center py-20 bg-white rounded-xl border border-gray-100 shadow-sm">
-                    <i class="fas fa-exclamation-triangle text-amber-500 text-4xl mb-4"></i>
+                    <i class="fas fa-exclamation-triangle text-blue-500 text-4xl mb-4"></i>
                     <div class="text-gray-500 font-medium">未获取到有效的对比数据</div>
                     <div class="text-gray-400 text-xs mt-2">数据类型: ${typeof resultData}</div>
-                    <div class="mt-6">
-                        <button onclick="console.log('Raw data:', window.lastComparisonResult)" class="text-blue-600 text-xs hover:underline">在控制台查看原始数据</button>
-                    </div>
                 </div>
             `;
             return;
@@ -1037,9 +1537,6 @@ function renderMultiResults(data, selectedResumes = []) {
                         <i class="fas fa-users-slash text-gray-300 text-4xl mb-4"></i>
                         <div class="text-gray-500 font-medium">未能解析出候选人对比信息</div>
                         <div class="text-gray-400 text-xs mt-2">AI 返回了数据但结构无法识别。包含的键：${Object.keys(resultData).join(', ')}</div>
-                        <div class="mt-6">
-                            <button onclick="console.log('Raw data:', window.lastComparisonResult)" class="text-blue-600 text-xs hover:underline">在控制台查看原始数据</button>
-                        </div>
                     </div>
                 `;
                 return;
@@ -1057,7 +1554,7 @@ function renderMultiResults(data, selectedResumes = []) {
                 { key: 'skills', label: '专业技能' },
                 { key: 'experience', label: '经验契合' },
                 { key: 'education', label: '学历背景' },
-                { key: 'stability', label: '离职稳定性' },
+                { key: 'project', label: '项目履历' },
                 { key: 'potential', label: '发展潜力' },
                 { key: 'teamwork', label: '团队协作' }
             ];
@@ -1079,6 +1576,12 @@ function renderMultiResults(data, selectedResumes = []) {
 
             const recommendation = resultData.recommendation || {};
             const winnerName = getWinnerName(recommendation.winner);
+
+            const gridColsClass = (people.length === 1)
+                ? 'grid-cols-1 md:grid-cols-1 lg:grid-cols-1'
+                : (people.length === 2)
+                    ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-2'
+                    : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3';
 
             let html = `
                 <div class="space-y-6">
@@ -1105,9 +1608,11 @@ function renderMultiResults(data, selectedResumes = []) {
                                 ${people.map((p, i) => `
                                     <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100 hover:border-blue-200 transition-colors">
                                         <div class="flex items-center space-x-3">
-                                            <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-sm" style="background-color: ${colors[i % colors.length].border}">
-                                                ${p.name.charAt(0)}
-                                            </div>
+                                             ${window.ui ? window.ui.renderAvatar(p.avatar, p.name, 'w-8 h-8', 'rounded-lg', true) : `
+                                                 <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400">
+                                                     <i class="fas fa-user text-xs"></i>
+                                                 </div>
+                                             `}
                                             <div>
                                                 <div class="font-bold text-gray-900 text-sm">${p.name}</div>
                                                 <div class="text-[10px] text-gray-500 font-medium">综合评分</div>
@@ -1148,9 +1653,11 @@ function renderMultiResults(data, selectedResumes = []) {
                                         <tr class="hover:bg-blue-50/30 transition-colors">
                                             <td class="p-3 bg-gray-50/10">
                                                 <div class="flex items-center space-x-2">
-                                                    <div class="w-5 h-5 shrink-0 rounded-full flex items-center justify-center text-white text-[9px] font-bold shadow-sm" style="background-color: ${colors[i % colors.length].border}">
-                                                        ${p.name.charAt(0)}
-                                                    </div>
+                                                    ${window.ui ? window.ui.renderAvatar(p.avatar, p.name, 'w-5 h-5 shrink-0', 'rounded-lg', true) : `
+                                                        <div class="w-6 h-6 shrink-0 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400">
+                                                            <i class="fas fa-user text-[10px]"></i>
+                                                        </div>
+                                                    `}
                                                     <span class="font-bold text-gray-900 truncate" title="${p.name}">${p.name}</span>
                                                 </div>
                                             </td>
@@ -1184,6 +1691,14 @@ function renderMultiResults(data, selectedResumes = []) {
                                 <i class="fas fa-robot mr-2 text-blue-600"></i>
                                 AI 综合对比分析
                             </h4>
+                            <div class="flex items-center gap-2">
+                                <button id="exportMdBtn" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200">
+                                    <i class="fas fa-file-code mr-1"></i>导出MD
+                                </button>
+                                <button id="exportPdfBtn" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700">
+                                    <i class="fas fa-file-pdf mr-1"></i>导出PDF
+                                </button>
+                            </div>
                         </div>
                         <div class="p-8">
                             ${recommendation.reason ? `
@@ -1202,21 +1717,23 @@ function renderMultiResults(data, selectedResumes = []) {
                                     <p class="text-sm text-gray-700 leading-relaxed">${recommendation.reason}</p>
                                     ${recommendation.hiring_risk ? `
                                         <div class="mt-4 pt-4 border-t border-blue-100 flex items-start space-x-2">
-                                            <i class="fas fa-exclamation-triangle text-amber-500 mt-0.5"></i>
-                                            <p class="text-xs text-gray-600"><span class="font-bold text-amber-600">风险提示：</span>${recommendation.hiring_risk}</p>
+                                            <i class="fas fa-exclamation-triangle text-rose-500 mt-0.5"></i>
+                                            <p class="text-xs text-gray-600"><span class="font-bold text-rose-600">风险提示：</span>${recommendation.hiring_risk}</p>
                                         </div>
                                     ` : ''}
                                 </div>
                             ` : ''}
 
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div class="grid ${gridColsClass} gap-6">
                                 ${people.map((p, i) => `
                                     <div class="bg-gray-50/50 p-6 rounded-2xl border border-gray-100 hover:shadow-md transition-all">
                                         <div class="flex items-center justify-between mb-4">
                                             <div class="flex items-center space-x-3">
-                                                <div class="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-sm" style="background-color: ${colors[i % colors.length].border}">
-                                                    ${p.name.charAt(0)}
-                                                </div>
+                                                ${window.ui ? window.ui.renderAvatar(p.avatar, p.name, 'w-10 h-10', 'rounded-lg', true) : `
+                                                    <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400">
+                                                        <i class="fas fa-user text-sm"></i>
+                                                    </div>
+                                                `}
                                                 <span class="font-bold text-gray-900 truncate max-w-[120px]" title="${p.name}">${p.name}</span>
                                             </div>
                                             <div class="flex flex-col items-end">
@@ -1279,6 +1796,69 @@ function renderMultiResults(data, selectedResumes = []) {
             
             dom.multiResults.innerHTML = html;
             renderMultiRadarChart(people, colors);
+            try {
+                const exportMdBtn = document.getElementById('exportMdBtn');
+                const exportPdfBtn = document.getElementById('exportPdfBtn');
+                const buildMarkdown = () => {
+                    const lines = [];
+                    lines.push(`# 简历多人对比分析报告`);
+                    lines.push('');
+                    if (recommendation && recommendation.reason) {
+                        lines.push(`> 推荐人选：${winnerName}`);
+                        lines.push('');
+                        lines.push(`> 理由：${recommendation.reason}`);
+                        if (recommendation.hiring_risk) {
+                            lines.push(`> 风险提示：${recommendation.hiring_risk}`);
+                        }
+                        lines.push('');
+                    }
+                    lines.push(`## 候选人概览`);
+                    people.forEach(p => {
+                        lines.push(`- ${p.name}：综合得分 ${p.total_score}`);
+                    });
+                    lines.push('');
+                    lines.push(`## 核心维度对照表`);
+                    const dimLabels = ['skills','experience','project','education','potential','teamwork'];
+                    const dimTitle = ['专业技能','经验契合','项目履历','学历背景','潜力','团队协作'];
+                    lines.push(`| 候选人 | ${dimTitle.join(' | ')} | 综合得分 |`);
+                    lines.push(`| - | - | - | - | - | - | - |`);
+                    people.forEach(p => {
+                        const row = [
+                            p.name,
+                            ...dimLabels.map(k => (p.scores_percent && p.scores_percent[k] != null) ? String(p.scores_percent[k]) : '0'),
+                            String(p.total_score)
+                        ];
+                        lines.push(`| ${row.join(' | ')} |`);
+                    });
+                    lines.push('');
+                    lines.push(`## AI 综合评价`);
+                    people.forEach(p => {
+                        lines.push(`### ${p.name}`);
+                        lines.push((p.summary && String(p.summary).trim()) ? String(p.summary).trim() : '暂无评价');
+                        lines.push('');
+                    });
+                    return lines.join('\n');
+                };
+                exportMdBtn?.addEventListener('click', () => {
+                    const md = buildMarkdown();
+                    const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    const dateStr = new Date().toISOString().slice(0,10);
+                    a.download = `对比分析_${dateStr}.md`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                });
+                exportPdfBtn?.addEventListener('click', (e) => {
+                    const dateStr = new Date().toISOString().slice(0, 10);
+                    exportToPdf('multi-analysis-results', `多人对比分析报告_${dateStr}.pdf`, e.currentTarget);
+                });
+            } catch (err) {
+                console.warn('Export handlers init failed:', err);
+            }
         } catch (err) {
             console.error('Render multi results failed:', err);
             dom.multiResults.innerHTML = `
@@ -1292,7 +1872,195 @@ function renderMultiResults(data, selectedResumes = []) {
         }
     }
 
+    function buildMarkdown() {
+        const record = state.analysisResult;
+        if (!record) return '';
+        
+        const data = normalizeResult(record);
+        const lines = [];
+        const nameText = data.basicInfo.name || '候选人';
+        
+        lines.push(`# ${nameText} 的简历解析报告`);
+        lines.push('');
+        lines.push(`## 综合得分`);
+        lines.push(`${data.overallScore} / 100`);
+        lines.push('');
+        lines.push(`## 核心维度`);
+        
+        const dimLabels = {
+            skills: '专业技能',
+            experience: '经验契合',
+            project: '项目履历',
+            education: '学历背景',
+            potential: '潜力',
+            teamwork: '团队协作'
+        };
+        
+        Object.keys(dimLabels).forEach(key => {
+            lines.push(`- ${dimLabels[key]}：${data.dimensions[key] || 0}`);
+        });
+        
+        lines.push('');
+        lines.push(`## AI 深度分析报告`);
+        lines.push(data.report || '暂无详细报告');
+        lines.push('');
+        
+        if (data.highlights && data.highlights.length > 0) {
+            lines.push(`### 核心优势`);
+            data.highlights.forEach(h => lines.push(`- ${h}`));
+            lines.push('');
+        }
+        
+        if (data.risks && data.risks.length > 0) {
+            lines.push(`### 不足之处`);
+            data.risks.forEach(r => lines.push(`- ${r}`));
+            lines.push('');
+        }
+        
+        return lines.join('\n');
+    }
+
+    async function exportToPdf(elementId, filename, btn) {
+        const target = document.getElementById(elementId);
+        if (!target) return;
+
+        const originalHtml = btn ? btn.innerHTML : '';
+        
+        try {
+            if (btn && btn.tagName === 'BUTTON') {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1.5"></i>正在生成...';
+            }
+
+            // Temporarily hide elements that shouldn't be in PDF
+            const buttonsToHide = target.querySelectorAll('button');
+            const originalDisplays = Array.from(buttonsToHide).map(b => b.style.display);
+            buttonsToHide.forEach(b => b.style.display = 'none');
+
+            // Set fixed width for better canvas capture
+            const originalWidth = target.style.width;
+            target.style.width = '1200px'; // Consistent width for PDF
+
+            const canvas = await html2canvas(target, {
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                backgroundColor: '#ffffff',
+                width: 1200
+            });
+
+            // Restore elements
+            target.style.width = originalWidth;
+            buttonsToHide.forEach((b, i) => b.style.display = originalDisplays[i]);
+
+            const imgData = canvas.toDataURL('image/jpeg', 0.95);
+            const jspdfNS = window.jspdf || {};
+            const JsPDFCtor = jspdfNS.jsPDF || window.jsPDF;
+            
+            if (!JsPDFCtor) {
+                window.print();
+                return;
+            }
+
+            const pdf = new JsPDFCtor('p', 'mm', 'a4');
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+            
+            let heightLeft = pdfHeight;
+            let position = 0;
+            const pageHeight = pdf.internal.pageSize.getHeight();
+
+            pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, pdfHeight);
+            heightLeft -= pageHeight;
+
+            while (heightLeft >= 0) {
+                position = heightLeft - pdfHeight;
+                pdf.addPage();
+                pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, pdfHeight);
+                heightLeft -= pageHeight;
+            }
+
+            pdf.save(filename);
+        } catch (err) {
+            console.error('PDF Export Error:', err);
+            alert('导出失败，请重试或尝试直接打印页面');
+        } finally {
+            if (btn && btn.tagName === 'BUTTON') {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
+        }
+    }
+
     // --- Helpers ---
+
+    function isMultiReportString(report) {
+        return typeof report === 'string' && (
+            report.includes('对比分析报告') ||
+            report.includes('候选人对比') ||
+            report.includes('两位候选人')
+        );
+    }
+
+    function isEmptyReport(report) {
+        if (!report) return true;
+        if (typeof report === 'string') {
+            const s = report.trim();
+            if (!s) return true;
+            if (s === '暂无报告' || s === '暂无详细报告内容') return true;
+            return false;
+        }
+        if (typeof report === 'object') {
+            return Object.keys(report).length === 0;
+        }
+        return true;
+    }
+
+    function isDeepAnalysisCompleteFromResultData(resultData) {
+        if (!resultData) return false;
+        const report = resultData.report ?? resultData.detailed_analysis ?? resultData.details ?? resultData.evaluation_report ?? resultData.analysis_report ?? null;
+        if (isMultiReportString(report)) return false;
+        return !isEmptyReport(report);
+    }
+
+    async function fetchDeepAnalysisCompleteness(resumeId) {
+        const id = String(resumeId);
+        if (deepAnalysisCompletenessCache.has(id)) return deepAnalysisCompletenessCache.get(id) === true;
+        if (deepAnalysisCompletenessInFlight.has(id)) return false;
+        deepAnalysisCompletenessInFlight.add(id);
+        try {
+            const result = await window.resumeDataManager.apiRequest(`/ai/result/${encodeURIComponent(id)}`, 'GET', null, false, true);
+            const isComplete = isDeepAnalysisCompleteFromResultData(result ? result.data : null);
+            deepAnalysisCompletenessCache.set(id, isComplete);
+            return isComplete;
+        } catch (e) {
+            deepAnalysisCompletenessCache.set(id, false);
+            return false;
+        } finally {
+            deepAnalysisCompletenessInFlight.delete(id);
+        }
+    }
+
+    async function prefetchDeepAnalysisCompleteness(resumeIds) {
+        if (!window.resumeDataManager || typeof window.resumeDataManager.apiRequest !== 'function') return;
+        const pending = (resumeIds || []).filter(id => id && !deepAnalysisCompletenessCache.has(String(id)) && !deepAnalysisCompletenessInFlight.has(String(id)));
+        if (pending.length === 0) return;
+
+        const concurrency = 4;
+        let cursor = 0;
+        const workers = Array.from({ length: Math.min(concurrency, pending.length) }, async () => {
+            while (cursor < pending.length) {
+                const id = pending[cursor];
+                cursor += 1;
+                await fetchDeepAnalysisCompleteness(id);
+            }
+        });
+
+        await Promise.all(workers);
+        if (state.analysisMode === 'single' && state.activeSidebarTab === 'library') {
+            renderCandidateList();
+        }
+    }
 
     function debounce(func, wait) {
         let timeout;

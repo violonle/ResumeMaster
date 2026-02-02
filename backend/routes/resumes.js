@@ -1,8 +1,16 @@
 const express = require('express');
-const { getAllResumes, getResumeById, createResume, updateResume, deleteResume, batchDeleteResumes } = require('../controllers/resumeController');
+const { 
+    getAllResumes, 
+    getResumeById, 
+    createResume, 
+    updateResume, 
+    deleteResume, 
+    batchDeleteResumes,
+    updateResumeStatus 
+} = require('../controllers/resumeController');
 const { authenticate } = require('../middleware/auth');
 const Permission = require('../middleware/permission');
-const { Resume } = require('../models');
+const { Resume, ResumeJob } = require('../models');
 const { Op } = require('sequelize');
 const sms = require('../services/smsService');
 const emailService = require('../services/emailService');
@@ -11,70 +19,10 @@ const router = express.Router();
 
 // 所有简历相关路由都需要认证
 router.get('/', authenticate, Permission.rateLimit(500, 60*60*1000), getAllResumes);
-router.get('/recruitment/status-grouped', authenticate, Permission.rateLimit(500, 60*60*1000), async (req, res) => {
-    try {
-        const userId = req.user.id;
-        const companyId = req.user.company_id;
-
-        const whereClause = {
-            user_id: userId
-        };
-
-        if (companyId) {
-            whereClause.company_id = companyId;
-        }
-
-        const resumes = await Resume.findAll({
-            where: whereClause,
-            order: [['upload_date', 'DESC']],
-            attributes: [
-                'id', 'name', 'file_name', 'email', 'phone', 'job_title', 
-                'recruitment_status', 'upload_date', 'parsed_data'
-            ]
-        });
-
-        const statusGroups = {
-            '投递': [],
-            '初筛': [],
-            '面试': [],
-            'Offer': [],
-            '入职': []
-        };
-
-        resumes.forEach(resume => {
-            const status = resume.recruitment_status || '投递';
-            if (statusGroups[status]) {
-                const parsedData = resume.parsed_data || {};
-                statusGroups[status].push({
-                    id: resume.id,
-                    name: resume.name || parsedData.name || resume.file_name || '未命名',
-                    file_name: resume.file_name,
-                    email: resume.email || parsedData.email || '',
-                    phone: resume.phone || parsedData.phone || '',
-                    job_title: resume.job_title || parsedData.jobTitle || parsedData.position || '职位未知',
-                    position: resume.job_title || parsedData.jobTitle || parsedData.position || '职位未知',
-                    recruitment_status: resume.recruitment_status,
-                    upload_date: resume.upload_date,
-                    parsed_data: parsedData
-                });
-            }
-        });
-
-        res.json({
-            success: true,
-            data: statusGroups
-        });
-    } catch (error) {
-        console.error('获取招聘流程数据失败:', error);
-        res.status(500).json({
-            success: false,
-            error: { message: '获取招聘流程数据失败: ' + error.message }
-        });
-    }
-});
 router.get('/:id', authenticate, Permission.rateLimit(500, 60*60*1000), getResumeById);
 router.post('/', authenticate, Permission.requireSubscription, Permission.checkApiLimit('resumeUpload'), Permission.rateLimit(300, 60*60*1000), createResume);
 router.put('/:id', authenticate, Permission.requireSubscription, Permission.rateLimit(300, 60*60*1000), updateResume);
+router.put('/:id/status', authenticate, Permission.requireSubscription, Permission.rateLimit(300, 60*60*1000), updateResumeStatus);
 router.delete('/:id', authenticate, Permission.requireSubscription, Permission.rateLimit(200, 60*60*1000), deleteResume);
 
 // 批量删除简历
@@ -244,7 +192,6 @@ router.post('/:id/interview', authenticate, Permission.requireSubscription, Perm
         };
 
         await resume.update({
-            recruitment_status: '面试',
             parsed_data: parsedData
         });
 
@@ -254,11 +201,12 @@ router.post('/:id/interview', authenticate, Permission.requireSubscription, Perm
         try {
             // 更鲁棒的电话号码提取
             let phone = resume.phone || parsedData.phone || (parsedData.basic_info && parsedData.basic_info.phone);
+            const phoneRegex = /1[3-9]\d{9}/;
             
             // 如果上述方式都没找到合法的 11 位手机号，尝试从原始文本中匹配
-            if (!phone || !/1\d{10}/.test(String(phone))) {
+            if (!phone || !phoneRegex.test(String(phone))) {
                 const rawText = resume.raw_text || '';
-                const phoneMatch = rawText.match(/1\d{10}/);
+                const phoneMatch = rawText.match(phoneRegex);
                 if (phoneMatch) {
                     phone = phoneMatch[0];
                     console.log(`[面试通知] 从原始文本中提取到手机号: ${phone}`);
@@ -275,37 +223,34 @@ router.post('/:id/interview', authenticate, Permission.requireSubscription, Perm
             
             const smsCfg = await sms.getConfig();
             const portalUrl = (smsCfg.portalUrl || 'https://master.cloujade.com').replace(/\/$/, '');
-            const interviewLink = `${portalUrl}?resumeId=${resume.id}`;
+            const latestResumeJob = await ResumeJob.findOne({ where: { resume_id: resume.id }, order: [['id', 'DESC']] });
+            const resumeJobId = latestResumeJob ? latestResumeJob.id : null;
+            const interviewLink = resumeJobId ? `${portalUrl}/interview.html?resumeJobId=${resumeJobId}` : `${portalUrl}/interview.html?resumeId=${resume.id}`;
             const position = resume.job_title || parsedData.jobTitle || parsedData.position || '该职位';
 
-            // 准备短信模板变量 (增加兼容性别名)
-            const smsParams = {
-                name: name,
-                time: timeStr,
-                date: timeStr,      // Alias: some templates use ${date}
-                job: position,      // Alias: friendly job name
-                position: position, // Alias: full position name
-                jobId: String(resume.id),
-                link: interviewLink,
-                url: interviewLink  // Alias: some templates use ${url}
-            };
-
             // 1. 发送短信
-            if (phone) {
+            if (phone && phoneRegex.test(String(phone)) && resumeJobId) {
+                const company = (req.user && req.user.company_name) || smsCfg.siteName || '某公司';
+                const smsParams = {
+                    name: name,
+                    company: company,
+                    time: timeStr,
+                    jobId: String(resumeJobId)
+                };
+                
                 notifications.sms.attempted = true
                 console.log(`[面试通知] 正在发送短信给 ${phone}, 场景: INTERVIEW, 参数:`, JSON.stringify(smsParams));
                 const smsResult = await sms.sendText(String(phone), smsParams, sms.SCENARIOS.INTERVIEW);
                 
-                notifications.sms.sent = smsResult && smsResult.success === true
+                notifications.sms.sent = smsResult && smsResult.sent === true
                 if (!notifications.sms.sent) {
                     console.error(`[面试通知] 短信发送失败: ${smsResult.error} - ${smsResult.message || ''}`);
-                    // Note: We don't fail the request here, but we log the error clearly.
                 } else {
                     console.log(`[面试通知] 短信发送成功:`, JSON.stringify(smsResult));
                 }
             } else {
                 notifications.sms.skipped = true
-                console.log(`[面试通知] 未找到电话号码，跳过短信发送`);
+                console.log(`[面试通知] 未找到合法的11位电话号码或候选记录，跳过短信发送. 电话: ${phone}`);
             }
 
             // 2. 发送邮件
@@ -420,8 +365,8 @@ router.post('/:id/offer', authenticate, Permission.requireSubscription, Permissi
         const targetEmail = email || resume.email || parsedData.email || (parsedData.basic_info && parsedData.basic_info.email)
         const candidateName = resume.name || parsedData.name || (parsedData.basic_info && parsedData.basic_info.name) || '候选人'
 
-        let companyName = '我司'
-        if (req.user.company_id) {
+        let companyName = req.user.company_name || '我司'
+        if (!req.user.company_name && req.user.company_id) {
             const company = await Company.findByPk(req.user.company_id)
             if (company && company.name) companyName = company.name
         }
@@ -435,10 +380,14 @@ router.post('/:id/offer', authenticate, Permission.requireSubscription, Permissi
         if (targetPhone) {
             notifications.sms.attempted = true
             try {
-                const smsParams = { name: candidateName, company: companyName, time: timeStr }
+                const smsParams = {
+                    name: candidateName,
+                    company: companyName,
+                    time: timeStr
+                }
                 console.log(`[Offer通知] 正在发送短信给 ${targetPhone}, 场景: OFFER, 参数:`, JSON.stringify(smsParams))
                 const smsResult = await sms.sendText(String(targetPhone), smsParams, sms.SCENARIOS.OFFER)
-                notifications.sms.sent = smsResult && smsResult.success === true
+                notifications.sms.sent = smsResult && smsResult.sent === true
                 if (!notifications.sms.sent) console.error(`[Offer通知] 短信发送失败: ${smsResult && smsResult.error ? smsResult.error : 'UNKNOWN'}`)
             } catch (smsError) {
                 console.error('[Offer通知] 发送短信过程中出现错误:', smsError)
@@ -507,7 +456,8 @@ router.post('/:id/offer', authenticate, Permission.requireSubscription, Permissi
 router.put('/:id/status', authenticate, Permission.requireSubscription, Permission.rateLimit(300, 60*60*1000), async (req, res) => {
     try {
         const { id } = req.params;
-        const { status } = req.body;
+        const { status, notes, reason } = req.body;
+        const finalNotes = notes || reason || '';
 
         if (!status) {
             return res.status(400).json({
@@ -533,13 +483,50 @@ router.put('/:id/status', authenticate, Permission.requireSubscription, Permissi
             });
         }
 
-        await resume.update({ recruitment_status: status });
+        const updateData = { recruitment_status: status };
+        
+        // 如果有备注，存入 parsed_data
+        if (finalNotes) {
+            const parsedData = resume.parsed_data || {};
+            parsedData.status_notes = parsedData.status_notes || {};
+            parsedData.status_notes[status] = finalNotes;
+            updateData.parsed_data = parsedData;
+        }
+
+        await resume.update(updateData);
+
+        // 如果该简历有关联的招聘流程，同步更新最新的 ResumeJob 记录
+        try {
+            const statusMap = {
+                '投递': 'applied',
+                '快评': 'screening',
+                '面试': 'interview',
+                'Offer': 'offer',
+                '入职': 'hired',
+                '淘汰': 'rejected',
+                '放弃': 'rejected'
+            };
+            const engStatus = statusMap[status];
+            if (engStatus) {
+                const { ResumeJob } = require('../models');
+                const latestJob = await ResumeJob.findOne({
+                    where: { resume_id: id },
+                    order: [['updated_at', 'DESC']]
+                });
+                if (latestJob) {
+                    await latestJob.update({ status: engStatus });
+                }
+            }
+        } catch (syncErr) {
+            console.error('Sync to ResumeJob failed:', syncErr);
+        }
 
         res.json({
             success: true,
             data: {
                 id: resume.id,
-                recruitment_status: status
+                recruitment_status: status,
+                notes: finalNotes
             },
             message: '状态更新成功'
         });

@@ -15,10 +15,10 @@
         :style="{ width: localRail ? '48px' : '50px', height: localRail ? '48px' : 'auto' }"
       >
         <VImg
-          :src="`${baseUrl}logo.png`"
-          alt="Logo"
-          contain
-        />
+            src="/logo.png"
+            alt="Logo"
+            contain
+          />
       </div>
       <div
           v-if="!localRail"

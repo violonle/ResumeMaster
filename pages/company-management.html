@@ -11,169 +11,350 @@
     <script src="/js/user-auth.js"></script>
     <script src="/js/ui-components.js"></script>
     <link rel="stylesheet" href="/css/sidebar.css">
+    <script src="/js/error-handler.js"></script>
     <style>
-        .setting-card { background: white; border-radius: 16px; border: 1px solid #f3f4f6; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: all 0.2s; }
-        .setting-card:hover { border-color: #e5e7eb; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        /* 移除错误的 @reference "tailwindcss"; */
+        @import url('https://fonts.loli.net/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        
+        body { 
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif; 
+            background-color: #f8fafc;
+        }
+
+        .settings-nav-item {
+            display: flex;
+            align-items: center;
+            padding: 0.875rem 1.25rem;
+            border-radius: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: #64748b;
+            position: relative;
+            overflow: hidden;
+        }
+        .settings-nav-item i {
+            transition: all 0.3s ease;
+        }
+        .settings-nav-item:hover {
+            background-color: #f1f5f9;
+            color: #0f172a;
+        }
+        .settings-nav-item:hover i {
+            transform: translateX(2px);
+            opacity: 1;
+        }
+        .settings-nav-item.active {
+            background-color: #0f172a !important;
+            color: white !important;
+            box-shadow: 0 12px 20px -8px rgba(15, 23, 42, 0.3);
+            transform: scale(1.02);
+        }
+        .settings-nav-item.active i {
+            opacity: 1;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .section-card {
+            @apply bg-white rounded-[2.5rem] border border-slate-200/60 shadow-sm overflow-hidden transition-all duration-500;
+        }
+
+        .section-card:hover {
+            @apply shadow-2xl shadow-slate-200/60 border-slate-300/60 -translate-y-1;
+        }
+
+        .input-group label {
+            @apply block text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] mb-2.5 ml-1;
+        }
+
+        .display-value {
+            @apply text-sm font-bold text-slate-900;
+        }
+
+        .btn-primary {
+            @apply px-6 py-3 bg-slate-900 text-white rounded-2xl hover:bg-black transition-all text-sm font-black uppercase tracking-widest shadow-xl shadow-slate-200 active:scale-95;
+        }
+
+        .btn-secondary {
+            @apply px-6 py-3 bg-white text-slate-600 border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all text-sm font-black uppercase tracking-widest active:scale-95;
+        }
+
+        .badge-pro {
+            @apply px-3 py-1 bg-blue-50 text-blue-600 rounded-xl text-[10px] font-black uppercase tracking-wider border border-blue-100;
+        }
+
+        .badge-success {
+            @apply px-3 py-1 bg-emerald-50 text-emerald-600 rounded-xl text-[10px] font-black uppercase tracking-wider border border-emerald-100;
+        }
+
+        .badge-neutral {
+            @apply px-3 py-1 bg-slate-50 text-slate-500 rounded-xl text-[10px] font-black uppercase tracking-wider border border-slate-100;
+        }
     </style>
 </head>
 
-<body class="bg-gray-50 font-sans text-gray-900">
+<body class="antialiased text-gray-900 selection:bg-blue-100 selection:text-blue-700">
     <aside id="sidebar" class="fixed left-0 top-0 bottom-0 sidebar-modern z-40"></aside>
 
-    <main class="main-content min-h-screen" id="main-content">
-        <!-- Header -->
-        <header class="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20 h-20">
-            <div class="flex items-center justify-between px-6 h-full">
-                <div class="flex items-center space-x-4 pl-8">
-                    <div class="brand-title flex flex-col justify-center space-y-1.5">
-                        <h1 class="text-lg font-bold text-gray-900 leading-none">企业设置</h1>
-                        <p class="text-xs text-gray-500 font-medium leading-tight">配置您的企业基本信息、团队成员及招聘偏好</p>
-                    </div>
+    <header class="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20 h-20">
+        <div class="flex items-center justify-between px-6 h-full">
+            <div class="flex items-center space-x-4 pl-8">
+                <div class="brand-title flex flex-col justify-center space-y-1.5">
+                    <h1 class="text-lg font-bold text-gray-900 leading-none">企业设置</h1>
+                    <p class="text-xs text-gray-500 font-medium leading-tight">配置您的企业基本信息、团队成员及招聘偏好</p>
                 </div>
-                <div id="header-right-section" class="flex items-center space-x-4"></div>
             </div>
-        </header>
+            <div id="header-right-section" class="flex items-center space-x-4"></div>
+        </div>
+    </header>
 
-        <div class="p-8 max-w-[1440px] mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Main Column -->
-            <div class="lg:col-span-2 space-y-8">
-                <!-- Company Info Card -->
-                <div class="setting-card p-8">
-                    <div class="flex justify-between items-start mb-6">
-                        <div class="flex items-center">
-                            <div class="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-3xl text-blue-500 border border-blue-100 mr-5">
-                                <span>🏢</span>
-                            </div>
+    <main class="main-content pt-20" id="main-content">
+        <div class="max-w-[1200px] mx-auto p-6 md:p-8">
+            <!-- Page Header -->
+            <div class="mb-8">
+                <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight">企业中心</h2>
+                <p class="text-sm font-bold text-slate-500 mt-1">管理您的企业身份、团队架构与协作偏好</p>
+            </div>
+
+            <div class="flex flex-col lg:flex-row gap-8">
+                <!-- Settings Sidebar -->
+                <aside class="w-full lg:w-72 flex-shrink-0">
+                    <div class="bg-white rounded-2xl border border-slate-200/60 p-3 sticky top-24 shadow-sm">
+                        <nav class="space-y-1">
+                            <a href="javascript:void(0)" onclick="switchTab('company')" class="settings-nav-item active" data-tab-link="company">
+                                <i class="fa-solid fa-building w-5 mr-3 opacity-70"></i> 企业信息
+                            </a>
+                            <a href="javascript:void(0)" onclick="switchTab('team')" class="settings-nav-item" data-tab-link="team">
+                                <i class="fa-solid fa-users w-5 mr-3 opacity-70"></i> 团队管理
+                            </a>
+                            <a href="javascript:void(0)" onclick="switchTab('preferences')" class="settings-nav-item" data-tab-link="preferences">
+                                <i class="fa-solid fa-sliders w-5 mr-3 opacity-70"></i> 招聘偏好
+                            </a>
+                            <div class="my-3 border-t border-slate-100"></div>
+                            <a href="/pages/subscription.html" class="settings-nav-item">
+                                <i class="fa-solid fa-gem w-5 mr-3 opacity-70"></i> 企业订阅
+                            </a>
+                        </nav>
+                    </div>
+                </aside>
+
+                <!-- Content Area -->
+                <div class="flex-1">
+                    <!-- Company Info Section -->
+                    <section id="company-section" class="section-card">
+                        <div class="px-8 py-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/30">
                             <div>
-                                <h2 class="text-2xl font-bold text-gray-900" data-company-name>—</h2>
-                                <div class="flex items-center mt-2 space-x-3 text-sm text-gray-500">
-                                    <span class="flex items-center bg-gray-100 px-2.5 py-0.5 rounded-md">
-                                        <span class="mr-1.5 text-gray-400">🏭</span>
-                                        <span data-company-industry>未设置行业</span>
-                                    </span>
-                                    <span class="flex items-center bg-gray-100 px-2.5 py-0.5 rounded-md">
-                                        <span class="mr-1.5 text-gray-400">📍</span>
-                                        <span data-company-location>—</span>
-                                    </span>
+                                <h3 class="text-lg font-black text-slate-900 tracking-tight">企业基本信息</h3>
+                                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Corporate Identity</p>
+                            </div>
+                            <button onclick="openEditModal()" class="btn-primary">
+                                <i class="fa-solid fa-pen-to-square mr-2"></i>编辑资料
+                            </button>
+                        </div>
+                        
+                        <div class="p-8">
+                            <div class="flex flex-col sm:flex-row items-center sm:items-start mb-10 gap-8">
+                                <div class="relative group">
+                                    <div id="company-logo-container" class="w-28 h-28 bg-slate-50 rounded-3xl border-2 border-white shadow-xl shadow-slate-100/50 flex items-center justify-center text-slate-400 text-4xl overflow-hidden ring-4 ring-slate-50/50">
+                                        <i class="fa-solid fa-building"></i>
+                                    </div>
+                                    <button class="absolute -bottom-2 -right-2 bg-white rounded-2xl p-2.5 shadow-xl border border-slate-100 text-slate-400 hover:text-blue-600 transition-all group-hover:scale-110">
+                                        <i class="fas fa-camera text-xs"></i>
+                                    </button>
+                                </div>
+                                <div class="mt-2 text-center sm:text-left flex-1">
+                                    <div class="flex flex-col sm:flex-row sm:items-center gap-3" id="certification-status-container">
+                                        <h3 class="text-2xl font-black text-slate-900" data-company-name>—</h3>
+                                        <!-- Dynamic Certification Status -->
+                                        <div id="certification-badge-wrapper"></div>
+                                    </div>
+                                    <div class="mt-3 flex flex-wrap justify-center sm:justify-start gap-2">
+                                        <span class="badge-neutral" data-company-industry>未设置行业</span>
+                                        <span class="badge-neutral">
+                                            <i class="fa-solid fa-location-dot mr-1.5 opacity-60"></i>
+                                            <span data-company-location>—</span>
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="mt-6 flex flex-wrap justify-center sm:justify-start gap-4">
+                                        <div class="flex flex-col">
+                                            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">规模</span>
+                                            <span class="text-xs font-bold text-slate-900 px-3 py-1.5 bg-slate-50 rounded-lg border border-slate-100" data-company-size>—</span>
+                                        </div>
+                                        <div class="flex flex-col">
+                                            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">成立时间</span>
+                                            <span class="text-xs font-bold text-slate-900 px-3 py-1.5 bg-slate-50 rounded-lg border border-slate-100" data-company-founded>—</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="space-y-8">
+                                <div class="input-group">
+                                    <label>公司简介</label>
+                                    <div class="text-sm font-medium text-slate-600 leading-relaxed bg-slate-50/50 p-6 rounded-2xl border border-slate-100/80" data-company-description>
+                                        暂无简介，请点击编辑信息添加公司简介。
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div class="input-group">
+                                        <label>官方网站</label>
+                                        <a href="#" target="_blank" class="display-value flex items-center p-3.5 bg-slate-50 rounded-xl border border-slate-100/50 hover:text-blue-600 transition-colors" data-company-website>
+                                            <i class="fa-solid fa-globe mr-3 text-slate-400"></i>
+                                            <span>—</span>
+                                        </a>
+                                    </div>
+                                    <div class="input-group">
+                                        <label>主要联系人</label>
+                                        <div class="display-value flex items-center p-3.5 bg-slate-50 rounded-xl border border-slate-100/50">
+                                            <i class="fa-solid fa-user-tie mr-3 text-slate-400"></i>
+                                            <span data-contact-name>—</span>
+                                        </div>
+                                    </div>
+                                    <div class="input-group">
+                                        <label>联系电话</label>
+                                        <div class="display-value flex items-center p-3.5 bg-slate-50 rounded-xl border border-slate-100/50">
+                                            <i class="fa-solid fa-phone mr-3 text-slate-400"></i>
+                                            <span data-contact-phone>—</span>
+                                        </div>
+                                    </div>
+                                    <div class="input-group">
+                                        <label>联系邮箱</label>
+                                        <div class="display-value flex items-center p-3.5 bg-slate-50 rounded-xl border border-slate-100/50">
+                                            <i class="fa-solid fa-envelope mr-3 text-slate-400"></i>
+                                            <span data-contact-email>—</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <button onclick="openEditModal()" class="px-4 py-2 border border-gray-200 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-50 hover:text-blue-600 transition-all flex items-center">
-                            <span class="mr-2">📝</span>编辑
-                        </button>
-                    </div>
+                    </section>
 
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 border-t border-gray-50 pt-6">
-                        <div>
-                            <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">公司规模</p>
-                            <p class="text-sm font-semibold text-gray-900 flex items-center">
-                                <span data-company-size>—</span>
-                            </p>
+                    <!-- Team Members Section -->
+                    <section id="team-section" class="section-card hidden">
+                        <div class="px-8 py-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/30">
+                            <div>
+                                <h3 class="text-lg font-black text-slate-900 tracking-tight">团队管理</h3>
+                                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Team Collaboration</p>
+                            </div>
+                            <button onclick="openAddMemberModal()" class="btn-primary">
+                                <i class="fa-solid fa-user-plus mr-2"></i>邀请成员
+                            </button>
                         </div>
-                        <div>
-                            <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">成立时间</p>
-                            <p class="text-sm font-semibold text-gray-900 flex items-center">
-                                <span data-company-founded>—</span>
-                            </p>
+                        
+                        <div id="team-list" class="divide-y divide-slate-50">
+                            <!-- Loading State -->
+                            <div class="p-16 text-center">
+                                <div class="w-10 h-10 border-4 border-slate-100 border-t-blue-500 rounded-full animate-spin mx-auto mb-4"></div>
+                                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">加载团队成员...</p>
+                            </div>
                         </div>
-                        <div class="col-span-2 md:col-span-2">
-                            <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">官方网站</p>
-                            <a href="#" target="_blank" class="text-sm font-semibold text-blue-600 hover:underline flex items-center truncate" data-company-website>
-                                <span>—</span>
-                            </a>
+                        
+                        <div class="p-4 bg-slate-50/50 border-t border-slate-50">
+                            <button onclick="ui.showNotification('更多成员功能开发中', 'info')" class="w-full py-2.5 text-xs font-black text-slate-400 hover:text-slate-600 uppercase tracking-widest transition-colors flex items-center justify-center gap-2">
+                                查看所有成员 <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                            </button>
                         </div>
-                    </div>
-                </div>
+                    </section>
 
-                <!-- Description -->
-                <div class="setting-card p-8">
-                    <h3 class="text-lg font-bold text-gray-900 mb-6 flex items-center">
-                        <span class="w-1 h-6 bg-blue-600 rounded-full mr-3"></span>
-                        公司简介
-                    </h3>
-                    <div class="prose prose-sm max-w-none text-gray-600 leading-relaxed bg-gray-50/50 p-6 rounded-xl border border-gray-100" data-company-description>
-                        暂无简介，请点击编辑信息添加公司简介。
-                    </div>
-                </div>
+                    <!-- Recruitment Preferences -->
+                    <section id="preferences-section" class="section-card hidden">
+                        <div class="px-8 py-6 border-b border-slate-50 bg-slate-50/30 flex items-center justify-between">
+                            <div>
+                                <h3 class="text-lg font-black text-slate-900 tracking-tight">招聘偏好</h3>
+                                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Recruitment Settings</p>
+                            </div>
+                            <button onclick="savePreferences()" class="btn-primary">
+                                <i class="fa-solid fa-save mr-2"></i>保存设置
+                            </button>
+                        </div>
+                        
+                        <div class="p-8 space-y-2">
+                            <!-- 自动回复简历投递 -->
+                            <div class="flex items-center justify-between py-6 group">
+                                <div class="flex-1 pr-8">
+                                    <h4 class="text-sm font-black text-slate-900">自动回复简历投递</h4>
+                                    <p class="text-xs font-bold text-slate-400 mt-1 leading-relaxed">当候选人投递简历后，系统将自动发送预设的回复确认邮件</p>
+                                </div>
+                                <div class="relative inline-flex items-center">
+                                    <input type="checkbox" id="auto-reply-toggle" class="sr-only peer">
+                                    <label for="auto-reply-toggle" class="w-12 h-6 bg-slate-200 peer-focus:outline-none rounded-full cursor-pointer transition-all peer-checked:bg-blue-600 relative after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-6 peer-checked:after:border-white"></label>
+                                </div>
+                            </div>
 
-                <!-- Team Members -->
-                <div class="setting-card overflow-hidden">
-                    <div class="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/30">
-                        <h3 class="text-lg font-bold text-gray-900 flex items-center">
-                            <span class="w-1 h-6 bg-blue-600 rounded-full mr-3"></span>
-                            团队成员
-                        </h3>
-                        <button onclick="openAddMemberModal()" class="px-4 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg text-sm font-medium transition-colors flex items-center">
-                            <span class="mr-2">➕</span>邀请成员
-                        </button>
-                    </div>
-                    
-                    <div id="team-list" class="divide-y divide-gray-100">
-                        <!-- Loading State -->
-                        <div class="p-12 text-center text-gray-500">
-                            <div class="spinner w-8 h-8 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
-                            <p>加载团队成员...</p>
-                        </div>
-                    </div>
-                    
-                    <div class="px-6 py-4 bg-gray-50/50 border-t border-gray-100 text-center">
-                        <button class="text-sm text-gray-500 hover:text-gray-700 font-medium flex items-center justify-center w-full">
-                            查看所有成员 <span class="ml-1 text-xs">▶️</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
+                            <!-- 启用AI智能筛选 -->
+                            <div class="py-6 border-t border-slate-50">
+                                <div class="flex items-center justify-between group">
+                                    <div class="flex-1 pr-8">
+                                        <h4 class="text-sm font-black text-slate-900">启用AI智能筛选</h4>
+                                        <p class="text-xs font-bold text-slate-400 mt-1 leading-relaxed">基于 AI 算法自动筛选符合职位要求的高质量候选人</p>
+                                    </div>
+                                    <div class="relative inline-flex items-center">
+                                        <input type="checkbox" id="auto-filter-toggle" class="sr-only peer">
+                                        <label for="auto-filter-toggle" class="w-12 h-6 bg-slate-200 peer-focus:outline-none rounded-full cursor-pointer transition-all peer-checked:bg-blue-600 relative after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-6 peer-checked:after:border-white"></label>
+                                    </div>
+                                </div>
+                                <div id="autoRejectScoreDiv" class="mt-4 ml-2 p-4 bg-slate-50 rounded-2xl border border-slate-100 hidden">
+                                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">自动淘汰分数线</label>
+                                    <div class="flex items-center gap-4">
+                                        <input type="number" id="autoRejectScore" value="60" min="0" max="100" class="w-24 px-4 py-2 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-sm font-bold text-slate-900">
+                                        <span class="text-xs text-slate-500 font-medium">低于此分数将自动标记为淘汰</span>
+                                    </div>
+                                </div>
+                            </div>
 
-            <!-- Sidebar Column -->
-            <div class="space-y-8">
-                <!-- Certification Status -->
-                <div class="setting-card p-6">
-                     <h3 class="text-base font-bold text-gray-900 mb-4 flex items-center uppercase tracking-wider text-xs text-gray-500">
-                        企业认证
-                    </h3>
-                    <div class="flex items-center justify-between mb-4">
-                        <span class="px-2.5 py-1 rounded-md text-xs font-bold bg-gray-100 text-gray-600 border border-gray-200">
-                            未认证
-                        </span>
-                        <button onclick="openCertificationModal()" class="text-sm text-blue-600 hover:underline">立即认证</button>
-                    </div>
-                    <p class="text-xs text-gray-400 leading-relaxed">认证企业可获得更多职位发布权益和高级搜索功能。</p>
-                </div>
+                            <!-- 高级选项 -->
+                            <div class="py-6 border-t border-slate-50">
+                                <div class="flex items-center gap-3 mb-6">
+                                    <div class="w-1 h-4 bg-blue-600 rounded-full"></div>
+                                    <h4 class="text-sm font-black text-slate-900 uppercase tracking-wider">高级选项</h4>
+                                </div>
 
-                <!-- Contact Card -->
-                <div class="setting-card p-6">
-                    <h3 class="text-base font-bold text-gray-900 mb-4 flex items-center uppercase tracking-wider text-xs text-gray-500">
-                        联系方式
-                    </h3>
-                    <div class="space-y-4">
-                        <div class="flex items-center p-3 rounded-xl bg-gray-50 group hover:bg-blue-50 transition-colors">
-                            <div class="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-gray-400 group-hover:text-blue-600 transition-colors">
-                                <span>👤</span>
-                            </div>
-                            <div class="ml-3">
-                                <p class="text-xs text-gray-400">联系人</p>
-                                <p class="text-sm font-medium text-gray-900" data-contact-name>—</p>
+                                <!-- 高分通知 -->
+                                <div class="mb-8">
+                                    <div class="flex items-center justify-between group mb-4">
+                                        <div class="flex-1 pr-8">
+                                            <h5 class="text-sm font-bold text-slate-700">启用高分通知</h5>
+                                            <p class="text-xs font-medium text-slate-400 mt-0.5">当候选人匹配得分超过设定阈值时，立即通过系统通知您</p>
+                                        </div>
+                                        <div class="relative inline-flex items-center">
+                                            <input type="checkbox" id="notifyHighScore" class="sr-only peer">
+                                            <label for="notifyHighScore" class="w-12 h-6 bg-slate-200 peer-focus:outline-none rounded-full cursor-pointer transition-all peer-checked:bg-blue-600 relative after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-6 peer-checked:after:border-white"></label>
+                                        </div>
+                                    </div>
+                                    <div id="highScoreDiv" class="ml-2 p-4 bg-slate-50 rounded-2xl border border-slate-100 hidden">
+                                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">高分阈值</label>
+                                        <div class="flex items-center gap-4">
+                                            <input type="number" id="highScoreThreshold" value="85" min="60" max="100" class="w-24 px-4 py-2 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-sm font-bold text-slate-900">
+                                            <span class="text-xs text-slate-500 font-medium">超过此分数将立即通知您</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 评分侧重 -->
+                                <div class="mb-2">
+                                    <h5 class="text-sm font-bold text-slate-700 mb-4">AI 评分侧重</h5>
+                                    <div class="relative max-w-xs">
+                                        <select id="weightPreference" class="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white outline-none transition-all text-sm font-bold text-slate-900 appearance-none cursor-pointer">
+                                            <option value="balanced">均衡模式 (默认)</option>
+                                            <option value="skills">技能优先 (侧重技术栈匹配)</option>
+                                            <option value="experience">经验优先 (侧重工作年限与经历)</option>
+                                            <option value="education">学历优先 (侧重教育背景)</option>
+                                        </select>
+                                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-5 text-slate-400">
+                                            <i class="fa-solid fa-chevron-down text-xs"></i>
+                                        </div>
+                                    </div>
+                                    <p class="mt-3 text-[11px] text-slate-400 font-bold uppercase tracking-widest flex items-center">
+                                        <i class="fa-solid fa-circle-info mr-2 text-blue-500"></i>
+                                        AI 将根据此偏好调整打分权重
+                                    </p>
+                                </div>
                             </div>
                         </div>
-                        <div class="flex items-center p-3 rounded-xl bg-gray-50 group hover:bg-blue-50 transition-colors">
-                            <div class="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-gray-400 group-hover:text-blue-600 transition-colors">
-                                <span>📞</span>
-                            </div>
-                            <div class="ml-3">
-                                <p class="text-xs text-gray-400">电话</p>
-                                <p class="text-sm font-medium text-gray-900" data-contact-phone>—</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center p-3 rounded-xl bg-gray-50 group hover:bg-blue-50 transition-colors">
-                            <div class="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-gray-400 group-hover:text-blue-600 transition-colors">
-                                <span>✉️</span>
-                            </div>
-                            <div class="ml-3">
-                                <p class="text-xs text-gray-400">邮箱</p>
-                                <p class="text-sm font-medium text-gray-900 truncate max-w-[180px]" data-contact-email>—</p>
-                            </div>
-                        </div>
-                    </div>
+                    </section>
                 </div>
             </div>
         </div>
@@ -182,193 +363,384 @@
     <script src="/js/header-profile.js"></script>
     <script src="/js/sidebar.js"></script>
     <script>
+        // Helper to set text content safely
+        function setText(selector, value, defaultVal = '—') {
+            const elements = document.querySelectorAll(selector);
+            elements.forEach(el => {
+                if (el) el.textContent = value || defaultVal;
+            });
+        }
+
+        const ui = new UIComponents();
+
         document.addEventListener('DOMContentLoaded', async function () {
             if (!requireAuth('/pages/login.html')) return;
             
-            HeaderProfile.init();
+            HeaderProfile.init('#header-right-section');
             if (window.Sidebar) {
                 Sidebar.init({ mount: '#sidebar', active: 'company' }).catch(err => console.error('Sidebar init failed:', err));
             }
 
             initCompanyData();
             createModals();
+            
+            // Preferences UI Interactivity
+            const autoFilterToggle = document.getElementById('auto-filter-toggle');
+            const autoRejectScoreDiv = document.getElementById('autoRejectScoreDiv');
+            if (autoFilterToggle && autoRejectScoreDiv) {
+                autoFilterToggle.addEventListener('change', () => {
+                    autoRejectScoreDiv.classList.toggle('hidden', !autoFilterToggle.checked);
+                });
+            }
+
+            const notifyHighScore = document.getElementById('notifyHighScore');
+            const highScoreDiv = document.getElementById('highScoreDiv');
+            if (notifyHighScore && highScoreDiv) {
+                notifyHighScore.addEventListener('change', () => {
+                    highScoreDiv.classList.toggle('hidden', !notifyHighScore.checked);
+                });
+            }
+            
+            // Handle initial tab from hash
+            const hash = window.location.hash.replace('#', '');
+            if (['company', 'team', 'preferences'].includes(hash)) {
+                switchTab(hash);
+            }
         });
+
+        function switchTab(tabId) {
+            // Hide all sections
+            document.getElementById('company-section').classList.add('hidden');
+            document.getElementById('team-section').classList.add('hidden');
+            document.getElementById('preferences-section').classList.add('hidden');
+            
+            // Remove active class from all links
+            document.querySelectorAll('[data-tab-link]').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Show selected section
+            const targetSection = document.getElementById(`${tabId}-section`);
+            if (targetSection) {
+                targetSection.classList.remove('hidden');
+            }
+            
+            // Add active class to selected link
+            const targetLink = document.querySelector(`[data-tab-link="${tabId}"]`);
+            if (targetLink) {
+                targetLink.classList.add('active');
+            }
+            
+            // Update URL hash without jumping
+            history.replaceState(null, null, `#${tabId}`);
+        }
 
         async function initCompanyData() { 
             try { 
+                // 1. 获取用户信息
                 const user = await userAuthInstance.fetchCurrentUser(); 
-                setText('[data-company-name]', user?.company_name || '未设置'); 
-                setText('[data-company-industry]', user?.industry || '未设置行业'); 
-                setText('[data-company-location]', user?.location || '—'); 
-                setText('[data-company-size]', user?.company_size || '—'); 
-                setText('[data-company-founded]', user?.founded_year || '—'); 
-                setText('[data-company-website]', user?.website || '—');
-                if(user?.website) {
-                    const el = document.querySelector('[data-company-website]');
-                    if(el) el.href = user.website;
+                if (!user) throw new Error('Failed to fetch user');
+
+                // 2. 获取企业详细信息
+                let company = {};
+                try {
+                    const resp = await userAuthInstance.apiRequest('/company/profile');
+                    if (resp && resp.success) {
+                        company = resp.data || {};
+                    }
+                } catch (err) {
+                    console.error('Fetch company profile failed:', err);
+                }
+
+                // 3. 填充基础信息（优先使用企业表的详细信息）
+                const compName = company.name || user?.company_name || '未设置';
+                setText('[data-company-name]', compName); 
+                setText('[data-company-industry]', company.industry || '未设置行业'); 
+                setText('[data-company-location]', company.address || '—'); 
+                setText('[data-company-size]', company.size || '—'); 
+                setText('[data-company-founded]', company.founding_year || '—'); 
+                setText('[data-company-website]', company.website || '—');
+                
+                // 更新企业Logo展示
+                const logoContainer = document.getElementById('company-logo-container');
+                if (logoContainer) {
+                    logoContainer.innerHTML = ui.renderAvatar(company.logo_url, compName, 'w-28 h-28', 'rounded-3xl');
                 }
                 
-                setText('[data-company-description]', user?.description || '暂无简介，请点击编辑信息添加公司简介。');
+                if(company.website) {
+                    const el = document.querySelector('[data-company-website]');
+                    if(el) el.href = company.website;
+                }
                 
-                setText('[data-contact-name]', user?.contact_name || user?.name || '—');
-                setText('[data-contact-phone]', user?.contact_phone || user?.phone || '—');
-                setText('[data-contact-email]', user?.contact_email || user?.email || '—');
+                setText('[data-company-description]', company.description || '暂无简介，请点击编辑信息添加公司简介。');
+                
+                // 4. 填充联系人信息
+                setText('[data-contact-name]', company.contact_name || user?.name || '—');
+                setText('[data-contact-phone]', company.contact_phone || user?.phone || '—');
+                setText('[data-contact-email]', user?.email || '—');
 
-                await loadTeamMembers(); 
-            } catch (e) { } 
-        }
+                // 5. 填充招聘偏好
+                if (company.settings) {
+                    const s = company.settings;
+                    const autoReply = document.getElementById('auto-reply-toggle');
+                    const autoFilter = document.getElementById('auto-filter-toggle');
+                    const autoRejectScore = document.getElementById('autoRejectScore');
+                    const notifyHigh = document.getElementById('notifyHighScore');
+                    const highThreshold = document.getElementById('highScoreThreshold');
+                    const weight = document.getElementById('weightPreference');
 
-        async function loadTeamMembers() { 
-            try { 
-                const result = await userAuthInstance.apiRequest('/company/team'); 
-                const members = result?.data || []; 
-                const container = document.getElementById('team-list'); 
-                const empty = container?.querySelector('[data-team-empty]'); 
-                if (empty) empty.remove(); 
-                if (!container) return; 
-                if (members.length === 0) { 
-                    container.innerHTML = '<div class="p-8 text-center"><div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4 text-gray-400"><i class="fas fa-users-slash text-2xl"></i></div><p class="text-gray-500">暂无团队成员</p></div>'; 
-                    return; 
-                } 
-                container.innerHTML = members.map(m => `
-                    <div class="flex items-center justify-between p-6 hover:bg-gray-50 transition-colors group">
-                        <div class="flex items-center space-x-4">
-                            <div class="relative">
-                                <img src="${m.avatar || '/images/banner1.jpg'}" alt="avatar" class="w-12 h-12 rounded-xl object-cover shadow-sm border border-gray-100">
-                                <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
-                            </div>
-                            <div>
-                                <p class="font-bold text-gray-900 group-hover:text-blue-600 transition-colors">${m.username || m.email || '未命名用户'}</p>
-                                <p class="text-xs text-gray-500 mt-0.5">${m.email || ''}</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center space-x-4">
-                            <span class="px-3 py-1 rounded-full text-xs font-medium ${roleColorClass(m.role)}">
-                                ${roleLabel(m.role)}
+                    if (autoReply) autoReply.checked = !!s.enableAutoReply;
+                    if (autoFilter) {
+                        autoFilter.checked = !!s.enableAutoScreening;
+                        document.getElementById('autoRejectScoreDiv').classList.toggle('hidden', !autoFilter.checked);
+                    }
+                    if (autoRejectScore) autoRejectScore.value = s.autoRejectScore || 60;
+                    if (notifyHigh) {
+                        notifyHigh.checked = !!s.notifyHighScore;
+                        document.getElementById('highScoreDiv').classList.toggle('hidden', !notifyHigh.checked);
+                    }
+                    if (highThreshold) highThreshold.value = s.highScoreThreshold || 85;
+                    if (weight) weight.value = s.weightPreference || 'balanced';
+                }
+
+                // 6. 更新认证状态
+                const certWrapper = document.getElementById('certification-badge-wrapper');
+                if (certWrapper) {
+                    if (company.is_verified || user?.is_verified) {
+                        certWrapper.innerHTML = `
+                            <span class="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-xl text-[10px] font-black uppercase tracking-wider border border-emerald-100 flex items-center gap-1.5 shadow-sm shadow-emerald-50">
+                                <i class="fa-solid fa-shield-check text-xs"></i>已认证企业
                             </span>
-                            <button class="text-gray-400 hover:text-gray-600 p-2 opacity-0 group-hover:opacity-100 transition-all">
-                                <i class="fas fa-ellipsis-v"></i>
+                        `;
+                    } else {
+                        certWrapper.innerHTML = `
+                            <button onclick="openCertificationModal()" class="px-3 py-1 bg-blue-50 text-blue-600 rounded-xl text-[10px] font-black uppercase tracking-wider border border-blue-100 hover:bg-blue-100 transition-all flex items-center gap-1.5 shadow-sm shadow-blue-50">
+                                <i class="fa-solid fa-circle-exclamation text-xs"></i>未认证 · 点击去认证
                             </button>
-                        </div>
-                    </div>
-                `).join(''); 
+                        `;
+                    }
+                }
+
+                // 6. 加载团队成员
+                await loadTeamMembers(); 
             } catch (e) { 
-                const container = document.getElementById('team-list'); 
-                if (container) { container.innerHTML = '<div class="p-4 bg-red-50 text-red-600 text-center rounded-lg m-4">数据加载失败</div>'; } 
+                console.error('Init company data failed:', e);
+                // Ensure loading states are cleared on error
+                const teamList = document.getElementById('team-list');
+                if (teamList) {
+                    teamList.innerHTML = `
+                        <div class="p-16 text-center">
+                            <div class="w-16 h-16 bg-red-50 rounded-3xl flex items-center justify-center text-red-400 mx-auto mb-4 border border-red-100/50">
+                                <i class="fa-solid fa-circle-exclamation text-2xl"></i>
+                            </div>
+                            <p class="text-sm font-bold text-red-600 tracking-tight">数据加载失败</p>
+                            <p class="text-[11px] font-bold text-red-400 uppercase tracking-widest mt-2">请刷新页面重试</p>
+                        </div>
+                    `;
+                }
             } 
         }
 
-        function setText(selector, value, defaultVal = '') {
-            const el = document.querySelector(selector);
-            if (el) el.textContent = value || defaultVal;
+        async function loadTeamMembers() { 
+            const container = document.getElementById('team-list'); 
+            if (!container) return; 
+
+            try { 
+                const result = await userAuthInstance.apiRequest('/company/team'); 
+                const members = result?.data || []; 
+                
+                if (members.length === 0) { 
+                    container.innerHTML = `
+                        <div class="p-16 text-center">
+                            <div class="w-16 h-16 bg-slate-50 rounded-3xl flex items-center justify-center text-slate-300 mx-auto mb-4 border border-slate-100/50">
+                                <i class="fa-solid fa-users-slash text-2xl"></i>
+                            </div>
+                            <p class="text-sm font-bold text-slate-900 tracking-tight">暂无团队成员</p>
+                            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-2">请邀请团队人员加入</p>
+                        </div>
+                    `; 
+                    return; 
+                } 
+
+                container.innerHTML = members.map(m => {
+                    const user = m.User || m; // 兼容联表和直接数据结构
+                    const name = user.username || user.email || '未命名用户';
+                    const avatarHtml = ui.renderAvatar(user.avatar, name, 'w-14 h-14', 'rounded-2xl');
+                    
+                    return `
+                        <div class="flex items-center justify-between p-6 hover:bg-slate-50/50 transition-all group border-b border-slate-50 last:border-0">
+                            <div class="flex items-center space-x-5">
+                                <div class="relative">
+                                    <div class="w-14 h-14 bg-slate-100 rounded-2xl overflow-hidden border border-slate-200/60 shadow-sm flex items-center justify-center">
+                                        ${avatarHtml}
+                                    </div>
+                                    <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full shadow-sm"></div>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-black text-slate-900 group-hover:text-blue-600 transition-colors">${name}</p>
+                                    <p class="text-[11px] font-bold text-slate-400 mt-0.5">${user.email || user.phone || ''}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-4">
+                                <span class="${roleBadgeClass(m.role || user.role)}">
+                                    ${roleLabel(m.role || user.role)}
+                                </span>
+                                <button class="w-10 h-10 rounded-xl bg-white border border-slate-100 text-slate-400 hover:text-slate-900 hover:border-slate-300 shadow-sm transition-all opacity-0 group-hover:opacity-100">
+                                    <i class="fa-solid fa-ellipsis-v"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join(''); 
+            } catch (e) { 
+                console.error('Load team members failed:', e);
+                container.innerHTML = `
+                    <div class="p-16 text-center">
+                        <div class="w-16 h-16 bg-red-50 rounded-3xl flex items-center justify-center text-red-400 mx-auto mb-4 border border-red-100/50">
+                            <i class="fa-solid fa-circle-exclamation text-2xl"></i>
+                        </div>
+                        <p class="text-sm font-bold text-red-600 tracking-tight">团队成员加载失败</p>
+                        <p class="text-[11px] font-bold text-red-400 uppercase tracking-widest mt-2">请稍后重试</p>
+                    </div>
+                `; 
+            } 
         }
 
-        function roleLabel(role) { switch ((role || '').toLowerCase()) { case 'admin': return '管理员'; case 'enterprise': return '企业版'; case 'premium': return '高级版'; default: return '普通用户'; } }
-        function roleColorClass(role) { switch ((role || '').toLowerCase()) { case 'admin': return 'bg-gray-100 text-gray-700'; case 'enterprise': return 'bg-blue-50 text-blue-700'; case 'premium': return 'bg-gray-100 text-gray-700'; default: return 'bg-gray-100 text-gray-600'; } }
+        function roleLabel(role) { 
+            switch ((role || '').toLowerCase()) { 
+                case 'admin': return '管理员'; 
+                case 'enterprise': return '企业主'; 
+                case 'premium': return '高级版'; 
+                default: return '普通成员'; 
+            } 
+        }
 
-        // Modals creation and logic (Keeping existing modal logic but ensuring they are injected)
+        function roleBadgeClass(role) { 
+            switch ((role || '').toLowerCase()) { 
+                case 'admin': return 'px-2.5 py-1 bg-slate-900 text-white rounded-lg text-[10px] font-black uppercase tracking-wider'; 
+                case 'enterprise': return 'px-2.5 py-1 bg-blue-600 text-white rounded-lg text-[10px] font-black uppercase tracking-wider'; 
+                case 'premium': return 'px-2.5 py-1 bg-indigo-600 text-white rounded-lg text-[10px] font-black uppercase tracking-wider'; 
+                default: return 'px-2.5 py-1 bg-slate-100 text-slate-500 rounded-lg text-[10px] font-black uppercase tracking-wider'; 
+            } 
+        }
+
+        // Modals creation and logic
         function createModals() {
-            // Edit Company Modal
+            // Edit Modal
             const editModal = document.createElement('div');
             editModal.id = 'edit-modal';
-            editModal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm';
+            editModal.className = 'fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden items-center justify-center p-4';
             editModal.innerHTML = `
-                <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto transform transition-all">
-                    <div class="p-6 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-10">
-                        <div class="text-xl font-bold text-gray-900">编辑企业信息</div>
-                        <button id="edit-close" class="p-2 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
-                            <i class="fas fa-times"></i>
+                <div class="bg-white rounded-[2rem] shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto transform transition-all border border-slate-200/50">
+                    <div class="px-8 py-6 border-b border-slate-50 flex items-center justify-between sticky top-0 bg-white/80 backdrop-blur-md z-10">
+                        <div>
+                            <h3 class="text-xl font-black text-slate-900 tracking-tight">编辑企业信息</h3>
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Edit Corporate Identity</p>
+                        </div>
+                        <button id="edit-close" class="w-10 h-10 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-900 transition-all flex items-center justify-center">
+                            <i class="fa-solid fa-xmark text-lg"></i>
                         </button>
                     </div>
-                    <form id="edit-form" class="p-8 space-y-6">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">企业名称 *</label>
-                                <input id="edit-name" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 focus:bg-white transition-all" type="text" placeholder="请输入企业名称" />
+                    <form id="edit-form" class="p-8 space-y-8">
+                        <!-- 基本信息 -->
+                        <div class="space-y-6">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-1 h-4 bg-blue-600 rounded-full"></div>
+                                <h4 class="text-sm font-black text-slate-900 uppercase tracking-wider">基本信息</h4>
                             </div>
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">所属行业</label>
-                                <select id="edit-industry" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 focus:bg-white transition-all">
-                                    <option value="">请选择行业</option>
-                                    <option value="互联网">互联网</option>
-                                    <option value="金融">金融</option>
-                                    <option value="教育">教育</option>
-                                    <option value="医疗">医疗</option>
-                                    <option value="制造业">制造业</option>
-                                    <option value="房地产">房地产</option>
-                                    <option value="零售">零售</option>
-                                    <option value="咨询">咨询</option>
-                                    <option value="其他">其他</option>
-                                </select>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="space-y-2">
+                                    <label for="edit-name" class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">企业名称 *</label>
+                                    <input id="edit-name" class="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white outline-none transition-all text-sm font-bold text-slate-900" type="text" placeholder="请输入企业名称" />
+                                </div>
+                                <div class="space-y-2">
+                                    <label for="edit-industry" class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">所属行业</label>
+                                    <select id="edit-industry" class="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white outline-none transition-all text-sm font-bold text-slate-900">
+                                        <option value="">请选择行业</option>
+                                        <option value="互联网">互联网</option>
+                                        <option value="金融">金融</option>
+                                        <option value="教育">教育</option>
+                                        <option value="医疗">医疗</option>
+                                        <option value="制造业">制造业</option>
+                                        <option value="房地产">房地产</option>
+                                        <option value="零售">零售</option>
+                                        <option value="咨询">咨询</option>
+                                        <option value="其他">其他</option>
+                                    </select>
+                                </div>
                             </div>
-                        </div>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">所在省/直辖市</label>
-                                <select id="select-province" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 focus:bg-white transition-all"></select>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">所在市</label>
-                                <select id="select-city" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 focus:bg-white transition-all"></select>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="space-y-2">
+                                    <label for="edit-size" class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">公司规模</label>
+                                    <select id="edit-size" class="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white outline-none transition-all text-sm font-bold text-slate-900">
+                                        <option value="">请选择规模</option>
+                                        <option value="0-20人">0-20人</option>
+                                        <option value="20-99人">20-99人</option>
+                                        <option value="100-499人">100-499人</option>
+                                        <option value="500-999人">500-999人</option>
+                                        <option value="1000-9999人">1000-9999人</option>
+                                        <option value="10000人以上">10000人以上</option>
+                                    </select>
+                                </div>
+                                <div class="space-y-2">
+                                    <label for="edit-founded" class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">成立年份</label>
+                                    <input id="edit-founded" class="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white outline-none transition-all text-sm font-bold text-slate-900" type="number" placeholder="如：2018" />
+                                </div>
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">所在区/县</label>
-                                <select id="select-district" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 focus:bg-white transition-all"></select>
+                        <!-- 联系信息 -->
+                        <div class="space-y-6">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-1 h-4 bg-indigo-600 rounded-full"></div>
+                                <h4 class="text-sm font-black text-slate-900 uppercase tracking-wider">联系方式</h4>
                             </div>
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">公司地址</label>
-                                <input id="edit-location" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 focus:bg-white transition-all" type="text" placeholder="请输入公司地址" />
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="space-y-2">
+                                    <label for="edit-contact-name" class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">联系人姓名</label>
+                                    <input id="edit-contact-name" class="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white outline-none transition-all text-sm font-bold text-slate-900" type="text" placeholder="请输入姓名" />
+                                </div>
+                                <div class="space-y-2">
+                                    <label for="edit-contact-phone" class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">联系人电话</label>
+                                    <input id="edit-contact-phone" class="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white outline-none transition-all text-sm font-bold text-slate-900" type="tel" placeholder="请输入手机号" />
+                                </div>
                             </div>
-                        </div>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">联系人姓名</label>
-                                <input id="edit-contact-name" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 focus:bg-white transition-all" type="text" placeholder="请输入联系人姓名" />
+
+                            <div class="space-y-2">
+                                <label for="edit-website" class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">官方网站</label>
+                                <input id="edit-website" class="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white outline-none transition-all text-sm font-bold text-slate-900" type="url" placeholder="https://..." />
                             </div>
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">联系人电话</label>
-                                <input id="edit-contact-phone" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 focus:bg-white transition-all" type="tel" placeholder="请输入联系人手机号" />
-                            </div>
-                        </div>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">公司规模</label>
-                                <select id="edit-size" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 focus:bg-white transition-all">
-                                    <option value="">请选择规模</option>
-                                    <option value="少于50人">少于50人</option>
-                                    <option value="50-200人">50-200人</option>
-                                    <option value="200-500人">200-500人</option>
-                                    <option value="500-1000人">500-1000人</option>
-                                    <option value="1000-5000人">1000-5000人</option>
-                                    <option value="5000人以上">5000人以上</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">成立年份</label>
-                                <input id="edit-founded" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 focus:bg-white transition-all" type="number" placeholder="如：2018" min="1900" max="2024" />
+
+                            <div class="space-y-2">
+                                <label for="edit-location" class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">详细地址</label>
+                                <input id="edit-location" class="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white outline-none transition-all text-sm font-bold text-slate-900" type="text" placeholder="请输入详细地址" />
                             </div>
                         </div>
 
-                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">公司官网</label>
-                            <input id="edit-website" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 focus:bg-white transition-all" type="url" placeholder="https://www.example.com" />
+                        <!-- 公司简介 -->
+                        <div class="space-y-6">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-1 h-4 bg-slate-900 rounded-full"></div>
+                                <h4 class="text-sm font-black text-slate-900 uppercase tracking-wider">公司简介</h4>
+                            </div>
+                            <div class="space-y-2">
+                                <label for="edit-description" class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">公司描述</label>
+                                <textarea id="edit-description" rows="4" class="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white outline-none transition-all text-sm font-bold text-slate-900 resize-none" placeholder="描述您的公司文化、愿景等..."></textarea>
+                            </div>
                         </div>
-                        
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">公司简介</label>
-                            <textarea id="edit-description" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 focus:bg-white transition-all" rows="4" placeholder="请输入公司简介"></textarea>
+
+                        <div class="pt-4 flex gap-4">
+                            <button type="button" onclick="submitEditForm()" class="flex-1 py-4 bg-slate-900 text-white rounded-2xl hover:bg-black transition-all text-sm font-black uppercase tracking-widest shadow-xl shadow-slate-200">
+                                保存更新
+                            </button>
+                            <button type="button" id="edit-cancel" class="px-8 py-4 bg-white text-slate-600 border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all text-sm font-black uppercase tracking-widest">
+                                取消
+                            </button>
                         </div>
                     </form>
-                    <div class="p-6 border-t border-gray-100 flex justify-end items-center space-x-3 bg-gray-50/50">
-                        <button type="button" id="edit-cancel" class="px-6 py-2.5 border border-gray-300 rounded-xl text-gray-700 hover:bg-white transition-all font-medium">取消</button>
-                        <button type="button" onclick="submitEditForm()" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-md hover:shadow-lg transition-all font-medium">保存更改</button>
-                    </div>
                 </div>
             `;
             document.body.appendChild(editModal);
@@ -376,71 +748,110 @@
             // Certification Modal
             const certModal = document.createElement('div');
             certModal.id = 'cert-modal';
-            certModal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm';
+            certModal.className = 'fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 hidden items-center justify-center p-4 transition-all duration-300';
             certModal.innerHTML = `
-                <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                    <div class="p-6 border-b border-gray-100 flex items-center justify-between">
-                        <div class="text-xl font-bold text-gray-900">企业认证</div>
-                        <button id="cert-close" class="p-2 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
-                            <i class="fas fa-times"></i>
+                <div class="bg-white rounded-[2.5rem] shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto transform transition-all border border-slate-200/50 scale-100">
+                    <div class="px-10 py-8 border-b border-slate-50 flex items-center justify-between sticky top-0 bg-white/90 backdrop-blur-xl z-10">
+                        <div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="px-2 py-0.5 bg-blue-600 text-[10px] font-black text-white rounded-full uppercase tracking-widest">Official</span>
+                                <h3 class="text-2xl font-black text-slate-900 tracking-tight">企业身份认证</h3>
+                            </div>
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Corporate Identity Verification</p>
+                        </div>
+                        <button id="cert-close" class="w-12 h-12 rounded-2xl hover:bg-slate-100 text-slate-400 hover:text-slate-900 transition-all flex items-center justify-center group">
+                            <i class="fa-solid fa-xmark text-xl group-hover:rotate-90 transition-transform duration-300"></i>
                         </button>
                     </div>
-                    <div class="p-8 space-y-6">
-                        <div class="bg-blue-50 border border-blue-100 rounded-xl p-5 flex items-start">
-                            <i class="fas fa-info-circle text-blue-600 mt-1 mr-3 text-lg"></i>
-                            <div>
-                                <h4 class="font-bold text-blue-900">认证须知</h4>
-                                <p class="text-sm text-blue-700 mt-1 leading-relaxed">企业认证需要提供真实有效的企业信息，认证通过后将获得更多功能权限，包括无限发布职位、高级人才搜索等。</p>
+                    <div class="p-10 space-y-10">
+                        <!-- Benefit Section -->
+                        <div class="relative overflow-hidden bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl p-8 text-white shadow-xl shadow-blue-200/50">
+                            <div class="relative z-10 flex items-start gap-6">
+                                <div class="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center flex-shrink-0 border border-white/30 shadow-inner">
+                                    <i class="fa-solid fa-shield-check text-white text-3xl"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-lg font-black uppercase tracking-wider mb-2">认证专享权益</h4>
+                                    <ul class="space-y-2 text-sm font-medium text-blue-50/90">
+                                        <li class="flex items-center gap-2">
+                                            <i class="fa-solid fa-circle-check text-blue-200 text-[10px]"></i>
+                                            获得「认证企业」尊贵标识，提升招聘信任度
+                                        </li>
+                                        <li class="flex items-center gap-2">
+                                            <i class="fa-solid fa-circle-check text-blue-200 text-[10px]"></i>
+                                            解锁无限职位发布名额，招募更多顶尖人才
+                                        </li>
+                                        <li class="flex items-center gap-2">
+                                            <i class="fa-solid fa-circle-check text-blue-200 text-[10px]"></i>
+                                            优先展示招聘信息，获得更多简历投递
+                                        </li>
+                                    </ul>
+                                </div>
                             </div>
-                        </div>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">统一社会信用代码 *</label>
-                                <input id="cert-license" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500" type="text" placeholder="请输入18位统一社会信用代码" />
-                            </div>
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">企业名称 *</label>
-                                <input id="cert-company-name" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500" type="text" placeholder="请输入企业全称" />
-                            </div>
-                        </div>
-                        
-                        <!-- Rest of the cert form (simplified for brevity but functional) -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">法定代表人 *</label>
-                                <input id="cert-legal-person" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500" type="text" />
-                            </div>
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">注册资本</label>
-                                <input id="cert-registered-capital" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500" type="text" />
-                            </div>
+                            <!-- Decorative Circle -->
+                            <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
                         </div>
 
-                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">联系人姓名 *</label>
-                                <input id="cert-contact" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500" type="text" />
-                            </div>
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">联系人手机 *</label>
-                                <input id="cert-phone" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500" type="tel" />
+                        <form id="cert-form" class="space-y-8">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div class="space-y-2.5">
+                            <label for="cert-license" class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">统一社会信用代码 *</label>
+                            <div class="relative group">
+                                <i class="fa-solid fa-hashtag absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors"></i>
+                                <input id="cert-license" class="w-full pl-12 pr-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white outline-none transition-all text-sm font-bold text-slate-900" type="text" placeholder="18位信用代码" />
                             </div>
                         </div>
-
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">营业执照扫描件 *</label>
-                            <div class="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center hover:border-blue-400 hover:bg-blue-50 transition-all cursor-pointer">
-                                <i class="fas fa-cloud-upload-alt text-blue-500 text-4xl mb-3"></i>
-                                <p class="text-sm font-medium text-gray-900">点击上传或拖拽文件到此处</p>
-                                <p class="text-xs text-gray-500 mt-1">支持 JPG、PNG、PDF，≤5MB</p>
-                                <input type="file" id="cert-license-file" class="hidden" accept=".jpg,.jpeg,.png,.pdf" />
+                        <div class="space-y-2.5">
+                            <label for="cert-company-name" class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">企业全称 *</label>
+                            <div class="relative group">
+                                <i class="fa-solid fa-building absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors"></i>
+                                <input id="cert-company-name" class="w-full pl-12 pr-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white outline-none transition-all text-sm font-bold text-slate-900" type="text" placeholder="须与营业执照一致" />
                             </div>
                         </div>
                     </div>
-                    <div class="p-6 border-t border-gray-100 flex justify-end items-center space-x-3 bg-gray-50/50">
-                        <button type="button" id="cert-cancel" class="px-6 py-2.5 border border-gray-300 rounded-xl text-gray-700 hover:bg-white transition-all font-medium">取消</button>
-                        <button type="submit" id="cert-submit" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-md transition-all font-medium">提交认证</button>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="space-y-2.5">
+                            <label for="cert-legal-person" class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">法定代表人 *</label>
+                            <div class="relative group">
+                                <i class="fa-solid fa-user-tie absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors"></i>
+                                <input id="cert-legal-person" class="w-full pl-12 pr-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white outline-none transition-all text-sm font-bold text-slate-900" type="text" placeholder="姓名" />
+                            </div>
+                        </div>
+                        <div class="space-y-2.5">
+                            <label for="cert-registered-capital" class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">注册资本</label>
+                            <div class="relative group">
+                                <i class="fa-solid fa-money-bill-wave absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors"></i>
+                                <input id="cert-registered-capital" class="w-full pl-12 pr-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white outline-none transition-all text-sm font-bold text-slate-900" type="text" placeholder="如：1000万人民币" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2.5">
+                        <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">营业执照附件 *</label>
+                                <div onclick="document.getElementById('cert-license-file').click()" class="border-2 border-dashed border-slate-200 rounded-[2.5rem] p-12 text-center hover:border-blue-500 hover:bg-blue-50/30 transition-all cursor-pointer group relative overflow-hidden bg-slate-50/50">
+                                    <div class="w-20 h-20 bg-white rounded-3xl flex items-center justify-center mx-auto mb-5 shadow-sm group-hover:scale-110 group-hover:shadow-lg transition-all duration-500">
+                                        <i class="fa-solid fa-cloud-arrow-up text-slate-400 group-hover:text-blue-600 text-3xl"></i>
+                                    </div>
+                                    <h5 class="text-base font-black text-slate-900 uppercase tracking-wider mb-2">点击或拖拽上传扫描件</h5>
+                                    <p class="text-xs text-slate-400 font-bold uppercase tracking-widest leading-relaxed">
+                                        支持 JPG, PNG, PDF 格式<br>
+                                        文件大小不超过 10MB
+                                    </p>
+                                    <input type="file" id="cert-license-file" class="hidden" accept=".jpg,.jpeg,.png,.pdf" />
+                                </div>
+                            </div>
+
+                            <div class="pt-6 flex gap-5">
+                                <button type="submit" id="cert-submit" class="flex-1 py-5 bg-blue-600 text-white rounded-2xl hover:bg-blue-700 transition-all text-sm font-black uppercase tracking-widest shadow-xl shadow-blue-200 flex items-center justify-center gap-3">
+                                    <span>提交审核</span>
+                                    <i class="fa-solid fa-paper-plane text-xs"></i>
+                                </button>
+                                <button type="button" id="cert-cancel" class="px-10 py-5 bg-white text-slate-600 border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all text-sm font-black uppercase tracking-widest">
+                                    取消
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             `;
@@ -449,51 +860,60 @@
             // Add Member Modal
             const addMemberModal = document.createElement('div');
             addMemberModal.id = 'add-member-modal';
-            addMemberModal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm';
+            addMemberModal.className = 'fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 hidden items-center justify-center p-4 transition-all duration-300';
             addMemberModal.innerHTML = `
-                <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full">
-                    <div class="p-6 border-b border-gray-100 flex items-center justify-between">
-                        <div class="text-xl font-bold text-gray-900">添加团队成员</div>
-                        <button id="add-member-close" class="p-2 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
-                            <i class="fas fa-times"></i>
+                <div class="bg-white rounded-[2.5rem] shadow-2xl max-w-md w-full transform transition-all border border-slate-200/50 overflow-hidden scale-100">
+                    <div class="px-10 py-8 border-b border-slate-50 flex items-center justify-between bg-white/90 backdrop-blur-xl">
+                        <div>
+                            <h3 class="text-2xl font-black text-slate-900 tracking-tight">邀请团队成员</h3>
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Invite Team Member</p>
+                        </div>
+                        <button id="add-member-close" class="w-10 h-10 rounded-2xl hover:bg-slate-100 text-slate-400 hover:text-slate-900 transition-all flex items-center justify-center group">
+                            <i class="fa-solid fa-xmark text-lg group-hover:rotate-90 transition-transform duration-300"></i>
                         </button>
                     </div>
-                    <form id="add-member-form" class="p-6 space-y-5">
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">姓名 *</label>
-                            <input id="member-name" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500" type="text" placeholder="请输入成员姓名" required />
+                    <form id="add-member-form" class="p-10 space-y-8">
+                        <div class="space-y-2.5">
+                            <label for="member-name" class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">成员姓名 *</label>
+                            <div class="relative group">
+                                <i class="fa-solid fa-user absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors"></i>
+                                <input id="member-name" class="w-full pl-12 pr-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white outline-none transition-all text-sm font-bold text-slate-900" type="text" placeholder="真实姓名" required />
+                            </div>
                         </div>
                         
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">手机号 *</label>
-                            <input id="member-phone" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500" type="tel" placeholder="请输入手机号码" required />
+                        <div class="space-y-2.5">
+                            <label for="member-phone" class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">手机号码 *</label>
+                            <div class="relative group">
+                                <i class="fa-solid fa-phone absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors"></i>
+                                <input id="member-phone" class="w-full pl-12 pr-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white outline-none transition-all text-sm font-bold text-slate-900" type="tel" placeholder="登录账号" required />
+                            </div>
                         </div>
                         
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">角色 *</label>
-                            <select id="member-role" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500" required>
-                                <option value="">请选择角色</option>
-                                <option value="hr_manager">HR经理</option>
-                                <option value="hr_specialist">HR专员</option>
-                                <option value="recruiter">招聘专员</option>
-                                <option value="admin">管理员</option>
-                            </select>
+                        <div class="space-y-2.5">
+                            <label for="member-role" class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">分配权限角色 *</label>
+                            <div class="relative group">
+                                <i class="fa-solid fa-user-gear absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors pointer-events-none z-10"></i>
+                                <select id="member-role" class="w-full pl-12 pr-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white outline-none transition-all text-sm font-bold text-slate-900 appearance-none relative" required>
+                                    <option value="">请选择角色</option>
+                                    <option value="hr_manager">HR经理 (全权管理)</option>
+                                    <option value="hr_specialist">HR专员 (基础操作)</option>
+                                    <option value="recruiter">招聘专员 (仅发布职位)</option>
+                                    <option value="admin">系统管理员 (企业级配置)</option>
+                                </select>
+                                <i class="fa-solid fa-chevron-down absolute right-5 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none"></i>
+                            </div>
                         </div>
-                        
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">邮箱 (可选)</label>
-                            <input id="member-email" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500" type="email" placeholder="请输入邮箱地址" />
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">备注</label>
-                            <textarea id="member-note" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500" rows="3" placeholder="请输入备注信息"></textarea>
+
+                        <div class="pt-4 flex gap-4">
+                            <button type="submit" onclick="submitAddMemberForm(event)" class="flex-1 py-5 bg-slate-900 text-white rounded-2xl hover:bg-black transition-all text-sm font-black uppercase tracking-widest shadow-xl shadow-slate-200 flex items-center justify-center gap-3">
+                                <span>发送邀请</span>
+                                <i class="fa-solid fa-paper-plane text-xs"></i>
+                            </button>
+                            <button type="button" id="add-member-cancel" class="px-8 py-5 bg-white text-slate-600 border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all text-sm font-black uppercase tracking-widest">
+                                取消
+                            </button>
                         </div>
                     </form>
-                    <div class="p-6 border-t border-gray-100 flex justify-end items-center space-x-3 bg-gray-50/50 rounded-b-2xl">
-                        <button type="button" id="add-member-cancel" class="px-6 py-2.5 border border-gray-300 rounded-xl text-gray-700 hover:bg-white transition-all font-medium">取消</button>
-                        <button type="submit" onclick="submitAddMemberForm(event)" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-md transition-all font-medium">保存并邀请</button>
-                    </div>
                 </div>
             `;
             document.body.appendChild(addMemberModal);
@@ -505,33 +925,6 @@
             document.getElementById('cert-cancel').addEventListener('click', closeCertificationModal);
             document.getElementById('add-member-close').addEventListener('click', closeAddMemberModal);
             document.getElementById('add-member-cancel').addEventListener('click', closeAddMemberModal);
-            
-            // Load pcas for address
-             (async function () {
-                const sp = document.getElementById('select-province');
-                const sc = document.getElementById('select-city');
-                const sd = document.getElementById('select-district');
-                if (!sp || !sc || !sd) return;
-                try {
-                    const res = await fetch('https://unpkg.com/china-division/dist/pcas.json');
-                    const pcas = await res.json();
-                    
-                    // Render Provinces
-                    sp.innerHTML = '<option value="">请选择省份</option>' + pcas.map(p => `<option value="${p.name}">${p.name}</option>`).join('');
-                    
-                    sp.addEventListener('change', () => {
-                        const p = pcas.find(i => i.name === sp.value);
-                        sc.innerHTML = '<option value="">请选择城市</option>' + (p ? p.children.map(c => `<option value="${c.name}">${c.name}</option>`).join('') : '');
-                        sd.innerHTML = '<option value="">请选择区县</option>';
-                    });
-                    
-                    sc.addEventListener('change', () => {
-                        const p = pcas.find(i => i.name === sp.value);
-                        const c = p ? p.children.find(i => i.name === sc.value) : null;
-                        sd.innerHTML = '<option value="">请选择区县</option>' + (c ? c.children.map(d => `<option value="${d.name}">${d.name}</option>`).join('') : '');
-                    });
-                } catch (_) {}
-            })();
         }
 
         async function openEditModal() {
@@ -543,12 +936,9 @@
                 if (user) {
                     document.getElementById('edit-name').value = user.company_name || '';
                     document.getElementById('edit-industry').value = user.industry || '';
-                    document.getElementById('edit-location').value = user.address || ''; // Assuming address part
-                    // Province/City/District handling is complex without split, maybe just leave for now or try to match if stored
-                    
+                    document.getElementById('edit-location').value = user.address || user.location || '';
                     document.getElementById('edit-contact-name').value = user.contact_name || user.name || '';
                     document.getElementById('edit-contact-phone').value = user.contact_phone || user.phone || '';
-                    
                     document.getElementById('edit-size').value = user.company_size || '';
                     document.getElementById('edit-founded').value = user.founded_year || '';
                     document.getElementById('edit-website').value = user.website || '';
@@ -585,9 +975,6 @@
         async function submitEditForm() {
             const name = document.getElementById('edit-name').value.trim();
             const industry = document.getElementById('edit-industry').value.trim();
-            const province = document.getElementById('select-province').value.trim();
-            const city = document.getElementById('select-city').value.trim();
-            const district = document.getElementById('select-district').value.trim();
             const address = document.getElementById('edit-location').value.trim();
             const contact_name = document.getElementById('edit-contact-name').value.trim();
             const contact_phone = document.getElementById('edit-contact-phone').value.trim();
@@ -599,19 +986,16 @@
             if (!name) { ui.showNotification('请输入企业名称', 'warning'); return; }
             
             const payload = { 
-                name, industry, province, city, district, address, 
+                name, industry, address, 
                 contact_name, contact_phone, 
                 company_size, founded_year, website, description 
             };
 
             try {
-                // Updating local display first for immediate feedback (optimistic UI)
+                // Updating local display first
                 setText('[data-company-name]', name);
                 setText('[data-company-industry]', industry || '未设置行业');
-                
-                const loc = [province, city, district].filter(Boolean).join('-');
-                setText('[data-company-location]', loc || address || '—');
-                
+                setText('[data-company-location]', address || '—');
                 setText('[data-company-size]', company_size || '—');
                 setText('[data-company-founded]', founded_year || '—');
                 setText('[data-company-website]', website || '—');
@@ -626,13 +1010,12 @@
                 
                 if (resp && resp.success) {
                     try {
-                        // Update local storage to persist basic info across reloads
                         const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
                         if (userInfo && userInfo.user) { 
                             Object.assign(userInfo.user, { 
                                 company_name: name, 
                                 industry, 
-                                location: loc || address,
+                                location: address,
                                 company_size, 
                                 founded_year, 
                                 website, 
@@ -657,27 +1040,40 @@
 
         async function submitAddMemberForm(e) {
             e.preventDefault();
-            // Mock implementation as in original
-             ui.showNotification('邀请已发送', 'success');
-             closeAddMemberModal();
-        }
-    </script>
-</body>
-</html>         } else {
-                     ui.showNotification('信息已更新（本地预览）', 'success');
-                     closeEditModal();
-                }
-            } catch (err) { 
-                console.error(err);
-                ui.showNotification('保存失败: ' + err.message, 'error'); 
-            }
+            ui.showNotification('邀请已发送', 'success');
+            closeAddMemberModal();
         }
 
-        async function submitAddMemberForm(e) {
-            e.preventDefault();
-            // Mock implementation as in original
-             ui.showNotification('邀请已发送', 'success');
-             closeAddMemberModal();
+        async function savePreferences() {
+            const settings = {
+                enableAutoReply: document.getElementById('auto-reply-toggle')?.checked,
+                enableAutoScreening: document.getElementById('auto-filter-toggle')?.checked,
+                autoRejectScore: parseInt(document.getElementById('autoRejectScore')?.value || '60'),
+                notifyHighScore: document.getElementById('notifyHighScore')?.checked,
+                highScoreThreshold: parseInt(document.getElementById('highScoreThreshold')?.value || '85'),
+                weightPreference: document.getElementById('weightPreference')?.value
+            };
+
+            const payload = { 
+                name: document.querySelector('[data-company-name]')?.textContent,
+                settings 
+            };
+
+            try {
+                ui.showLoading('正在保存...');
+                const resp = await userAuthInstance.apiRequest('/company/profile', 'POST', payload);
+                ui.hideLoading();
+                
+                if (resp && resp.success) {
+                    ui.showNotification('招聘偏好已保存', 'success');
+                } else {
+                    ui.showNotification('保存失败', 'error');
+                }
+            } catch (err) {
+                ui.hideLoading();
+                console.error(err);
+                ui.showNotification('保存失败: ' + err.message, 'error');
+            }
         }
     </script>
 </body>

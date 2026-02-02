@@ -14,9 +14,25 @@ class HeaderProfile {
             return;
         }
 
+        // 先尝试更新一次用户信息以获取最新订阅状态
+        if (window.userAuthInstance && window.userAuthInstance.isLoggedIn()) {
+            window.userAuthInstance.checkAuth().then(() => {
+                this.render(containerSelector, append);
+            }).catch(() => {
+                this.render(containerSelector, append);
+            });
+        } else {
+            this.render(containerSelector, append);
+        }
+    }
+
+    /**
+     * 执行实际的渲染逻辑
+     */
+    static render(containerSelector = null, append = false) {
         const user = this.getUserInfo();
         const html = this.generateHTML(user);
-
+        
         let container;
         if (containerSelector) {
             container = document.querySelector(containerSelector);
@@ -24,20 +40,14 @@ class HeaderProfile {
 
         // Fallback: Try to find the standard header right section
         if (!container) {
-            // Strategy 1: Look for ID 'header-right-section'
             container = document.getElementById('header-right-section');
-            
-            // Strategy 2: Look for the last flex item in header
             if (!container) {
                 const headers = document.getElementsByTagName('header');
                 if (headers.length > 0) {
                     const header = headers[0];
-                    // Find the flex container that usually holds right-side items
                     const flexContainers = header.querySelectorAll('.flex.items-center.justify-between > div:last-child');
                     if (flexContainers.length > 0) {
                         container = flexContainers[0];
-                        // If we are guessing the container, we might want to be careful about replacing
-                        // But for dashboard.html, replacing is correct (it replaces bell/user icons)
                     }
                 }
             }
@@ -47,7 +57,6 @@ class HeaderProfile {
             if (append) {
                 const wrapper = document.createElement('div');
                 wrapper.innerHTML = html;
-                // Append the children of wrapper to container
                 while (wrapper.firstChild) {
                     container.appendChild(wrapper.firstChild);
                 }
@@ -55,8 +64,6 @@ class HeaderProfile {
                 container.innerHTML = html;
             }
             this.attachEvents();
-        } else {
-            console.warn('HeaderProfile: Container not found. Please provide a valid selector or ensure standard header structure.');
         }
     }
 
@@ -157,6 +164,11 @@ class HeaderProfile {
         
         // 由于 ui-avatars.com 在国内可能也不稳定，我们改用本地生成的 Base64 头像（简单的文字头像）
         const generateInitialAvatar = (name) => {
+            if (typeof ui !== 'undefined' && ui.renderAvatar) {
+                // 用户头像不属于候选人
+                return ui.renderAvatar(user.avatar, name, 'w-8 h-8', 'rounded-full', false);
+            }
+            // ... 保持原有 canvas 回退逻辑不变
             try {
                 const canvas = document.createElement('canvas');
                 canvas.width = 128;
@@ -164,7 +176,10 @@ class HeaderProfile {
                 const ctx = canvas.getContext('2d');
                 
                 // 背景
-                ctx.fillStyle = '#0d8abc';
+                const colors = ['#3b82f6', '#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#14b8a6'];
+                let hash = 0;
+                for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+                ctx.fillStyle = colors[Math.abs(hash) % colors.length];
                 ctx.fillRect(0, 0, 128, 128);
                 
                 // 文字
@@ -172,8 +187,15 @@ class HeaderProfile {
                 ctx.font = 'bold 64px sans-serif';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                const initial = (name || '?').charAt(0).toUpperCase();
-                ctx.fillText(initial, 64, 64);
+                
+                let displayName = '';
+                const chineseMatch = name.match(/[\u4e00-\u9fa5]/g);
+                if (chineseMatch && chineseMatch.length >= 2) {
+                    displayName = chineseMatch.slice(0, 2).join('');
+                } else {
+                    displayName = name.substring(0, 2).toUpperCase();
+                }
+                ctx.fillText(displayName, 64, 64);
                 
                 return canvas.toDataURL('image/png');
             } catch (e) {
@@ -182,13 +204,14 @@ class HeaderProfile {
         };
 
         const avatarUrl = user.avatar || generateInitialAvatar(name);
+        const isHtml = avatarUrl.trim().startsWith('<');
 
         return `
             <div class="flex items-center space-x-4 ml-4">
                 <!-- User Profile Dropdown -->
                 <div class="relative z-50">
                     <button id="header-user-btn" class="flex items-center space-x-3 p-1.5 rounded-lg hover:bg-gray-50 transition-colors focus:outline-none border border-transparent hover:border-gray-200">
-                        <img src="${avatarUrl}" onerror="this.src='${fallbackAvatar}';this.onerror=null;" alt="Avatar" class="w-8 h-8 rounded-full object-cover border border-gray-200">
+                        ${isHtml ? avatarUrl : `<img src="${avatarUrl}" onerror="this.src='${fallbackAvatar}';this.onerror=null;" alt="Avatar" class="w-8 h-8 rounded-full object-cover">`}
                         <div class="text-left hidden md:block">
                             <p class="text-sm font-semibold text-gray-900 leading-none">${name} <span class="font-normal text-gray-500 text-xs"> ${role}</span></p>
                             <p class="text-xs text-gray-500 mt-0.5">${enterprise}</p>
@@ -200,7 +223,7 @@ class HeaderProfile {
                     <div id="header-user-menu" class="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-100 py-2 hidden transform transition-all duration-200 origin-top-right">
                         <div class="px-4 py-3 border-b border-gray-50 bg-gray-50/50">
                             <div class="flex items-center space-x-3">
-                                <img src="${avatarUrl}" onerror="this.src='${fallbackAvatar}';this.onerror=null;" class="w-10 h-10 rounded-full object-cover border border-gray-200">
+                                ${isHtml ? avatarUrl.replace(/w-\d+ h-\d+/, 'w-10 h-10') : `<img src="${avatarUrl}" onerror="this.src='${fallbackAvatar}';this.onerror=null;" class="w-10 h-10 rounded-full object-cover">`}
                                 <div class="overflow-hidden">
                                     <p class="text-sm font-semibold text-gray-900 truncate">${name}</p>
                                     <p class="text-xs text-gray-500 truncate">${user.email || '未绑定邮箱'}</p>

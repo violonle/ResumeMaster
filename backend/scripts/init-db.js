@@ -2,6 +2,7 @@
  * 数据库初始化脚本
  * 自动创建数据库和表，并初始化默认管理员数据
  */
+require('dotenv').config();
 const { sequelize, User, Role } = require('../models');
 const bcrypt = require('bcryptjs');
 

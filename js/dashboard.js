@@ -32,7 +32,7 @@ class DashboardController {
             console.log('Dashboard initialized successfully');
         } catch (error) {
             console.error('Dashboard initialization failed:', error);
-            // 显示错误提示
+            ui.showNotification('工作台加载失败，请刷新重试', 'error');
         }
     }
 
@@ -83,7 +83,7 @@ class DashboardController {
             
             this.updateStatCard('stat-candidates', stats.total_candidates, `今日新增 ${stats.new_candidates_today}`);
             this.updateStatCard('stat-jobs', stats.active_jobs, '招聘进行中');
-            this.updateStatCard('stat-interviews', stats.interviews_scheduled, '待面试');
+            this.updateStatCard('stat-interviews', stats.screened_resumes, '已快评');
             this.updateStatCard('stat-offers', stats.offers_sent, '待入职');
         } catch (error) {
             console.error('Failed to load stats:', error);
@@ -111,16 +111,19 @@ class DashboardController {
         }
         
         // Create a new container for the bars if needed
-        const funnelContainer = document.createElement('div');
-        funnelContainer.className = 'flex flex-col space-y-3 w-full h-full justify-center';
-        parent.appendChild(funnelContainer);
+        let funnelContainer = parent.querySelector('.funnel-bars-container');
+        if (!funnelContainer) {
+            funnelContainer = document.createElement('div');
+            funnelContainer.className = 'funnel-bars-container flex flex-col space-y-3 w-full h-full justify-center';
+            parent.appendChild(funnelContainer);
+        }
 
         try {
             const pipeline = await this.resumeData.getRecruitmentPipeline();
             
             const statusMap = {
                 '投递': 'applied',
-                '初筛': 'screening',
+                '快评': 'screening',
                 '面试': 'interview',
                 'Offer': 'offer',
                 '入职': 'hired'
@@ -128,7 +131,7 @@ class DashboardController {
             
             const stages = {
                 'applied': { count: 0, label: '投递', color: 'bg-blue-100', text: 'text-blue-700', width: '100%' },
-                'screening': { count: 0, label: '初筛', color: 'bg-blue-200', text: 'text-blue-800', width: '85%' },
+                'screening': { count: 0, label: '快评', color: 'bg-blue-200', text: 'text-blue-800', width: '85%' },
                 'interview': { count: 0, label: '面试', color: 'bg-blue-300', text: 'text-blue-900', width: '70%' },
                 'offer': { count: 0, label: 'Offer', color: 'bg-indigo-300', text: 'text-indigo-900', width: '55%' },
                 'hired': { count: 0, label: '入职', color: 'bg-indigo-500', text: 'text-white', width: '40%' }
@@ -188,12 +191,15 @@ class DashboardController {
                 if (t.items && Array.isArray(t.items) && t.items.length > 0) {
                     t.items.forEach(item => {
                         let detail = {
+                             id: item.id,
+                             resumeId: item.resumeId,
                              title: t.title,
                              desc: item.desc || '未命名任务',
                              time: item.time ? new Date(item.time).toLocaleDateString() : '今天',
                              link: t.link,
                              priority: t.priority,
-                             type: t.type
+                             type: t.type,
+                             score: item.score
                         };
                         
                         if (t.type === 'review') {
@@ -214,26 +220,63 @@ class DashboardController {
             const priorityOrder = { 'high': 0, 'medium': 1, 'low': 2 };
             detailedTasks.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
 
-            const reviewItems = detailedTasks.filter(t => t.type === 'review');
+            const reviewItems = detailedTasks.filter(t => t.type === 'review' || t.type === 'screened');
             const workflowItems = detailedTasks.filter(t => t.type === 'interview' || t.type === 'offer');
 
-            const renderItem = (task) => `
-                <div class="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-xl hover:shadow-md transition-all">
-                    <div class="flex-1 min-w-0">
-                        <h4 class="text-sm font-bold text-gray-900 whitespace-normal">${task.desc}</h4>
-                        <p class="text-xs text-gray-500 mt-0.5">${task.title} · ${task.time}</p>
+            const renderItem = (task) => {
+                let badge = '';
+                let actionButtons = '';
+                
+                if (task.score) {
+                    const colorClass = task.score >= 80 ? 'text-emerald-600 bg-emerald-50' : (task.score >= 60 ? 'text-blue-600 bg-blue-50' : 'text-rose-600 bg-rose-50');
+                    badge = `<span class="mr-2 px-1.5 py-0.5 rounded text-[10px] font-bold ${colorClass}">AI ${task.score}分</span>`;
+                    
+                    // 为有评分的筛选任务添加快速操作按钮
+                    if (task.type === 'review' && task.id) {
+                        actionButtons = `
+                            <div class="flex space-x-2 ml-4">
+                                <button onclick="event.stopPropagation(); dashboardController.quickScreen('${task.id}', '面试')" class="px-2 py-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 rounded hover:bg-emerald-100 transition-colors">
+                                    <i class="fas fa-check mr-1"></i>通过
+                                </button>
+                                <button onclick="event.stopPropagation(); dashboardController.quickScreen('${task.id}', '淘汰')" class="px-2 py-1 text-[10px] font-bold text-rose-600 bg-rose-50 border border-rose-100 rounded hover:bg-rose-100 transition-colors">
+                                    <i class="fas fa-times mr-1"></i>不通过
+                                </button>
+                            </div>
+                        `;
+                    }
+                } else if (task.type === 'review') {
+                    badge = `<span class="mr-2 px-1.5 py-0.5 rounded text-[10px] font-bold text-gray-500 bg-gray-100 border border-gray-200">待快评</span>`;
+                } else if (task.type === 'screened') {
+                    badge = `<span class="mr-2 px-1.5 py-0.5 rounded text-[10px] font-bold text-yellow-700 bg-yellow-100 border border-yellow-200">已快评</span>`;
+                }
+
+                if (!actionButtons) {
+                    actionButtons = `
+                        <button onclick="window.location.href='${task.link}'" class="ml-4 shrink-0 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100">
+                            ${task.action}
+                        </button>
+                    `;
+                }
+
+                return `
+                <div class="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-xl hover:shadow-md transition-all cursor-pointer" onclick="window.location.href='${task.link}'">
+                    <div class="flex-1 min-w-0 mr-4">
+                        <h4 class="text-sm font-bold text-gray-900 truncate mb-1.5" title="${task.desc}">${task.desc}</h4>
+                        <div class="flex items-center flex-wrap">
+                            ${badge}
+                            <p class="text-[10px] text-gray-500 truncate" title="${task.title} · ${task.time}">${task.title} · ${task.time}</p>
+                        </div>
                     </div>
-                    <button onclick="window.location.href='${task.link}'" class="ml-4 shrink-0 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100">
-                        ${task.action}
-                    </button>
+                    ${actionButtons}
                 </div>
             `;
+            };
 
             container.innerHTML = `
                 <div class="space-y-4">
                     <div>
                         <div class="flex items-center mb-2">
-                            <span class="text-sm font-bold text-gray-800">待筛选简历</span>
+                            <span class="text-sm font-bold text-gray-800">快评任务</span>
                             <span class="ml-2 text-xs text-gray-500">${reviewItems.length} 条</span>
                         </div>
                         <div class="space-y-3">
@@ -265,12 +308,12 @@ class DashboardController {
         if (!el) return;
         
         const getCacheKey = (period) => {
-            let userId = 'guest';
+            let userIdValue = 'guest';
             try {
                 const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-                userId = userInfo.id || (userInfo.user && userInfo.user.id) || 'guest';
+                userIdValue = userInfo.id || (userInfo.user && userInfo.user.id) || 'guest';
             } catch (e) {}
-            return `ai_prediction_${userId}_${period}`;
+            return `ai_prediction_${userIdValue}_${period}`;
         };
 
         const render = (data) => {
@@ -280,7 +323,19 @@ class DashboardController {
             }
 
             const analysis = data.ai_analysis;
-            // 处理可能的字符串数据（防止JSON解析失败时的降级显示）
+            
+            // 辅助：处理大模型可能返回的对象格式，确保输出为字符串
+            const formatText = (val) => {
+                if (!val) return '';
+                if (typeof val === 'string') return val;
+                if (typeof val === 'object') {
+                    // 尝试提取核心文字内容
+                    return val.text || val.content || val.reason || val.description || val.analysis || JSON.stringify(val);
+                }
+                return String(val);
+            };
+
+            // 处理可能的数组数据
             const getList = (arr) => Array.isArray(arr) ? arr : [];
 
             el.innerHTML = `
@@ -289,18 +344,18 @@ class DashboardController {
                     <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
                         <div class="flex items-center mb-2 pb-2 border-b border-gray-100">
                             <i class="fas fa-chart-line text-blue-500 mr-2"></i>
-                            <h4 class="font-bold text-blue-600 text-sm">招聘趋势预测</h4>
+                            <h4 class="font-bold text-gray-900 text-sm">招聘趋势预测</h4>
                         </div>
-                        <p class="text-sm text-gray-600 leading-relaxed text-justify mt-2">${analysis.trend_analysis || '暂无分析'}</p>
+                        <p class="text-sm text-gray-600 leading-relaxed text-justify mt-2">${formatText(analysis.trend_analysis) || '暂无分析'}</p>
                     </div>
 
                     <!-- 漏斗健康度 -->
                     <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
                          <div class="flex items-center mb-2 pb-2 border-b border-gray-100">
                             <i class="fas fa-heartbeat text-blue-500 mr-2"></i>
-                            <h4 class="font-bold text-blue-600 text-sm">漏斗健康度</h4>
+                            <h4 class="font-bold text-gray-900 text-sm">漏斗健康度</h4>
                         </div>
-                        <p class="text-sm text-gray-600 leading-relaxed text-justify mt-2">${analysis.pipeline_health || '暂无评价'}</p>
+                        <p class="text-sm text-gray-600 leading-relaxed text-justify mt-2">${formatText(analysis.pipeline_health) || '暂无评价'}</p>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -308,7 +363,7 @@ class DashboardController {
                         <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
                              <div class="flex items-center mb-2 pb-2 border-b border-gray-100">
                                 <i class="fas fa-exclamation-circle text-blue-500 mr-2 text-xs"></i>
-                                <h4 class="font-bold text-blue-600 text-sm">潜在瓶颈</h4>
+                                <h4 class="font-bold text-gray-900 text-sm">潜在瓶颈</h4>
                             </div>
                             <ul class="list-disc list-inside text-xs text-gray-600 space-y-2 mt-2">
                                 ${getList(analysis.potential_bottlenecks).map(b => `<li>${b}</li>`).join('') || '<li class="text-gray-400">未发现明显瓶颈</li>'}
@@ -319,7 +374,7 @@ class DashboardController {
                         <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
                              <div class="flex items-center mb-2 pb-2 border-b border-gray-100">
                                 <i class="fas fa-lightbulb text-blue-500 mr-2 text-xs"></i>
-                                <h4 class="font-bold text-blue-600 text-sm">改进建议</h4>
+                                <h4 class="font-bold text-gray-900 text-sm">改进建议</h4>
                             </div>
                              <ul class="list-disc list-inside text-xs text-gray-600 space-y-2 mt-2">
                                 ${getList(analysis.suggestions).map(s => `<li>${s}</li>`).join('') || '<li class="text-gray-400">暂无建议</li>'}
@@ -403,19 +458,7 @@ class DashboardController {
         if (!container) return;
 
         try {
-            const response = await fetch('/api/company/recent-activity', {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to fetch recent activities');
-            }
-
-            const result = await response.json();
+            const result = await this.resumeData.apiRequest('/company/recent-activity', 'GET', null, false);
             const activities = result.data || [];
 
             if (activities.length === 0) {
@@ -450,6 +493,42 @@ class DashboardController {
         } catch (error) {
             console.error('Failed to load recent activities:', error);
             container.innerHTML = '<div class="text-sm text-gray-500 text-center py-4">加载失败，请刷新重试</div>';
+        }
+    }
+
+    /**
+     * 快速快评候选人
+     * @param {string} resumeId - 简历ID
+     * @param {string} status - 目标状态 (面试/淘汰)
+     */
+    async quickScreen(candidateId, status) {
+        if (!candidateId) return;
+        
+        try {
+            ui.showLoading(`正在将候选人移至${status}...`);
+            
+            // Map status to English for recruitment API if needed, 
+            // but updateRecruitmentStatus handle Chinese as well
+            const statusMap = {
+                '面试': 'interview',
+                '淘汰': 'rejected'
+            };
+            const targetStatus = statusMap[status] || status;
+            
+            await this.resumeData.updateRecruitmentStatus(candidateId, targetStatus);
+            
+            ui.hideLoading();
+            ui.showNotification(`已将候选人设为「${status}」`, 'success');
+            
+            // 重新加载待办事项
+            await this.loadPendingTasks();
+            // 重新加载图表以反映变化
+            await this.loadFunnelChart();
+            await this.loadStats();
+        } catch (error) {
+            console.error('快速快评失败:', error);
+            ui.hideLoading();
+            ui.showNotification(error.message || '操作失败，请稍后重试', 'error');
         }
     }
 
@@ -502,9 +581,27 @@ class DashboardController {
                     : 'w-6 h-6 rounded-full bg-gray-400 text-white flex items-center justify-center text-xs mr-2';
             });
         };
-        const open = () => { modal.classList.remove('hidden'); modal.classList.add('flex'); showStep(0); };
-        const close = () => { modal.classList.add('hidden'); modal.classList.remove('flex'); };
-        if (closeBtn) closeBtn.addEventListener('click', () => { close(); localStorage.setItem('firstSetupRequired','0'); });
+        const open = () => { 
+            modal.classList.remove('hidden'); 
+            showStep(0); 
+            document.body.style.overflow = 'hidden'; 
+        };
+        const close = () => { 
+            modal.classList.add('hidden'); 
+            document.body.style.overflow = ''; 
+        };
+        if (closeBtn) closeBtn.addEventListener('click', () => { 
+            close(); 
+            localStorage.setItem('firstSetupRequired','0'); 
+        });
+
+        // 点击背景关闭
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal || e.target.closest('.fixed.inset-0.bg-gray-500')) {
+                close();
+                localStorage.setItem('firstSetupRequired','0');
+            }
+        });
 
         // 填充显示ID与头像预览
         const idInput = document.getElementById('onb-user-id');
@@ -617,8 +714,30 @@ class DashboardController {
                 drawCrop(); 
             };
             cropImg.src = url;
-            if (cropModal) { cropModal.classList.remove('hidden'); cropModal.classList.add('flex'); }
+            if (cropModal) { 
+                cropModal.classList.remove('hidden'); 
+                document.body.style.overflow = 'hidden';
+            }
         };
+
+        const closeCrop = () => {
+            if (cropModal) {
+                cropModal.classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+        };
+
+        if (cropModal) {
+            cropModal.addEventListener('click', (e) => {
+                if (e.target === cropModal || e.target.closest('.fixed.inset-0.bg-gray-500')) {
+                    closeCrop();
+                }
+            });
+        }
+
+        const cropCancelBtn = document.getElementById('avatar-crop-cancel-btn');
+        if (cropCancelBtn) cropCancelBtn.addEventListener('click', closeCrop);
+        if (cropCancel) cropCancel.addEventListener('click', closeCrop);
 
         if (cropCanvas) {
             const getCanvasPoint = (e) => {
@@ -860,7 +979,7 @@ class DashboardController {
         // 省市区三级联动逻辑已移除
 
 
-        const notify = (msg, type='info') => { try { ui.showNotification(msg, type); } catch(_) { console.log(msg); } };
+        const notify = (msg, type='info') => { ui.showNotification(msg, type); };
         const doSetPassword = async () => {
             try {
                 if (!pwd || !pwd2) return true; // nothing to do

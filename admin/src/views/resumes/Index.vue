@@ -157,9 +157,19 @@
             </VBtn>
             <VBtn
               variant="outlined"
+              class="me-2"
               @click="resetFilters"
             >
               重置
+            </VBtn>
+            <VBtn
+              v-if="selected.length > 0"
+              color="error"
+              variant="flat"
+              prepend-icon="mdi-delete"
+              @click="handleBatchDelete"
+            >
+              批量删除 ({{ selected.length }})
             </VBtn>
           </VCol>
         </VRow>
@@ -172,12 +182,15 @@
       border
     >
       <VDataTableServer
+        v-model="selected"
         v-model:items-per-page="filters.limit"
         :headers="headers"
         :items="items"
         :items-length="total"
         :loading="loading"
         :items-per-page-options="[10, 20, 50, 100]"
+        item-value="id"
+        show-select
         hover
         @update:options="loadItems"
       >
@@ -266,6 +279,7 @@
               size="small"
               icon
               color="primary"
+              class="me-1"
               @click="viewDetail(item)"
             >
               <VIcon
@@ -277,6 +291,24 @@
                 location="top"
               >
                 查看详情
+              </VTooltip>
+            </VBtn>
+            <VBtn
+              variant="text"
+              size="small"
+              icon
+              color="error"
+              @click="handleDelete(item)"
+            >
+              <VIcon
+                icon="mdi-delete-outline"
+                size="20"
+              />
+              <VTooltip
+                activator="parent"
+                location="top"
+              >
+                删除简历
               </VTooltip>
             </VBtn>
           </div>
@@ -332,6 +364,7 @@ const router = useRouter()
 const loading = ref(false)
 const generatingLink = ref(false)
 const items = ref([])
+const selected = ref([])
 const total = ref(0)
 const companies = ref([])
 const stats = ref({
@@ -354,7 +387,7 @@ const headers = [
   { title: '所属公司', key: 'company', sortable: false, minWidth: '150px' },
   { title: '关联职位', key: 'jobs', sortable: false, minWidth: '150px' },
   { title: '上传时间', key: 'created_at', sortable: true, width: '150px' },
-  { title: '操作', key: 'actions', sortable: false, align: 'end', width: '120px' }
+  { title: '操作', key: 'actions', sortable: false, align: 'end', width: '160px' }
 ]
 
 // 方法
@@ -389,7 +422,7 @@ const loadItems = async (options = {}) => {
     if (itemsPerPage) filters.limit = itemsPerPage
 
     const { data } = await resumeAPI.getList(filters)
-    items.value = data.list
+    items.value = data.items
     total.value = data.total
   } catch (error) {
     console.error('Failed to load resumes:', error)
@@ -479,6 +512,48 @@ const copyLink = async () => {
     alert('链接已复制到剪贴板')
   } catch (err) {
     console.error('Failed to copy:', err)
+  }
+}
+
+const handleDelete = async (item) => {
+  if (!confirm(`确定要删除简历 "${item.name}" 吗？此操作不可撤销。`)) {
+    return
+  }
+
+  try {
+    loading.value = true
+    await resumeAPI.delete(item.id)
+    alert('删除成功')
+    loadItems()
+    loadStats()
+  } catch (error) {
+    console.error('Delete resume failed:', error)
+    alert(error.response?.data?.message || '删除失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+const handleBatchDelete = async () => {
+  const ids = selected.value
+  if (!ids.length) return
+
+  if (!confirm(`确定要删除选中的 ${ids.length} 份简历吗？此操作不可撤销。`)) {
+    return
+  }
+
+  try {
+    loading.value = true
+    await resumeAPI.batchDelete(ids)
+    alert('批量删除成功')
+    selected.value = []
+    loadItems()
+    loadStats()
+  } catch (error) {
+    console.error('Batch delete resumes failed:', error)
+    alert(error.response?.data?.message || '批量删除失败')
+  } finally {
+    loading.value = false
   }
 }
 

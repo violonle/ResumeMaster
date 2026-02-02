@@ -331,20 +331,28 @@ const smsScenarioOptions = [
   { title: '登录/注册验证码', value: 'auth' },
   { title: '面试邀请通知', value: 'interview' },
   { title: 'Offer发送通知', value: 'offer' },
+  { title: '面试催单通知', value: 'reminder' },
 ]
 
 const defaultTestParams = {
   auth: { code: '123456' },
   interview: {
     name: '张三',
+    company: '超级简历',
     time: '2026-01-20 10:00',
-    jobId: '12345',
+    jobId: '12345'
   },
   offer: {
     name: '张三',
-    company: '争湃科技',
-    time: '2026-02-01',
+    company: '超级简历',
+    time: '2026-02-01'
   },
+  reminder: {
+    time: '15分钟后',
+    name: '张三',
+    company: '超级简历',
+    url: 'https://master.cloujade.com?resumeJobId=12345'
+  }
 }
 
 watch(smsTestScenario, (newVal) => {
@@ -395,7 +403,12 @@ const testSms = async () => {
     ui.showNotification('测试短信已发出', 'success')
   } catch (error) {
     console.error('Test SMS error:', error)
-    ui.showNotification('发送失败：' + (error.response?.data?.message || error.message), 'error')
+    const data = error.response?.data
+    const err = data?.error
+    const msg = (err && typeof err === 'object')
+      ? `${err.code ? err.code + ': ' : ''}${err.message || '发送失败'}`
+      : (typeof err === 'string' ? err : (data?.message || error.message || '发送失败'))
+    ui.showNotification('发送失败：' + msg, 'error')
   } finally {
     testing.value = false
   }

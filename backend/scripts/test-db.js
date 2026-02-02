@@ -2,13 +2,14 @@
  * 数据库连接测试脚本
  */
 const mysql = require('mysql2/promise');
+require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
 
 async function testDatabaseConnection() {
     const dbConfig = {
         host: process.env.DB_HOST || '127.0.0.1',
-        port: process.env.DB_PORT || 3306,
-        user: process.env.DB_USERNAME || 'root',
-        password: process.env.DB_PASSWORD || '123456',
+        port: Number(process.env.DB_PORT) || 3306,
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || 'Longkou7~!@',
         database: process.env.DB_NAME || 'superresumemaster'
     };
 
@@ -25,9 +26,9 @@ async function testDatabaseConnection() {
         connection = await mysql.createConnection(dbConfig);
         
         // 测试连接
-        const [rows] = await connection.execute('SELECT NOW() as current_time');
+        const [rows] = await connection.execute('SELECT NOW() as now_time');
         console.log('✅ 数据库连接成功!');
-        console.log('当前时间:', rows[0].current_time);
+        console.log('当前时间:', rows[0].now_time);
 
         // 检查表是否存在
         const [tables] = await connection.execute('SHOW TABLES');
