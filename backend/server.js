@@ -40,20 +40,36 @@ const deepAnalysisService = require('./services/deepAnalysisService');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+const fs = require('fs');
+const path = require('path');
+
+// 确保日志目录存在
+const logDir = path.join(__dirname, 'logs');
+if (!fs.existsSync(logDir)) {
+  fs.mkdirSync(logDir);
+}
+
+const logFile = path.join(logDir, 'app.log');
+
 // 日志中间件 - 移动到最上方以捕获所有请求
 app.use((req, res, next) => {
   const timestamp = new Date().toISOString();
   const start = Date.now();
   
-  // 记录请求体（如果是登录请求）
-  if (req.path.includes('/login')) {
-    console.log(`[DEBUG_REQ] ${timestamp} - ${req.method} ${req.url} body:`, JSON.stringify(req.body));
+  // 记录请求体（如果是登录或支付请求）
+  let bodyLog = '';
+  if (req.method === 'POST' && (req.path.includes('/login') || req.path.includes('/payment'))) {
+    bodyLog = ` body: ${JSON.stringify(req.body)}`;
   }
   
   // 响应结束时记录
   res.on('finish', () => {
     const duration = Date.now() - start;
-    console.log(`[${timestamp}] ${req.method} ${req.url} - ${res.statusCode} (${duration}ms)`);
+    const logMessage = `[${timestamp}] ${req.method} ${req.url}${bodyLog} - ${res.statusCode} (${duration}ms)\n`;
+    
+    // 同时输出到控制台和文件
+    console.log(logMessage.trim());
+    fs.appendFileSync(logFile, logMessage);
   });
   
   next();
@@ -105,7 +121,6 @@ app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
 
 // 静态文件服务
-const path = require('path');
 const ROOT_DIR = path.resolve(__dirname, '..');
 // 后台管理系统静态文件
 const adminDistPath = path.join(ROOT_DIR, 'admin/dist');

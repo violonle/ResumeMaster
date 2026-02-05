@@ -7,20 +7,23 @@ class ConfigHelper {
   // 获取微信支付配置
   static getWechatPayConfig() {
     return {
-      appId: process.env.WECHAT_APP_ID || 'default_wechat_app_id',
-      mchId: process.env.WECHAT_MCH_ID || 'default_wechat_mch_id',
-      apiKey: process.env.WECHAT_API_KEY || 'default_wechat_api_key',
-      appSecret: process.env.WECHAT_APP_SECRET || 'default_wechat_app_secret',
-      notifyUrl: process.env.WECHAT_NOTIFY_URL || '/api/payment/wechat-notify'
+      appId: process.env.WECHAT_APP_ID,
+      mchId: process.env.WECHAT_MCH_ID,
+      apiV3Key: process.env.WECHAT_APIV3_KEY,
+      serialNo: process.env.WECHAT_SERIAL_NO,
+      privateKey: process.env.WECHAT_PRIVATE_KEY,
+      publicKey: process.env.WECHAT_PUBLIC_KEY,
+      notifyUrl: process.env.WECHAT_NOTIFY_URL || 'https://master.cloujade.com/api/payment/notify/wechat',
+      enabled: process.env.WECHAT_PAY_ENABLED !== 'false'
     };
   }
 
   // 获取支付宝配置
   static getAlipayConfig() {
     return {
-      appId: process.env.ALIPAY_APP_ID || 'default_alipay_app_id',
-      privateKey: process.env.ALIPAY_PRIVATE_KEY || 'default_alipay_private_key',
-      publicKey: process.env.ALIPAY_PUBLIC_KEY || 'default_alipay_public_key',
+      appId: process.env.ALIPAY_APP_ID || '',
+      privateKey: process.env.ALIPAY_PRIVATE_KEY || '',
+      publicKey: process.env.ALIPAY_PUBLIC_KEY || '',
       serverUrl: process.env.ALIPAY_SERVER_URL || 'https://openapi.alipay.com/gateway.do',
       notifyUrl: process.env.ALIPAY_NOTIFY_URL || '/api/payment/alipay-notify',
       returnUrl: process.env.ALIPAY_RETURN_URL || '/payment/success',
@@ -53,7 +56,7 @@ class ConfigHelper {
   // 检查配置是否完整
   static validateConfig(type) {
     const required = {
-      wechatpay: ['WECHAT_APP_ID', 'WECHAT_MCH_ID', 'WECHAT_API_KEY'],
+      wechatpay: ['WECHAT_APP_ID', 'WECHAT_MCH_ID', 'WECHAT_APIV3_KEY', 'WECHAT_SERIAL_NO'],
       alipay: ['ALIPAY_APP_ID', 'ALIPAY_PRIVATE_KEY', 'ALIPAY_PUBLIC_KEY'],
       ai: ['SILICONFLOW_API_KEY', 'GLM_API_KEY', 'QWEN_API_KEY', 'DEEPSEEK_API_KEY']
     };

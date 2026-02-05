@@ -132,6 +132,10 @@ export const systemAPI = {
   getNotificationSettings: () => apiClient.get('/admin/system/notifications'),
   updateNotificationSettings: (data) => apiClient.put('/admin/system/notifications', data),
 
+  // 支付设置
+  getPaymentSettings: () => apiClient.get('/admin/system/payment'),
+  updatePaymentSettings: (data) => apiClient.put('/admin/system/payment', data),
+
   // 权限管理
   getRoles: () => apiClient.get('/admin/system/roles'),
   createRole: (data) => apiClient.post('/admin/system/roles', data),

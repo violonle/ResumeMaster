@@ -3,52 +3,118 @@ const axios = require('axios');
 const moment = require('moment');
 const ConfigHelper = require('../utils/configHelper');
 
+const { SystemConfig } = require('../models');
+
 class AlipayService {
   constructor(config) {
-    const alipayConfig = config || ConfigHelper.getAlipayConfig();
-    this.appId = alipayConfig.appId;
-    this.privateKey = alipayConfig.privateKey;
-    this.publicKey = alipayConfig.publicKey;
-    this.alipayPublicKey = this.formatPublicKey(alipayConfig.alipayPublicKey || alipayConfig.publicKey);
-    this.notifyUrl = alipayConfig.notifyUrl;
-    this.returnUrl = alipayConfig.returnUrl;
-    this.gatewayUrl = alipayConfig.serverUrl || 'https://openapi.alipay.com/gateway.do';
-    this.sandboxGatewayUrl = 'https://openapi.alipaydev.com/gateway.do';
-    this.isSandbox = alipayConfig.sandbox || alipayConfig.isSandbox || false;
+    this.updateConfig(config || ConfigHelper.getAlipayConfig());
+  }
+
+  updateConfig(config) {
+    this.appId = config.appId;
+    this.privateKey = this.formatPrivateKey(config.privateKey);
+    this.publicKey = config.publicKey;
+    this.alipayPublicKey = this.formatPublicKey(config.alipayPublicKey || config.publicKey);
+    this.notifyUrl = config.notifyUrl;
+    this.returnUrl = config.returnUrl;
+    this.gatewayUrl = config.serverUrl || 'https://openapi.alipay.com/gateway.do';
+    this.sandboxGatewayUrl = 'https://openapi-sandbox.dl.alipaydev.com/gateway.do';
+    this.isSandbox = config.sandbox || config.isSandbox || false;
     this.currentGatewayUrl = this.isSandbox ? this.sandboxGatewayUrl : this.gatewayUrl;
     this.charset = 'UTF-8';
     this.signType = 'RSA2';
     this.version = '1.0';
     this.format = 'JSON';
+    this.enabled = config.enabled !== undefined ? config.enabled : true;
+    this.sandbox = config.sandbox || false;
+  }
+
+  formatPrivateKey(key) {
+    if (!key) return '';
+    // 支持 PKCS1 和 PKCS8 格式
+    if (key.includes('BEGIN PRIVATE KEY') || key.includes('BEGIN RSA PRIVATE KEY')) return key;
+
+    const match = key.match(/.{1,64}/g);
+    if (!match) return key;
+
+    // 默认转换为 PKCS8 (通常兼容性更好)
+    return `-----BEGIN PRIVATE KEY-----\n${match.join('\n')}\n-----END PRIVATE KEY-----`;
+  }
+
+  /**
+   * 检查配置是否完整
+   * @returns {boolean}
+   */
+  isConfigured() {
+    // 只要配置了 appId、私钥和公钥即可
+    return !!(this.appId && this.privateKey && (this.publicKey || this.alipayPublicKey));
+  }
+
+  async loadConfigFromDb() {
+    try {
+      console.log('AlipayService: Loading config from DB for key "payment_alipay"...');
+      const cfg = await SystemConfig.findOne({ where: { key: 'payment_alipay' } });
+      if (cfg && cfg.value) {
+        console.log('AlipayService: Found config in DB');
+        const dbConfig = typeof cfg.value === 'string' ? JSON.parse(cfg.value) : cfg.value;
+        console.log('AlipayService: DB Config Keys:', Object.keys(dbConfig));
+        const envConfig = ConfigHelper.getAlipayConfig();
+        this.updateConfig({ ...envConfig, ...dbConfig });
+        console.log('AlipayService: Config updated. appId:', this.appId);
+      } else {
+        console.log('AlipayService: No config found in DB for "payment_alipay"');
+      }
+    } catch (error) {
+      console.error('AlipayService: Failed to load alipay config from DB:', error);
+    }
   }
 
   // 格式化公钥
   formatPublicKey(key) {
     if (!key) return '';
-    if (key.includes('BEGIN PUBLIC KEY')) return key;
-    
+    if (key.includes('BEGIN PUBLIC KEY') || key.includes('BEGIN RSA PUBLIC KEY')) return key;
+
     // 每64个字符换行
     const match = key.match(/.{1,64}/g);
     if (!match) return key;
-    
+
     return `-----BEGIN PUBLIC KEY-----\n${match.join('\n')}\n-----END PUBLIC KEY-----`;
   }
 
   // 生成签名
   generateSign(params) {
-    // 按ASCII字典序排序
-    const sortedParams = Object.keys(params)
-      .filter(key => params[key] !== '' && key !== 'sign' && key !== 'sign_type')
-      .sort()
-      .map(key => `${key}=${decodeURIComponent(params[key])}`)
-      .join('&');
-    
-    const signContent = `${sortedParams}`;
-    
-    if (this.signType === 'RSA2') {
-      return crypto.createSign('RSA-SHA256').update(signContent, 'utf8').sign(this.privateKey, 'base64');
-    } else {
-      return crypto.createSign('RSA-SHA1').update(signContent, 'utf8').sign(this.privateKey, 'base64');
+    try {
+      if (!this.privateKey) {
+        throw new Error('支付宝私钥未配置或无效');
+      }
+
+      // 1. 筛选并排序
+      const keys = Object.keys(params)
+        .filter(key => params[key] !== undefined && params[key] !== null && params[key] !== '' && key !== 'sign')
+        .sort();
+
+      // 2. 拼接待签名字符串 (不使用 decodeURIComponent，直接使用原始值)
+      const signContent = keys
+        .map(key => {
+          let value = params[key];
+          // 如果是对象，转为 JSON 字符串
+          if (typeof value === 'object') {
+            value = JSON.stringify(value);
+          }
+          return `${key}=${value}`;
+        })
+        .join('&');
+
+      console.log('AlipayService: Sign Content:', signContent);
+
+      // 3. 签名
+      const signer = this.signType === 'RSA2' ? 'RSA-SHA256' : 'RSA-SHA1';
+      const sign = crypto.createSign(signer).update(signContent, 'utf8').sign(this.privateKey, 'base64');
+
+      return sign;
+    } catch (error) {
+      console.error('AlipayService: Generate Sign Error:', error.message);
+      throw error;
     }
   }
 
@@ -59,11 +125,11 @@ class AlipayService {
       .sort()
       .map(key => `${key}=${params[key]}`)
       .join('&');
-    
+
     if (this.signType === 'RSA2') {
-      return crypto.createVerify('RSA-SHA256').update(sortedParams, 'utf8').verify(this.alipayPublicKey, sign, 'base64');
+      return crypto.createVerify('RSA-SHA256').update(sortedParams, 'utf8').verify(this.publicKey || this.alipayPublicKey, sign, 'base64');
     } else {
-      return crypto.createVerify('RSA-SHA1').update(sortedParams, 'utf8').verify(this.alipayPublicKey, sign, 'base64');
+      return crypto.createVerify('RSA-SHA1').update(sortedParams, 'utf8').verify(this.publicKey || this.alipayPublicKey, sign, 'base64');
     }
   }
 
@@ -76,12 +142,9 @@ class AlipayService {
       sign_type: this.signType,
       timestamp: moment().format('YYYY-MM-DD HH:mm:ss'),
       version: this.version,
-      format: this.format
+      format: this.format,
+      biz_content: typeof bizContent === 'string' ? bizContent : JSON.stringify(bizContent)
     };
-
-    if (bizContent) {
-      params.biz_content = JSON.stringify(bizContent);
-    }
 
     if (notifyUrl) {
       params.notify_url = notifyUrl;
@@ -93,7 +156,8 @@ class AlipayService {
 
     // 生成签名
     params.sign = this.generateSign(params);
-    
+
+    console.log('AlipayService: Request Params prepared for method:', method);
     return params;
   }
 
@@ -116,16 +180,19 @@ class AlipayService {
 
     // 构建表单提交HTML
     let formHtml = `<form id="alipaysubmit" name="alipaysubmit" action="${this.currentGatewayUrl}?charset=${this.charset}" method="POST">`;
-    
+
     for (const key in params) {
       if (params.hasOwnProperty(key)) {
-        formHtml += `<input type="hidden" name="${key}" value="${params[key]}"/>`;
+        // 使用单引号包裹 value，避免 JSON 双引号截断
+        // 对 value 中的单引号进行转义 (虽然 JSON 中很少有单引号，但为了安全)
+        const value = String(params[key]).replace(/'/g, '&#39;');
+        formHtml += `<input type="hidden" name="${key}" value='${value}'/>`;
       }
     }
-    
+
     formHtml += '</form>';
     formHtml += '<script>document.forms["alipaysubmit"].submit();</script>';
-    
+
     return formHtml;
   }
 
@@ -148,16 +215,18 @@ class AlipayService {
 
     // 构建表单提交HTML
     let formHtml = `<form id="alipaysubmit" name="alipaysubmit" action="${this.currentGatewayUrl}?charset=${this.charset}" method="POST">`;
-    
+
     for (const key in params) {
       if (params.hasOwnProperty(key)) {
-        formHtml += `<input type="hidden" name="${key}" value="${params[key]}"/>`;
+        // 使用单引号包裹 value
+        const value = String(params[key]).replace(/'/g, '&#39;');
+        formHtml += `<input type="hidden" name="${key}" value='${value}'/>`;
       }
     }
-    
+
     formHtml += '</form>';
     formHtml += '<script>document.forms["alipaysubmit"].submit();</script>';
-    
+
     return formHtml;
   }
 
@@ -184,7 +253,7 @@ class AlipayService {
       });
 
       const result = response.data;
-      
+
       if (result.alipay_trade_create_response && result.alipay_trade_create_response.code === '10000') {
         return {
           success: true,
@@ -223,7 +292,7 @@ class AlipayService {
       });
 
       const result = response.data;
-      
+
       if (result.alipay_trade_query_response && result.alipay_trade_query_response.code === '10000') {
         return {
           success: true,
@@ -266,7 +335,7 @@ class AlipayService {
       });
 
       const result = response.data;
-      
+
       if (result.alipay_trade_close_response && result.alipay_trade_close_response.code === '10000') {
         return { success: true };
       } else {
@@ -302,7 +371,7 @@ class AlipayService {
       });
 
       const result = response.data;
-      
+
       if (result.alipay_trade_refund_response && result.alipay_trade_refund_response.code === '10000') {
         return {
           success: true,

@@ -119,6 +119,12 @@ const routes = [
         meta: { title: '系统设置', breadcrumb: '系统设置', permission: 'system.settings', defaultTab: 'basic' }
       },
       {
+        path: 'system/payment',
+        name: 'payment-settings',
+        component: () => import('@/views/system/PaymentConfig.vue'),
+        meta: { title: '支付管理', breadcrumb: '支付管理', permission: 'invoices.view' }
+      },
+      {
         path: 'subscription-plans',
         name: 'subscription-plans',
         component: () => import('@/views/subscriptions/Plans.vue'),

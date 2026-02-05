@@ -1,329 +1,205 @@
 const crypto = require('crypto');
 const axios = require('axios');
-const xml2js = require('xml2js');
-const moment = require('moment');
-
+const WxPay = require('wechatpay-node-v3');
 const ConfigHelper = require('../utils/configHelper');
-
-const fs = require('fs');
-const https = require('https');
+const { SystemConfig } = require('../models');
 
 class WechatPayService {
   constructor(config) {
-    const wechatConfig = config || ConfigHelper.getWechatPayConfig();
-    this.appId = wechatConfig.appId;
-    this.mchId = wechatConfig.mchId;
-    this.apiKey = wechatConfig.apiKey;
-    this.appSecret = wechatConfig.appSecret;
-    this.notifyUrl = wechatConfig.notifyUrl;
-    this.unifiedOrderUrl = 'https://api.mch.weixin.qq.com/pay/unifiedorder';
-    this.orderQueryUrl = 'https://api.mch.weixin.qq.com/pay/orderquery';
-    this.closeOrderUrl = 'https://api.mch.weixin.qq.com/pay/closeorder';
-    this.refundUrl = 'https://api.mch.weixin.qq.com/secapi/pay/refund';
-    this.certPath = wechatConfig.certPath || process.env.WECHAT_CERT_PATH;
-    this.keyPath = wechatConfig.keyPath || process.env.WECHAT_KEY_PATH;
+    this.updateConfig(config || ConfigHelper.getWechatPayConfig());
   }
 
-  // 生成随机字符串
-  generateNonceStr(length = 32) {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let result = '';
-    for (let i = 0; i < length; i++) {
-      result += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return result;
-  }
-
-  // 生成签名
-  generateSign(params) {
-    // 按ASCII字典序排序
-    const sortedParams = Object.keys(params)
-      .filter(key => params[key] !== '' && key !== 'sign')
-      .sort()
-      .map(key => `${key}=${params[key]}`)
-      .join('&');
+  updateConfig(config) {
+    this.appId = config.appId;
+    this.mchId = config.mchId;
+    this.apiV3Key = config.apiV3Key;
+    this.notifyUrl = config.notifyUrl;
+    this.serialNo = config.serialNo;
+    this.enabled = config.enabled !== undefined ? config.enabled : true;
     
-    const stringSignTemp = `${sortedParams}&key=${this.apiKey}`;
-    return crypto.createHash('md5').update(stringSignTemp).digest('hex').toUpperCase();
-  }
-
-  // 将对象转换为XML
-  objectToXml(obj) {
-    let xml = '<xml>';
-    for (const key in obj) {
-      if (obj.hasOwnProperty(key)) {
-        xml += `<${key}><![CDATA[${obj[key]}]]></${key}>`;
+    // 处理私钥
+    if (config.privateKey) {
+      this.privateKey = config.privateKey.replace(/\\n/g, '\n');
+      if (!this.privateKey.includes('-----BEGIN PRIVATE KEY-----')) {
+        this.privateKey = `-----BEGIN PRIVATE KEY-----\n${this.privateKey}\n-----END PRIVATE KEY-----`;
       }
     }
-    xml += '</xml>';
-    return xml;
+
+    // 初始化 wechatpay-node-v3 实例
+    if (this.isConfigured()) {
+      try {
+        this.wxpay = new WxPay({
+          appid: this.appId,
+          mchid: this.mchId,
+          publicKey: config.publicKey ? config.publicKey.replace(/\\n/g, '\n') : undefined, 
+          privateKey: this.privateKey,
+          key: this.apiV3Key, // API V3 Key
+          serial_no: this.serialNo,
+        });
+        console.log('[DEBUG_PAY] WechatPay SDK initialized successfully');
+      } catch (error) {
+        console.error('[DEBUG_PAY] Failed to initialize WechatPay SDK:', error);
+      }
+    }
   }
 
-  // 将XML转换为对象
-  xmlToObject(xml) {
-    return new Promise((resolve, reject) => {
-      xml2js.parseString(xml, { explicitArray: false }, (err, result) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(result.xml);
-        }
-      });
-    });
+  isConfigured() {
+    return !!(this.mchId && this.serialNo && this.privateKey && this.apiV3Key);
+  }
+
+  async loadConfigFromDb() {
+    try {
+      const cfg = await SystemConfig.findOne({ where: { key: 'payment_wechat' } });
+      if (cfg && cfg.value) {
+        const dbConfig = typeof cfg.value === 'string' ? JSON.parse(cfg.value) : cfg.value;
+        const envConfig = ConfigHelper.getWechatPayConfig();
+        this.updateConfig({ ...envConfig, ...dbConfig });
+      }
+    } catch (error) {
+      console.error('Failed to load wechat pay config from DB:', error);
+    }
   }
 
   // 统一下单接口
   async createUnifiedOrder(orderData) {
+    if (!this.wxpay) {
+      return { success: false, error: '微信支付 SDK 未正确初始化，请检查配置' };
+    }
+
+    const tradeType = (orderData.tradeType || 'NATIVE').toUpperCase();
     const params = {
-      appid: this.appId,
-      mch_id: this.mchId,
-      nonce_str: this.generateNonceStr(),
-      body: orderData.body,
+      description: orderData.body,
       out_trade_no: orderData.outTradeNo,
-      total_fee: orderData.totalFee, // 单位为分
-      spbill_create_ip: orderData.spbillCreateIp || '127.0.0.1',
       notify_url: this.notifyUrl,
-      trade_type: orderData.tradeType || 'JSAPI',
-      openid: orderData.openId
+      amount: {
+        total: Math.round(orderData.totalFee),
+        currency: 'CNY'
+      }
     };
 
-    // 生成签名
-    params.sign = this.generateSign(params);
-
     try {
-      const xml = this.objectToXml(params);
-      const response = await axios.post(this.unifiedOrderUrl, xml, {
-        headers: { 'Content-Type': 'application/xml' }
-      });
+      let result;
+      console.log(`[DEBUG_PAY] Creating ${tradeType} order:`, params);
 
-      const result = await this.xmlToObject(response.data);
-      
-      if (result.return_code === 'SUCCESS' && result.result_code === 'SUCCESS') {
-        return {
-          success: true,
-          data: {
-            appId: this.appId,
-            timeStamp: Math.floor(Date.now() / 1000).toString(),
-            nonceStr: this.generateNonceStr(),
-            package: `prepay_id=${result.prepay_id}`,
-            signType: 'MD5'
+      switch (tradeType) {
+        case 'NATIVE':
+          result = await this.wxpay.transactions_native(params);
+          console.log('[DEBUG_PAY] NATIVE result:', result);
+          if (result.status !== 200 && result.status !== 201) {
+            return { success: false, error: result.error || '下单失败' };
           }
-        };
-      } else {
-        return {
-          success: false,
-          error: result.err_code_des || result.return_msg
-        };
+          return { success: true, data: { codeUrl: result.code_url || (result.data ? result.data.code_url : undefined) } };
+        
+        case 'H5':
+          params.scene_info = {
+            payer_client_ip: orderData.spbillCreateIp || '127.0.0.1',
+            h5_info: { type: 'Wap' }
+          };
+          result = await this.wxpay.transactions_h5(params);
+          console.log('[DEBUG_PAY] H5 result:', result);
+          if (result.status !== 200 && result.status !== 201) {
+            return { success: false, error: result.error || '下单失败' };
+          }
+          return { success: true, data: { h5Url: result.h5_url || (result.data ? result.data.h5_url : undefined) } };
+        
+        case 'JSAPI':
+          if (!orderData.openId) {
+            return { success: false, error: 'JSAPI 支付需要 openId' };
+          }
+          params.payer = { openid: orderData.openId };
+          result = await this.wxpay.transactions_jsapi(params);
+          console.log('[DEBUG_PAY] JSAPI result:', result);
+          if (result.status !== 200 && result.status !== 201) {
+            return { success: false, error: result.error || '下单失败' };
+          }
+          // JSAPI result 已经包含了 appId, timeStamp, nonceStr, package, signType, paySign
+          return { success: true, data: result.data || result };
+
+        default:
+          return { success: false, error: `不支持的支付类型: ${tradeType}` };
       }
     } catch (error) {
-      return {
-        success: false,
-        error: error.message
-      };
+      console.error(`[DEBUG_PAY] ${tradeType} order failed:`, error);
+      const errorMsg = error.response && error.response.data ? error.response.data.message : error.message;
+      return { success: false, error: errorMsg };
     }
   }
 
   // 查询订单
   async queryOrder(outTradeNo) {
-    const params = {
-      appid: this.appId,
-      mch_id: this.mchId,
-      out_trade_no: outTradeNo,
-      nonce_str: this.generateNonceStr()
-    };
-
-    params.sign = this.generateSign(params);
-
+    if (!this.wxpay) return { success: false, error: 'SDK not initialized' };
     try {
-      const xml = this.objectToXml(params);
-      const response = await axios.post(this.orderQueryUrl, xml, {
-        headers: { 'Content-Type': 'application/xml' }
-      });
-
-      const result = await this.xmlToObject(response.data);
-      
-      if (result.return_code === 'SUCCESS' && result.result_code === 'SUCCESS') {
-        return {
-          success: true,
-          data: {
-            tradeState: result.trade_state,
-            totalFee: result.total_fee,
-            transactionId: result.transaction_id,
-            timeEnd: result.time_end
-          }
-        };
-      } else {
-        return {
-          success: false,
-          error: result.err_code_des || result.return_msg
-        };
-      }
-    } catch (error) {
-      return {
-        success: false,
-        error: error.message
-      };
-    }
-  }
-
-  // 关闭订单
-  async closeOrder(outTradeNo) {
-    const params = {
-      appid: this.appId,
-      mch_id: this.mchId,
-      out_trade_no: outTradeNo,
-      nonce_str: this.generateNonceStr()
-    };
-
-    params.sign = this.generateSign(params);
-
-    try {
-      const xml = this.objectToXml(params);
-      const response = await axios.post(this.closeOrderUrl, xml, {
-        headers: { 'Content-Type': 'application/xml' }
-      });
-
-      const result = await this.xmlToObject(response.data);
-      
-      if (result.return_code === 'SUCCESS' && result.result_code === 'SUCCESS') {
-        return { success: true };
-      } else {
-        return {
-          success: false,
-          error: result.err_code_des || result.return_msg
-        };
-      }
-    } catch (error) {
-      return {
-        success: false,
-        error: error.message
-      };
-    }
-  }
-
-  // 申请退款
-  async refund(refundData) {
-    const params = {
-      appid: this.appId,
-      mch_id: this.mchId,
-      nonce_str: this.generateNonceStr(),
-      out_trade_no: refundData.outTradeNo,
-      out_refund_no: refundData.outRefundNo || `REFUND_${refundData.outTradeNo}`,
-      total_fee: refundData.totalFee,
-      refund_fee: refundData.refundFee,
-      op_user_id: this.mchId
-    };
-
-    params.sign = this.generateSign(params);
-
-    try {
-      const xml = this.objectToXml(params);
-      
-      const options = {
-        headers: { 'Content-Type': 'application/xml' }
-      };
-
-      // 如果配置了证书，添加到请求选项中
-      if (this.certPath && this.keyPath) {
-        try {
-            const httpsAgent = new https.Agent({
-                cert: fs.readFileSync(this.certPath),
-                key: fs.readFileSync(this.keyPath),
-                passphrase: this.mchId // 默认密码为商户号
-            });
-            options.httpsAgent = httpsAgent;
-        } catch (certError) {
-            console.warn('加载微信支付证书失败:', certError.message);
-            // 继续尝试无证书请求（可能会失败）
-        }
-      }
-
-      const response = await axios.post(this.refundUrl, xml, options);
-
-      const result = await this.xmlToObject(response.data);
-      
-      if (result.return_code === 'SUCCESS' && result.result_code === 'SUCCESS') {
-        return {
-          success: true,
-          data: {
-            transactionId: result.transaction_id,
-            outTradeNo: result.out_trade_no,
-            outRefundNo: result.out_refund_no,
-            refundId: result.refund_id,
-            refundFee: result.refund_fee
-          }
-        };
-      } else {
-        return {
-          success: false,
-          error: result.err_code_des || result.return_msg
-        };
-      }
-    } catch (error) {
-      return {
-        success: false,
-        error: error.message
-      };
-    }
-  }
-
-  // 验证支付回调签名
-  verifyNotifySign(params) {
-    const receivedSign = params.sign;
-    const calculatedSign = this.generateSign(params);
-    return receivedSign === calculatedSign;
-  }
-
-  // 处理支付回调
-  async handleNotify(notifyData) {
-    try {
-      // 验证签名
-      if (!this.verifyNotifySign(notifyData)) {
-        return {
-          success: false,
-          error: '签名验证失败'
-        };
-      }
-
-      // 验证支付状态
-      if (notifyData.result_code !== 'SUCCESS') {
-        return {
-          success: false,
-          error: '支付失败'
-        };
-      }
-
+      const result = await this.wxpay.query({ out_trade_no: outTradeNo });
       return {
         success: true,
         data: {
-          outTradeNo: notifyData.out_trade_no,
-          transactionId: notifyData.transaction_id,
-          totalFee: notifyData.total_fee,
-          timeEnd: notifyData.time_end
+          tradeState: result.trade_state,
+          tradeStateDesc: result.trade_state_desc,
+          totalFee: result.amount ? result.amount.total : 0,
+          transactionId: result.transaction_id,
+          timeEnd: result.success_time
         }
       };
     } catch (error) {
-      return {
-        success: false,
-        error: error.message
-      };
+      return { success: false, error: error.message };
     }
   }
 
-  // 生成支付成功响应XML
-  generateSuccessResponse() {
-    return `<xml>
-      <return_code><![CDATA[SUCCESS]]></return_code>
-      <return_msg><![CDATA[OK]]></return_msg>
-    </xml>`;
-  }
+  // 处理回调
+  async handleNotify(headers, notifyData) {
+    if (!this.wxpay) return { success: false, error: 'SDK not initialized' };
+    try {
+      // 1. 验证签名 (可选但推荐)
+      if (headers && headers['wechatpay-signature']) {
+        const isValid = await this.wxpay.verifySign({
+          timestamp: headers['wechatpay-timestamp'],
+          nonce: headers['wechatpay-nonce'],
+          body: notifyData,
+          serial: headers['wechatpay-serial'],
+          signature: headers['wechatpay-signature'],
+          apiSecret: this.apiV3Key
+        });
+        
+        if (!isValid) {
+          console.error('[DEBUG_PAY] Invalid signature in notify');
+          return { success: false, error: '签名验证失败' };
+        }
+      }
 
-  // 生成支付失败响应XML
-  generateFailResponse(message = 'FAIL') {
-    return `<xml>
-      <return_code><![CDATA[FAIL]]></return_code>
-      <return_msg><![CDATA[${message}]]></return_msg>
-    </xml>`;
+      // 2. 解密数据
+      const { resource } = notifyData;
+      if (!resource) {
+        return { success: false, error: '通知数据格式错误' };
+      }
+
+      // 使用 SDK 的 decipher_gcm 方法解密
+      // 参数顺序: ciphertext, associated_data, nonce, key
+      const result = this.wxpay.decipher_gcm(
+        resource.ciphertext,
+        resource.associated_data,
+        resource.nonce,
+        this.apiV3Key
+      );
+      
+      console.log('[DEBUG_PAY] Decrypted notify data:', result);
+
+      if (result.trade_state === 'SUCCESS') {
+        return {
+          success: true,
+          data: {
+            outTradeNo: result.out_trade_no,
+            transactionId: result.transaction_id,
+            totalFee: result.amount ? result.amount.total : 0,
+            timeEnd: result.success_time
+          }
+        };
+      } else {
+        return { success: false, error: `支付状态: ${result.trade_state}`, tradeState: result.trade_state };
+      }
+    } catch (error) {
+      console.error('[DEBUG_PAY] Notify handle failed:', error);
+      return { success: false, error: error.message };
+    }
   }
 }
 

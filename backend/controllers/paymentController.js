@@ -8,23 +8,47 @@ const { Op } = require('sequelize');
 class PaymentController {
   constructor() {
     // 初始化支付服务
-    this.wechatPayService = new WechatPayService({
-      appId: process.env.WECHAT_APP_ID,
-      mchId: process.env.WECHAT_MCH_ID,
-      apiKey: process.env.WECHAT_API_KEY,
-      appSecret: process.env.WECHAT_APP_SECRET,
-      notifyUrl: process.env.WECHAT_NOTIFY_URL
-    });
+    this.wechatPayService = new WechatPayService();
+    this.alipayService = new AlipayService();
+  }
 
-    this.alipayService = new AlipayService({
-      appId: process.env.ALIPAY_APP_ID,
-      privateKey: process.env.ALIPAY_PRIVATE_KEY,
-      publicKey: process.env.ALIPAY_PUBLIC_KEY,
-      alipayPublicKey: process.env.ALIPAY_PUBLIC_KEY,
-      notifyUrl: process.env.ALIPAY_NOTIFY_URL,
-      returnUrl: process.env.ALIPAY_RETURN_URL,
-      isSandbox: process.env.ALIPAY_SANDBOX === 'true'
-    });
+  // 确保支付服务配置已加载
+  async _ensureServices() {
+    await Promise.all([
+      this.wechatPayService.loadConfigFromDb(),
+      this.alipayService.loadConfigFromDb()
+    ]);
+  }
+
+  /**
+   * 获取支付配置状态
+   */
+  async getPaymentConfig(req, res) {
+    try {
+      await this._ensureServices();
+
+      res.json({
+        success: true,
+        data: {
+          alipay: {
+            enabled: this.alipayService.isConfigured(),
+            name: '支付宝',
+            icon: 'fab fa-alipay'
+          },
+          wechat: {
+            enabled: this.wechatPayService.isConfigured(),
+            name: '微信支付',
+            icon: 'fab fa-weixin'
+          }
+        }
+      });
+    } catch (error) {
+      console.error('获取支付配置失败:', error);
+      res.status(500).json({
+        success: false,
+        message: '获取支付配置失败'
+      });
+    }
   }
 
   // 生成唯一订单号
@@ -34,9 +58,22 @@ class PaymentController {
     return `ORDER_${timestamp}_${random}`;
   }
 
+  // 判断是否为移动端设备
+  isMobileDevice(req) {
+    const userAgent = req.headers['user-agent'] || '';
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+  }
+
+  // 判断是否在微信浏览器中
+  isWechatBrowser(req) {
+    const userAgent = req.headers['user-agent'] || '';
+    return /MicroMessenger/i.test(userAgent);
+  }
+
   // 创建支付订单
   async createPaymentOrder(req, res) {
     try {
+      await this._ensureServices();
       const { userId, planType, paymentMethod, amount, openId } = req.body;
 
       // 验证用户
@@ -64,17 +101,49 @@ class PaymentController {
 
       // 根据支付方式调用不同的支付接口
       if (paymentMethod === 'wechat') {
+        let tradeType = 'NATIVE'; // 默认扫码支付
+
+        if (openId || this.isWechatBrowser(req)) {
+          // 微信内浏览器或已提供 openId
+          tradeType = 'JSAPI';
+        } else if (this.isMobileDevice(req)) {
+          // 外部移动浏览器
+          tradeType = 'H5';
+        }
+
+        console.log(`[DEBUG_PAY] Creating WeChat order:`, {
+          orderNo,
+          amount,
+          tradeType,
+          openId,
+          ip: req.ip
+        });
+
         paymentResult = await this.wechatPayService.createUnifiedOrder({
           body: `SuperResumeMaster - ${planType}会员`,
           outTradeNo: orderNo,
-          totalFee: amount * 100, // 转换为分
-          spbillCreateIp: req.ip,
-          tradeType: 'JSAPI',
+          totalFee: Math.round(amount * 100), // 确保是整数
+          spbillCreateIp: (req.ip || '127.0.0.1').replace('::ffff:', ''),
+          tradeType: tradeType,
           openId: openId
         });
+
+        console.log(`[DEBUG_PAY] WeChat paymentResult:`, JSON.stringify(paymentResult));
       } else if (paymentMethod === 'alipay') {
         // 支付宝支付
+        console.log('PaymentController: Processing Alipay order...');
+        console.log('PaymentController: Alipay configured status:', this.alipayService.isConfigured());
+        // 检查支付宝配置是否完整
+        if (!this.alipayService.isConfigured()) {
+          console.error('Alipay config is incomplete or default values are being used');
+          return res.status(400).json({
+            success: false,
+            message: '支付宝支付配置未完成，请联系管理员'
+          });
+        }
+
         const subject = `SuperResumeMaster - ${planType}会员`;
+        console.log('PaymentController: Generating Alipay payment URL for order:', orderNo);
         const formHtml = await this.alipayService.pagePay(
           subject,
           orderNo,
@@ -113,6 +182,7 @@ class PaymentController {
       }
     } catch (error) {
       logger.error('创建支付订单失败', { message: error.message, stack: error.stack });
+
       res.status(500).json({
         success: false,
         error: '创建支付订单失败'
@@ -120,52 +190,57 @@ class PaymentController {
     }
   }
 
-  // 微信支付回调
+  // 微信支付回调 (V3)
   async wechatNotify(req, res) {
     try {
-      const xmlData = req.body;
+      await this._ensureServices();
+      const notifyData = req.body;
 
-      // 解析XML数据
-      const notifyData = await this.wechatPayService.xmlToObject(xmlData);
+      console.log('[DEBUG_PAY] Received WeChat notify:', JSON.stringify(notifyData));
+      console.log('[DEBUG_PAY] Notify headers:', JSON.stringify(req.headers));
 
       // 处理支付回调
-      const result = await this.wechatPayService.handleNotify(notifyData);
+      const result = await this.wechatPayService.handleNotify(req.headers, notifyData);
 
       if (result.success) {
         const { outTradeNo, transactionId, totalFee } = result.data;
 
         // 更新订单状态
         const order = await Order.findOne({ where: { out_trade_no: outTradeNo } });
-        if (order && order.status === 'pending') {
-          order.status = 'paid';
-          order.transaction_id = transactionId;
-          order.paid_at = new Date();
-          await order.save();
+        if (order) {
+          if (order.status === 'pending') {
+            order.status = 'paid';
+            order.transaction_id = transactionId;
+            order.paid_at = new Date();
+            await order.save();
 
-          // 更新用户订阅状态
-          await this.updateUserSubscription(order.user_id, order.plan);
+            // 更新用户订阅状态
+            await this.updateUserSubscription(order.user_id, order.plan);
+            logger.info('微信支付成功，订单已更新', { outTradeNo, transactionId });
+          } else {
+            logger.info('微信支付回调：订单已处理过', { outTradeNo, status: order.status });
+          }
+        } else {
+          logger.warn('微信支付回调：订单不存在', { outTradeNo });
         }
 
-        // 返回成功响应
-        logger.info('微信支付回调成功', { outTradeNo, transactionId, totalFee });
-        res.set('Content-Type', 'application/xml');
-        res.send(this.wechatPayService.generateSuccessResponse());
+        // 返回成功响应给微信
+        res.status(200).send('success');
       } else {
         // 返回失败响应
-        logger.warn('微信支付回调失败', { error: result.error });
-        res.set('Content-Type', 'application/xml');
-        res.send(this.wechatPayService.generateFailResponse(result.error));
+        logger.warn('微信支付回调验签或解密失败', { error: result.error });
+        res.status(500).send('fail');
       }
     } catch (error) {
-      logger.error('微信支付回调处理失败', { message: error.message, stack: error.stack });
-      res.set('Content-Type', 'application/xml');
-      res.send(this.wechatPayService.generateFailResponse('处理失败'));
+      logger.error('微信支付回调处理异常', { message: error.message, stack: error.stack });
+      res.status(500).send('fail');
     }
   }
 
   // 支付宝支付回调
   async alipayNotify(req, res) {
     try {
+      await this._ensureServices();
       const notifyData = req.body;
 
       // 处理支付回调
@@ -203,6 +278,7 @@ class PaymentController {
   // 查询支付订单状态
   async queryPaymentStatus(req, res) {
     try {
+      await this._ensureServices();
       const { orderNo, paymentMethod } = req.params;
       const userId = req.user.id;
 
@@ -256,25 +332,55 @@ class PaymentController {
       const user = await User.findByPk(userId, {
         include: [{ model: Company, as: 'Company' }]
       });
-      
-      if (!user || !user.Company) {
-        console.error('更新订阅失败: 用户未关联公司', userId);
+
+      if (!user) {
+        console.error('更新订阅失败: 用户不存在', userId);
         return;
       }
 
-      const companyId = user.Company.id;
+      // 如果用户没有公司，创建一个默认公司
+      let companyId = user.company_id;
+      if (!companyId) {
+        const company = await Company.create({
+          name: `${user.username || user.email || user.id} 的个人公司`,
+          status: 'active'
+        });
+        companyId = company.id;
+        user.company_id = companyId;
+        await user.save();
+      }
 
       // 计算订阅到期时间
-      let expiresAt = new Date();
+      let baseDate = new Date();
+
+      // 检查现有订阅
+      const existingSub = await Subscription.findOne({
+        where: {
+          company_id: companyId,
+          status: 'active',
+          end_at: { [Op.gt]: new Date() }
+        }
+      });
+
+      if (existingSub && existingSub.end_at) {
+        baseDate = new Date(existingSub.end_at);
+      }
+
+      let expiresAt = new Date(baseDate);
       if (planType.includes('monthly')) {
         expiresAt.setMonth(expiresAt.getMonth() + 1);
-      } else if (planType.includes('yearly')) {
+      } else if (planType.includes('yearly') || planType.includes('annual')) {
         expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+      } else {
+        // 默认一个月
+        expiresAt.setMonth(expiresAt.getMonth() + 1);
       }
 
       // 解析计划详情
-      const planLevel = planType.includes('pro') ? 'pro' : (planType.includes('enterprise') ? 'enterprise' : 'free');
-      const billingCycle = planType.includes('yearly') ? 'annual' : 'monthly';
+      // 注意：User.role 使用 'premium', Subscription.plan 使用 'pro'
+      const planLevel = (planType.includes('pro') || planType.includes('premium')) ? 'pro' : (planType.includes('enterprise') ? 'enterprise' : 'free');
+      const userRole = planLevel === 'pro' ? 'premium' : (planLevel === 'enterprise' ? 'enterprise' : 'user');
+      const billingCycle = (planType.includes('yearly') || planType.includes('annual')) ? 'annual' : 'monthly';
 
       // 更新或创建订阅记录
       const [subscription, created] = await Subscription.findOrCreate({
@@ -294,24 +400,32 @@ class PaymentController {
         subscription.billing_cycle = billingCycle;
         subscription.status = 'active';
         subscription.end_at = expiresAt;
-        // 如果是续费，start_at 保持不变或根据业务逻辑更新
         await subscription.save();
       }
 
       // 更新用户状态
       user.subscription_status = 'active';
+      user.subscription_end_date = expiresAt;
+      user.role = userRole;
       await user.save();
-      
-      // 同时更新公司下所有用户的订阅状态（如果是企业版订阅）
+
+      // 同时更新公司下所有用户的订阅状态和角色（如果是企业版或专业版订阅）
       if (planLevel === 'enterprise' || planLevel === 'pro') {
-         await User.update(
-           { subscription_status: 'active' },
-           { where: { company_id: companyId } }
-         );
+        await User.update(
+          {
+            subscription_status: 'active',
+            subscription_end_date: expiresAt,
+            role: userRole
+          },
+          { where: { company_id: companyId } }
+        );
       }
-      
+
+      logger.info('用户订阅状态更新成功', { userId, companyId, planLevel, userRole, expiresAt });
+
     } catch (error) {
       console.error('更新用户订阅状态失败:', error);
+      logger.error('更新用户订阅状态失败', { userId, planType, error: error.message });
     }
   }
 
@@ -326,12 +440,12 @@ class PaymentController {
       // 简单起见，目前只允许本人查看，或者管理员查看
       // 这里假设中间件已经验证了 token，req.user 存在
       if (req.user.id != userId) {
-         // 检查是否是同一公司
-         if (!req.user.company_id || req.user.company_id !== (await User.findByPk(userId)).company_id) {
-             return res.status(403).json({ success: false, error: '无权查看此用户的订单' });
-         }
+        // 检查是否是同一公司
+        if (!req.user.company_id || req.user.company_id !== (await User.findByPk(userId)).company_id) {
+          return res.status(403).json({ success: false, error: '无权查看此用户的订单' });
+        }
       }
-      
+
       const whereClause = { user_id: userId };
       // 如果需要支持公司维度的订单查询，可以修改 whereClause
 
@@ -375,10 +489,10 @@ class PaymentController {
 
       // 验证订单所有权 (本人或公司管理员)
       if (order.user_id !== userId && req.user.role !== 'admin') {
-         // 如果不是本人也不是超级管理员，检查是否是同公司管理员
-         if (!req.user.company_id || req.user.company_id !== order.company_id || req.user.role !== 'company_admin') {
-             return res.status(403).json({ error: '无权操作此订单的退款' });
-         }
+        // 如果不是本人也不是超级管理员，检查是否是同公司管理员
+        if (!req.user.company_id || req.user.company_id !== order.company_id || req.user.role !== 'company_admin') {
+          return res.status(403).json({ error: '无权操作此订单的退款' });
+        }
       }
 
       if (order.status !== 'paid') {
@@ -393,9 +507,9 @@ class PaymentController {
         // 微信支付退款
         // 注意：微信支付金额单位为分
         refundResult = await this.wechatPayService.refund({
-            outTradeNo: orderNo,
-            totalFee: Math.round(order.amount * 100),
-            refundFee: Math.round(refundAmount * 100)
+          outTradeNo: orderNo,
+          totalFee: Math.round(order.amount * 100),
+          refundFee: Math.round(refundAmount * 100)
         });
       } else {
         return res.status(400).json({ error: '不支持的支付方式' });

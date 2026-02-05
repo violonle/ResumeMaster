@@ -128,6 +128,14 @@
         rounded="lg"
         class="mb-1"
       />
+      <VListItem
+        prepend-icon="mdi-credit-card-settings-outline"
+        title="支付管理"
+        :to="{ name: 'payment-settings' }"
+        color="primary"
+        rounded="lg"
+        class="mb-1"
+      />
 
       <VListSubheader
         v-if="!localRail"

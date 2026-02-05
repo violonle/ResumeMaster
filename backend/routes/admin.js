@@ -773,6 +773,71 @@ router.post('/system/email/test', authenticateToken, requireAdmin, async (req, r
   }
 });
 
+// 支付设置
+router.get('/system/payment', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const SystemConfig = sequelize.models.SystemConfig;
+    const wechatCfg = await SystemConfig.findOne({ where: { key: 'payment_wechat' } });
+    const alipayCfg = await SystemConfig.findOne({ where: { key: 'payment_alipay' } });
+
+    const defaultWechat = {
+      appId: '',
+      mchId: '',
+      apiKey: '',
+      apiV3Key: '',
+      privateKey: '',
+      publicKey: '',
+      serialNo: '',
+      enabled: false,
+      notifyUrl: '',
+    };
+
+    const defaultAlipay = {
+      appId: '',
+      privateKey: '',
+      alipayPublicKey: '',
+      enabled: false,
+      notifyUrl: '',
+      sandbox: false,
+    };
+
+    const wechat = wechatCfg ? (typeof wechatCfg.value === 'string' ? JSON.parse(wechatCfg.value) : wechatCfg.value) : defaultWechat;
+    const alipay = alipayCfg ? (typeof alipayCfg.value === 'string' ? JSON.parse(alipayCfg.value) : alipayCfg.value) : defaultAlipay;
+
+    res.json({
+      success: true,
+      data: {
+        wechat: { ...defaultWechat, ...wechat },
+        alipay: { ...defaultAlipay, ...alipay }
+      }
+    });
+  } catch (e) {
+    res.status(500).json({ message: '获取支付设置失败' });
+  }
+});
+
+router.put('/system/payment', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { wechat, alipay } = req.body;
+    const SystemConfig = sequelize.models.SystemConfig;
+
+    if (wechat) {
+      const [w] = await SystemConfig.findOrCreate({ where: { key: 'payment_wechat' } });
+      await w.update({ value: JSON.stringify(wechat), type: 'json' });
+    }
+
+    if (alipay) {
+      const [a] = await SystemConfig.findOrCreate({ where: { key: 'payment_alipay' } });
+      await a.update({ value: JSON.stringify(alipay), type: 'json' });
+    }
+
+    res.json({ success: true, message: '支付设置已保存' });
+  } catch (e) {
+    console.error('Save payment settings error:', e);
+    res.status(500).json({ message: '保存支付设置失败' });
+  }
+});
+
 // 企业管理
 router.get('/companies', authenticateToken, requireAdmin, async (req, res) => {
   try {

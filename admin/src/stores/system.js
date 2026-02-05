@@ -136,6 +136,28 @@ export const useSystemStore = defineStore('system', () => {
     systemNotifications: true,
   })
   
+  const paymentSettings = ref({
+    wechat: {
+      appId: '',
+      mchId: '',
+      apiKey: '',
+      apiV3Key: '',
+      privateKey: '',
+      publicKey: '',
+      serialNo: '',
+      enabled: false,
+      notifyUrl: '',
+    },
+    alipay: {
+      appId: '',
+      privateKey: '',
+      alipayPublicKey: '',
+      enabled: false,
+      notifyUrl: '',
+      sandbox: false,
+    }
+  })
+  
   const roles = ref([])
   const permissions = ref([])
   const logs = ref([])
@@ -289,6 +311,28 @@ export const useSystemStore = defineStore('system', () => {
     }
   }
 
+  const fetchPaymentSettings = async () => {
+    try {
+      const response = await systemAPI.getPaymentSettings()
+      paymentSettings.value = response.data
+      return response.data
+    } catch (error) {
+      console.error('Failed to fetch payment settings:', error)
+      throw error
+    }
+  }
+
+  const updatePaymentSettings = async (data) => {
+    try {
+      const response = await systemAPI.updatePaymentSettings(data)
+      paymentSettings.value = data
+      return response.data
+    } catch (error) {
+      console.error('Failed to update payment settings:', error)
+      throw error
+    }
+  }
+
   const fetchRoles = async () => {
     try {
       const response = await systemAPI.getRoles()
@@ -387,6 +431,7 @@ export const useSystemStore = defineStore('system', () => {
     smsSettings,
     emailSettings,
     notificationSettings,
+    paymentSettings,
     roles,
     permissions,
     logs,
@@ -404,6 +449,8 @@ export const useSystemStore = defineStore('system', () => {
     testEmail,
     fetchNotificationSettings,
     updateNotificationSettings,
+    fetchPaymentSettings,
+    updatePaymentSettings,
     fetchRoles,
     fetchPermissions,
     createRole,
