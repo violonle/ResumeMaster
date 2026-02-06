@@ -1,11 +1,9 @@
 version: '3.8'
 
 services:
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: srm-backend
+  app:
+    image: letuyang/super-resume-master:latest
+    container_name: srm-app
     restart: always
     environment:
       - NODE_ENV=production
@@ -21,30 +19,24 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./backend/uploads:/app/uploads
+      - ./uploads:/app/backend/uploads
     depends_on:
       db:
         condition: service_healthy
 
-  # 示例数据库配置（生产环境建议使用云数据库，如果是自建可参考以下配置）
   db:
-    image: ${DB_IMAGE:-mysql:8.0}
+    image: mysql:8.0
     container_name: srm-db
     restart: always
     environment:
       - MYSQL_DATABASE=${DB_NAME:-superresumemaster}
       - MYSQL_ROOT_PASSWORD=${DB_PASSWORD:-YourStrongPassword}
-      # 如果是 PostgreSQL
-      - POSTGRES_DB=${DB_NAME:-superresumemaster}
-      - POSTGRES_PASSWORD=${DB_PASSWORD:-YourStrongPassword}
     ports:
-      - "${DB_PORT:-3306}:${DB_PORT:-3306}"
+      - "${DB_PORT:-3306}:3306"
     volumes:
-      - db_data:/var/lib/mysql # 如果是 mysql
-      # - db_data:/var/lib/postgresql/data # 如果是 postgres
+      - db_data:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD:-YourStrongPassword}"]
-      # test: ["CMD-SHELL", "pg_isready -U root -d superresumemaster"] # 如果是 postgres
       interval: 10s
       timeout: 5s
       retries: 5

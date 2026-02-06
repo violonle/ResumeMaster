@@ -51,7 +51,11 @@ if (!fs.existsSync(logDir)) {
 
 const logFile = path.join(logDir, 'app.log');
 
-// 日志中间件 - 移动到最上方以捕获所有请求
+// 1. 解析请求体 (必须在日志中间件之前，否则日志无法捕获 body)
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
+
+// 2. 日志中间件 (现在可以正确捕获 req.body)
 app.use((req, res, next) => {
   const timestamp = new Date().toISOString();
   const start = Date.now();
@@ -117,8 +121,6 @@ app.use(cors({
 
 // 统一开启预检请求处理
 app.options('*', cors());
-app.use(bodyParser.json({ limit: '50mb' }));
-app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
 
 // 静态文件服务
 const ROOT_DIR = path.resolve(__dirname, '..');

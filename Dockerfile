@@ -7,14 +7,12 @@ ARG DOCKER_MIRROR="docker.m.daocloud.io"
 
 # --- Stage 1: Build Admin ---
 FROM --platform=$BUILDPLATFORM ${DOCKER_MIRROR}/library/node:20-slim AS admin-builder
-# 使用阿里云镜像源加速 apt-get 并增加重试机制
 RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources && \
     (apt-get update || (sleep 5 && apt-get update)) && \
     apt-get install -y --no-install-recommends python3 make g++ && \
     rm -rf /var/lib/apt/lists/*
 WORKDIR /app/admin
 COPY admin/package*.json ./
-# 使用国内淘宝镜像源加速
 RUN npm config set registry https://registry.npmmirror.com && \
     npm install --ignore-scripts
 COPY admin/ .

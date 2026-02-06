@@ -37,23 +37,22 @@ export default defineConfig({
       '@layouts': fileURLToPath(new URL('./src/@layouts', import.meta.url)),
       '@images': fileURLToPath(new URL('./src/assets/images/', import.meta.url)),
       '@styles': fileURLToPath(new URL('./src/styles/', import.meta.url)),
-      '@mdi': fileURLToPath(new URL('./node_modules/@mdi/font', import.meta.url)),
     },
   },
   server: {
     port: 3004,
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:8000',
+        target: 'http://127.0.0.1:3000',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, '/api')
       },
       '/uploads': {
-        target: 'http://127.0.0.1:8000',
+        target: 'http://127.0.0.1:3000',
         changeOrigin: true
       },
       '/public': {
-        target: 'http://127.0.0.1:8000',
+        target: 'http://127.0.0.1:3000',
         changeOrigin: true
       }
     }

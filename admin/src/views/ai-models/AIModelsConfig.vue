@@ -529,7 +529,7 @@ const platforms = computed(() => {
   return (aiConfig.value.strategies?.platforms || []).map(p => p.name)
 })
 const presetPlatforms = computed(() => {
-  const base = ['SILICONFLOW', 'GLM', 'QWEN', 'DEEPSEEK']
+  const base = ['SILICONFLOW', 'GLM', 'QWEN', 'DEEPSEEK', 'MODELSCOPE']
   const extra = platforms.value || []
   return Array.from(new Set([...base, ...extra]))
 })
@@ -699,7 +699,8 @@ const providerNameMap = {
   QWEN: '阿里云百炼 (QWEN)',
   GLM: '质谱AI开放平台 (GLM)',
   SILICONFLOW: '硅基流动 (综合平台)',
-  DEEPSEEK: 'DeepSeek 官方'
+  DEEPSEEK: 'DeepSeek 官方',
+  MODELSCOPE: '魔搭 ModelScope'
 }
 const displayProviderName = (name) => providerNameMap[baseKey(name)] || name
 const configuredProviderItems = computed(() => providersList.value.map(p => ({ title: displayProviderName(p.name), value: p.name })))
