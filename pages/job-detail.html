@@ -7,6 +7,7 @@
     <script src="../js/tailwindcss.js"></script>
     <script src="../js/ui-components.js"></script>
     <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="/css/design-system.css">
     <!-- Flatpickr -->
     <script src="../js/flatpickr-stub.js"></script>
     <link rel="stylesheet" href="../css/sidebar.css">
@@ -2317,153 +2318,55 @@
           let candidatesResult = null;
           
           try {
-              console.log('开始并行加载流水线和人才库数据...');
-              const opts = {};
-              const sVal = statusFilter && statusFilter.value ? statusFilter.value : '';
-              const hiredBtn = document.getElementById('showHiredBtn');
-              const showHiredOnly = hiredBtn ? hiredBtn.classList.contains('active-hired') : false;
-              const showRejectedOnly = rejectedOnlyFilter ? rejectedOnlyFilter.checked : false;
+              console.log('使用统一的 getTalentPoolResumes API 加载候选人数据...');
               
-              if (showHiredOnly) opts.status = 'hired';
-              else if (showRejectedOnly) opts.status = 'rejected';
-              else if (sVal) opts.status = sVal;
-              if (searchInput && searchInput.value) opts.q = searchInput.value.toLowerCase();
+              // 简化参数，确保jobId正确传递
+              const opts = {
+                  jobId: cleanId,
+                  page: currentCandidatePage,
+                  pageSize: candidatePageSize,
+                  isTalentPool: false // 明确指定不是人才库查询，而是职位相关查询
+              };
               
-              opts.page = currentCandidatePage;
-              opts.pageSize = candidatePageSize;
-              opts.jobId = cleanId;
+              console.log('调用getTalentPoolResumes API，参数:', opts);
+              
+              // 暂时不传递筛选参数，确保获取所有候选人
+              // 筛选将在前端通过filterCandidates函数处理
 
-              // 构建人才库查询参数，确保与流水线数据使用相同的过滤条件
-              const libraryQueryParams = new URLSearchParams();
-              libraryQueryParams.set('limit', '1000');
-              libraryQueryParams.set('jobId', cleanId);
-              if (opts.status) libraryQueryParams.set('status', opts.status);
-              if (opts.q) libraryQueryParams.set('q', opts.q);
+              // 使用与 librarypool.html 相同的 API 端点
+              // 统一使用 getTalentPoolResumes 获取候选人数据
+              const candidates = await window.resumeDataManager.getTalentPoolResumes(false, false, opts);
+              console.log('API调用成功，返回候选人数量:', candidates ? candidates.length : 0);
+              
+              console.log('getTalentPoolResumes 返回:', candidates);
 
-              // 并行获取流水线数据和人才库数据，确保关联过的简历都能搜到
-              const [pipelineResp, libraryResp] = await Promise.all([
-                  window.resumeDataManager.getRecruitmentPipeline(cleanId, { ...opts, withMeta: true }),
-                  window.resumeDataManager.apiRequest(`/library/resumes?${libraryQueryParams.toString()}`, 'GET', null, true, true).catch(e => ({ data: [] }))
-              ]);
-
-              console.log('流水线返回:', pipelineResp);
-              console.log('人才库返回:', libraryResp);
-
-              // 1. 获取流水线中的正式候选人
-                let pipelineCandidates = [];
-                let serverCandidateTotal = null;
-
-                if (pipelineResp) {
-                    if (Array.isArray(pipelineResp)) {
-                        pipelineCandidates = pipelineResp;
-                        serverCandidateTotal = pipelineResp.length;
-                    } else if (pipelineResp.data && Array.isArray(pipelineResp.data)) {
-                        pipelineCandidates = pipelineResp.data;
-                        serverCandidateTotal = pipelineResp.total;
-                    } else if (typeof pipelineResp === 'object') {
-                        // 处理分组对象 { applied: [], ... }
-                        // 排除 total 等非数组属性
-                        pipelineCandidates = Object.entries(pipelineResp)
-                            .filter(([key, val]) => Array.isArray(val) && key !== 'total')
-                            .flatMap(([key, val]) => val.map(item => ({ ...(item || {}), __pipeline_group_status: key })));
-                        serverCandidateTotal = typeof pipelineResp.total === 'number' ? pipelineResp.total : pipelineCandidates.length;
-                    }
-                }
-
-              if (Array.isArray(pipelineCandidates) && pipelineCandidates.length > 0) {
-                  pipelineCandidates = pipelineCandidates.map(c => {
-                      const resumeId = c && (c.resume_id || c.resumeId || c.id);
-                      const candidateId = c && (c.resume_job_id || c.resumeJobId || c.id);
-                      const rawStatus = c && (c.status || c.recruitment_status || c.recruitmentStatus || c.rj_status || c.__pipeline_group_status);
-                      return {
-                          ...c,
-                          id: candidateId != null ? String(candidateId) : (c && c.id != null ? String(c.id) : ''),
-                          resume_id: resumeId != null ? String(resumeId) : (c && c.resume_id != null ? String(c.resume_id) : ''),
-                          job_id: String((c && (c.job_id || c.jobId)) || cleanId),
-                          status: normalizeStatus(rawStatus),
-                          recruitment_status: c && (c.recruitment_status || c.recruitmentStatus || rawStatus)
-                      };
-                  });
+              if (!candidates || !Array.isArray(candidates)) {
+                  throw new Error('候选人数据格式错误');
               }
 
-              // 2. 获取人才库中关联了此职位的候选人
-              const libraryCandidates = (libraryResp && libraryResp.data) ? libraryResp.data : [];
-              const associatedFromLibrary = libraryCandidates.filter(r => {
-                  const jid = r.associated_job_id || r.job_id || r.jobId;
-                  return String(jid) === String(cleanId);
-              }).map(r => ({
-                  id: (r.resume_job_id || r.resumeJobId || r.id) != null ? String(r.resume_job_id || r.resumeJobId || r.id) : '',
-                  resume_id: (r.resume_id || r.resumeId || r.id) != null ? String(r.resume_id || r.resumeId || r.id) : '',
-                  job_id: cleanId,
-                  name: r.name,
-                  file_name: r.file_name,
-                  status: normalizeStatus(r.status || r.recruitment_status || r.recruitmentStatus || 'applied'),
-                  score: r.score || 0,
-                  created_at: r.upload_date || r.created_at,
-                  experience: r.experience,
-                  education: r.education,
-                  job_title: r.job_title || r.position,
-                  analysis: r.analysis,
-                  has_deep_analysis: !!r.has_deep_analysis || !!(r.analysis && (r.analysis.overall_score!=null || r.analysis.dimensions))
-              }));
-
-              // 3. 合并并去重
-              const combinedMap = new Map();
-              pipelineCandidates.forEach(c => {
-                  const resumeKey = String(c && (c.resume_id || c.resumeId || c.id));
-                  if (!resumeKey || resumeKey === 'undefined' || resumeKey === 'null') return;
-                  combinedMap.set(resumeKey, c);
-              });
-              associatedFromLibrary.forEach(c => {
-                  const key = String(c && (c.resume_id || c.resumeId || c.id));
-                  if (!combinedMap.has(key)) {
-                      combinedMap.set(key, c);
-                  } else {
-                      const existing = combinedMap.get(key);
-
-                      const getStatusWeight = (st) => {
-                          const s = normalizeStatus(st);
-                          const weights = { applied: 10, screening: 20, interview: 30, offer: 40, hired: 50, rejected: 60 };
-                          return weights[s] || 0;
-                      };
-                      const existingStatusWeight = getStatusWeight(existing && (existing.status || existing.recruitment_status));
-                      const incomingStatusWeight = getStatusWeight(c && (c.status || c.recruitment_status));
-                      if (incomingStatusWeight > existingStatusWeight) {
-                          existing.status = normalizeStatus(c && (c.status || c.recruitment_status));
-                      }
-                      
-                      // 判定是否已有深度解析数据
-                      const existingHasDeep = existing.has_deep_analysis || 
-                                            (existing.analysis && existing.analysis.dimensions && 
-                                             Object.values(existing.analysis.dimensions).some(v => v > 0));
-                      
-                      const incomingHasDeep = c.has_deep_analysis || 
-                                            (c.analysis && c.analysis.dimensions && 
-                                             Object.values(c.analysis.dimensions).some(v => v > 0));
-
-                      // 如果现有数据没有深度解析，而新数据有，则覆盖
-                      if (!existingHasDeep && incomingHasDeep) {
-                          existing.analysis = c.analysis;
-                          existing.has_deep_analysis = true;
-                          const derivedScore = (c.analysis && c.analysis.overall_score) ? c.analysis.overall_score : (c.score || 0);
-                          if (!existing.score || existing.score === 0) existing.score = derivedScore;
-                      } else if (!existing.analysis && c.analysis) {
-                          // 都没有深度解析，但新数据有基础分析数据
-                          existing.analysis = c.analysis;
-                      }
-                      
-                      if (!existing.position && c.position) existing.position = c.position;
-                      if (!existing.job_title && c.job_title) existing.job_title = c.job_title;
-                      if ((!existing.name || existing.name === '未命名候选人') && c.name) existing.name = c.name;
-                      if (!existing.file_name && c.file_name) existing.file_name = c.file_name;
-                      if (!existing.status && c.status) existing.status = c.status;
-                      combinedMap.set(key, existing);
-                  }
+              // 标准化候选人数据
+              const normalizedCandidates = candidates.map(c => {
+                  const resumeId = c.resume_id || c.resumeId || c.id;
+                  const candidateId = c.resume_job_id || c.resumeJobId || c.id;
+                  const rawStatus = c.status || c.recruitment_status || c.recruitmentStatus;
+                  
+                  return {
+                      ...c,
+                      id: candidateId != null ? String(candidateId) : (c.id != null ? String(c.id) : ''),
+                      resume_id: resumeId != null ? String(resumeId) : (c.resume_id != null ? String(c.resume_id) : ''),
+                      job_id: String((c.job_id || c.jobId) || cleanId),
+                      status: normalizeStatus(rawStatus),
+                      recruitment_status: c.recruitment_status || c.recruitmentStatus || rawStatus,
+                      score: c.score || c.overall_score || 0,
+                      created_at: c.upload_date || c.created_at,
+                      job_title: c.job_title || c.position,
+                      has_deep_analysis: !!c.has_deep_analysis || !!(c.analysis && (c.analysis.overall_score!=null || c.analysis.dimensions))
+                  };
               });
 
               candidatesResult = { 
-                  data: Array.from(combinedMap.values()), 
-                  total: serverCandidateTotal || combinedMap.size,
+                  data: normalizedCandidates,
+                  total: normalizedCandidates.length,
                   page: opts.page,
                   pageSize: opts.pageSize
               };
@@ -2507,77 +2410,80 @@
           }
           
           const candidates = (candidatesResult && Array.isArray(candidatesResult)) ? candidatesResult : (candidatesResult && candidatesResult.data ? candidatesResult.data : []);
+          console.log('处理后的候选人数据:', candidates);
           serverCandidateTotal = (candidatesResult && typeof candidatesResult.total === 'number') ? candidatesResult.total : null;
           console.log('最终候选人数据:', candidates);
-              
-              // 检查返回数据的有效性
-              if (!candidates) {
-                  console.warn('API返回空数据');
-                  allCandidates = [];
-              } else if (!Array.isArray(candidates)) {
-                  console.warn('API返回数据不是数组格式:', typeof candidates, candidates);
-                  allCandidates = [];
-              } else if (candidates.length === 0) {
-                  console.log('API返回空数组，该职位暂无候选人');
-                  allCandidates = [];
+          
+          // 检查返回数据的有效性
+          if (!candidates) {
+              console.warn('API返回空数据');
+              allCandidates = [];
+          } else if (!Array.isArray(candidates)) {
+              console.warn('API返回数据不是数组格式:', typeof candidates, candidates);
+              allCandidates = [];
+          } else if (candidates.length === 0) {
+              console.log('API返回空数组，该职位暂无候选人');
+              allCandidates = [];
+          } else {
+              // 去重逻辑：确保每个候选人记录 ID 唯一
+              const seen = new Set();
+              allCandidates = candidates.filter(c => {
+                  // 放宽条件，允许没有ID的候选人
+                  if (!c) return false;
+                  if (c.id && seen.has(c.id)) return false;
+                  if (c.id) seen.add(c.id);
+                  return true;
+              });
+              console.log('有效候选人数量:', allCandidates.length);
+
+              allCandidates.forEach(c => {
+                  if (!c.score) c.score = 0;
+              });
+          }
+          
+          renderCandidateList(allCandidates);
+          renderCandidatePaginationInfo();
+          
+          // 检查是否有正在快评中的简历（status为applied且没有分数的）
+          const screeningTip = document.getElementById('screening-status-tip');
+          if (screeningTip) {
+              const hasScreening = allCandidates.some(c => (c.status === 'applied' || c.status === '投递') && (!c.score || c.score === 0));
+              if (hasScreening) {
+                  screeningTip.classList.remove('hidden');
               } else {
-                  // 去重逻辑：确保每个候选人记录 ID 唯一
-                  const seen = new Set();
-                  allCandidates = candidates.filter(c => {
-                      if (!c || !c.id || seen.has(c.id)) return false;
-                      seen.add(c.id);
-                      return true;
-                  });
-                  console.log('有效候选人数量:', allCandidates.length);
-
-                  allCandidates.forEach(c => {
-                      if (!c.score) c.score = 0;
-                  });
+                  screeningTip.classList.add('hidden');
               }
-              
-              renderCandidateList(allCandidates);
-              renderCandidatePaginationInfo();
-              
-              // 检查是否有正在快评中的简历（status为applied且没有分数的）
-              const screeningTip = document.getElementById('screening-status-tip');
-              if (screeningTip) {
-                  const hasScreening = allCandidates.some(c => (c.status === 'applied' || c.status === '投递') && (!c.score || c.score === 0));
-                  if (hasScreening) {
-                      screeningTip.classList.remove('hidden');
-                  } else {
-                      screeningTip.classList.add('hidden');
+          }
+          
+          // Trigger filter if values exist (to persist state)
+          filterCandidates(); 
+
+          if (window.currentJob && window.currentJob.enable_auto_screening && !window.autoScreeningTriggered) {
+              const pendingAutoScreenIds = allCandidates.filter(c => {
+                  const statusRaw = String(c.status || '').trim().toLowerCase();
+                  const isApplied = !statusRaw || statusRaw === '投递' || statusRaw === '新投递' || statusRaw === 'applied' || statusRaw === 'new';
+                  if (!isApplied) return false;
+
+                  const scoreVal = parseInt(c.score || 0);
+                  if (!isNaN(scoreVal) && scoreVal > 0) return false;
+
+                  let analysis = c.analysis || null;
+                  if (analysis) {
+                      try { analysis = typeof analysis === 'string' ? JSON.parse(analysis) : analysis; } catch (_) {}
+                      const overall = parseInt(analysis?.overall_score || 0);
+                      if (!isNaN(overall) && overall > 0) return false;
+                      if (analysis?.dimensions && Object.values(analysis.dimensions).some(v => parseFloat(v) > 0)) return false;
                   }
+
+                  if (c.has_deep_analysis) return false;
+                  return true;
+              }).map(c => c.resume_id || c.id);
+
+              if (pendingAutoScreenIds.length > 0) {
+                  triggerAutoScreening(pendingAutoScreenIds);
               }
-              
-              // Trigger filter if values exist (to persist state)
-              filterCandidates(); 
-
-              if (window.currentJob && window.currentJob.enable_auto_screening && !window.autoScreeningTriggered) {
-                  const pendingAutoScreenIds = allCandidates.filter(c => {
-                      const statusRaw = String(c.status || '').trim().toLowerCase();
-                      const isApplied = !statusRaw || statusRaw === '投递' || statusRaw === '新投递' || statusRaw === 'applied' || statusRaw === 'new';
-                      if (!isApplied) return false;
-
-                      const scoreVal = parseInt(c.score || 0);
-                      if (!isNaN(scoreVal) && scoreVal > 0) return false;
-
-                      let analysis = c.analysis || null;
-                      if (analysis) {
-                          try { analysis = typeof analysis === 'string' ? JSON.parse(analysis) : analysis; } catch (_) {}
-                          const overall = parseInt(analysis?.overall_score || 0);
-                          if (!isNaN(overall) && overall > 0) return false;
-                          if (analysis?.dimensions && Object.values(analysis.dimensions).some(v => parseFloat(v) > 0)) return false;
-                      }
-
-                      if (c.has_deep_analysis) return false;
-                      return true;
-                  }).map(c => c.resume_id || c.id);
-
-                  if (pendingAutoScreenIds.length > 0) {
-                      triggerAutoScreening(pendingAutoScreenIds);
-                  }
-                  window.autoScreeningTriggered = true;
-              }
+              window.autoScreeningTriggered = true;
+          }
       }
 
       function toggleHiredFilter() {
@@ -2832,13 +2738,19 @@
                           if (src[key] !== undefined) {
                               let val = src[key];
                               if (typeof val === 'object' && val !== null) val = val.score || val.value || val.rating;
-                              return Number(val) || 0;
+                              let numVal = Number(val) || 0;
+                              // 确保返回值在0-1之间
+                              if (numVal > 1) return numVal / 100;
+                              return numVal;
                           }
                           const foundKey = Object.keys(src).find(k => k.toLowerCase() === key.toLowerCase());
                           if (foundKey) {
                               let val = src[foundKey];
                               if (typeof val === 'object' && val !== null) val = val.score || val.value || val.rating;
-                              return Number(val) || 0;
+                              let numVal = Number(val) || 0;
+                              // 确保返回值在0-1之间
+                              if (numVal > 1) return numVal / 100;
+                              return numVal;
                           }
                       }
                   }
@@ -2880,6 +2792,71 @@
               }
 
               let dimensionHtml = '';
+              console.log('开始处理维度数据:', dimensionScores);
+              // 生成维度HTML
+              if (hasDimensionDisplay) {
+                  console.log('有维度数据，生成维度HTML');
+                  dimensionHtml = `
+                      <div class="grid grid-cols-3 gap-3 mt-3">
+                          <div class="dimension-item">
+                              <div class="text-xs font-bold text-gray-500 mb-1">专业技能</div>
+                              <div class="flex items-center">
+                                  <div class="w-full bg-gray-100 rounded-full h-1.5 mr-2">
+                                      <div class="bg-blue-600 h-1.5 rounded-full" style="width: ${Math.min(100, dimensionScores.skills * 100)}%"></div>
+                                  </div>
+                                  <span class="text-xs font-bold text-blue-600 min-w-[30px] text-right">${Math.round(dimensionScores.skills * 100)}%</span>
+                              </div>
+                          </div>
+                          <div class="dimension-item">
+                              <div class="text-xs font-bold text-gray-500 mb-1">工作经验</div>
+                              <div class="flex items-center">
+                                  <div class="w-full bg-gray-100 rounded-full h-1.5 mr-2">
+                                      <div class="bg-green-600 h-1.5 rounded-full" style="width: ${Math.min(100, dimensionScores.experience * 100)}%"></div>
+                                  </div>
+                                  <span class="text-xs font-bold text-green-600 min-w-[30px] text-right">${Math.round(dimensionScores.experience * 100)}%</span>
+                              </div>
+                          </div>
+                          <div class="dimension-item">
+                              <div class="text-xs font-bold text-gray-500 mb-1">学历背景</div>
+                              <div class="flex items-center">
+                                  <div class="w-full bg-gray-100 rounded-full h-1.5 mr-2">
+                                      <div class="bg-purple-600 h-1.5 rounded-full" style="width: ${Math.min(100, dimensionScores.education * 100)}%"></div>
+                                  </div>
+                                  <span class="text-xs font-bold text-purple-600 min-w-[30px] text-right">${Math.round(dimensionScores.education * 100)}%</span>
+                              </div>
+                          </div>
+                          <div class="dimension-item">
+                              <div class="text-xs font-bold text-gray-500 mb-1">项目经验</div>
+                              <div class="flex items-center">
+                                  <div class="w-full bg-gray-100 rounded-full h-1.5 mr-2">
+                                      <div class="bg-yellow-600 h-1.5 rounded-full" style="width: ${Math.min(100, dimensionScores.project * 100)}%"></div>
+                                  </div>
+                                  <span class="text-xs font-bold text-yellow-600 min-w-[30px] text-right">${Math.round(dimensionScores.project * 100)}%</span>
+                              </div>
+                          </div>
+                          <div class="dimension-item">
+                              <div class="text-xs font-bold text-gray-500 mb-1">发展潜力</div>
+                              <div class="flex items-center">
+                                  <div class="w-full bg-gray-100 rounded-full h-1.5 mr-2">
+                                      <div class="bg-pink-600 h-1.5 rounded-full" style="width: ${Math.min(100, dimensionScores.potential * 100)}%"></div>
+                                  </div>
+                                  <span class="text-xs font-bold text-pink-600 min-w-[30px] text-right">${Math.round(dimensionScores.potential * 100)}%</span>
+                              </div>
+                          </div>
+                          <div class="dimension-item">
+                              <div class="text-xs font-bold text-gray-500 mb-1">团队协作</div>
+                              <div class="flex items-center">
+                                  <div class="w-full bg-gray-100 rounded-full h-1.5 mr-2">
+                                      <div class="bg-indigo-600 h-1.5 rounded-full" style="width: ${Math.min(100, dimensionScores.teamwork * 100)}%"></div>
+                                  </div>
+                                  <span class="text-xs font-bold text-indigo-600 min-w-[30px] text-right">${Math.round(dimensionScores.teamwork * 100)}%</span>
+                              </div>
+                          </div>
+                      </div>
+                  `;
+              } else {
+                  console.log('无维度数据，不生成维度HTML');
+              }
               let eduText = '学历不限';
               if (c.education) {
                   if (Array.isArray(c.education) && c.education.length > 0) {
@@ -2913,39 +2890,8 @@
                    (score >= 80 ? 'bg-blue-50 text-blue-700 border border-blue-100' : 
                    (score >= 60 ? 'bg-blue-50 text-blue-700 border border-blue-100' : 'bg-gray-50 text-gray-600 border border-gray-100')));
 
-              if (hasDeep && hasDimensionDisplay) {
-                  const dimensionItems = [
-                      { label: '专业技能', value: dimensionScores.skills },
-                      { label: '经验契合', value: dimensionScores.experience },
-                      { label: '学历背景', value: dimensionScores.education },
-                      { label: '项目履历匹配', value: dimensionScores.project },
-                      { label: '潜力', value: dimensionScores.potential },
-                      { label: '团队协作', value: dimensionScores.teamwork }
-                  ];
-                  dimensionHtml = `
-                      <div class="grid grid-cols-3 gap-2 mt-3">
-                          ${dimensionItems.map(item => `
-                              <div class="flex items-center justify-between px-2 py-1 rounded-lg bg-gray-50 border border-gray-100">
-                                  <span class="text-[10px] font-semibold text-gray-500">${item.label}</span>
-                                  <span class="text-xs font-black text-gray-700">${item.value || 0}</span>
-                              </div>
-                          `).join('')}
-                      </div>
-                  `;
-              } else {
-                  dimensionHtml = `
-                      <div class="flex flex-wrap items-center gap-2 mt-3">
-                          <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold ${scoreBg}">
-                              ${matchStatus}
-                          </span>
-                          <div class="flex flex-wrap items-center gap-x-4 text-xs font-medium text-gray-400">
-                              <span class="flex items-center"><i class="fas fa-briefcase mr-1.5 opacity-50"></i>${expText}</span>
-                              <span class="flex items-center"><i class="fas fa-graduation-cap mr-1.5 opacity-50"></i>${eduText}</span>
-                              <span class="flex items-center"><i class="far fa-clock mr-1.5 opacity-50"></i>${formatDate(c.updated_at) || '今天'}</span>
-                          </div>
-                      </div>
-                  `;
-              }
+              // 6个维度已经在上面生成，这里不需要重复生成
+              // 确保dimensionHtml变量保持上面生成的值
 
               const avatarHtml = window.ui ? window.ui.renderAvatar(c.avatar, c.name || c.file_name || '?', 'w-12 h-12', 'rounded-xl', true) : `
                   <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600">

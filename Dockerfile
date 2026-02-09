@@ -82,6 +82,7 @@ COPY public/ ./public/
 COPY components/ ./components/
 COPY index.html ./
 COPY pages/ ./pages/
+COPY dist/ ./dist/
 
 # 4. 强制覆盖构建产物 (确保最新的覆盖旧的)
 COPY --from=admin-builder /app/admin/dist ./admin/dist
