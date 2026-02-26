@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,7 +9,7 @@
     <script src="../js/tailwindcss.js"></script>
     <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <script src="/js/chart.min.js"></script>
-    
+
     <!-- Shared Utils -->
     <script src="../js/user-auth.js"></script>
     <script src="../js/header-profile.js"></script>
@@ -33,38 +34,48 @@
             --line-height-relaxed: 1.75;
             --line-height-base: 1.6;
         }
+
         body {
             font-family: var(--font-main);
             line-height: var(--line-height-base);
             -webkit-font-smoothing: antialiased;
         }
+
         /* Prose 样式覆盖，优化 AI 报告阅读体验 */
         .prose {
             max-width: none;
-            color: #334155; /* slate-700 */
+            color: #334155;
+            /* slate-700 */
         }
+
         .prose p {
             line-height: var(--line-height-relaxed);
             margin-bottom: 1.25em;
             font-size: 0.95rem;
         }
-        .prose h3, .prose h4 {
-            color: #0f172a; /* slate-900 */
+
+        .prose h3,
+        .prose h4 {
+            color: #0f172a;
+            /* slate-900 */
             font-weight: 800;
             margin-top: 2em;
             margin-bottom: 0.75em;
             letter-spacing: -0.02em;
         }
-        .prose ul, .prose ol {
+
+        .prose ul,
+        .prose ol {
             margin-top: 0.75em;
             margin-bottom: 1.25em;
         }
+
         .prose li {
             margin-top: 0.5em;
             margin-bottom: 0.5em;
             line-height: var(--line-height-relaxed);
         }
-        
+
         .main-content-area {
             flex: 1;
             background:
@@ -76,9 +87,11 @@
             padding: 40px 20px;
             overflow-y: auto;
         }
+
         .main-content {
             padding: 64px 0 0 0 !important;
         }
+
         .score-card {
             background: var(--surface-strong);
             border: 1px solid var(--border);
@@ -86,23 +99,27 @@
             padding: 14px 14px;
             transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
         }
+
         .score-card:hover {
             border-color: rgba(37, 99, 235, 0.35);
             box-shadow: var(--shadow-soft);
             transform: translateY(-1px);
         }
+
         .module-card {
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: 24px;
             box-shadow: var(--shadow);
         }
+
         .subcard {
             background: rgba(255, 255, 255, 0.75);
             border: 1px solid var(--border);
             border-radius: 20px;
             box-shadow: 0 10px 20px rgba(15, 23, 42, 0.04);
         }
+
         .subhead {
             display: flex;
             align-items: center;
@@ -110,12 +127,14 @@
             padding: 14px 16px 10px 16px;
             border-bottom: 1px solid rgba(148, 163, 184, 0.18);
         }
+
         .subhead-title {
             font-weight: 800;
             color: #0f172a;
             font-size: 13px;
             letter-spacing: 0.02em;
         }
+
         .subhead-hint {
             font-size: 11px;
             color: #64748b;
@@ -123,12 +142,14 @@
         }
     </style>
 </head>
+
 <body class="bg-gray-50 font-sans antialiased text-gray-900">
     <!-- Header -->
     <header class="fixed top-0 left-0 right-0 h-20 bg-white shadow-sm border-b border-gray-200 z-50">
         <div class="max-w-[1600px] mx-auto h-full px-6 flex items-center justify-between">
             <div class="flex items-center space-x-4 pl-8">
-                <button onclick="history.length > 1 ? history.back() : location.href='./analysis-records.html'" class="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500 flex items-center justify-center">
+                <button onclick="history.length > 1 ? history.back() : location.href='./analysis-records.html'"
+                    class="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500 flex items-center justify-center">
                     <i class="fas fa-arrow-left text-xl"></i>
                 </button>
                 <div class="brand-title flex flex-col justify-center space-y-1.5">
@@ -147,7 +168,8 @@
         <div class="main-content-area">
             <div class="max-w-[1440px] mx-auto">
                 <!-- Loading State -->
-                <div id="loading-state" class="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-gray-100 shadow-sm">
+                <div id="loading-state"
+                    class="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-gray-100 shadow-sm">
                     <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
                     <p class="text-gray-500">正在加载解析详情...</p>
                 </div>
@@ -158,29 +180,37 @@
                     <div class="mb-2">
                         <h2 class="text-2xl font-bold text-gray-900">简历解析详情</h2>
                     </div>
-                    
+
                     <!-- Basic Info Card -->
-                    <div id="basic-info-card" class="portal-card module-card p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                    <div id="basic-info-card"
+                        class="portal-card module-card p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                         <div class="flex items-center space-x-5">
-                            <div class="w-16 h-16 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 text-2xl font-bold border border-blue-100">
+                            <div
+                                class="w-16 h-16 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 text-2xl font-bold border border-blue-100">
                                 <i class="fas fa-user-tie"></i>
                             </div>
                             <div>
                                 <div class="flex items-center space-x-3">
                                     <h3 id="res-name" class="text-xl font-bold text-gray-900">候选人姓名</h3>
-                                    <a id="quick-preview-btn" href="#" target="_blank" class="text-blue-600 hover:text-blue-700 text-sm flex items-center hidden" title="快速预览原件">
+                                    <a id="quick-preview-btn" href="#" target="_blank"
+                                        class="text-blue-600 hover:text-blue-700 text-sm flex items-center hidden"
+                                        title="快速预览原件">
                                         <i class="fas fa-external-link-alt"></i>
                                     </a>
                                 </div>
                                 <p id="res-info" class="text-sm text-gray-500 mt-1">载入中...</p>
                                 <div class="flex items-center mt-2.5 space-x-2">
-                                    <span class="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-bold rounded uppercase tracking-wider">AI Analysis Record</span>
+                                    <span
+                                        class="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-bold rounded uppercase tracking-wider">AI
+                                        Analysis Record</span>
                                 </div>
                             </div>
                         </div>
                         <div class="text-right lg:text-left">
-                            <div id="pipeline-actions" class="mb-4 flex flex-wrap justify-start lg:justify-end gap-2"></div>
-                            <div class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">Overall Score</div>
+                            <div id="pipeline-actions" class="mb-4 flex flex-wrap justify-start lg:justify-end gap-2">
+                            </div>
+                            <div class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">Overall
+                                Score</div>
                             <div class="flex items-baseline justify-end space-x-1">
                                 <span id="res-score" class="text-4xl font-black text-blue-600">0</span>
                                 <span class="text-gray-400 font-bold text-sm">/100</span>
@@ -196,18 +226,21 @@
                                 核心能力多维分析
                             </h4>
                             <div class="flex items-center gap-2">
-                                <button id="reanalyze-btn" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-white text-blue-600 hover:bg-blue-50 border border-blue-200">
+                                <button id="reanalyze-btn"
+                                    class="px-3 py-1.5 text-xs font-bold rounded-lg bg-white text-blue-600 hover:bg-blue-50 border border-blue-200">
                                     <i class="fas fa-sync-alt mr-1"></i>重新解析
                                 </button>
-                                <button id="exportMdSingleBtn" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200">
+                                <button id="exportMdSingleBtn"
+                                    class="px-3 py-1.5 text-xs font-bold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200">
                                     <i class="fas fa-file-code mr-1"></i>导出MD
                                 </button>
-                                <button id="exportPdfSingleBtn" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700">
+                                <button id="exportPdfSingleBtn"
+                                    class="px-3 py-1.5 text-xs font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700">
                                     <i class="fas fa-file-pdf mr-1"></i>导出PDF
                                 </button>
                             </div>
                         </div>
-                        
+
                         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                             <div class="lg:col-span-7">
                                 <div class="subcard overflow-hidden">
@@ -256,7 +289,8 @@
                                 对比解析结论
                             </h4>
                         </div>
-                        <div id="comparison-summary" class="grid grid-cols-1 lg:grid-cols-12 gap-6 leading-relaxed text-gray-600"></div>
+                        <div id="comparison-summary"
+                            class="grid grid-cols-1 lg:grid-cols-12 gap-6 leading-relaxed text-gray-600"></div>
                     </div>
 
                     <!-- AI Analysis Report -->
@@ -267,12 +301,12 @@
                                 AI 深度分析报告
                             </h4>
                         </div>
-                        
+
                         <!-- Highlights & Risks (Single Analysis Specific) -->
                         <div id="highlights-risks-container" class="mb-8 grid grid-cols-1 md:grid-cols-2 gap-4 hidden">
                             <div class="bg-slate-50 border border-slate-200 rounded-xl p-5 shadow-sm">
                                 <h5 class="text-sm font-bold text-gray-800 mb-3 flex items-center">
-                                    <i class="fas fa-bolt mr-2 text-emerald-600"></i>核心亮点
+                                    <i class="fas fa-bolt mr-2 text-blue-600"></i>核心亮点
                                 </h5>
                                 <ul id="res-highlights" class="space-y-2">
                                     <!-- Dynamic Items -->
@@ -290,15 +324,20 @@
 
                         <div id="ai-report" class="prose prose-slate max-w-none">
                             <!-- Dynamic Content -->
-                            <div class="flex flex-col items-center justify-center py-20 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+                            <div
+                                class="flex flex-col items-center justify-center py-20 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
                                 <i class="fas fa-robot text-5xl text-gray-300 mb-6"></i>
-                                <p class="text-gray-500 mb-8 text-center text-lg">当前暂无深度分析报告<br><span class="text-sm text-gray-400">点击下方按钮即可通过 AI 深度分析简历并补充生成完整报告</span></p>
-                <button id="supplement-btn" class="group relative px-12 py-6 bg-slate-900 text-white text-2xl font-bold rounded-2xl hover:bg-black transition-all duration-300 flex items-center shadow-2xl hover:shadow-slate-300 hover:-translate-y-1 transform active:scale-95 overflow-hidden">
-                    <div class="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-                    <i class="fas fa-wand-magic-sparkles mr-4 text-3xl animate-pulse"></i>
-                    <span class="relative">补充分析报告</span>
-                </button>
-            </div>
+                                <p class="text-gray-500 mb-8 text-center text-lg">当前暂无深度分析报告<br><span
+                                        class="text-sm text-gray-400">点击下方按钮即可通过 AI 深度分析简历并补充生成完整报告</span></p>
+                                <button id="supplement-btn"
+                                    class="group relative px-12 py-6 bg-slate-900 text-white text-2xl font-bold rounded-2xl hover:bg-black transition-all duration-300 flex items-center shadow-2xl hover:shadow-slate-300 hover:-translate-y-1 transform active:scale-95 overflow-hidden">
+                                    <div
+                                        class="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                                    </div>
+                                    <i class="fas fa-wand-magic-sparkles mr-4 text-3xl animate-pulse"></i>
+                                    <span class="relative">补充分析报告</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -307,14 +346,18 @@
     </div>
 
     <!-- 淘汰反馈模态框 -->
-    <div id="rejectModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div id="rejectModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog"
+        aria-modal="true">
         <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div id="reject-modal-backdrop" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeRejectModal()"></div>
+            <div id="reject-modal-backdrop" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+                aria-hidden="true" onclick="closeRejectModal()"></div>
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div
+                class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
                 <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                     <div class="sm:flex sm:items-start">
-                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                        <div
+                            class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
                             <i class="fas fa-exclamation-triangle text-red-600"></i>
                         </div>
                         <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
@@ -323,16 +366,20 @@
                                 <p class="text-sm text-gray-500 mb-4">
                                     请填写淘汰理由（可选），该理由将仅供内部参考。
                                 </p>
-                                <textarea id="rejectReason" rows="3" class="shadow-sm focus:ring-red-500 focus:border-red-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border" placeholder="请输入淘汰理由..."></textarea>
+                                <textarea id="rejectReason" rows="3"
+                                    class="shadow-sm focus:ring-red-500 focus:border-red-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border"
+                                    placeholder="请输入淘汰理由..."></textarea>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                    <button type="button" onclick="confirmReject()" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
+                    <button type="button" onclick="confirmReject()"
+                        class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
                         确认淘汰
                     </button>
-                    <button type="button" onclick="closeRejectModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                    <button type="button" onclick="closeRejectModal()"
+                        class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
                         取消
                     </button>
                 </div>
@@ -341,14 +388,18 @@
     </div>
 
     <!-- 深度解析说明模态框 -->
-    <div id="analysisModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div id="analysisModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title"
+        role="dialog" aria-modal="true">
         <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div id="analysis-modal-backdrop" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeAnalysisModal()"></div>
+            <div id="analysis-modal-backdrop" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+                aria-hidden="true" onclick="closeAnalysisModal()"></div>
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div
+                class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
                 <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                     <div class="sm:flex sm:items-start">
-                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
+                        <div
+                            class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
                             <i class="fas fa-magic text-blue-600"></i>
                         </div>
                         <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
@@ -369,11 +420,12 @@
                                 <div class="space-y-3 text-sm text-gray-600">
                                     <p class="font-bold text-gray-800">解析维度包含：</p>
                                     <ul class="list-disc pl-5 space-y-1">
-                                        <li>专业技能深度评估</li>
-                                        <li>项目经验契合度分析</li>
-                                        <li>学历与背景质量评估</li>
-                                        <li>离职原因与稳定性预测</li>
-                                        <li>团队协作与文化匹配度</li>
+                                        <li>技能匹配</li>
+                                        <li>经验匹配</li>
+                                        <li>项目履历匹配</li>
+                                        <li>学历背景</li>
+                                        <li>发展潜力</li>
+                                        <li>团队协作</li>
                                     </ul>
                                     <p class="mt-4 italic">解析过程大约需要 10-30 秒，完成后将自动刷新页面显示结果。</p>
                                 </div>
@@ -382,10 +434,12 @@
                     </div>
                 </div>
                 <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                    <button type="button" onclick="confirmDeepAnalysis()" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
+                    <button type="button" onclick="confirmDeepAnalysis()"
+                        class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
                         立即解析
                     </button>
-                    <button type="button" onclick="closeAnalysisModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                    <button type="button" onclick="closeAnalysisModal()"
+                        class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
                         取消
                     </button>
                 </div>
@@ -414,14 +468,14 @@
             if (!currentRejectId) return;
             const reasonInput = document.getElementById('rejectReason');
             const notes = reasonInput ? reasonInput.value : '';
-            
+
             try {
                 ui.showLoading('正在提交...');
-                const result = await userAuthInstance.apiRequest(`/resumes/${currentRejectId}/status`, 'PUT', { 
+                const result = await userAuthInstance.apiRequest(`/resumes/${currentRejectId}/status`, 'PUT', {
                     status: '淘汰',
                     notes: notes
                 });
-                
+
                 ui.hideLoading();
                 if (result.success) {
                     // ui.showNotification('已淘汰简历', 'success');
@@ -446,11 +500,11 @@
             if (!currentAnalysisId) return;
             const resumeId = currentAnalysisId;
             closeAnalysisModal();
-            
+
             try {
                 ui.showLoading('正在启动解析...');
                 const result = await userAuthInstance.apiRequest('/api/ai/analyze', 'POST', { resumeId, force: true, options: { scene: 'deep_analysis' } });
-                
+
                 ui.hideLoading();
                 if (result.success) {
                     // ui.showNotification('解析任务已提交，请稍候...', 'success');
@@ -480,7 +534,7 @@
             if (window.Sidebar) {
                 window.Sidebar.init({ mount: '#sidebar', active: 'resume-tools' });
             }
-            
+
             // 初始化头像
             if (typeof HeaderProfile !== 'undefined') {
                 HeaderProfile.init('#header-right-section');
@@ -547,10 +601,10 @@
                 const token = options.token || userAuthInstance.getToken();
                 const maxPolls = Number(options.maxPolls || 60);
                 const interval = Number(options.interval || 4000);
-                
+
                 // 获取轮询状态显示区域
                 const statusText = document.getElementById('polling-status');
-                
+
                 // 优先使用 WebSocket 订阅
                 if (window.SocketClient) {
                     console.log('[Socket] Subscribing to analysis for:', rid);
@@ -578,9 +632,9 @@
                 // 保留轮询作为兜底逻辑
                 for (let i = 0; i < maxPolls; i++) {
                     if (statusText) {
-                        statusText.innerHTML = `正在为您生成犀利、专业的深度报告<br>已耗时 ${i * Math.round(interval/1000)} 秒，请稍等片刻...`;
+                        statusText.innerHTML = `正在为您生成犀利、专业的深度报告<br>已耗时 ${i * Math.round(interval / 1000)} 秒，请稍等片刻...`;
                     }
-                    
+
                     const latest = await fetchLatestAnalysis(rid, token);
                     const report = latest ? latest.report : null;
                     if (!isReportEmptyValue(report)) {
@@ -596,7 +650,7 @@
                             }
                             return;
                         }
-                        
+
                         if (typeof fetchDetail === 'function') {
                             fetchDetail();
                         } else {
@@ -616,7 +670,7 @@
                             }
                             return;
                         }
-                        
+
                         if (typeof fetchDetail === 'function') {
                             fetchDetail();
                         } else {
@@ -649,7 +703,7 @@
                     const token = userAuthInstance.getToken();
                     const latest = await fetchLatestAnalysis(rid, token);
                     const report = latest ? latest.report : null;
-                    
+
                     // 如果不是强制刷新，且已有结果，则直接显示
                     if (!forceFromUrl) {
                         if (!isReportEmptyValue(report)) {
@@ -707,7 +761,7 @@
             }
 
             // 定义解析启动函数，确保在 auto-trigger 之前可用
-            window.startDeepAnalysis = async function(rid, isAuto = false) {
+            window.startDeepAnalysis = async function (rid, isAuto = false) {
                 if (!rid) {
                     alert('无法获取简历ID，请刷新页面重试');
                     return;
@@ -720,7 +774,7 @@
                     // 处理按钮状态
                     let btn = null;
                     let originalHtml = '';
-                    
+
                     if (!isAuto) {
                         // 优先尝试从 supplementBtn 或 event.currentTarget 获取按钮
                         btn = dom.supplementBtn || (typeof event !== 'undefined' && event.currentTarget);
@@ -729,14 +783,14 @@
                             btn.disabled = true;
                             btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>正在启动解析...';
                         }
-                        
+
                         const innerBtn = document.getElementById('supplement-btn-inner');
                         if (innerBtn) {
                             innerBtn.disabled = true;
                             innerBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2 text-xl"></i>正在唤醒 AI...';
                         }
                     }
-                    
+
                     const token = userAuthInstance.getToken();
                     const response = await fetch('/api/ai/analyze', {
                         method: 'POST',
@@ -744,13 +798,13 @@
                             'Authorization': `Bearer ${token}`,
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({ 
+                        body: JSON.stringify({
                             resumeId: rid,
                             force: true,
                             options: { scene: 'deep_analysis' }
                         })
                     });
-                    
+
                     const result = await response.json();
                     if (result.success) {
                         // 如果是自动触发或页面尚未有内容，显示全局加载状态
@@ -759,9 +813,9 @@
                                 dom.loading.innerHTML = `
                                     <div class="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-gray-100 shadow-xl max-w-2xl mx-auto">
                                         <div class="relative mb-8">
-                                            <div class="absolute -inset-4 bg-emerald-100/50 rounded-full animate-pulse"></div>
+                                            <div class="absolute -inset-4 bg-blue-100/50 rounded-full animate-pulse"></div>
                                             <div class="relative bg-white p-6 rounded-full shadow-lg">
-                                                <i class="fas fa-check-circle text-4xl text-emerald-600"></i>
+                                                <i class="fas fa-check-circle text-4xl text-blue-600"></i>
                                             </div>
                                         </div>
                                         <h3 class="text-2xl font-black text-gray-900 mb-2">解析任务已提交</h3>
@@ -794,7 +848,7 @@
                                 `;
                             }
                         }
-                        
+
                         await pollLatestReport(rid, { force: true, token });
                     } else {
                         throw new Error(result.error || '启动解析失败');
@@ -802,7 +856,7 @@
                 } catch (e) {
                     console.error('Start analysis error:', e);
                     alert('分析失败: ' + (e.message || '网络请求失败，请稍后重试'));
-                    
+
                     // 恢复按钮状态
                     if (dom.supplementBtn) {
                         dom.supplementBtn.disabled = false;
@@ -887,22 +941,22 @@
             function normalizeStatus(raw) {
                 const s = String(raw || '').trim().toLowerCase();
                 const map = {
-                '投递': 'applied',
-                '待快评': 'applied',
-                '待初筛': 'applied',
-                '新投递': 'applied',
-                '快评': 'screening',
-                '已快评': 'screening',
-                '初筛': 'screening',
-                '已初筛': 'screening',
-                '通过初筛': 'screening',
-                '面试': 'interview',
-                '已发offer': 'offer',
-                '入职': 'hired',
-                '已入职': 'hired',
-                '已录用': 'hired',
-                '淘汰': 'rejected',
-                '已淘汰': 'rejected',
+                    '投递': 'applied',
+                    '待快评': 'applied',
+                    '待初筛': 'applied',
+                    '新投递': 'applied',
+                    '快评': 'screening',
+                    '已快评': 'screening',
+                    '初筛': 'screening',
+                    '已初筛': 'screening',
+                    '通过初筛': 'screening',
+                    '面试': 'interview',
+                    '已发offer': 'offer',
+                    '入职': 'hired',
+                    '已入职': 'hired',
+                    '已录用': 'hired',
+                    '淘汰': 'rejected',
+                    '已淘汰': 'rejected',
                 };
                 const normalized = map[s] || s || 'applied';
                 return normalized;
@@ -926,14 +980,14 @@
                 }
             }
 
-            window.updateStatus = async function(resumeId, status) {
+            window.updateStatus = async function (resumeId, status) {
                 if (!confirm('确定要更新状态吗？')) return;
                 try {
                     const token = userAuthInstance.getToken();
                     // Try to use recruitment status endpoint if available, otherwise assume resumes endpoint
                     // Since we don't have candidateId here easily, we might need an endpoint that accepts resumeId
                     // Or we assume the backend handles it.
-                    
+
                     // We'll use a generic status update endpoint that resolves the latest active job application or creates one?
                     // Actually, let's try the standard endpoint.
                     const response = await fetch(`/api/resumes/${resumeId}/status`, {
@@ -944,7 +998,7 @@
                         },
                         body: JSON.stringify({ status })
                     });
-                    
+
                     const result = await response.json();
                     if (result.success) {
                         // if (typeof ui !== 'undefined') ui.showNotification('状态更新成功', 'success');
@@ -967,7 +1021,7 @@
                 try {
                     const token = userAuthInstance.getToken();
                     let apiUrl = '';
-                    
+
                     if (recordId && recordId !== 'null') {
                         apiUrl = `/api/ai/records/${recordId}`;
                     } else if (resumeId && resumeId !== 'null') {
@@ -984,7 +1038,7 @@
                             'Authorization': `Bearer ${token}`
                         }
                     });
-                    
+
                     if (response.status === 401) {
                         userAuthInstance.logout();
                         window.location.href = 'login.html?message=' + encodeURIComponent('会话已过期，请重新登录');
@@ -1009,7 +1063,7 @@
                     }
 
                     const result = await response.json();
-                    
+
                     if (result.success) {
                         if (result.data) {
                             await renderDetail(result.data);
@@ -1031,7 +1085,7 @@
                     showError('无法加载解析详情：数据为空');
                     return;
                 }
-                
+
                 // 确保关键字段存在且格式正确，增加容错
                 try {
                     if (typeof record.dimensions === 'string') {
@@ -1046,11 +1100,11 @@
                     }
                 } catch (e) { record.detailed_analysis = {}; }
                 record.detailed_analysis = record.detailed_analysis || record.details || {};
-                
+
                 const details = record.detailed_analysis || record.details || {};
                 const analysisData = record.type === 'single' ? (details.analysis || details || {}) : (details || {});
                 const info = analysisData.basic_info || analysisData.parsed_data?.basic_info || {};
-                
+
                 // 兼容不同版本的 AI 返回结构 (single analysis)
                 const isMulti = record.type === 'multi';
 
@@ -1064,44 +1118,59 @@
                         }
                         return s || {};
                     });
-                    
+
                     const getVal = (keys) => {
-                        for (const key of keys) {
-                            for (const source of safeSources) {
-                                if (!source || typeof source !== 'object') continue;
-                                
-                                // 处理嵌套结构，例如 analysis.dimensions.skills.score
+                        const searchKeys = keys.map(k => k.toLowerCase());
+                        for (const source of safeSources) {
+                            if (!source || typeof source !== 'object') continue;
+
+                            // 1. 处理数组结构 (competency_matrix)
+                            const items = Array.isArray(source) ? source : (source.competency_matrix || []);
+                            if (Array.isArray(items)) {
+                                for (const item of items) {
+                                    const dimName = (item.dimension || item.name || '').toLowerCase();
+                                    if (searchKeys.some(k => dimName.includes(k))) {
+                                        const v = item.score || item.value || 0;
+                                        return parseInt(v) || 0;
+                                    }
+                                }
+                            }
+
+                            // 2. 处理对象结构
+                            for (const key of keys) {
                                 let val = source[key];
-                                
-                                // 如果直接获取不到，尝试在 nested keys 中查找 (比如维度名称可能是中文)
                                 if (val === undefined || val === null) {
-                                    // 尝试在 dimensions 对象内部查找
                                     if (source.dimensions && source.dimensions[key] !== undefined) {
                                         val = source.dimensions[key];
                                     }
                                 }
 
                                 if (val !== undefined && val !== null) {
-                                    // 提取数值：支持 {score: 80}, {value: 80}, 80, "80"
                                     const raw = typeof val === 'object' ? (val.score ?? val.value ?? val.rating ?? 0) : val;
                                     const num = parseInt(raw, 10);
                                     if (!isNaN(num) && num > 0) return num;
+                                }
+
+                                // 模糊匹配键名
+                                const foundKey = Object.keys(source).find(k => k.toLowerCase() === key.toLowerCase());
+                                if (foundKey) {
+                                    const val2 = typeof source[foundKey] === 'object' ? (source[foundKey].score ?? source[foundKey].value ?? 0) : source[foundKey];
+                                    const num2 = parseInt(val2, 10);
+                                    if (!isNaN(num2) && num2 > 0) return num2;
                                 }
                             }
                         }
                         return 0;
                     };
-                    
-                    const dims = {
-                        skills: getVal(['skills', 'skill_match', 'professional', 'core_skills', 'job_fit', '专业技能', '技能评分', '技能匹配', '专业能力']),
-                        experience: getVal(['experience', 'experience_match', 'experience_fit', 'background', '工作经验', '经验契合', '经验评分', '项目经验']),
-                        project: getVal(['project', 'project_match', 'project_fit', 'project_experience', '项目履历匹配', '项目经验', '履历匹配', '稳定性', 'stability', 'work_stability']),
-                        education: getVal(['education', 'education_background', 'academic', '学历背景', '教育背景', '学历评分', '学习能力']),
-                        potential: getVal(['potential', 'growth_potential', 'development', 'learning_ability', '发展潜力', '潜力评分', '成长性', '综合素质']),
-                        teamwork: getVal(['teamwork', 'collaboration', 'social', '团队协作', '协作能力', '团队精神', '沟通能力'])
-                    };
 
-                    return dims;
+                    return {
+                        skills: getVal(['skills', 'skill_match', 'professional', 'core_skills', 'job_fit', '专业技能', '技能评分', '技能匹配', '专业能力', '技术能力', '业务能力', '技能匹配度']),
+                        experience: getVal(['experience', 'experience_match', 'experience_fit', 'background', '工作经验', '经验契合', '经验评分', '项目经验', '履历背景', '行业经验', '工作背景']),
+                        project: getVal(['project', 'project_match', 'project_fit', 'project_experience', '项目履历匹配', '项目经验', '履历匹配', '稳定性', 'stability', 'work_stability', '项目背景', '工作稳定性']),
+                        education: getVal(['education', 'education_background', 'academic', '学历背景', '教育背景', '学历评分', '学习能力', '教育匹配', '学历契合']),
+                        potential: getVal(['potential', 'growth_potential', 'development', 'learning_ability', '发展潜力', '潜力评分', '成长性', '综合素质', '职业潜力']),
+                        teamwork: getVal(['teamwork', 'collaboration', 'social', '团队协作', '协作能力', '团队精神', '沟通能力', '组织协同', '人际沟通'])
+                    };
                 };
 
                 const dims = normalizeDimensions([
@@ -1124,13 +1193,13 @@
                     analysisData.scores_percent,
                     analysisData.radar_scores
                 ]);
-                
+
                 // 确保 record.dimensions 也是最新的归一化数据，方便后续导出使用
                 record.dimensions = dims;
-                
+
                 // 设置当前简历ID用于补充报告
                 currentResumeId = record.resume_id || record.Resume?.id;
-                
+
                 const headerTitle = document.getElementById('header-title');
                 const contentTitle = document.getElementById('content-title');
                 const subtitle = document.getElementById('res-name-subtitle');
@@ -1150,7 +1219,7 @@
                     const candidates = Array.isArray(comparison.candidates) ? comparison.candidates : [];
                     const names = candidates.map(c => c.name || c.file_name).filter(Boolean);
                     const displayName = names.length ? names.join(' vs ') : '对比解析结果';
-                    
+
                     if (dom.resName) {
                         dom.resName.textContent = displayName;
                         const badge = document.createElement('span');
@@ -1183,16 +1252,16 @@
                     if (subtitle) subtitle.textContent = `匹配岗位：${record.position || '未指定'}`;
                     if (dom.resName) {
                         dom.resName.textContent = displayName;
-                        
+
                         // 添加状态标签
                         try {
                             const jobIdHint = record.job_id || record.ResumeJob?.job_id || null;
                             const resolved = await resolveCandidateStatus(record.Resume.id, jobIdHint);
                             const statusKey = resolved || normalizeStatus(record.Resume.recruitment_status || '投递');
-                            
+
                             const badge = document.createElement('span');
                             badge.className = 'status-badge ml-3 px-2 py-1 text-[10px] font-bold rounded-lg align-middle border';
-                            
+
                             if (statusKey === 'applied') {
                                 badge.className += ' bg-gray-100 text-gray-500 border-gray-200';
                                 badge.innerHTML = '<i class="fas fa-clock mr-1"></i>待快评';
@@ -1200,16 +1269,16 @@
                                 badge.className += ' bg-yellow-100 text-yellow-700 border-yellow-200';
                                 badge.innerHTML = '<i class="fas fa-search mr-1"></i>已快评';
                             } else if (statusKey === 'hired' || statusKey === 'offer') {
-                                badge.className += ' bg-emerald-100 text-emerald-700 border-emerald-200';
+                                badge.className += ' bg-blue-100 text-blue-700 border-blue-200';
                                 badge.innerHTML = '<i class="fas fa-check-circle mr-1"></i>已录用';
                             } else if (statusKey === 'interview') {
-                                badge.className += ' bg-purple-100 text-purple-700 border-purple-200';
+                                badge.className += ' bg-blue-100 text-blue-700 border-blue-200';
                                 badge.innerHTML = '<i class="fas fa-calendar-alt mr-1"></i>面试中';
                             } else if (statusKey === 'rejected') {
                                 badge.className += ' bg-red-100 text-red-700 border-red-200';
                                 badge.innerHTML = '<i class="fas fa-times-circle mr-1"></i>已淘汰';
                             }
-                            
+
                             if (dom.resName.parentElement) dom.resName.parentElement.appendChild(badge);
                         } catch (e) { console.warn('Add status badge failed:', e); }
                     }
@@ -1225,16 +1294,16 @@
                     }
 
                     if (dom.resInfo) dom.resInfo.textContent = `匹配岗位：${record.position || '未指定'} | ${info.experience || '多年'}经验 | ${info.education || '本科'}`;
-                    
+
                     const resume = record.Resume;
                     if (resume) {
                         const attachmentName = document.getElementById('attachment-name');
                         const attachmentSize = document.getElementById('attachment-size');
                         const previewBtn = document.getElementById('preview-attachment-btn');
-                        
+
                         if (attachmentName) attachmentName.textContent = resume.file_name || '未知文件名';
                         if (attachmentSize) attachmentSize.textContent = resume.file_size ? `${(resume.file_size / 1024).toFixed(1)} KB` : '未知大小';
-                        
+
                         if (previewBtn) {
                             if (resume.file_path) {
                                 let filePath = resume.file_path;
@@ -1244,7 +1313,7 @@
                                 }
                                 previewBtn.href = filePath;
                                 previewBtn.classList.remove('hidden');
-                                
+
                                 const icon = document.getElementById('attachment-icon');
                                 if (icon) {
                                     const ext = (resume.file_name || '').split('.').pop().toLowerCase();
@@ -1265,7 +1334,7 @@
                     if (exportMdSingleBtn) exportMdSingleBtn.classList.remove('hidden');
                     if (exportPdfSingleBtn) exportPdfSingleBtn.classList.remove('hidden');
                 }
-                
+
                 // 2. 综合得分
                 if (dom.resScore) {
                     if (isMulti) {
@@ -1292,13 +1361,13 @@
                         if (statusKey === 'applied') {
                             btnHtml = `<button class="${btnClass} bg-blue-600 text-white hover:bg-blue-700" onclick="updateStatus('${record.Resume.id}', 'screening')"><i class="fas fa-check mr-1.5"></i>手动快评</button>`;
                         } else if (statusKey === 'screening') {
-                            btnHtml = `<button class="${btnClass} bg-indigo-600 text-white hover:bg-indigo-700" onclick="alert('请前往职位详情页进行面试邀请')"><i class="fas fa-calendar-alt mr-1.5"></i>邀请面试</button>`;
+                            btnHtml = `<button class="${btnClass} bg-blue-600 text-white hover:bg-blue-700" onclick="alert('请前往职位详情页进行面试邀请')"><i class="fas fa-calendar-alt mr-1.5"></i>邀请面试</button>`;
                         } else if (statusKey === 'interview') {
-                            btnHtml = `<button class="${btnClass} bg-orange-600 text-white hover:bg-orange-700" onclick="alert('请前往职位详情页发送 Offer')"><i class="fas fa-file-signature mr-1.5"></i>发送Offer</button>`;
+                            btnHtml = `<button class="${btnClass} bg-blue-600 text-white hover:bg-blue-700" onclick="alert('请前往职位详情页发送 Offer')"><i class="fas fa-file-signature mr-1.5"></i>发送Offer</button>`;
                         } else if (statusKey === 'offer') {
-                            btnHtml = `<button class="${btnClass} bg-emerald-600 text-white hover:bg-emerald-700" onclick="updateStatus('${record.Resume.id}', 'hired')"><i class="fas fa-user-check mr-1.5"></i>确认入职</button>`;
+                            btnHtml = `<button class="${btnClass} bg-blue-600 text-white hover:bg-blue-700" onclick="updateStatus('${record.Resume.id}', 'hired')"><i class="fas fa-user-check mr-1.5"></i>确认入职</button>`;
                         }
-                        if (!['rejected','hired'].includes(statusKey)) {
+                        if (!['rejected', 'hired'].includes(statusKey)) {
                             btnHtml += `<button class="${btnClass} ml-2 bg-red-50 text-red-600 border border-red-100 hover:bg-red-100" onclick="updateStatus('${record.Resume.id}', 'rejected')"><i class="fas fa-times mr-1.5"></i>淘汰</button>`;
                         }
                         if (statusKey === 'rejected') {
@@ -1329,7 +1398,7 @@
                         comparisonSection.classList.remove('hidden');
                         const summaryGrid = candidates.length <= 2 ? 'lg:grid-cols-2' : 'lg:grid-cols-3';
                         const summarySpan = candidates.length <= 2 ? 'lg:col-span-1' : 'lg:col-span-4';
-                        
+
                         comparisonSummary.className = `grid grid-cols-1 ${summaryGrid} gap-4`;
                         comparisonSummary.innerHTML = `
                             <div class="bg-gray-50 border border-gray-100 rounded-xl p-4 h-full ${summarySpan}">
@@ -1427,12 +1496,12 @@
                     if (scoreCol) scoreCol.classList.remove('hidden');
                     renderRadarChart(record.dimensions);
                     renderScoreCards(record.dimensions);
-                    
+
                     // 核心修复：渲染亮点与风险
                     const highlightsRisksContainer = document.getElementById('highlights-risks-container');
                     const resHighlights = document.getElementById('res-highlights');
                     const resRisks = document.getElementById('res-risks');
-                    
+
                     if (highlightsRisksContainer && resHighlights && resRisks) {
                         const extractList = (val) => Array.isArray(val) ? val : [];
                         const highlights = [
@@ -1450,8 +1519,8 @@
                             ...extractList(analysisData.evaluation_report && analysisData.evaluation_report.weaknesses)
                         ].filter(Boolean);
                         highlightsRisksContainer.classList.remove('hidden');
-                        resHighlights.innerHTML = highlights.length > 0 
-                            ? highlights.map(h => `<li class="flex items-start text-sm text-gray-700 leading-relaxed"><i class="fas fa-check-circle text-emerald-500 mt-1 mr-2 text-[10px]"></i>${h}</li>`).join('')
+                        resHighlights.innerHTML = highlights.length > 0
+                            ? highlights.map(h => `<li class="flex items-start text-sm text-gray-700 leading-relaxed"><i class="fas fa-check-circle text-blue-500 mt-1 mr-2 text-[10px]"></i>${h}</li>`).join('')
                             : '<li class="text-xs text-gray-400 italic">暂无亮点</li>';
                         resRisks.innerHTML = risks.length > 0
                             ? risks.map(r => `<li class="flex items-start text-sm text-gray-700 leading-relaxed"><i class="fas fa-exclamation-circle text-blue-500 mt-1 mr-2 text-[10px]"></i>${r}</li>`).join('')
@@ -1465,10 +1534,10 @@
                     const urlParams = new URLSearchParams(window.location.search);
                     const shouldTrigger = urlParams.get('trigger') === 'true';
                     const isEmptyReport = isReportEmptyValue(report);
-                    
+
                     if (shouldTrigger && isEmptyReport && !isMulti && resumeId && !autoPolling) {
                         console.log('Auto-triggering deep analysis for resume:', resumeId);
-                        
+
                         // 优化自动触发时的 UI 交互
                         if (dom.loading) {
                             dom.loading.innerHTML = `
@@ -1513,7 +1582,7 @@
                             dom.loading.classList.remove('hidden');
                             if (dom.content) dom.content.classList.add('hidden');
                         }
-                        
+
                         window.startDeepAnalysis(resumeId, true);
                     }
                     try {
@@ -1565,7 +1634,7 @@
                             if (hiring) {
                                 lines.push(`### 录用建议`);
                                 if (typeof hiring === 'string' && hiring.trim().startsWith('{')) {
-                                    try { hiring = JSON.parse(hiring); } catch(e){}
+                                    try { hiring = JSON.parse(hiring); } catch (e) { }
                                 }
                                 if (typeof hiring === 'object' && hiring !== null) {
                                     if (hiring.grade) lines.push(`- 推荐等级：${hiring.grade}`);
@@ -1584,7 +1653,7 @@
                             const url = URL.createObjectURL(blob);
                             const a = document.createElement('a');
                             a.href = url;
-                            const dateStr = new Date().toISOString().slice(0,10);
+                            const dateStr = new Date().toISOString().slice(0, 10);
                             a.download = `解析报告_${dateStr}.md`;
                             document.body.appendChild(a);
                             a.click();
@@ -1635,10 +1704,10 @@
                                 });
                                 y += 10;
                                 const details = record.detailed_analysis || record.details || {};
-                                
+
                                 let hiringText = details.hiring_advice || details.evaluation_report?.hiring_advice || '';
                                 if (typeof hiringText === 'string' && hiringText.trim().startsWith('{')) {
-                                    try { hiringText = JSON.parse(hiringText); } catch(e){}
+                                    try { hiringText = JSON.parse(hiringText); } catch (e) { }
                                 }
                                 if (typeof hiringText === 'object' && hiringText !== null) {
                                     const parts = [];
@@ -1659,12 +1728,12 @@
                                         y += 18;
                                         doc.setFontSize(11);
                                         const chunks = doc.splitTextToSize(String(text), 515);
-                                        if (y + chunks.length*14 > 780) { doc.addPage(); y = 50; }
+                                        if (y + chunks.length * 14 > 780) { doc.addPage(); y = 50; }
                                         doc.text(chunks, marginX, y);
-                                        y += chunks.length*14 + 10;
+                                        y += chunks.length * 14 + 10;
                                     }
                                 });
-                                const dateStr = new Date().toISOString().slice(0,10);
+                                const dateStr = new Date().toISOString().slice(0, 10);
                                 doc.save(`解析报告_${dateStr}.pdf`);
                             } catch (err) { console.error('Export PDF failed', err); }
                         });
@@ -1808,7 +1877,7 @@
 
             function renderComparisonScoreCards(candidates, winner) {
                 if (!dom.scoreCards) return;
-                
+
                 const dimensions = [
                     { key: 'skills', label: '技能', icon: 'fa-tools' },
                     { key: 'experience', label: '经验', icon: 'fa-briefcase' },
@@ -1824,7 +1893,7 @@
                     const name = c.name || c.file_name || `候选人${idx + 1}`;
                     const score = c.overall_score || 0;
                     const dimScores = c.scores_percent || c.scores || {};
-                    
+
                     return `
                         <div class="p-4 rounded-xl border ${isWinner ? 'border-blue-100 bg-blue-50/30 shadow-sm' : 'border-gray-100 bg-gray-50/30'}">
                             <div class="flex items-center justify-between mb-4 pb-2 border-b border-dashed ${isWinner ? 'border-blue-100' : 'border-gray-200'}">
@@ -1839,14 +1908,14 @@
                             </div>
                             <div class="grid grid-cols-3 gap-3">
                                 ${dimensions.map(dim => {
-                                    const val = dimScores[dim.key] || 0;
-                                    return `
+                        const val = dimScores[dim.key] || 0;
+                        return `
                                         <div class="flex flex-col items-center p-2 rounded-lg bg-white/60 border border-white shadow-sm">
                                             <div class="text-[10px] text-gray-400 font-bold mb-1">${dim.label}</div>
                                             <div class="text-xs font-black text-gray-800">${val}</div>
                                         </div>
                                     `;
-                                }).join('')}
+                    }).join('')}
                             </div>
                         </div>
                     `;
@@ -1877,7 +1946,7 @@
 
                 function renderValue(val, key = '') {
                     if (!val) return '';
-                    
+
                     // 核心优化：录用建议展示效果
                     if (key === 'hiring_advice') {
                         let grade = '';
@@ -1891,12 +1960,12 @@
                         if (typeof val === 'string' && val.trim().startsWith('{')) {
                             try {
                                 adviceObj = JSON.parse(val);
-                            } catch (e) {}
+                            } catch (e) { }
                         }
 
                         if (typeof adviceObj === 'object' && adviceObj !== null && (adviceObj.grade || adviceObj.reason)) {
                             grade = adviceObj.grade || '';
-                            cnLevel = adviceObj.comment || ''; 
+                            cnLevel = adviceObj.comment || '';
                             reason = adviceObj.reason || '';
                             isMatch = true;
                         } else if (typeof val === 'string') {
@@ -1906,15 +1975,15 @@
                                 const fullGradeStr = gradeMatch[1];
                                 const enMatch = fullGradeStr.match(/[A-DS][+-]?/i);
                                 if (enMatch) grade = enMatch[0].toUpperCase();
-                                
+
                                 const cnMatch = fullGradeStr.match(/[(（](.*?)[)）]/) || fullGradeStr.match(/[\u4e00-\u9fa5]{2,}/);
                                 if (cnMatch) cnLevel = (cnMatch[1] || cnMatch[0]).trim();
-                                
+
                                 reason = val.replace(gradeMatch[0], '').trim();
-                                reason = reason.replace(/^【.*?建议】/, '') 
-                                               .replace(/^[。\.，, ]+/, '') 
-                                               .replace(/^核心录用理由[:：]\s*/, '') 
-                                               .trim();
+                                reason = reason.replace(/^【.*?建议】/, '')
+                                    .replace(/^[。\.，, ]+/, '')
+                                    .replace(/^核心录用理由[:：]\s*/, '')
+                                    .trim();
                                 isMatch = true;
                             }
                         }
@@ -1926,7 +1995,7 @@
                                         <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">推荐等级</span>
                                         <div class="flex flex-col items-center gap-0">
                                             ${grade ? `<span class="text-6xl font-black text-white leading-none">${grade}</span>` : ''}
-                                            ${cnLevel ? `<span class="text-[11px] font-bold text-emerald-400 mt-3 text-center leading-tight px-1">${cnLevel}</span>` : ''}
+                                            ${cnLevel ? `<span class="text-[11px] font-bold text-blue-400 mt-3 text-center leading-tight px-1">${cnLevel}</span>` : ''}
                                         </div>
                                     </div>
                                     <div class="flex-1 flex flex-col justify-center">
@@ -2002,17 +2071,17 @@
                         return `
                             <div class="space-y-3">
                                 ${val.map(item => {
-                                    if (typeof item === 'object') {
-                                        return `<div class="bg-gray-50 p-3 rounded-lg text-xs text-gray-600">
+                            if (typeof item === 'object') {
+                                return `<div class="bg-gray-50 p-3 rounded-lg text-xs text-gray-600">
                                             ${Object.entries(item).map(([k, v]) => `<strong>${k}:</strong> ${v}`).join(' | ')}
                                         </div>`;
-                                    }
-                                    return `
+                            }
+                            return `
                                         <div class="flex items-start">
                                             <i class="fas fa-check-circle text-blue-500 mt-1.5 mr-3 text-xs flex-shrink-0"></i>
                                             <span class="text-gray-600">${item}</span>
                                         </div>`;
-                                }).join('')}
+                        }).join('')}
                             </div>
                         `;
                     }
@@ -2039,7 +2108,7 @@
                             </button>
                         </div>
                     `;
-                    
+
                     // 重新绑定事件
                     const innerBtn = document.getElementById('supplement-btn-inner');
                     if (innerBtn) {
@@ -2060,7 +2129,7 @@
 
                 // 判断报告是否为空或占位符
                 let isEmpty = !report || report === '暂无报告' || report === '暂无详细报告内容' || (typeof report === 'object' && Object.keys(report).length === 0);
-                
+
                 // 深度检查对象是否真的为空
                 if (!isEmpty && typeof report === 'object') {
                     const hasContent = Object.values(report).some(v => {
@@ -2071,17 +2140,17 @@
                     });
                     if (!hasContent) isEmpty = true;
                 }
-                
+
                 if (isEmpty) {
                     renderEmptyState();
                 } else {
                     if (dom.supplementBtn) dom.supplementBtn.classList.add('hidden'); // 已有报告，隐藏补充按钮
-                    
+
                     if (typeof report === 'string') {
-                    // 核心修复：如果检测到对比解析的内容出现在单人详情中，拦截并提示
-                    if (report.includes('对比分析报告') || report.includes('候选人对比') || report.includes('两位候选人')) {
-                        console.warn('[Security] Detected multi-analysis report content in single view');
-                        dom.aiReport.innerHTML = `
+                        // 核心修复：如果检测到对比解析的内容出现在单人详情中，拦截并提示
+                        if (report.includes('对比分析报告') || report.includes('候选人对比') || report.includes('两位候选人')) {
+                            console.warn('[Security] Detected multi-analysis report content in single view');
+                            dom.aiReport.innerHTML = `
                             <div class="p-8 bg-blue-50 rounded-2xl border border-blue-100 text-center my-8">
                                 <i class="fas fa-exclamation-triangle text-blue-500 text-3xl mb-4"></i>
                                 <h4 class="text-blue-900 font-bold mb-2">报告内容异常</h4>
@@ -2091,65 +2160,65 @@
                                 </button>
                             </div>
                         `;
-                        const triggerBtn = document.getElementById('trigger-supplement-btn');
-                        if (triggerBtn) triggerBtn.onclick = () => {
-                            if (dom.supplementBtn) dom.supplementBtn.click();
-                            else if (window.startDeepAnalysis && currentResumeId) window.startDeepAnalysis(currentResumeId);
-                        };
-                        return;
-                    }
+                            const triggerBtn = document.getElementById('trigger-supplement-btn');
+                            if (triggerBtn) triggerBtn.onclick = () => {
+                                if (dom.supplementBtn) dom.supplementBtn.click();
+                                else if (window.startDeepAnalysis && currentResumeId) window.startDeepAnalysis(currentResumeId);
+                            };
+                            return;
+                        }
 
-                    // 简单的 Markdown 换行转换
-                    dom.aiReport.innerHTML = report.split('\n').map(line => {
-                        let content = line.trim();
-                        if (!content) return '';
-                        
-                        // 处理可能出现的 [object Object] 异常
-                        if (content.includes('[object Object]')) return '';
+                        // 简单的 Markdown 换行转换
+                        dom.aiReport.innerHTML = report.split('\n').map(line => {
+                            let content = line.trim();
+                            if (!content) return '';
 
-                        if (content.startsWith('###')) {
-                            const rawText = content.replace(/^###\s*/, '').trim();
-                            const title = keyMap[rawText.toLowerCase()] || rawText;
-                            return `<h4 class="text-lg font-bold text-gray-900 mt-8 mb-4 flex items-center tracking-tight">
+                            // 处理可能出现的 [object Object] 异常
+                            if (content.includes('[object Object]')) return '';
+
+                            if (content.startsWith('###')) {
+                                const rawText = content.replace(/^###\s*/, '').trim();
+                                const title = keyMap[rawText.toLowerCase()] || rawText;
+                                return `<h4 class="text-lg font-bold text-gray-900 mt-8 mb-4 flex items-center tracking-tight">
                                         <span class="w-1.5 h-5 bg-blue-600 rounded-full mr-3"></span>${title}
                                     </h4>`;
-                        }
-                        if (content.startsWith('##')) {
-                            const rawText = content.replace(/^##\s*/, '').trim();
-                            const title = keyMap[rawText.toLowerCase()] || rawText;
-                            return `<h3 class="text-xl font-extrabold text-gray-900 mt-10 mb-5 tracking-tight">${title}</h3>`;
-                        }
-                        if (content.startsWith('# ')) {
-                            const rawText = content.replace(/^#\s*/, '').trim();
-                            const title = keyMap[rawText.toLowerCase()] || rawText;
-                            return `<h2 class="text-2xl font-black text-gray-900 mt-12 mb-6 tracking-tighter border-b pb-2">${title}</h2>`;
-                        }
-                        if (content.startsWith('- ') || content.startsWith('* ')) {
-                            const text = content.replace(/^[-*]\s*/, '').trim();
-                            return `<div class="flex items-start mb-3 pl-1">
+                            }
+                            if (content.startsWith('##')) {
+                                const rawText = content.replace(/^##\s*/, '').trim();
+                                const title = keyMap[rawText.toLowerCase()] || rawText;
+                                return `<h3 class="text-xl font-extrabold text-gray-900 mt-10 mb-5 tracking-tight">${title}</h3>`;
+                            }
+                            if (content.startsWith('# ')) {
+                                const rawText = content.replace(/^#\s*/, '').trim();
+                                const title = keyMap[rawText.toLowerCase()] || rawText;
+                                return `<h2 class="text-2xl font-black text-gray-900 mt-12 mb-6 tracking-tighter border-b pb-2">${title}</h2>`;
+                            }
+                            if (content.startsWith('- ') || content.startsWith('* ')) {
+                                const text = content.replace(/^[-*]\s*/, '').trim();
+                                return `<div class="flex items-start mb-3 pl-1">
                                         <i class="fas fa-circle text-[6px] text-blue-500 mt-2.5 mr-3 flex-shrink-0"></i>
                                         <span class="text-gray-600 leading-relaxed">${text}</span>
                                     </div>`;
-                        }
-                        
-                        // 加粗处理 **text**
-                        const formattedContent = content.replace(/\*\*(.*?)\*\*/g, '<strong class="text-gray-900 font-bold">$1</strong>');
-                        return `<p class="text-gray-600 leading-relaxed mb-4 pl-1">${formattedContent}</p>`;
-                    }).join('');
-                } else if (typeof report === 'object') {
-                    // 如果是对象结构，尝试渲染关键字段
-                    let html = '';
-                    for (const [key, value] of Object.entries(report)) {
-                        if (key === 'basic_info' || key === 'parsed_data') continue; // 跳过已在上方显示的
-                        
-                        // 过滤空值
-                        if (!value) continue;
-                        if (Array.isArray(value) && value.length === 0) continue;
-                        if (typeof value === 'object' && Object.keys(value).length === 0) continue;
-                        if (typeof value === 'string' && !value.trim()) continue;
+                            }
 
-                        const title = keyMap[key] || key;
-                        html += `
+                            // 加粗处理 **text**
+                            const formattedContent = content.replace(/\*\*(.*?)\*\*/g, '<strong class="text-gray-900 font-bold">$1</strong>');
+                            return `<p class="text-gray-600 leading-relaxed mb-4 pl-1">${formattedContent}</p>`;
+                        }).join('');
+                    } else if (typeof report === 'object') {
+                        // 如果是对象结构，尝试渲染关键字段
+                        let html = '';
+                        for (const [key, value] of Object.entries(report)) {
+                            if (key === 'basic_info' || key === 'parsed_data') continue; // 跳过已在上方显示的
+
+                            // 过滤空值
+                            if (!value) continue;
+                            if (Array.isArray(value) && value.length === 0) continue;
+                            if (typeof value === 'object' && Object.keys(value).length === 0) continue;
+                            if (typeof value === 'string' && !value.trim()) continue;
+
+                            const title = keyMap[key] || key;
+                            html += `
                             <div class="mb-12 last:mb-0">
                                 <h4 class="text-xl font-black text-gray-900 mb-6 flex items-center tracking-tight">
                                     <span class="w-2 h-6 bg-blue-600 rounded-full mr-4 shadow-sm shadow-blue-200"></span>${title}
@@ -2158,18 +2227,18 @@
                                     ${renderValue(value, key)}
                                 </div>
                             </div>`;
-                    }
-                    
-                    if (!html) {
-                        renderEmptyState();
-                    } else {
-                        dom.aiReport.innerHTML = html;
+                        }
+
+                        if (!html) {
+                            renderEmptyState();
+                        } else {
+                            dom.aiReport.innerHTML = html;
+                        }
                     }
                 }
             }
-        }
 
-        // 补充分析按钮点击事件
+            // 补充分析按钮点击事件
             if (dom.supplementBtn) {
                 dom.supplementBtn.addEventListener('click', async () => {
                     if (!currentResumeId) {
@@ -2181,18 +2250,18 @@
                         const innerBtn = document.getElementById('supplement-btn-inner');
                         const originalContent = dom.supplementBtn.innerHTML;
                         const originalInnerContent = innerBtn ? innerBtn.innerHTML : '';
-                        
+
                         dom.supplementBtn.disabled = true;
                         if (innerBtn) {
                             innerBtn.disabled = true;
                             innerBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2 text-xl"></i>正在唤醒 AI...';
                         }
                         dom.supplementBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>生成中...';
-                        
+
                         const token = userAuthInstance.getToken();
                         const apiUrl = `/api/ai/supplement-analysis/${currentResumeId}`;
                         console.log(`[SupplementAnalysis] Calling API: ${apiUrl}`);
-                        
+
                         const response = await fetch(apiUrl, {
                             method: 'POST',
                             headers: {
@@ -2200,14 +2269,14 @@
                                 'Content-Type': 'application/json'
                             }
                         });
-                        
+
                         console.log(`[SupplementAnalysis] API Response status: ${response.status}`);
                         const result = await response.json();
                         console.log(`[SupplementAnalysis] API Response body:`, result);
-                        
+
                         if (result.success) {
-                        // 显示提交成功状态
-                        dom.aiReport.innerHTML = `
+                            // 显示提交成功状态
+                            dom.aiReport.innerHTML = `
                             <div class="flex flex-col items-center justify-center py-20 bg-blue-50/50 rounded-xl border-2 border-dashed border-blue-200">
                                 <div class="relative">
                                     <div class="animate-ping absolute inset-0 rounded-full bg-blue-400 opacity-20"></div>
@@ -2217,70 +2286,70 @@
                                 <p id="polling-status" class="text-blue-400 text-sm text-center">正在为您生成犀利、专业的深度报告<br>请稍等片刻，不要刷新页面</p>
                             </div>
                         `;
-                        
-                        // 开始轮询检查结果
-                        let pollCount = 0;
-                        const maxPolls = 30; // 最多轮询30次 (150秒)
-                        const pollInterval = setInterval(async () => {
-                            pollCount++;
-                            const statusText = document.getElementById('polling-status');
-                            if (statusText) statusText.innerHTML = `正在为您生成犀利、专业的深度报告<br>已耗时 ${pollCount * 5} 秒，请稍等片刻...`;
 
-                            try {
-                                const checkRes = await fetch(`/api/ai/result/${currentResumeId}`, {
-                                    cache: 'no-store',
-                                    headers: { 'Authorization': `Bearer ${token}` }
-                                });
-                                const checkData = await checkRes.json();
-                                
-                                if (checkData.success && checkData.data) {
-                                    const details = checkData.data.detailed_analysis || {};
-                                    const report = checkData.data.report || details.evaluation_report || details.analysis_report || details.report || details.evaluation || null;
-                                    const hasReportSummary = (() => {
-                                        if (!report) return false;
-                                        if (typeof report === 'string') {
-                                            const trimmed = report.trim();
-                                            return !!trimmed && trimmed !== '暂无报告' && trimmed !== '暂无详细报告内容';
+                            // 开始轮询检查结果
+                            let pollCount = 0;
+                            const maxPolls = 30; // 最多轮询30次 (150秒)
+                            const pollInterval = setInterval(async () => {
+                                pollCount++;
+                                const statusText = document.getElementById('polling-status');
+                                if (statusText) statusText.innerHTML = `正在为您生成犀利、专业的深度报告<br>已耗时 ${pollCount * 5} 秒，请稍等片刻...`;
+
+                                try {
+                                    const checkRes = await fetch(`/api/ai/result/${currentResumeId}`, {
+                                        cache: 'no-store',
+                                        headers: { 'Authorization': `Bearer ${token}` }
+                                    });
+                                    const checkData = await checkRes.json();
+
+                                    if (checkData.success && checkData.data) {
+                                        const details = checkData.data.detailed_analysis || {};
+                                        const report = checkData.data.report || details.evaluation_report || details.analysis_report || details.report || details.evaluation || null;
+                                        const hasReportSummary = (() => {
+                                            if (!report) return false;
+                                            if (typeof report === 'string') {
+                                                const trimmed = report.trim();
+                                                return !!trimmed && trimmed !== '暂无报告' && trimmed !== '暂无详细报告内容';
+                                            }
+                                            if (typeof report === 'object') {
+                                                return !!(report.summary || report.hiring_advice || (Array.isArray(report.strengths) && report.strengths.length) || (Array.isArray(report.weaknesses) && report.weaknesses.length) || (Array.isArray(report.suggestions) && report.suggestions.length));
+                                            }
+                                            return false;
+                                        })();
+                                        const dims = checkData.data.dimensions || details.radar || details.dimensions || details.scores_percent || {};
+                                        const hasDimensions = dims && typeof dims === 'object' && Object.values(dims).some(v => Number(v || 0) > 0);
+                                        const hasScore = Number(checkData.data.overall_score || details.overall_score || 0) > 0;
+                                        const hasDetail = details && typeof details === 'object' && Object.keys(details).length > 0;
+                                        if (hasReportSummary || (hasDetail && (hasDimensions || hasScore))) {
+                                            clearInterval(pollInterval);
+                                            if (typeof fetchDetail === 'function') {
+                                                fetchDetail();
+                                            } else {
+                                                window.location.reload();
+                                            }
+                                            return;
                                         }
-                                        if (typeof report === 'object') {
-                                            return !!(report.summary || report.hiring_advice || (Array.isArray(report.strengths) && report.strengths.length) || (Array.isArray(report.weaknesses) && report.weaknesses.length) || (Array.isArray(report.suggestions) && report.suggestions.length));
-                                        }
-                                        return false;
-                                    })();
-                                    const dims = checkData.data.dimensions || details.radar || details.dimensions || details.scores_percent || {};
-                                    const hasDimensions = dims && typeof dims === 'object' && Object.values(dims).some(v => Number(v || 0) > 0);
-                                    const hasScore = Number(checkData.data.overall_score || details.overall_score || 0) > 0;
-                                    const hasDetail = details && typeof details === 'object' && Object.keys(details).length > 0;
-                                    if (hasReportSummary || (hasDetail && (hasDimensions || hasScore))) {
-                                        clearInterval(pollInterval);
-                                        if (typeof fetchDetail === 'function') {
-                                            fetchDetail();
-                                        } else {
-                                            window.location.reload();
-                                        }
-                                        return;
                                     }
+                                } catch (err) {
+                                    console.error('Polling error:', err);
                                 }
-                            } catch (err) {
-                                console.error('Polling error:', err);
-                            }
 
-                            if (pollCount >= maxPolls) {
-                                clearInterval(pollInterval);
-                                if (statusText) statusText.innerHTML = `分析超时，请手动刷新页面查看结果`;
-                                setTimeout(() => window.location.reload(), 3000);
+                                if (pollCount >= maxPolls) {
+                                    clearInterval(pollInterval);
+                                    if (statusText) statusText.innerHTML = `分析超时，请手动刷新页面查看结果`;
+                                    setTimeout(() => window.location.reload(), 3000);
+                                }
+                            }, 5000);
+                        } else {
+                            const errorMsg = typeof result.error === 'object' ? JSON.stringify(result.error) : (result.error || '未知错误');
+                            alert('补充分析失败: ' + errorMsg);
+                            dom.supplementBtn.disabled = false;
+                            dom.supplementBtn.innerHTML = originalContent;
+                            if (innerBtn) {
+                                innerBtn.disabled = false;
+                                innerBtn.innerHTML = originalInnerContent;
                             }
-                        }, 5000); 
-                    } else {
-                        const errorMsg = typeof result.error === 'object' ? JSON.stringify(result.error) : (result.error || '未知错误');
-                        alert('补充分析失败: ' + errorMsg);
-                        dom.supplementBtn.disabled = false;
-                        dom.supplementBtn.innerHTML = originalContent;
-                        if (innerBtn) {
-                            innerBtn.disabled = false;
-                            innerBtn.innerHTML = originalInnerContent;
                         }
-                    }
                     } catch (error) {
                         console.error('Supplement analysis error:', error);
                         alert('网络请求失败，请稍后重试');
@@ -2304,13 +2373,13 @@
                     }
 
                     if (!confirm('确定要重新解析吗？这将强制消耗 AI 额度重新生成报告。')) return;
-                    
+
                     // 调用统一的启动函数
                     await window.startDeepAnalysis(currentResumeId, false);
                 });
             }
 
-            window.updateStatus = async function(resumeId, status) {
+            window.updateStatus = async function (resumeId, status) {
                 if (!confirm('确定要更新状态吗？')) return;
                 try {
                     const token = userAuthInstance.getToken();
@@ -2349,7 +2418,7 @@
                         },
                         body: JSON.stringify({ status })
                     });
-                    
+
                     const result = await response.json();
                     if (result.success) {
                         if (typeof fetchDetail === 'function') {
@@ -2400,4 +2469,5 @@
         });
     </script>
 </body>
+
 </html>

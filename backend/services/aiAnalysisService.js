@@ -60,7 +60,7 @@ class AIAnalysisService {
 
         } catch (error) {
             console.error('AI分析服务错误:', error);
-            
+
             // 错误降级：返回基础分析结果
             return this.generateFallbackAnalysis(resumeText, targetJob, error);
         }
@@ -78,7 +78,7 @@ class AIAnalysisService {
             }
 
             let parsedResult = JSON.parse(jsonMatch[0]);
-            
+
             // 如果是数组（来自职位匹配分析模板），取第一个并转换格式
             if (Array.isArray(parsedResult)) {
                 if (parsedResult.length === 0) {
@@ -106,43 +106,81 @@ class AIAnalysisService {
                     }] : []
                 };
             }
-            
+
             // 确保有分数字段
             if (!parsedResult.overall_score) {
                 parsedResult.overall_score = parsedResult.match_score || parsedResult.score || 60;
             }
 
             // 映射雷达图字段 (统一前端需要的字段名)
-            if (parsedResult.scores_percent) {
-                // 优先支持深度解析的 6 个维度
-                parsedResult.radar_scores = {
-                    skills: parsedResult.scores_percent.skills || parsedResult.scores_percent.job_fit || 0,
-                    experience: parsedResult.scores_percent.experience || parsedResult.scores_percent.experience_fit || 0,
-                    education: parsedResult.scores_percent.education || 0,
-                    stability: parsedResult.scores_percent.stability || 0,
-                    potential: parsedResult.scores_percent.potential || parsedResult.scores_percent.learning_ability || 0,
-                    teamwork: parsedResult.scores_percent.teamwork || 0
-                };
-                
-                // 为了兼容旧版前端，保留原有映射
-                parsedResult.radar_scores.job_fit = parsedResult.radar_scores.skills;
-                parsedResult.radar_scores.experience_fit = parsedResult.radar_scores.experience;
-                parsedResult.radar_scores.learning_ability = parsedResult.radar_scores.potential;
-            } else if (parsedResult.dimensions || parsedResult.score_detail || parsedResult.radar_scores) {
-                const src = parsedResult.dimensions || parsedResult.score_detail || parsedResult.radar_scores;
-                parsedResult.radar_scores = {
-                    skills: src.skills || src.core_skills || src.job_fit || 0,
-                    experience: src.experience || src.experience_fit || 0,
-                    education: src.education || 0,
-                    stability: src.stability || 0,
-                    potential: src.potential || src.learning_ability || src.potential || 0,
-                    teamwork: src.teamwork || 0
-                };
-                // 兼容旧版
-                parsedResult.radar_scores.job_fit = parsedResult.radar_scores.skills;
-                parsedResult.radar_scores.experience_fit = parsedResult.radar_scores.experience;
-                parsedResult.radar_scores.learning_ability = parsedResult.radar_scores.potential;
-            }
+            const dimensionMappings = {
+                skills: ['技能匹配', 'skills', 'skill_match', 'professional', 'core_skills', 'job_fit', '专业技能', '技能评分', '技能匹配', '技术能力', '业务能力', '技能匹配度', '专业素质'],
+                experience: ['经验匹配', 'experience', 'experience_match', 'experience_fit', 'background', '工作经验', '经验契合', '经验评分', '履历背景', '项目经验', '行业经验', '工作背景'],
+                project: ['项目履历匹配', 'project', 'project_match', 'project_fit', 'stability', 'work_stability', 'tenure', '稳定性', '离职风险', '职业稳定性', '项目背景', '履历匹配', '项目经验匹配', '项目实战', '项目表现', '项目履历', '工作稳定性'],
+                education: ['学历背景', 'education', 'education_background', 'academic', '教育背景', '学历评分', '学术背景', '学校背景', '学历契合', '教育匹配'],
+                potential: ['发展潜力', 'potential', 'growth_potential', 'development', 'learning_ability', '潜力评分', '成长性', '爆发力', '进取心', '学习能力', '职业潜力'],
+                teamwork: ['团队协作', 'teamwork', 'collaboration', 'social', '协作能力', '团队精神', '沟通能力', '领导力', '组织协同力', '团队意识', '人际沟通']
+            };
+
+            const getVal = (source, keys) => {
+                if (!source || typeof source !== 'object') return 0;
+                const searchKeys = keys.map(k => k.toLowerCase());
+
+                // 1. 处理数组结构 (competency_matrix)
+                const items = Array.isArray(source) ? source : (source.competency_matrix || []);
+                if (Array.isArray(items)) {
+                    for (const item of items) {
+                        const dimName = (item.dimension || item.name || '').toLowerCase();
+                        if (searchKeys.some(k => dimName.includes(k))) {
+                            return parseInt(item.score || item.value || 0);
+                        }
+                    }
+                }
+
+                // 2. 处理对象结构
+                for (const key of keys) {
+                    let val = source[key];
+                    if (val === undefined || val === null) {
+                        // 尝试模糊匹配键名
+                        const foundKey = Object.keys(source).find(k => k.toLowerCase() === key.toLowerCase());
+                        if (foundKey) val = source[foundKey];
+                    }
+
+                    if (val !== undefined && val !== null) {
+                        const raw = typeof val === 'object' ? (val.score ?? val.value ?? val.rating ?? 0) : val;
+                        return parseInt(raw) || 0;
+                    }
+                }
+
+                // 3. 递归检查嵌套 dimensions
+                if (source.dimensions && source.dimensions !== source) {
+                    return getVal(source.dimensions, keys);
+                }
+                if (source.score_detail && source.score_detail !== source) {
+                    return getVal(source.score_detail, keys);
+                }
+
+                return 0;
+            };
+
+            const src = parsedResult.scores_percent || parsedResult.dimensions || parsedResult.score_detail || parsedResult;
+            parsedResult.radar_scores = {
+                skills: getVal(src, dimensionMappings.skills),
+                experience: getVal(src, dimensionMappings.experience),
+                project: getVal(src, dimensionMappings.project),
+                education: getVal(src, dimensionMappings.education),
+                potential: getVal(src, dimensionMappings.potential),
+                teamwork: getVal(src, dimensionMappings.teamwork)
+            };
+
+            // 兼容旧版前端字段名
+            parsedResult.radar_scores.job_fit = parsedResult.radar_scores.skills;
+            parsedResult.radar_scores.experience_fit = parsedResult.radar_scores.experience;
+            parsedResult.radar_scores.learning_ability = parsedResult.radar_scores.potential;
+            parsedResult.radar_scores.stability = parsedResult.radar_scores.project;
+
+            // 重要：同步更新 dimensions 字段，确保存入数据库的是标准化后的维度分
+            parsedResult.dimensions = { ...parsedResult.radar_scores };
 
             // 如果没有 radar_scores，提供默认值
             if (!parsedResult.radar_scores) {
@@ -185,15 +223,15 @@ class AIAnalysisService {
      */
     async batchAnalyzeResumes(resumes, options = {}) {
         const results = [];
-        const batchSize = 10; 
+        const batchSize = 10;
 
         for (let i = 0; i < resumes.length; i += batchSize) {
             const batch = resumes.slice(i, i + batchSize);
             const batchPromises = batch.map(async (resume) => {
                 try {
                     const analysis = await this.analyzeResume(
-                        resume.content, 
-                        resume.targetJob, 
+                        resume.content,
+                        resume.targetJob,
                         options
                     );
                     return {

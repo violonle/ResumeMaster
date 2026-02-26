@@ -309,8 +309,12 @@ class UserAuth {
         try {
             const token = this.token;
             if (token) {
+                const controller = new AbortController();
+                const signal = controller.signal;
+                
                 const bases = [this.apiBaseUrl, this.fallbackApiBaseUrl, '/api']
                     .filter((v, i, arr) => v && arr.indexOf(v) === i);
+                
                 bases.some(base => {
                     try {
                         fetch(`${base}/auth/logout`, {
@@ -318,7 +322,8 @@ class UserAuth {
                             headers: {
                                 'Authorization': `Bearer ${token}`,
                                 'Content-Type': 'application/json'
-                            }
+                            },
+                            signal
                         }).catch(err => {
                             if (err && err.name !== 'AbortError') {
                                 console.warn('登出请求失败:', err);
@@ -329,6 +334,9 @@ class UserAuth {
                         return false;
                     }
                 });
+                
+                // 适当延迟后中止控制器
+                setTimeout(() => controller.abort(), 3000);
             }
         } catch (e) {
             console.warn('登出请求错误:', e);
@@ -779,12 +787,8 @@ function updateUserInterface(user) {
             const name = element.querySelector('[data-user-name]');
 
             if (avatar) {
-                avatar.src = user.avatar || `data:image/svg+xml,${encodeURIComponent(`
-                    <svg width="40" height="40" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="20" cy="20" r="20" fill="#4ECDC4"/>
-                        <text x="50%" y="50%" dy=".3em" text-anchor="middle" fill="white" font-size="20" font-family="Arial">${(user.username || 'U').charAt(0).toUpperCase()}</text>
-                    </svg>
-                `)}`;
+                // 用户默认头像使用 /avatars/avatar.svg
+                avatar.src = user.avatar || '/avatars/avatar.svg';
             }
 
             if (name) {

@@ -182,7 +182,7 @@
 
                     <!-- Submit Button -->
                     <div class="pt-2">
-                        <button type="submit" id="submit-btn" class="w-full inline-flex justify-center items-center rounded-lg border border-transparent shadow-sm px-4 py-3 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all">
+                        <button type="submit" id="submit-btn" class="w-full inline-flex justify-center items-center rounded-lg border border-transparent shadow-sm px-4 py-3 bg-gray-900 text-base font-medium text-white hover:bg-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all">
                             <i class="fas fa-paper-plane mr-2"></i> 确认发送面试通知
                         </button>
                     </div>
@@ -452,35 +452,19 @@
 
         function getScoreColorClass(score) {
             if (!score) return 'bg-gray-100 text-gray-600';
-            if (score >= 80) return 'bg-green-100 text-green-700';
+            if (score >= 80) return 'bg-blue-100 text-blue-700';
             if (score >= 60) return 'bg-yellow-100 text-yellow-700';
             return 'bg-red-100 text-red-700';
         }
 
         function getStatusColorClass(status) {
             const s = String(status || '').toLowerCase();
-            if (s.includes('面试') || s === 'interview') return 'bg-purple-100 text-purple-700'; // 面试中 - library uses bg-green for others, but interview is distinct here? Wait, let's match exactly.
-            // librarypool.html logic:
-            // parsing: bg-blue-100 text-blue-600
-            // 已快评 (screening): bg-yellow-100 text-yellow-600
-            // 已快评 (screening): bg-yellow-100 text-yellow-600
-            // 未快评 (applied/投递): bg-gray-100 text-gray-500
-            // 默认 (others like interview/hired/offer?): bg-green-100 text-green-600
-            // 已淘汰 (rejected): bg-red-100 text-red-600 (handled separately in library but we can merge)
-
-            // Let's align with librarypool.html specific colors found in search:
-            // 已快评: bg-yellow-100 text-yellow-600 border-yellow-200
-            // 未快评: bg-gray-100 text-gray-500 border-gray-200
+            if (s.includes('面试') || s === 'interview') return 'bg-blue-100 text-blue-700';
             if (s.includes('淘汰') || s === 'rejected') return 'bg-red-100 text-red-600 border border-red-200';
             if (s.includes('快评') || s === 'screening') return 'bg-yellow-100 text-yellow-600 border border-yellow-200';
             if (s === '投递' || s === 'applied' || s.includes('未快评')) return 'bg-gray-100 text-gray-500 border border-gray-200';
             
-            // For Interview/Offer/Hired, library uses green. Let's stick to that for consistency, 
-            // OR keep purple for interview if user specifically wants library consistency but library puts them in "green" bucket?
-            // The user said "colors consistent with talent pool".
-            // Library pool code:
-            // } else { badgeClass = 'bg-green-100 text-green-600 border-green-200'; } -> This covers interview, offer, hired.
-            return 'bg-green-100 text-green-600 border border-green-200';
+            return 'bg-blue-100 text-blue-600 border border-blue-200';
         }
 
         function renderCandidateList(candidates) {

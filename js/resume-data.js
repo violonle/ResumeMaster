@@ -19,6 +19,25 @@ class ResumeDataManagerInternal {
     }
 
     /**
+     * 获取当前环境的基础API URL
+     * 确保在生产环境中始终使用相对路径
+     */
+    getCurrentApiBaseUrl() {
+        const hostname = window.location.hostname;
+        const port = window.location.port;
+        const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
+        const isBackendPort = port === '3000';
+        
+        // 生产环境强制使用相对路径
+        if (!isLocal || isBackendPort) {
+            return '/api';
+        }
+        
+        // 本地开发环境
+        return 'http://localhost:3000/api';
+    }
+
+    /**
      * 初始化数据管理器
      */
     init() {
@@ -97,17 +116,18 @@ class ResumeDataManagerInternal {
         const options = { method, headers, cache: method === 'GET' ? 'no-store' : 'default' };
         if (data) options.body = isForm ? data : JSON.stringify(data);
 
-        const tryRequest = async (base) => {
-            const response = await fetch(`${base}${endpoint}`, options);
+        async function tryRequest(base) {
+            const url = base + endpoint;
+            const response = await fetch(url, options);
             const text = await response.text();
             let result;
             try {
                 result = text ? JSON.parse(text) : {};
             } catch (e) {
                 // 仅记录警告，避免控制台充满红色的 JSON 解析错误
-                console.warn(`⚠️ [API] ${base} 返回了非 JSON 响应，将尝试下一个备选地址。`);
+                console.warn('⚠️ [API] ' + base + ' 返回了非 JSON 响应，将尝试下一个备选地址。');
                 // 如果是404/500且返回HTML，这里会捕获
-                const err = new Error(response.ok ? '服务器返回了非JSON格式的数据' : `请求失败 (${response.status})`);
+                const err = new Error(response.ok ? '服务器返回了非JSON格式的数据' : '请求失败 (' + response.status + ')');
                 err.status = response.status;
                 throw err;
             }
@@ -127,16 +147,24 @@ class ResumeDataManagerInternal {
                 throw err;
             }
             return result;
-        };
+        }
 
-        const bases = [this.apiBaseUrl, this.fallbackApiBaseUrl, '/api'].filter((v, i, arr) => v && arr.indexOf(v) === i);
+        // 确保使用当前环境的正确API基础URL，避免硬编码localhost:3000在生产环境中使用
+        const currentBase = this.getCurrentApiBaseUrl();
+        const bases = [currentBase, '/api'].filter((v, i, arr) => v && arr.indexOf(v) === i);
 
         let lastError;
         for (const b of bases) {
             try {
                 const res = await tryRequest(b);
-                this.apiBaseUrl = b;
-                if (showLoading && typeof ErrorHandler !== 'undefined') { ErrorHandler.showLoading(false); }
+                // 只在本地开发环境中更新apiBaseUrl，生产环境中保持为相对路径
+                const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                if (isLocal) {
+                    this.apiBaseUrl = b;
+                }
+                if (showLoading && typeof ErrorHandler !== 'undefined') {
+                    ErrorHandler.showLoading(false);
+                }
                 
                 // 全局兼容：如果返回结果中有 recruitment_status，尝试转换
                 if (res && res.data) {

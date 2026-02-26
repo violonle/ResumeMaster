@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,9 +8,10 @@
     <script src="../js/tailwindcss.js"></script>
     <script src="../js/ui-components.js"></script>
     <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="/css/sidebar.css">
     <link rel="stylesheet" href="/css/design-system.css">
     <script src="../js/user-auth.js"></script>
@@ -35,9 +37,11 @@
         :root {
             --font-family-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
         }
+
         body {
             font-family: var(--font-family-sans);
         }
+
         .portal-card {
             background-color: white;
             border: 1px solid #e5e7eb;
@@ -47,42 +51,145 @@
             transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
             transition-duration: 300ms;
         }
+
         .portal-card:hover {
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             transform: translateY(-2px);
         }
-        .card-hover { transition: all 0.3s ease; }
-        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1); }
-        .resume-card { transition: all 0.3s ease; }
-        .resume-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1); }
-        .btn-primary { background-color: #2563eb; transition: all 0.3s ease; }
-        .btn-primary:hover { background-color: #1d4ed8; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3); }
-        .filter-btn { transition: all 0.3s ease; }
-        .filter-btn.active { background-color: #2563eb; color: white; }
-        .search-box { transition: all 0.3s ease; }
-        .search-box:focus { box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-        .fade-in-up { animation: fadeInUp 0.6s ease forwards; }
-        .score-badge { position: absolute; top: 12px; right: 12px; padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
-        .score-excellent { background-color: #10b981; color: white; }
-        .score-good { background-color: #3b82f6; color: white; }
-        .score-average { background-color: #f59e0b; color: white; }
-        .score-poor { background-color: #ef4444; color: white; }
-        .tag { display: inline-block; padding: 2px 8px; background: #f3f4f6; color: #6b7280; border-radius: 12px; font-size: 0.75rem; margin-right: 4px; margin-bottom: 4px; }
-        .main-content { margin-left: 280px; padding: 24px; }
-        .sidebar-collapsed-root .main-content { margin-left: 60px !important; }
-        @media (max-width:768px){ .main-content{ margin-left:0 !important; padding:24px } }
-        .brand-title { white-space: normal !important; }
+
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .resume-card {
+            transition: all 0.3s ease;
+        }
+
+        .resume-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-primary {
+            background-color: #2563eb;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background-color: #1d4ed8;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3);
+        }
+
+        .filter-btn {
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn.active {
+            background-color: #2563eb;
+            color: white;
+        }
+
+        .search-box {
+            transition: all 0.3s ease;
+        }
+
+        .search-box:focus {
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        .score-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .score-excellent {
+            background-color: #10b981;
+            color: white;
+        }
+
+        .score-good {
+            background-color: #3b82f6;
+            color: white;
+        }
+
+        .score-average {
+            background-color: #f59e0b;
+            color: white;
+        }
+
+        .score-poor {
+            background-color: #ef4444;
+            color: white;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            background: #f3f4f6;
+            color: #6b7280;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            margin-right: 4px;
+            margin-bottom: 4px;
+        }
+
+        .main-content {
+            margin-left: 280px;
+            padding: 24px;
+        }
+
+        .sidebar-collapsed-root .main-content {
+            margin-left: 60px !important;
+        }
+
+        @media (max-width:768px) {
+            .main-content {
+                margin-left: 0 !important;
+                padding: 24px
+            }
+        }
+
+        .brand-title {
+            white-space: normal !important;
+        }
     </style>
 </head>
+
 <body class="bg-gray-50 antialiased text-gray-900 selection:bg-blue-100 selection:text-blue-700 min-h-screen">
     <!-- 侧边栏 -->
     <aside id="sidebar" class="fixed left-0 top-0 bottom-0 sidebar-modern z-40">
-        
+
     </aside>
 
     <!-- 移动端遮罩 -->
-    
+
 
     <!-- Header -->
     <header class="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20 h-20">
@@ -96,26 +203,27 @@
             <div class="flex items-center space-x-4" id="header-right-section"></div>
         </div>
     </header>
-    
+
     <!-- 主要内容 -->
     <main class="main-content pt-24" id="main-content">
         <div class="p-6 lg:pl-12 max-w-[1440px] mx-auto">
             <!-- 统计卡片 -->
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                    <div class="portal-card p-6">
-                        <div class="flex items-center justify-between">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="portal-card p-6">
+                    <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-gray-600">总简历数</p>
                             <p class="text-2xl font-bold text-gray-900">24</p>
                         </div>
                         <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                             <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/>
+                                <path fill-rule="evenodd"
+                                    d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" />
                             </svg>
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="portal-card p-6">
                     <div class="flex items-center justify-between">
                         <div>
@@ -124,12 +232,13 @@
                         </div>
                         <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                             <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"/>
+                                <path fill-rule="evenodd"
+                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" />
                             </svg>
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="portal-card p-6">
                     <div class="flex items-center justify-between">
                         <div>
@@ -138,12 +247,13 @@
                         </div>
                         <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                             <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                <path
+                                    d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                             </svg>
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="portal-card p-6">
                     <div class="flex items-center justify-between">
                         <div>
@@ -152,7 +262,8 @@
                         </div>
                         <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                             <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"/>
+                                <path fill-rule="evenodd"
+                                    d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" />
                             </svg>
                         </div>
                     </div>
@@ -160,51 +271,60 @@
             </div>
 
         </div>
-        
+
         <!-- 搜索和筛选 -->
         <div class="portal-card p-4 mb-8 fade-in-up max-w-[1440px] mx-auto">
             <div class="flex items-center justify-between gap-4">
                 <!-- 搜索框 -->
                 <div class="flex-1">
                     <div class="relative">
-                        <input type="text" id="searchInput" placeholder="输入简历名称、姓名..." 
-                               class="search-box w-full pl-9 pr-10 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
-                        <svg class="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        <input type="text" id="searchInput" placeholder="输入简历名称、姓名..."
+                            class="search-box w-full pl-9 pr-10 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                        <svg class="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
-                        <button id="searchButton" class="absolute right-2.5 top-1/2 transform -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 focus:outline-none">
+                        <button id="searchButton"
+                            class="absolute right-2.5 top-1/2 transform -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 focus:outline-none">
                             <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                             </svg>
                         </button>
                     </div>
                 </div>
-                
+
                 <!-- 排序按钮 -->
                 <div class="flex items-center gap-2">
-                    <button id="sortButton" class="sort-btn px-3 py-1.5 rounded-lg border border-gray-300 text-sm font-medium hover:bg-gray-50 flex items-center gap-1">
+                    <button id="sortButton"
+                        class="sort-btn px-3 py-1.5 rounded-lg border border-gray-300 text-sm font-medium hover:bg-gray-50 flex items-center gap-1">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9M3 12h5"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 4h13M3 8h9M3 12h5" />
                         </svg>
                         <span>时间</span>
-                        <svg id="sortIcon" class="w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        <svg id="sortIcon" class="w-4 h-4 transition-transform duration-300" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                         </svg>
                     </button>
                 </div>
             </div>
         </div>
-        
+
         <!-- 简历列表 -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 fade-in-up" id="resumeGrid">
             <!-- 简历卡片 1 -->
-            <div class="resume-card bg-white rounded-2xl shadow-lg p-6 relative" data-score="92" data-category="excellent">
+            <div class="resume-card bg-white rounded-2xl shadow-lg p-6 relative" data-score="92"
+                data-category="excellent">
                 <div class="score-badge score-excellent">92分</div>
-                
+
                 <div class="flex items-start space-x-4 mb-4">
                     <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
                         <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/>
+                            <path fill-rule="evenodd"
+                                d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" />
                         </svg>
                     </div>
                     <div class="flex-1">
@@ -213,7 +333,7 @@
                         <p class="text-xs text-gray-500 mt-1">上传时间：2024-01-15</p>
                     </div>
                 </div>
-                
+
                 <div class="space-y-2 mb-4">
                     <div class="flex justify-between text-sm">
                         <span class="text-gray-600">经验匹配</span>
@@ -224,31 +344,40 @@
                         <span class="font-semibold text-blue-600">88%</span>
                     </div>
                 </div>
-                
+
                 <div class="flex space-x-2">
-                    <button class="flex-1 bg-blue-50 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors" onclick="viewResume('李四_全栈开发.pdf')">
+                    <button
+                        class="flex-1 bg-blue-50 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors"
+                        onclick="viewResume('李四_全栈开发.pdf')">
                         <i class="fas fa-eye mr-1"></i> 查看
                     </button>
-                    <button class="flex-1 bg-white border border-blue-600 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors" onclick="handleDeepAnalysis(1)">
+                    <button
+                        class="flex-1 bg-white border border-blue-600 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors"
+                        onclick="handleDeepAnalysis(1)">
                         <i class="fas fa-chart-bar mr-1"></i> 深度解析
                     </button>
-                    <button class="bg-red-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-700 transition-colors" onclick="handleReject(1)">
+                    <button
+                        class="bg-red-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-700 transition-colors"
+                        onclick="handleReject(1)">
                         <i class="fas fa-user-times"></i>
                     </button>
-                    <button class="bg-gray-50 text-gray-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">
+                    <button
+                        class="bg-gray-50 text-gray-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">
                         <i class="fas fa-ellipsis-h"></i>
                     </button>
                 </div>
             </div>
-            
+
             <!-- 简历卡片 2 -->
             <div class="resume-card bg-white rounded-2xl shadow-lg p-6 relative" data-score="85" data-category="good">
-                <div class="score-badge score-good">85分</div>
-                
+                <div class="score-badge score-good flex items-center gap-1">85分<span
+                        class="text-[10px] font-normal opacity-90">(预估)</span></div>
+
                 <div class="flex items-start space-x-4 mb-4">
                     <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
                         <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/>
+                            <path fill-rule="evenodd"
+                                d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" />
                         </svg>
                     </div>
                     <div class="flex-1">
@@ -257,7 +386,7 @@
                         <p class="text-xs text-gray-500 mt-1">上传时间：2024-01-14</p>
                     </div>
                 </div>
-                
+
                 <div class="space-y-2 mb-4">
                     <div class="flex justify-between text-sm">
                         <span class="text-gray-600">经验匹配</span>
@@ -268,31 +397,40 @@
                         <span class="font-semibold text-blue-600">85%</span>
                     </div>
                 </div>
-                
+
                 <div class="flex space-x-2">
-                    <button class="flex-1 bg-blue-50 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors" onclick="viewResume('张三_前端开发.pdf')">
+                    <button
+                        class="flex-1 bg-blue-50 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors"
+                        onclick="viewResume('张三_前端开发.pdf')">
                         <i class="fas fa-eye mr-1"></i> 查看
                     </button>
-                    <button class="flex-1 bg-white border border-blue-600 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors" onclick="handleDeepAnalysis(2)">
+                    <button
+                        class="flex-1 bg-white border border-blue-600 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors"
+                        onclick="handleDeepAnalysis(2)">
                         <i class="fas fa-chart-bar mr-1"></i> 深度解析
                     </button>
-                    <button class="bg-red-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-700 transition-colors" onclick="handleReject(2)">
+                    <button
+                        class="bg-red-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-700 transition-colors"
+                        onclick="handleReject(2)">
                         <i class="fas fa-user-times"></i>
                     </button>
-                    <button class="bg-gray-50 text-gray-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">
+                    <button
+                        class="bg-gray-50 text-gray-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">
                         <i class="fas fa-ellipsis-h"></i>
                     </button>
                 </div>
             </div>
-            
+
             <!-- 简历卡片 3 -->
-            <div class="resume-card bg-white rounded-2xl shadow-lg p-6 relative" data-score="78" data-category="average">
+            <div class="resume-card bg-white rounded-2xl shadow-lg p-6 relative" data-score="78"
+                data-category="average">
                 <div class="score-badge score-average">78分</div>
-                
+
                 <div class="flex items-start space-x-4 mb-4">
                     <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
                         <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/>
+                            <path fill-rule="evenodd"
+                                d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" />
                         </svg>
                     </div>
                     <div class="flex-1">
@@ -301,7 +439,7 @@
                         <p class="text-xs text-gray-500 mt-1">上传时间：2024-01-13</p>
                     </div>
                 </div>
-                
+
                 <div class="space-y-2 mb-4">
                     <div class="flex justify-between text-sm">
                         <span class="text-gray-600">经验匹配</span>
@@ -312,31 +450,40 @@
                         <span class="font-semibold text-blue-600">80%</span>
                     </div>
                 </div>
-                
+
                 <div class="flex space-x-2">
-                    <button class="flex-1 bg-blue-50 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors" onclick="viewResume('王五_后端开发.pdf')">
+                    <button
+                        class="flex-1 bg-blue-50 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors"
+                        onclick="viewResume('王五_后端开发.pdf')">
                         <i class="fas fa-eye mr-1"></i> 查看
                     </button>
-                    <button class="flex-1 bg-white border border-blue-600 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors" onclick="handleDeepAnalysis(3)">
+                    <button
+                        class="flex-1 bg-white border border-blue-600 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors"
+                        onclick="handleDeepAnalysis(3)">
                         <i class="fas fa-chart-bar mr-1"></i> 深度解析
                     </button>
-                    <button class="bg-red-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-700 transition-colors" onclick="handleReject(3)">
+                    <button
+                        class="bg-red-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-700 transition-colors"
+                        onclick="handleReject(3)">
                         <i class="fas fa-user-times"></i>
                     </button>
-                    <button class="bg-gray-50 text-gray-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">
+                    <button
+                        class="bg-gray-50 text-gray-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">
                         <i class="fas fa-ellipsis-h"></i>
                     </button>
                 </div>
             </div>
-            
+
             <!-- 简历卡片 4 -->
-            <div class="resume-card bg-white rounded-2xl shadow-lg p-6 relative" data-score="95" data-category="excellent">
+            <div class="resume-card bg-white rounded-2xl shadow-lg p-6 relative" data-score="95"
+                data-category="excellent">
                 <div class="score-badge score-excellent">95分</div>
-                
+
                 <div class="flex items-start space-x-4 mb-4">
                     <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
                         <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/>
+                            <path fill-rule="evenodd"
+                                d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" />
                         </svg>
                     </div>
                     <div class="flex-1">
@@ -345,7 +492,7 @@
                         <p class="text-xs text-gray-500 mt-1">上传时间：2024-01-12</p>
                     </div>
                 </div>
-                
+
                 <div class="space-y-2 mb-4">
                     <div class="flex justify-between text-sm">
                         <span class="text-gray-600">经验匹配</span>
@@ -356,31 +503,39 @@
                         <span class="font-semibold text-blue-600">92%</span>
                     </div>
                 </div>
-                
+
                 <div class="flex space-x-2">
-                    <button class="flex-1 bg-blue-50 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors" onclick="viewResume('赵六_架构师.pdf')">
+                    <button
+                        class="flex-1 bg-blue-50 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors"
+                        onclick="viewResume('赵六_架构师.pdf')">
                         <i class="fas fa-eye mr-1"></i> 查看
                     </button>
-                    <button class="flex-1 bg-white border border-blue-600 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors" onclick="handleDeepAnalysis(4)">
+                    <button
+                        class="flex-1 bg-white border border-blue-600 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors"
+                        onclick="handleDeepAnalysis(4)">
                         <i class="fas fa-chart-bar mr-1"></i> 分析
                     </button>
-                    <button class="bg-red-50 text-red-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors" onclick="handleReject(4)">
+                    <button
+                        class="bg-red-50 text-red-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors"
+                        onclick="handleReject(4)">
                         <i class="fas fa-user-times"></i>
                     </button>
-                    <button class="bg-gray-50 text-gray-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">
+                    <button
+                        class="bg-gray-50 text-gray-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">
                         <i class="fas fa-ellipsis-h"></i>
                     </button>
                 </div>
             </div>
-            
+
             <!-- 简历卡片 5 -->
             <div class="resume-card bg-white rounded-2xl shadow-lg p-6 relative" data-score="65" data-category="poor">
                 <div class="score-badge score-poor">65分</div>
-                
+
                 <div class="flex items-start space-x-4 mb-4">
                     <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
                         <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/>
+                            <path fill-rule="evenodd"
+                                d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" />
                         </svg>
                     </div>
                     <div class="flex-1">
@@ -389,7 +544,7 @@
                         <p class="text-xs text-gray-500 mt-1">上传时间：2024-01-11</p>
                     </div>
                 </div>
-                
+
                 <div class="space-y-2 mb-4">
                     <div class="flex justify-between text-sm">
                         <span class="text-gray-600">经验匹配</span>
@@ -400,31 +555,39 @@
                         <span class="font-semibold text-blue-600">70%</span>
                     </div>
                 </div>
-                
+
                 <div class="flex space-x-2">
-                    <button class="flex-1 bg-blue-50 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors" onclick="viewResume('孙七_初级开发.pdf')">
+                    <button
+                        class="flex-1 bg-blue-50 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors"
+                        onclick="viewResume('孙七_初级开发.pdf')">
                         <i class="fas fa-eye mr-1"></i> 查看
                     </button>
-                    <button class="flex-1 bg-white border border-blue-600 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors" onclick="handleDeepAnalysis(5)">
+                    <button
+                        class="flex-1 bg-white border border-blue-600 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors"
+                        onclick="handleDeepAnalysis(5)">
                         <i class="fas fa-chart-bar mr-1"></i> 分析
                     </button>
-                    <button class="bg-red-50 text-red-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors" onclick="handleReject(5)">
+                    <button
+                        class="bg-red-50 text-red-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors"
+                        onclick="handleReject(5)">
                         <i class="fas fa-user-times"></i>
                     </button>
-                    <button class="bg-gray-50 text-gray-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">
+                    <button
+                        class="bg-gray-50 text-gray-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">
                         <i class="fas fa-ellipsis-h"></i>
                     </button>
                 </div>
             </div>
-            
+
             <!-- 简历卡片 6 -->
             <div class="resume-card bg-white rounded-2xl shadow-lg p-6 relative" data-score="88" data-category="good">
                 <div class="score-badge score-good">88分</div>
-                
+
                 <div class="flex items-start space-x-4 mb-4">
                     <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
                         <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/>
+                            <path fill-rule="evenodd"
+                                d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" />
                         </svg>
                     </div>
                     <div class="flex-1">
@@ -433,7 +596,7 @@
                         <p class="text-xs text-gray-500 mt-1">上传时间：2024-01-10</p>
                     </div>
                 </div>
-                
+
                 <div class="space-y-2 mb-4">
                     <div class="flex justify-between text-sm">
                         <span class="text-gray-600">经验匹配</span>
@@ -444,52 +607,65 @@
                         <span class="font-semibold text-blue-600">90%</span>
                     </div>
                 </div>
-                
+
                 <div class="flex space-x-2">
-                    <button class="flex-1 bg-blue-50 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors" onclick="viewResume('周八_产品经理.pdf')">
+                    <button
+                        class="flex-1 bg-blue-50 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors"
+                        onclick="viewResume('周八_产品经理.pdf')">
                         <i class="fas fa-eye mr-1"></i> 查看
                     </button>
-                    <button class="flex-1 bg-white border border-blue-600 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors" onclick="handleDeepAnalysis(6)">
+                    <button
+                        class="flex-1 bg-white border border-blue-600 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors"
+                        onclick="handleDeepAnalysis(6)">
                         <i class="fas fa-chart-bar mr-1"></i> 分析
                     </button>
-                    <button class="bg-red-50 text-red-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors" onclick="handleReject(6)">
+                    <button
+                        class="bg-red-50 text-red-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors"
+                        onclick="handleReject(6)">
                         <i class="fas fa-user-times"></i>
                     </button>
-                    <button class="bg-gray-50 text-gray-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">
+                    <button
+                        class="bg-gray-50 text-gray-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">
                         <i class="fas fa-ellipsis-h"></i>
                     </button>
                 </div>
             </div>
         </div>
-        
+
         <!-- 分页 -->
         <div class="flex justify-center mt-8">
             <nav class="flex space-x-2">
-                <button class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                <button
+                    class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
                     上一页
                 </button>
                 <button class="px-3 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-lg">
                     1
                 </button>
-                <button class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                <button
+                    class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
                     2
                 </button>
-                <button class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                <button
+                    class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
                     3
                 </button>
-                <button class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                <button
+                    class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
                     下一页
                 </button>
             </nav>
         </div>
     </main>
-    
+
     <!-- 简历预览弹窗 -->
     <div id="resumeModal" class="fixed inset-0 z-50 hidden overflow-y-auto" role="dialog" aria-modal="true">
         <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeModal()"></div>
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"
+                onclick="closeModal()"></div>
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-            <div class="inline-block align-middle bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full border border-gray-100">
+            <div
+                class="inline-block align-middle bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full border border-gray-100">
                 <div class="bg-white px-6 pt-6 pb-4 sm:p-8 sm:pb-6">
                     <div class="flex justify-between items-center mb-6">
                         <h3 class="text-xl font-bold text-gray-900" id="modalTitle">简历预览</h3>
@@ -497,82 +673,95 @@
                             <i class="fas fa-times text-xl"></i>
                         </button>
                     </div>
-                    
+
                     <div class="text-center py-12 bg-gray-50 rounded-xl border border-gray-100">
                         <div class="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
                             <svg class="w-12 h-12 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/>
+                                <path fill-rule="evenodd"
+                                    d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" />
                             </svg>
                         </div>
                         <h3 class="text-2xl font-bold text-gray-900 mb-2" id="resumeFileName">简历文件名</h3>
                         <p class="text-gray-500 mb-8">简历预览功能正在开发中，敬请期待...</p>
-                        
+
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-left px-6">
                             <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
                                 <h4 class="font-bold text-gray-900 mb-3 flex items-center">
                                     <i class="fas fa-info-circle text-blue-500 mr-2"></i>基本信息
                                 </h4>
                                 <ul class="text-sm text-gray-600 space-y-2">
-                                    <li class="flex justify-between"><span>文件大小</span><span class="font-medium">2.3 MB</span></li>
-                                    <li class="flex justify-between"><span>文件格式</span><span class="font-medium">PDF</span></li>
-                                    <li class="flex justify-between"><span>页数</span><span class="font-medium">2页</span></li>
-                                    <li class="flex justify-between"><span>上传时间</span><span class="font-medium">2024-01-15</span></li>
+                                    <li class="flex justify-between"><span>文件大小</span><span class="font-medium">2.3
+                                            MB</span></li>
+                                    <li class="flex justify-between"><span>文件格式</span><span
+                                            class="font-medium">PDF</span></li>
+                                    <li class="flex justify-between"><span>页数</span><span class="font-medium">2页</span>
+                                    </li>
+                                    <li class="flex justify-between"><span>上传时间</span><span
+                                            class="font-medium">2024-01-15</span></li>
                                 </ul>
                             </div>
-                            
+
                             <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
                                 <h4 class="font-bold text-gray-900 mb-3 flex items-center">
-                                    <i class="fas fa-chart-pie text-indigo-500 mr-2"></i>分析结果
+                                    <i class="fas fa-chart-pie text-blue-500 mr-2"></i>分析结果
                                 </h4>
                                 <ul class="text-sm text-gray-600 space-y-2">
-                                    <li class="flex justify-between"><span>综合评分</span><span class="font-bold text-blue-600 text-base">92分</span></li>
-                                    <li class="flex justify-between"><span>经验匹配</span><span class="font-medium">90%</span></li>
-                                    <li class="flex justify-between"><span>发展潜力</span><span class="font-medium">88%</span></li>
+                                    <li class="flex justify-between"><span>综合评分</span><span
+                                            class="font-bold text-blue-600 text-base">92分</span></li>
+                                    <li class="flex justify-between"><span>经验匹配</span><span
+                                            class="font-medium">90%</span></li>
+                                    <li class="flex justify-between"><span>发展潜力</span><span
+                                            class="font-medium">88%</span></li>
                                 </ul>
                             </div>
-                            
+
                             <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
                                 <h4 class="font-bold text-gray-900 mb-3 flex items-center">
-                                    <i class="fas fa-history text-emerald-500 mr-2"></i>操作记录
+                                    <i class="fas fa-history text-blue-500 mr-2"></i>操作记录
                                 </h4>
                                 <ul class="text-sm text-gray-600 space-y-2">
-                                    <li class="flex justify-between"><span>最后查看</span><span class="font-medium">今天 14:30</span></li>
-                                    <li class="flex justify-between"><span>分析次数</span><span class="font-medium">3次</span></li>
-                                    <li class="flex justify-between"><span>对比次数</span><span class="font-medium">2次</span></li>
-                                    <li class="flex justify-between"><span>导出次数</span><span class="font-medium">1次</span></li>
+                                    <li class="flex justify-between"><span>最后查看</span><span class="font-medium">今天
+                                            14:30</span></li>
+                                    <li class="flex justify-between"><span>分析次数</span><span
+                                            class="font-medium">3次</span></li>
+                                    <li class="flex justify-between"><span>对比次数</span><span
+                                            class="font-medium">2次</span></li>
+                                    <li class="flex justify-between"><span>导出次数</span><span
+                                            class="font-medium">1次</span></li>
                                 </ul>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="bg-gray-50 px-6 py-4 sm:px-8 sm:flex sm:flex-row-reverse">
-                    <button type="button" onclick="closeModal()" class="w-full inline-flex justify-center rounded-xl border border-gray-200 shadow-sm px-6 py-2.5 bg-white text-sm font-bold text-gray-700 hover:bg-gray-50 transition-all sm:w-auto">关闭</button>
+                    <button type="button" onclick="closeModal()"
+                        class="w-full inline-flex justify-center rounded-xl border border-gray-200 shadow-sm px-6 py-2.5 bg-white text-sm font-bold text-gray-700 hover:bg-gray-50 transition-all sm:w-auto">关闭</button>
                 </div>
             </div>
         </div>
     </div>
-    
+
     <script>
         // 筛选功能
         const filterBtns = document.querySelectorAll('.filter-btn');
         const resumeCards = document.querySelectorAll('.resume-card');
         const searchInput = document.getElementById('searchInput');
-        
+
         filterBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 // 更新按钮状态
                 filterBtns.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-                
+
                 const filter = btn.getAttribute('data-filter');
                 filterResumes(filter);
             });
         });
-        
+
         function filterResumes(filter) {
             resumeCards.forEach(card => {
                 const category = card.getAttribute('data-category');
-                
+
                 if (filter === 'all' || category === filter) {
                     card.style.display = 'block';
                 } else {
@@ -580,15 +769,15 @@
                 }
             });
         }
-        
+
         // 搜索功能
         searchInput.addEventListener('input', (e) => {
             const searchTerm = e.target.value.toLowerCase();
-            
+
             resumeCards.forEach(card => {
                 const title = card.querySelector('h3').textContent.toLowerCase();
                 const allText = title;
-                
+
                 if (allText.includes(searchTerm)) {
                     card.style.display = 'block';
                 } else {
@@ -596,25 +785,25 @@
                 }
             });
         });
-        
+
         // 简历预览功能
         function viewResume(fileName) {
             document.getElementById('modalTitle').textContent = '简历预览 - ' + fileName;
             document.getElementById('resumeFileName').textContent = fileName;
             document.getElementById('resumeModal').classList.remove('hidden');
         }
-        
+
         function closeModal() {
             document.getElementById('resumeModal').classList.add('hidden');
         }
-        
+
         // 点击模态框外部关闭
         document.getElementById('resumeModal').addEventListener('click', (e) => {
             if (e.target === e.currentTarget) {
                 closeModal();
             }
         });
-        
+
         // 用户信息显示
         const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
         const usernameDisplay = document.getElementById('username-display');
@@ -641,17 +830,17 @@
         // 侧边栏切换功能
         const sidebarToggle = document.getElementById('sidebar-toggle');
         const sidebar = document.getElementById('sidebar');
-        
+
         // 桌面端侧边栏切换
-        
-        
+
+
         // 移动端侧边栏切换
-        
+
 
         // 退出登录
         const logoutBtn = document.getElementById('logout-btn');
         if (logoutBtn) {
-            logoutBtn.addEventListener('click', function(e) {
+            logoutBtn.addEventListener('click', function (e) {
                 e.preventDefault();
                 ui.showConfirm('确定要退出登录吗？', () => {
                     // 使用userAuthInstance登出
@@ -676,7 +865,7 @@
         });
     </script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const searchInput = document.getElementById('searchInput');
             const searchButton = document.getElementById('searchButton');
             const sortButton = document.getElementById('sortButton');
@@ -697,7 +886,7 @@
 
             function sortResumes() {
                 const resumeCards = Array.from(resumeGrid.querySelectorAll('.resume-card'));
-                
+
                 resumeCards.sort((a, b) => {
                     const dateA = new Date(a.querySelector('p.text-xs.text-gray-500').textContent.replace('上传时间：', ''));
                     const dateB = new Date(b.querySelector('p.text-xs.text-gray-500').textContent.replace('上传时间：', ''));
@@ -719,7 +908,7 @@
             }
 
             searchButton.addEventListener('click', performSearch);
-            searchInput.addEventListener('keyup', function(event) {
+            searchInput.addEventListener('keyup', function (event) {
                 if (event.key === 'Enter') {
                     performSearch();
                 }
@@ -732,42 +921,54 @@
         });
     </script>
     <!-- 淘汰反馈弹窗 -->
-    <div id="rejectModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div id="rejectModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog"
+        aria-modal="true">
         <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeRejectModal()"></div>
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"
+                onclick="closeRejectModal()"></div>
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-            <div class="inline-block align-middle bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-gray-100">
+            <div
+                class="inline-block align-middle bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-gray-100">
                 <div class="bg-white px-6 pt-6 pb-4 sm:p-8 sm:pb-6">
                     <div class="sm:flex sm:items-start">
-                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-50 sm:mx-0 sm:h-12 sm:w-12 border border-red-100">
+                        <div
+                            class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-50 sm:mx-0 sm:h-12 sm:w-12 border border-red-100">
                             <i class="fas fa-exclamation-triangle text-red-500 text-xl"></i>
                         </div>
                         <div class="mt-3 text-center sm:mt-0 sm:ml-6 sm:text-left w-full">
                             <h3 class="text-xl leading-6 font-bold text-gray-900" id="modal-title">淘汰候选人</h3>
                             <div class="mt-4">
                                 <p class="text-sm text-gray-500 mb-4">请填写淘汰原因，这将有助于优化 AI 推荐模型。</p>
-                                <textarea id="rejectReason" rows="4" class="block w-full text-sm border-gray-200 rounded-xl p-4 border focus:ring-red-500 focus:border-red-500 transition-all resize-none bg-gray-50" placeholder="请输入淘汰原因（选填）"></textarea>
+                                <textarea id="rejectReason" rows="4"
+                                    class="block w-full text-sm border-gray-200 rounded-xl p-4 border focus:ring-red-500 focus:border-red-500 transition-all resize-none bg-gray-50"
+                                    placeholder="请输入淘汰原因（选填）"></textarea>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="bg-gray-50 px-6 py-4 sm:px-8 sm:flex sm:flex-row-reverse gap-3">
-                    <button type="button" onclick="confirmReject()" class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-6 py-2.5 bg-red-600 text-sm font-bold text-white hover:bg-red-700 transition-all sm:w-auto">确认淘汰</button>
-                    <button type="button" onclick="closeRejectModal()" class="mt-3 w-full inline-flex justify-center rounded-xl border border-gray-200 shadow-sm px-6 py-2.5 bg-white text-sm font-bold text-gray-700 hover:bg-gray-50 transition-all sm:mt-0 sm:w-auto">取消</button>
+                    <button type="button" onclick="confirmReject()"
+                        class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-6 py-2.5 bg-red-600 text-sm font-bold text-white hover:bg-red-700 transition-all sm:w-auto">确认淘汰</button>
+                    <button type="button" onclick="closeRejectModal()"
+                        class="mt-3 w-full inline-flex justify-center rounded-xl border border-gray-200 shadow-sm px-6 py-2.5 bg-white text-sm font-bold text-gray-700 hover:bg-gray-50 transition-all sm:mt-0 sm:w-auto">取消</button>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- 深度解析说明弹窗 -->
-    <div id="analysisModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div id="analysisModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title"
+        role="dialog" aria-modal="true">
         <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeAnalysisModal()"></div>
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"
+                onclick="closeAnalysisModal()"></div>
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-            <div class="inline-block align-middle bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-gray-100">
+            <div
+                class="inline-block align-middle bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-gray-100">
                 <div class="bg-white px-6 pt-6 pb-4 sm:p-8 sm:pb-6">
                     <div class="sm:flex sm:items-start">
-                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-50 sm:mx-0 sm:h-12 sm:w-12 border border-blue-100">
+                        <div
+                            class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-50 sm:mx-0 sm:h-12 sm:w-12 border border-blue-100">
                             <i class="fas fa-magic text-blue-500 text-xl"></i>
                         </div>
                         <div class="mt-3 text-center sm:mt-0 sm:ml-6 sm:text-left w-full">
@@ -788,11 +989,18 @@
                                 <div class="space-y-4 text-sm text-gray-600">
                                     <p class="font-bold text-gray-800 text-base">解析维度包含：</p>
                                     <ul class="space-y-3">
-                                        <li class="flex items-center"><i class="fas fa-check-circle text-emerald-500 mr-3"></i>专业技能深度评估</li>
-                                        <li class="flex items-center"><i class="fas fa-check-circle text-emerald-500 mr-3"></i>项目经验契合度分析</li>
-                                        <li class="flex items-center"><i class="fas fa-check-circle text-emerald-500 mr-3"></i>学历与背景质量评估</li>
-                                        <li class="flex items-center"><i class="fas fa-check-circle text-emerald-500 mr-3"></i>离职原因与稳定性预测</li>
-                                        <li class="flex items-center"><i class="fas fa-check-circle text-emerald-500 mr-3"></i>团队协作与文化匹配度</li>
+                                        <li class="flex items-center"><i
+                                                class="fas fa-check-circle text-blue-500 mr-3"></i>技能匹配</li>
+                                        <li class="flex items-center"><i
+                                                class="fas fa-check-circle text-blue-500 mr-3"></i>经验匹配</li>
+                                        <li class="flex items-center"><i
+                                                class="fas fa-check-circle text-blue-500 mr-3"></i>项目履历匹配</li>
+                                        <li class="flex items-center"><i
+                                                class="fas fa-check-circle text-blue-500 mr-3"></i>学历背景</li>
+                                        <li class="flex items-center"><i
+                                                class="fas fa-check-circle text-blue-500 mr-3"></i>发展潜力</li>
+                                        <li class="flex items-center"><i
+                                                class="fas fa-check-circle text-blue-500 mr-3"></i>团队协作</li>
                                     </ul>
                                     <p class="mt-6 italic text-gray-400">解析过程大约需要 10-30 秒，完成后将自动刷新页面显示结果。</p>
                                 </div>
@@ -801,10 +1009,12 @@
                     </div>
                 </div>
                 <div class="bg-gray-50 px-6 py-4 sm:px-8 sm:flex sm:flex-row-reverse gap-3">
-                    <button type="button" onclick="confirmDeepAnalysis()" class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-6 py-2.5 bg-blue-600 text-sm font-bold text-white hover:bg-blue-700 transition-all sm:w-auto">
+                    <button type="button" onclick="confirmDeepAnalysis()"
+                        class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-6 py-2.5 bg-blue-600 text-sm font-bold text-white hover:bg-blue-700 transition-all sm:w-auto">
                         立即解析
                     </button>
-                    <button type="button" onclick="closeAnalysisModal()" class="mt-3 w-full inline-flex justify-center rounded-xl border border-gray-200 shadow-sm px-6 py-2.5 bg-white text-sm font-bold text-gray-700 hover:bg-gray-50 transition-all sm:mt-0 sm:w-auto">
+                    <button type="button" onclick="closeAnalysisModal()"
+                        class="mt-3 w-full inline-flex justify-center rounded-xl border border-gray-200 shadow-sm px-6 py-2.5 bg-white text-sm font-bold text-gray-700 hover:bg-gray-50 transition-all sm:mt-0 sm:w-auto">
                         取消
                     </button>
                 </div>
@@ -842,7 +1052,7 @@
 
         async function confirmReject() {
             if (!currentRejectId) return;
-            
+
             const reasonInput = document.getElementById('rejectReason');
             const reason = reasonInput ? reasonInput.value : '';
 
@@ -854,18 +1064,18 @@
 
             try {
                 // 使用 userAuthInstance.apiRequest 发送淘汰请求
-                const response = await window.userAuthInstance.apiRequest(`/resumes/${currentRejectId}/status`, 'PUT', { 
+                const response = await window.userAuthInstance.apiRequest(`/resumes/${currentRejectId}/status`, 'PUT', {
                     status: '淘汰',
                     reason: reason
                 }, false);
-                
+
                 ui.showNotification('已成功淘汰该候选人', 'success');
 
                 // 自动刷新当前页面，以更新状态
                 setTimeout(() => {
                     window.location.reload();
                 }, 1500);
-                
+
             } catch (error) {
                 console.error('淘汰操作失败:', error);
                 ui.hideLoading();
@@ -896,13 +1106,13 @@
 
             try {
                 // 使用 userAuthInstance.apiRequest 发送解析请求
-                const response = await window.userAuthInstance.apiRequest('/ai/batch-analyze', 'POST', { 
+                const response = await window.userAuthInstance.apiRequest('/ai/batch-analyze', 'POST', {
                     resumeIds: [currentAnalysisId],
-                    options: { 
+                    options: {
                         scene: 'deep_analysis'
                     }
                 }, false);
-                
+
                 handleDeepAnalysis(null); // 关闭弹窗
                 ui.showNotification('深度解析任务已启动，正在后台处理', 'success');
 
@@ -922,7 +1132,7 @@
                     // 降级到轮询
                     startPolling(currentAnalysisId);
                 }
-                
+
             } catch (error) {
                 console.error('深度解析请求失败:', error);
                 ui.showNotification('解析失败: ' + (error.message || '未知错误'), 'error');
@@ -944,7 +1154,7 @@
                             setTimeout(() => window.location.reload(), 1500);
                             return;
                         }
-                    } catch (_) {}
+                    } catch (_) { }
                     await new Promise(res => setTimeout(res, 2000));
                 }
             };
@@ -953,7 +1163,8 @@
     </script>
     <script src="/js/sidebar.js"></script>
     <script>
-      Sidebar.init({ mount:'#sidebar', active:'librarypool' })
+        Sidebar.init({ mount: '#sidebar', active: 'librarypool' })
     </script>
 </body>
+
 </html>

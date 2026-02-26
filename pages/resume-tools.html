@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,7 +11,7 @@
     <script src="../js/chart.min.js"></script>
     <script src="../js/html2canvas.min.js"></script>
     <script src="../js/jspdf.umd.min.js"></script>
-    
+
     <!-- Shared Utils -->
     <script src="../js/user-auth.js"></script>
     <script src="../js/header-profile.js"></script>
@@ -18,10 +19,10 @@
     <script src="../js/resume-data.js?v=3"></script>
     <script src="/js/sidebar.js"></script>
     <script src="../js/resume-upload-handler.js"></script>
-    
+
     <!-- Parsing Specific -->
     <script src="../js/ai-analyzer.js"></script>
-    
+
     <!-- Comparison Specific -->
     <script src="../js/chart-utils.js"></script>
     <script src="../js/resume-comparison.js"></script>
@@ -40,10 +41,12 @@
             border-radius: 0.375rem;
             transition: all 0.2s;
         }
+
         .tab-btn:hover {
             color: #111827;
             background-color: #f9fafb;
         }
+
         .tab-btn.active {
             /* Dark theme active state */
             background-color: #111827;
@@ -52,22 +55,24 @@
         }
 
         .tab-card {
-             display: flex;
-             align-items: center;
-             gap: 12px;
-             padding: 12px 16px;
-             border-radius: 16px;
-             border: 1px solid #e5e7eb;
-             background: #ffffff;
-             transition: all 0.2s ease;
-             min-width: 220px;
-         }
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 16px;
+            border: 1px solid #e5e7eb;
+            background: #ffffff;
+            transition: all 0.2s ease;
+            min-width: 220px;
+        }
+
         .tab-card.active {
             background: #111827;
             color: #ffffff;
             border-color: #111827;
             box-shadow: 0 10px 20px -10px rgba(17, 24, 39, 0.5);
         }
+
         .tab-card .tab-icon {
             width: 36px;
             height: 36px;
@@ -78,31 +83,44 @@
             align-items: center;
             justify-content: center;
         }
+
         .tab-card.active .tab-icon {
             background: #1f2937;
             color: #ffffff;
         }
+
         .tab-card .tab-title {
             font-weight: 700;
             font-size: 14px;
         }
+
         .tab-card .tab-desc {
             font-size: 11px;
             color: #9ca3af;
         }
+
         .tab-card.active .tab-desc {
             color: #e5e7eb;
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
+
         .animate-fadeIn {
             animation: fadeIn 0.5s ease-out forwards;
         }
     </style>
 </head>
+
 <body class="bg-gray-50 h-screen overflow-hidden">
     <aside id="sidebar" class="fixed left-0 top-0 bottom-0 sidebar-modern z-40"></aside>
     <div id="sidebar-overlay" class="sidebar-overlay"></div>
@@ -135,7 +153,8 @@
                     <div class="mb-4">
                         <label class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block">筛选职位</label>
                         <div class="relative">
-                            <select id="sidebar-job-select" class="w-full pl-4 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none transition-all text-sm">
+                            <select id="sidebar-job-select"
+                                class="w-full pl-4 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none transition-all text-sm">
                                 <option value="all">全部岗位</option>
                                 <!-- Jobs will be loaded here -->
                             </select>
@@ -147,8 +166,8 @@
 
                     <div class="relative mb-4">
                         <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                        <input type="text" id="candidate-search" placeholder="搜索候选人..." 
-                               class="w-full pl-11 pr-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-100 outline-none text-sm font-bold text-gray-700 transition-all">
+                        <input type="text" id="candidate-search" placeholder="搜索候选人..."
+                            class="w-full pl-11 pr-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-100 outline-none text-sm font-bold text-gray-700 transition-all">
                     </div>
                     <div id="candidate-list" class="flex-1 overflow-y-auto pr-2 custom-scrollbar">
                         <!-- Dynamic List -->
@@ -157,7 +176,8 @@
 
                 <!-- Upload Tab Content -->
                 <div id="upload-content" class="hidden flex-1 flex flex-col p-4 overflow-hidden">
-                    <div id="drop-zone" class="border-2 border-dashed border-gray-100 rounded-lg p-6 text-center hover:border-blue-400 hover:bg-blue-50 transition-all cursor-pointer mb-4 bg-gray-50/50">
+                    <div id="drop-zone"
+                        class="border-2 border-dashed border-gray-100 rounded-lg p-6 text-center hover:border-blue-400 hover:bg-blue-50 transition-all cursor-pointer mb-4 bg-gray-50/50">
                         <i class="fas fa-cloud-upload-alt text-2xl text-gray-400 mb-2"></i>
                         <p class="text-sm text-gray-600 font-medium">点击上传简历</p>
                         <p class="text-xs text-gray-400 mt-1">支持 PDF, DOC, DOCX</p>
@@ -169,7 +189,8 @@
                 </div>
 
                 <div class="p-4 border-t border-gray-100 bg-gray-50/30">
-                    <button id="analyze-btn" disabled class="w-full bg-blue-600 text-white py-3 rounded-2xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 disabled:opacity-50 disabled:shadow-none flex items-center justify-center">
+                    <button id="analyze-btn" disabled
+                        class="w-full bg-blue-600 text-white py-3 rounded-2xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 disabled:opacity-50 disabled:shadow-none flex items-center justify-center">
                         <i class="fas fa-arrow-right mr-2"></i> 深度解析
                     </button>
                 </div>
@@ -181,7 +202,8 @@
             <div class="max-w-[1440px] mx-auto pb-8">
                 <div class="flex items-center justify-between mb-8">
                     <div class="flex items-center space-x-4">
-                        <a href="analysis-records.html" class="inline-flex items-center px-4 py-2 bg-white border border-gray-200 rounded-2xl text-sm font-bold text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-all shadow-sm">
+                        <a href="analysis-records.html"
+                            class="inline-flex items-center px-4 py-2 bg-white border border-gray-200 rounded-2xl text-sm font-bold text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-all shadow-sm">
                             <i class="fas fa-history mr-2"></i>
                             解析记录
                         </a>
@@ -205,7 +227,8 @@
                 </div>
 
                 <!-- Empty State -->
-                <div id="empty-state" class="flex flex-col items-center justify-center py-20 bg-white border border-gray-100 rounded-2xl shadow-sm border-dashed">
+                <div id="empty-state"
+                    class="flex flex-col items-center justify-center py-20 bg-white border border-gray-100 rounded-2xl shadow-sm border-dashed">
                     <div class="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-6">
                         <i class="fas fa-user-check text-4xl text-gray-300"></i>
                     </div>
@@ -216,22 +239,29 @@
                 <!-- Single Analysis Results -->
                 <div id="single-analysis-results" class="hidden space-y-5">
                     <!-- Basic Info Card -->
-                    <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-6 flex items-center justify-between">
+                    <div
+                        class="bg-white border border-gray-100 rounded-2xl shadow-sm p-6 flex items-center justify-between">
                         <div class="flex items-center space-x-6">
-                            <div class="w-16 h-16 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 text-2xl font-bold border border-blue-100">
+                            <div
+                                class="w-16 h-16 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 text-2xl font-bold border border-blue-100">
                                 <i class="fas fa-user-tie"></i>
                             </div>
                             <div>
                                 <h3 id="res-name" class="text-xl font-bold text-gray-900">候选人姓名</h3>
                                 <p id="res-info" class="text-sm text-gray-500 mt-1">多年经验 | 本科 | 面议</p>
                                 <div class="flex items-center mt-2.5 space-x-2">
-                                    <span class="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-bold rounded uppercase tracking-wider">Verified Profile</span>
-                                    <span class="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-bold rounded uppercase tracking-wider">AI Scored</span>
+                                    <span
+                                        class="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-bold rounded uppercase tracking-wider">Verified
+                                        Profile</span>
+                                    <span
+                                        class="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-bold rounded uppercase tracking-wider">AI
+                                        Scored</span>
                                 </div>
                             </div>
                         </div>
                         <div class="text-right">
-                            <div class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">Overall Match Score</div>
+                            <div class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">Overall
+                                Match Score</div>
                             <div class="flex items-baseline justify-end space-x-1">
                                 <span id="res-score" class="text-4xl font-black text-blue-600">0</span>
                                 <span class="text-gray-400 font-bold text-sm">/100</span>
@@ -246,12 +276,15 @@
                                 <i class="fas fa-chart-line mr-2 text-blue-600"></i>
                                 核心能力多维分析
                             </h4>
-                            <div class="flex items-center space-x-6 text-[10px] font-bold uppercase tracking-wider text-gray-400">
-                                <span class="flex items-center"><i class="fas fa-circle text-blue-600/20 mr-1.5"></i> 维度分布</span>
-                                <span class="flex items-center"><i class="fas fa-star text-blue-600 mr-1.5"></i> 精确评分</span>
+                            <div
+                                class="flex items-center space-x-6 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                                <span class="flex items-center"><i class="fas fa-circle text-blue-600/20 mr-1.5"></i>
+                                    维度分布</span>
+                                <span class="flex items-center"><i class="fas fa-star text-blue-600 mr-1.5"></i>
+                                    精确评分</span>
                             </div>
                         </div>
-                        
+
                         <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
                             <!-- Radar Chart -->
                             <div class="lg:col-span-7">
@@ -277,13 +310,16 @@
                                 AI 深度分析报告
                             </h4>
                             <div class="flex items-center gap-2">
-                                <button id="reanalyze-btn" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-white text-blue-600 hover:bg-blue-50 border border-blue-200">
+                                <button id="reanalyze-btn"
+                                    class="px-3 py-1.5 text-xs font-bold rounded-lg bg-white text-blue-600 hover:bg-blue-50 border border-blue-200">
                                     <i class="fas fa-microscope mr-1"></i>重新解析
                                 </button>
-                                <button id="exportMdSingleBtn" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200">
+                                <button id="exportMdSingleBtn"
+                                    class="px-3 py-1.5 text-xs font-bold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200">
                                     <i class="fas fa-file-code mr-1"></i>导出MD
                                 </button>
-                                <button id="exportPdfSingleBtn" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700">
+                                <button id="exportPdfSingleBtn"
+                                    class="px-3 py-1.5 text-xs font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700">
                                     <i class="fas fa-file-pdf mr-1"></i>导出PDF
                                 </button>
                             </div>
@@ -296,7 +332,7 @@
                         <div id="highlights-risks-container" class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4 hidden">
                             <div class="bg-slate-50 border border-slate-200 rounded-xl p-5 shadow-sm">
                                 <h5 class="text-sm font-bold text-gray-800 mb-3 flex items-center">
-                                    <i class="fas fa-bolt mr-2 text-emerald-600"></i>核心亮点
+                                    <i class="fas fa-bolt mr-2 text-blue-600"></i>核心亮点
                                 </h5>
                                 <ul id="res-highlights" class="space-y-2">
                                     <!-- Dynamic Items -->
@@ -323,7 +359,8 @@
     </div>
 
     <!-- Loading Overlay -->
-    <div id="loading-overlay" class="fixed inset-0 bg-white/90 backdrop-blur-md z-[100] hidden flex flex-col items-center justify-center p-6">
+    <div id="loading-overlay"
+        class="fixed inset-0 bg-white/90 backdrop-blur-md z-[100] hidden flex flex-col items-center justify-center p-6">
         <div class="w-20 h-20 relative mb-8">
             <div class="absolute inset-0 border-4 border-blue-100 rounded-full"></div>
             <div class="absolute inset-0 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
@@ -331,33 +368,37 @@
                 <i class="fas fa-robot text-2xl text-blue-600 animate-pulse"></i>
             </div>
         </div>
-        
+
         <h3 class="text-xl font-black text-gray-900 mb-2 loading-text">AI 正在深度解析中...</h3>
         <p class="text-gray-500 text-sm mb-4">这可能需要 15-30 秒，请勿刷新页面</p>
-        
+
         <!-- 新增：耗时较长时的提示 -->
         <div id="long-wait-msg" class="hidden mb-6 text-center animate-fadeIn">
             <p class="text-blue-600 font-bold text-sm mb-1">解析报告正在生成中...</p>
             <p class="text-gray-400 text-xs">您可以关闭本页，稍后在“解析记录”中查看，或者刷新当前页。</p>
         </div>
-        
+
         <div class="w-full max-w-md bg-gray-100 h-2 rounded-full overflow-hidden shadow-inner">
-            <div class="progress-bar-inner h-full bg-gradient-to-r from-blue-500 to-blue-700 transition-all duration-500 ease-out" style="width: 10%"></div>
+            <div class="progress-bar-inner h-full bg-gradient-to-r from-blue-500 to-blue-700 transition-all duration-500 ease-out"
+                style="width: 10%"></div>
         </div>
 
         <!-- 新增：跳转按钮 -->
         <div id="loading-actions" class="hidden mt-10 flex items-center gap-4">
-            <button id="view-results-btn" class="hidden px-6 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100">
+            <button id="view-results-btn"
+                class="hidden px-6 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100">
                 查看解析报告
             </button>
-            <a href="javascript:location.reload()" class="px-6 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-50 transition-all">
+            <a href="javascript:location.reload()"
+                class="px-6 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-50 transition-all">
                 返回深度解析
             </a>
-            <a href="analysis-records.html" class="px-6 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100">
+            <a href="analysis-records.html"
+                class="px-6 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100">
                 前往解析记录
             </a>
         </div>
-        
+
         <div class="mt-10 grid grid-cols-3 gap-8 w-full max-w-lg">
             <div class="flex flex-col items-center">
                 <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 mb-2">
@@ -381,18 +422,23 @@
     </div>
 
     <!-- Deep Analysis Modal -->
-    <div id="analysisModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div id="analysisModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title"
+        role="dialog" aria-modal="true">
         <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div id="analysis-modal-backdrop" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeAnalysisModal()"></div>
+            <div id="analysis-modal-backdrop" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+                aria-hidden="true" onclick="closeAnalysisModal()"></div>
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div
+                class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
                 <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                     <div class="sm:flex sm:items-start">
-                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
+                        <div
+                            class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
                             <i class="fas fa-magic text-blue-600"></i>
                         </div>
                         <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="analysis-modal-title">深度解析说明</h3>
+                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="analysis-modal-title">深度解析说明
+                            </h3>
                             <div class="mt-2">
                                 <div class="bg-blue-50 p-4 mb-4">
                                     <div class="flex">
@@ -409,11 +455,12 @@
                                 <div class="space-y-3 text-sm text-gray-600">
                                     <p class="font-bold text-gray-800">解析维度包含：</p>
                                     <ul class="list-disc pl-5 space-y-1">
-                                        <li>专业技能深度评估</li>
-                                        <li>项目经验契合度分析</li>
-                                        <li>学历与背景质量评估</li>
-                                        <li>离职原因与稳定性预测</li>
-                                        <li>团队协作与文化匹配度</li>
+                                        <li>技能匹配</li>
+                                        <li>经验匹配</li>
+                                        <li>项目履历匹配</li>
+                                        <li>学历背景</li>
+                                        <li>发展潜力</li>
+                                        <li>团队协作</li>
                                     </ul>
                                     <p class="mt-4 italic">解析过程大约需要 10-30 秒，完成后将自动刷新页面显示结果。</p>
                                 </div>
@@ -422,10 +469,12 @@
                     </div>
                 </div>
                 <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                    <button type="button" id="confirmAnalysisBtn" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
+                    <button type="button" id="confirmAnalysisBtn"
+                        class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
                         立即解析
                     </button>
-                    <button type="button" onclick="closeAnalysisModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                    <button type="button" onclick="closeAnalysisModal()"
+                        class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
                         取消
                     </button>
                 </div>
@@ -434,14 +483,18 @@
     </div>
 
     <!-- 淘汰反馈模态框 -->
-    <div id="rejectModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div id="rejectModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog"
+        aria-modal="true">
         <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div id="reject-modal-backdrop" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeRejectModal()"></div>
+            <div id="reject-modal-backdrop" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+                aria-hidden="true" onclick="closeRejectModal()"></div>
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div
+                class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
                 <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                     <div class="sm:flex sm:items-start">
-                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                        <div
+                            class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
                             <i class="fas fa-exclamation-triangle text-red-600"></i>
                         </div>
                         <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
@@ -450,16 +503,20 @@
                                 <p class="text-sm text-gray-500 mb-4">
                                     请填写淘汰理由（可选），该理由将仅供内部参考。
                                 </p>
-                                <textarea id="rejectReason" rows="3" class="shadow-sm focus:ring-red-500 focus:border-red-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border" placeholder="请输入淘汰理由..."></textarea>
+                                <textarea id="rejectReason" rows="3"
+                                    class="shadow-sm focus:ring-red-500 focus:border-red-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border"
+                                    placeholder="请输入淘汰理由..."></textarea>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                    <button type="button" id="confirmRejectBtn" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
+                    <button type="button" id="confirmRejectBtn"
+                        class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
                         确认淘汰
                     </button>
-                    <button type="button" onclick="closeRejectModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                    <button type="button" onclick="closeRejectModal()"
+                        class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
                         取消
                     </button>
                 </div>
@@ -481,4 +538,5 @@
         }
     </script>
 </body>
+
 </html>

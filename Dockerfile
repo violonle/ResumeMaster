@@ -101,8 +101,8 @@ EXPOSE 3000
 # 环境变量
 ENV NODE_ENV=production
 ENV TIKA_JAR_PATH=/app/backend/docparser/docparser.jar
-# 强制刷新构建缓存: 2026-01-17-FINAL
-ENV REFRESHED_AT=2026-01-17-FINAL
+# 强制刷新构建缓存: 2026-02-10-FINAL
+ENV REFRESHED_AT=2026-02-10-FINAL
 
 # 启动命令：增加自检
 CMD ["sh", "-c", "echo '--- 启动前自检 ---' && \

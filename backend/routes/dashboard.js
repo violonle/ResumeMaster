@@ -353,7 +353,7 @@ router.get('/ai-prediction', authenticate, async (req, res) => {
             role: req.user.role 
         };
 
-        const timeoutMs = 30000; // 增加到 30 秒，给 AI 足够的时间生成内容
+        const timeoutMs = 60000; // 增加到 60 秒
         const timeoutFallback = {
             success: false,
             data: {

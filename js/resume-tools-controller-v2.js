@@ -3,7 +3,7 @@
  * Implements the new layout and logic for Resume Analysis and Comparison
  */
 
-(function() {
+(function () {
     // Shared State
     const state = {
         activeSidebarTab: 'library', // 'library' or 'upload'
@@ -34,22 +34,22 @@
         candidateSearch: document.getElementById('candidate-search'),
         candidateList: document.getElementById('candidate-list'),
         sidebarJobSelect: document.getElementById('sidebar-job-select'),
-        
+
         // Upload
         dropZone: document.getElementById('drop-zone'),
         fileInput: document.getElementById('file-input'),
         fileList: document.getElementById('file-list'),
-        
+
         // Main Area Header
         analysisModeTabs: document.querySelectorAll('.main-content-area .tab-card'),
         analyzeBtn: document.getElementById('analyze-btn'),
-        
+
         // Content Sections
         emptyState: document.getElementById('empty-state'),
         singleResults: document.getElementById('single-analysis-results'),
         multiResults: document.getElementById('multi-analysis-results'),
         loadingOverlay: document.getElementById('loading-overlay'),
-        
+
         // Result Elements (Single)
         resName: document.getElementById('res-name'),
         resInfo: document.getElementById('res-info'),
@@ -74,12 +74,12 @@
         ]);
         renderJobSelect();
         renderCandidateList();
-        
+
         // Initialize Header Profile
         if (typeof HeaderProfile !== 'undefined' && HeaderProfile.init) {
             HeaderProfile.init('#header-right-section');
         }
-        
+
         // Initialize Sidebar
         if (window.Sidebar) {
             window.Sidebar.init({ mount: '#sidebar', active: 'resume-tools' });
@@ -115,7 +115,7 @@
                 // Find the closest button element in case the click was on an inner element
                 const button = e.target.closest('button');
                 if (!button) return;
-                
+
                 const mode = button.dataset.mode;
                 switchAnalysisMode(mode);
             });
@@ -138,7 +138,7 @@
                 handleFileUpload(e.dataTransfer.files);
             });
         }
-        
+
         if (dom.fileInput) {
             dom.fileInput.addEventListener('change', (e) => handleFileUpload(e.target.files));
         }
@@ -151,7 +151,7 @@
             dom.reanalyzeBtn.addEventListener('click', async () => {
                 const target = state.selectedResumes[0] || state.uploadedFiles[0];
                 const resumeId = target ? (target.id || target.resumeId) : (state.analysisResult ? (state.analysisResult.resume_id || state.analysisResult.id) : null);
-                
+
                 if (!resumeId) {
                     alert('无法获取简历ID，请选择简历后再试');
                     return;
@@ -167,7 +167,7 @@
 
                     // Set force flag and trigger analysis
                     state.forceNextAnalysis = true;
-                    
+
                     // 提取当前维度得分，以便在重新解析时保持不变
                     let currentDimensions = null;
                     let currentOverallScore = null;
@@ -180,16 +180,16 @@
                             if (normalized.overallScore) {
                                 currentOverallScore = normalized.overallScore;
                             }
-                            console.log('[Re-analyze] Preserving current metrics:', { 
-                                dimensions: currentDimensions, 
-                                score: currentOverallScore 
+                            console.log('[Re-analyze] Preserving current metrics:', {
+                                dimensions: currentDimensions,
+                                score: currentOverallScore
                             });
                         }
                     }
-                    
+
                     // Directly call startAnalysis which handles the overlay and progress
                     await startAnalysis(currentDimensions, currentOverallScore);
-                    
+
                     // Reset UI and flags
                     state.forceNextAnalysis = false;
                     dom.reanalyzeBtn.disabled = false;
@@ -217,7 +217,7 @@
                 const a = document.createElement('a');
                 a.href = url;
                 const nameText = dom.resName ? dom.resName.textContent : '简历解析报告';
-                const dateStr = new Date().toISOString().slice(0,10);
+                const dateStr = new Date().toISOString().slice(0, 10);
                 a.download = `${nameText}_${dateStr}.md`;
                 document.body.appendChild(a);
                 a.click();
@@ -241,16 +241,16 @@
             confirmAnalysisBtn.addEventListener('click', () => {
                 const modal = document.getElementById('analysisModal');
                 if (modal) modal.classList.add('hidden');
-                
+
                 // 核心修复：单一解析模式下，不再跳转到详情页，而是直接在当前页面进行解析
                 // 这样符合用户“在 resume-tools.html 生成内容”的预期
                 if (state.analysisMode === 'single' && state.pendingSingleAction && state.pendingSingleAction.type === 'view_existing' && state.pendingSingleAction.resumeId) {
-                     // 如果是查看已有结果，可以直接跳转到详情页，或者在当前页渲染（取决于需求）
-                     // 这里为了体验一致性，我们选择在当前页渲染
-                     openExistingAnalysis({ id: state.pendingSingleAction.resumeId });
-                     return;
+                    // 如果是查看已有结果，可以直接跳转到详情页，或者在当前页渲染（取决于需求）
+                    // 这里为了体验一致性，我们选择在当前页渲染
+                    openExistingAnalysis({ id: state.pendingSingleAction.resumeId });
+                    return;
                 }
-                
+
                 startAnalysis();
             });
         }
@@ -260,7 +260,7 @@
                 dom.loadingOverlay.classList.add('hidden');
                 const targetId = state.analysisMode === 'single' ? 'single-analysis-results' : 'multi-analysis-results';
                 document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                
+
                 // 重置相关状态
                 state.loadingActionsVisible = false;
                 if (dom.viewResultsBtn) dom.viewResultsBtn.classList.add('hidden');
@@ -292,14 +292,14 @@
             if (t.dataset.mode === mode) t.classList.add('active');
             else t.classList.remove('active');
         });
-        
+
         // Reset selection when switching modes to avoid confusion
         state.selectedResumes = [];
         state.uploadedFiles = [];
         renderCandidateList();
         renderUploadedFiles();
         updateAnalyzeBtn();
-        
+
         // Show empty state
         showEmptyState();
     }
@@ -325,12 +325,12 @@
 
     function renderJobSelect() {
         if (!dom.sidebarJobSelect) return;
-        
+
         // Clear existing options except "All"
         const defaultOption = dom.sidebarJobSelect.options[0];
         dom.sidebarJobSelect.innerHTML = '';
         dom.sidebarJobSelect.appendChild(defaultOption);
-        
+
         state.jobs.forEach(job => {
             const option = document.createElement('option');
             option.value = job.id;
@@ -341,7 +341,7 @@
 
     function renderCandidateList() {
         const query = dom.candidateSearch.value.toLowerCase();
-        
+
         // Filter by search query AND selected job
         const filtered = state.talentPool.filter(c => {
             // Job filter
@@ -350,13 +350,13 @@
                 // 1. Check direct job_id field (if exists)
                 // 2. Check Jobs array (from library enrichment)
                 // 3. Check ResumeJobs array (direct associations)
-                const isMatch = (c.job_id == state.selectedJobId) || 
-                               (c.Jobs && c.Jobs.some(j => j.id == state.selectedJobId)) ||
-                               (c.ResumeJobs && c.ResumeJobs.some(rj => rj.job_id == state.selectedJobId));
-                
+                const isMatch = (c.job_id == state.selectedJobId) ||
+                    (c.Jobs && c.Jobs.some(j => j.id == state.selectedJobId)) ||
+                    (c.ResumeJobs && c.ResumeJobs.some(rj => rj.job_id == state.selectedJobId));
+
                 if (!isMatch) return false;
             }
-            
+
             // Search query filter
             const name = (c.name || '未命名').toLowerCase();
             const pos = (c.job_title || c.position || c.associated_job_title || '').toLowerCase();
@@ -387,7 +387,7 @@
 
             const div = document.createElement('div');
             div.className = `candidate-item p-3 mb-3 rounded-xl border transition-all cursor-pointer ${isSelected ? 'selected' : 'border-gray-100 hover:border-blue-200 bg-gray-50/50 hover:bg-white hover:shadow-md'}`;
-            
+
             // 获取职位名称
             let displayPosition = '未设置职位';
             if (c.associated_job_title) {
@@ -403,7 +403,7 @@
                 const job = state.jobs.find(j => j.id == c.ResumeJobs[0].job_id);
                 if (job) displayPosition = job.title;
             }
-            
+
             // Determine action element: Radio/Checkbox or View Analysis link
             let actionHtml = '';
             if (state.analysisMode === 'single' && isDeepAnalysisComplete) {
@@ -419,7 +419,7 @@
                            ${isSelected ? 'checked' : ''}>
                 `;
             }
-            
+
             div.innerHTML = `
                 <div class="flex items-center space-x-3">
                     <div class="flex-shrink-0">
@@ -438,7 +438,7 @@
                     </div>
                 </div>
             `;
-            
+
             // If analyzed in single mode, clicking the item should probably just go to the link, 
             // but the user might want to select it for re-analysis?
             // "如已解析，则不显示单选radio，用‘查看解析’的链接来替代"
@@ -472,7 +472,7 @@
 
     function toggleCandidateSelection(candidate) {
         const index = state.selectedResumes.findIndex(r => r.id === candidate.id);
-        
+
         if (state.analysisMode === 'single') {
             // In single mode, only one can be selected
             state.selectedResumes = index === -1 ? [candidate] : [];
@@ -489,7 +489,7 @@
                 state.selectedResumes.splice(index, 1);
             }
         }
-        
+
         renderCandidateList();
         updateAnalyzeBtn();
         showEmptyState();
@@ -548,14 +548,14 @@
                     <i class="fas fa-times"></i>
                 </button>
             `;
-            
+
             div.querySelector('button').onclick = (e) => {
                 e.stopPropagation();
                 state.uploadedFiles.splice(idx, 1);
                 renderUploadedFiles();
                 updateAnalyzeBtn();
             };
-            
+
             dom.fileList.appendChild(div);
         });
     }
@@ -614,7 +614,7 @@
 
     async function openExistingAnalysis(candidate) {
         if (!candidate || !candidate.id) return;
-        
+
         // 为了统一体验和解决“内容为空”的问题，点击历史记录也跳转到统一的详情页
         window.location.href = `analysis-detail.html?resume_id=${encodeURIComponent(String(candidate.id))}`;
     }
@@ -625,10 +625,10 @@
         if (state.isAnalyzing) {
             return;
         }
-        
+
         state.isAnalyzing = true;
         if (dom.analyzeBtn) dom.analyzeBtn.disabled = true;
-        
+
         // 重置手动操作状态
         state.loadingActionsVisible = false;
         if (dom.viewResultsBtn) dom.viewResultsBtn.classList.add('hidden');
@@ -644,7 +644,7 @@
 
         if (dom.loadingOverlay) {
             dom.loadingOverlay.classList.remove('hidden');
-            
+
             // 2.5秒后显示跳转按钮
             if (state.loadingTimer) clearTimeout(state.loadingTimer);
             state.loadingTimer = setTimeout(() => {
@@ -657,15 +657,15 @@
         } else {
             console.error('[startAnalysis] Loading overlay element not found!');
         }
-        
+
         // 更新进度提示 (Initial)
         const initialMsg = state.forceNextAnalysis ? '正在重新解析中...' : '正在准备分析环境...';
         updateLoadingProgress(initialMsg, 10);
-        
+
         try {
             const target = state.selectedResumes[0] || state.uploadedFiles[0];
             console.info('[ResumeTools] Trigger analysis:', state.analysisMode, target ? (target.id || target.name || '') : '');
-            
+
             // 核心修复：确保在单人模式下选中了候选人
             if (state.analysisMode === 'single' && !target) {
                 throw new Error('请先选择一位候选人');
@@ -676,7 +676,7 @@
             } else {
                 await performMultiAnalysis();
             }
-            
+
             // 成功后处理
             const longWaitMsgDone = document.getElementById('long-wait-msg');
             if (state.loadingActionsVisible && longWaitMsgDone) {
@@ -702,18 +702,18 @@
             if (typeof ui !== 'undefined' && ui.showNotification) {
                 ui.showNotification(e.message || '分析过程中出现错误，请检查网络或重试', 'error');
             }
-            
+
             // 关键修复：当分析失败时，更新遮罩状态而不是让其卡住
             if (state.loadingActionsVisible && dom.loadingOverlay) {
                 const longWaitMsg = document.getElementById('long-wait-msg');
                 const loadingText = dom.loadingOverlay.querySelector('.loading-text');
                 if (loadingText) loadingText.textContent = '分析失败';
-                
+
                 if (longWaitMsg) {
                     longWaitMsg.innerHTML = `<p class="text-rose-500 font-bold text-sm mb-1">分析失败</p><p class="text-gray-400 text-xs">${e.message || '请稍后重试'}</p>`;
                     longWaitMsg.classList.remove('hidden');
                 }
-                
+
                 // 3秒后自动关闭遮罩
                 setTimeout(() => {
                     dom.loadingOverlay.classList.add('hidden');
@@ -722,13 +722,13 @@
         } finally {
             state.isAnalyzing = false;
             state.forceNextAnalysis = false; // 重置强制重新解析标志
-            
+
             // 清理定时器
             if (state.loadingTimer) {
                 clearTimeout(state.loadingTimer);
                 state.loadingTimer = null;
             }
-            
+
             // 只有在未显示手动操作区域时才自动关闭遮罩
             if (!state.loadingActionsVisible) {
                 const longWaitMsg = document.getElementById('long-wait-msg');
@@ -737,7 +737,7 @@
                 if (loadingActions) loadingActions.classList.add('hidden');
                 dom.loadingOverlay.classList.add('hidden');
             }
-            
+
             updateAnalyzeBtn();
         }
     }
@@ -760,7 +760,7 @@
     async function performSingleAnalysis(preservedDimensions = null, preservedScore = null) {
         const target = state.selectedResumes[0] || state.uploadedFiles[0];
         const isForce = state.forceNextAnalysis;
-        
+
         // 1. 如果是已有的库内简历，直接跳转到详情页触发解析
         if (target.id) {
             updateLoadingProgress('正在跳转到详情页...', 90);
@@ -777,7 +777,7 @@
         try {
             const formData = new FormData();
             formData.append('file', target);
-            
+
             // 获取选中的职位信息
             const selectedJob = state.jobs.find(j => j.id == state.selectedJobId);
             if (selectedJob) {
@@ -806,21 +806,21 @@
     async function performMultiAnalysis() {
         // Prepare IDs and names for existing resumes and files for upload
         const resumesInfo = state.selectedResumes.map(r => ({ id: r.id, name: r.name }));
-        
+
         // Find the selected job object if any
         const selectedJob = state.jobs.find(j => j.id == state.selectedJobId) || null;
-        
+
         // For uploaded files, we need to upload them first to get IDs
         if (state.uploadedFiles.length > 0) {
             let fileIdx = 0;
             for (const file of state.uploadedFiles) {
                 fileIdx++;
                 updateLoadingProgress(`正在上传第 ${fileIdx}/${state.uploadedFiles.length} 份简历...`, 10 + (fileIdx / state.uploadedFiles.length * 20));
-                
+
                 try {
                     const formData = new FormData();
                     formData.append('file', file);
-                    
+
                     // 核心优化：传递目标职位上下文，触发后端自动快评
                     if (selectedJob) {
                         formData.append('targetJob', JSON.stringify(selectedJob));
@@ -828,7 +828,7 @@
 
                     // Use resumeDataManager.apiRequest for better error handling and token management
                     const uploadRes = await window.resumeDataManager.apiRequest('/ai/upload', 'POST', formData, true, true);
-                    
+
                     if (uploadRes.success && uploadRes.data && uploadRes.data.resumeId) {
                         resumesInfo.push({
                             id: uploadRes.data.resumeId,
@@ -843,20 +843,20 @@
                 }
             }
         }
-        
+
         const resumeIds = resumesInfo.map(r => r.id);
-        
+
         if (resumeIds.length < 2) {
             throw new Error('请至少选择或上传 2 份简历进行对比');
         }
-        
+
         updateLoadingProgress('正在进行多份简历横向对比分析...', 40);
-        
+
         // Pass a dummy progress callback to show it's working
         const result = await window.aiAnalyzer.compareResumes(resumeIds, selectedJob, (p) => {
             updateLoadingProgress(p.message || '正在对比分析...', 40 + (p.progress * 0.5));
         });
-        
+
         updateLoadingProgress('对比分析完成，正在渲染报告...', 100);
         state.comparisonResult = result;
         window.lastComparisonResult = result; // Set global for debugging
@@ -892,7 +892,7 @@
      */
     function normalizeResult(data) {
         if (!data) return null;
-        
+
         let resultData = data;
         if (resultData && typeof resultData === 'object' && resultData.data && typeof resultData.data === 'object') {
             resultData = resultData.data;
@@ -919,7 +919,7 @@
         } else if (resultData && typeof resultData === 'object' && (resultData.result || resultData.analysis)) {
             resultData = resultData.result || resultData.analysis;
         }
-        
+
         // 1. 基础信息归一化
         const info = resultData.basic_info || resultData.parsed_data?.basic_info || resultData.parsedData?.personalInfo || {};
         const basicInfo = {
@@ -931,21 +931,21 @@
 
         // 2. 分数归一化 (0-100)
         const overallScore = parseInt(
-            resultData.overall_score || 
-            resultData.total_score || 
-            resultData.score || 
-            resultData.match_score || 
-            resultData.match_percent || 
+            resultData.overall_score ||
+            resultData.total_score ||
+            resultData.score ||
+            resultData.match_score ||
+            resultData.match_percent ||
             0
         );
 
         // 3. 维度分数归一化 (Radar & Cards)
-        const rawScores = resultData.scores_percent || 
-                         resultData.radar_scores || 
-                         resultData.dimensions || 
-                         resultData.score_detail || 
-                         resultData.match_details || 
-                         {};
+        const rawScores = resultData.scores_percent ||
+            resultData.radar_scores ||
+            resultData.dimensions ||
+            resultData.score_detail ||
+            resultData.match_details ||
+            {};
         let normalizedRawScores = rawScores;
         if (typeof normalizedRawScores === 'string') {
             try {
@@ -954,7 +954,7 @@
                 normalizedRawScores = {};
             }
         }
-        
+
         const getVal = (keys) => {
             for (const key of keys) {
                 if (normalizedRawScores[key] !== undefined) {
@@ -980,16 +980,16 @@
             try { details = JSON.parse(details); } catch (_) { details = {}; }
         }
         const report =
-                      resultData.evaluation_report ||
-                      resultData.analysis_report ||
-                      resultData.report ||
-                      details.evaluation_report ||
-                      details.analysis_report ||
-                      details.report ||
-                      resultData.evaluation ||
-                      resultData.feedback ||
-                      resultData.advice ||
-                      '暂无详细报告内容';
+            resultData.evaluation_report ||
+            resultData.analysis_report ||
+            resultData.report ||
+            details.evaluation_report ||
+            details.analysis_report ||
+            details.report ||
+            resultData.evaluation ||
+            resultData.feedback ||
+            resultData.advice ||
+            '暂无详细报告内容';
 
         // 5. 亮点与风险提取 (Extra highlights and risks)
         const highlights =
@@ -1022,7 +1022,7 @@
         try {
             const data = normalizeResult(rawData);
             if (!data) return;
-            
+
             // 关键修复：增加最终数据完整性校验，如果总分和维度分均为0，说明数据尚未就绪
             const hasDimensions = Object.values(data.dimensions).some(v => v > 0);
             if (data.overallScore === 0 && !hasDimensions && (!data.report || data.report === '暂无详细报告内容')) {
@@ -1032,42 +1032,55 @@
                 }
                 return;
             }
-            
+
             dom.emptyState.classList.add('hidden');
             dom.multiResults.classList.add('hidden');
             dom.singleResults.classList.remove('hidden');
-            
+
             // 1. 基础信息 (Basic Info)
             if (dom.resName) dom.resName.textContent = data.basicInfo.name;
             if (dom.resInfo) {
                 dom.resInfo.textContent = `${data.basicInfo.experience}经验 | ${data.basicInfo.education} | ${data.basicInfo.salary}`;
             }
-            
+
             // 2. 核心得分 (Overall Score)
             if (dom.resScore) {
                 animateNumber(dom.resScore, 0, data.overallScore, 1000);
+
+                // Remove existing badge if any
+                const existingBadge = dom.resScore.parentNode.querySelector('.estimate-badge');
+                if (existingBadge) existingBadge.remove();
+
+                // Add estimated badge if needed
+                const isEstimated = (data.raw && (data.raw.is_estimate || data.raw.status === 'estimating')) || data.isEstimated;
+                if (isEstimated) {
+                    const badge = document.createElement('span');
+                    badge.className = 'estimate-badge ml-2 text-xs text-gray-400 font-normal bg-gray-100 px-1.5 py-0.5 rounded align-middle';
+                    badge.textContent = '(预估)';
+                    dom.resScore.parentNode.appendChild(badge);
+                }
             }
-            
+
             // 3. 雷达图维度 (Radar Chart)
             renderRadarChart(data.dimensions);
-            
+
             // 4. 维度卡片 (Score Cards)
             renderScoreCards(data.dimensions);
-            
+
             // 5. AI 报告内容 (AI Report)
             renderAIReport(data.report);
-            
+
             // 6. 亮点与风险 (Highlights & Risks)
             if (dom.highlightsRisksContainer) {
                 if (data.highlights.length > 0 || data.risks.length > 0) {
                     dom.highlightsRisksContainer.classList.remove('hidden');
-                    
+
                     if (dom.resHighlights) {
-                        dom.resHighlights.innerHTML = data.highlights.length > 0 
+                        dom.resHighlights.innerHTML = data.highlights.length > 0
                             ? data.highlights.map(h => `<li class="flex items-start text-sm text-gray-700 leading-relaxed"><i class="fas fa-check-circle text-emerald-500 mt-1 mr-2 text-[10px]"></i>${h}</li>`).join('')
                             : '<li class="text-xs text-gray-400 italic">暂无亮点</li>';
                     }
-                    
+
                     if (dom.resRisks) {
                         dom.resRisks.innerHTML = data.risks.length > 0
                             ? data.risks.map(r => `<li class="flex items-start text-sm text-gray-700 leading-relaxed"><i class="fas fa-exclamation-circle text-rose-500 mt-1 mr-2 text-[10px]"></i>${r}</li>`).join('')
@@ -1089,7 +1102,7 @@
 
     function renderRadarChart(scores) {
         if (!dom.radarContainer) return;
-        
+
         const ctx = document.getElementById('radarChart');
         if (!ctx) return;
 
@@ -1169,10 +1182,10 @@
             if (scoreValue > 0 && scoreValue <= 5) {
                 scoreValue = scoreValue * 20;
             }
-            
+
             const displayScore = Math.round(scoreValue);
             const progressWidth = Math.min(100, Math.max(0, displayScore));
-            
+
             const item = document.createElement('div');
             item.className = 'flex items-center justify-between py-3 border-b border-gray-50 last:border-0 group transition-all';
             item.innerHTML = `
@@ -1195,7 +1208,7 @@
                 </div>
             `;
             dom.scoreCards.appendChild(item);
-            
+
             // 延迟触发动画
             setTimeout(() => {
                 const bar = item.querySelector('.bg-blue-600');
@@ -1249,7 +1262,7 @@
             dom.aiReport.innerHTML = report.split('\n').map(line => {
                 let content = line.trim();
                 if (!content) return '';
-                
+
                 // 处理可能出现的 [object Object] 异常
                 if (content.includes('[object Object]')) return '';
 
@@ -1277,7 +1290,7 @@
                                 <span class="text-gray-600 leading-relaxed">${text}</span>
                             </div>`;
                 }
-                
+
                 // 加粗处理 **text**
                 const formattedContent = content.replace(/\*\*(.*?)\*\*/g, '<strong class="text-gray-900 font-bold">$1</strong>');
                 return `<p class="text-gray-600 leading-relaxed mb-4 pl-1">${formattedContent}</p>`;
@@ -1285,7 +1298,7 @@
         } else if (typeof report === 'object' && report !== null) {
             // If report is structured object, use the enhanced object rendering logic
             let html = '';
-            
+
             // Handle summary separately if exists for prominence
             const summary = report.summary || report.evaluation || '';
             if (summary) {
@@ -1308,9 +1321,9 @@
 
             for (const [key, value] of Object.entries(report)) {
                 if (key === 'basic_info' || key === 'parsed_data' || key === 'summary' || key === 'evaluation') continue;
-                
+
                 const title = keyMap[key] || key;
-                
+
                 // 针对“录用建议”进行特殊样式优化
                 if (key === 'hiring_advice') {
                     let grade = '';
@@ -1319,7 +1332,7 @@
 
                     let adviceObj = value;
                     if (typeof value === 'string' && value.trim().startsWith('{')) {
-                        try { adviceObj = JSON.parse(value); } catch(e){}
+                        try { adviceObj = JSON.parse(value); } catch (e) { }
                     }
 
                     if (typeof adviceObj === 'object' && adviceObj !== null) {
@@ -1369,16 +1382,16 @@
                                 <span class="w-1.5 h-5 bg-blue-600 rounded-full mr-3"></span>${title}
                             </h4>
                             <div class="text-gray-600 leading-relaxed pl-4 ml-1">
-                                ${Array.isArray(value) 
-                                    ? `<div class="space-y-3">
+                                ${Array.isArray(value)
+                            ? `<div class="space-y-3">
                                         ${value.map(item => `
                                             <div class="flex items-start">
                                                 <i class="fas fa-check-circle text-blue-500 mt-1.5 mr-3 text-xs flex-shrink-0"></i>
                                                 <span class="text-gray-600">${item}</span>
                                             </div>`).join('')}
                                            </div>`
-                                    : (typeof value === 'string' ? `<p class="whitespace-pre-line">${value}</p>` : `<pre class="text-xs bg-gray-50 p-3 rounded-lg overflow-x-auto">${JSON.stringify(value, null, 2)}</pre>`)
-                                }
+                            : (typeof value === 'string' ? `<p class="whitespace-pre-line">${value}</p>` : `<pre class="text-xs bg-gray-50 p-3 rounded-lg overflow-x-auto">${JSON.stringify(value, null, 2)}</pre>`)
+                        }
                             </div>
                         </div>`;
                 }
@@ -1445,91 +1458,91 @@
     /**
  * 渲染多人对比结果
  */
-function renderMultiResults(data, selectedResumes = []) {
-    try {
-        dom.emptyState.classList.add('hidden');
-        dom.singleResults.classList.add('hidden');
-        dom.multiResults.classList.remove('hidden');
-        
-        // 提取数据
-        let resultData = data.data || data.comparison || data.result || data;
-        
-        // 如果数据是字符串，尝试解析 (针对可能的解析残留)
-        if (typeof resultData === 'string') {
-            try {
-                // 尝试清理 Markdown 代码块
-                let cleanData = resultData.replace(/```(?:json)?\s*([\s\S]*?)\s*```/i, '$1').trim();
-                // 尝试提取 JSON 部分
-                const firstBrace = cleanData.indexOf('{');
-                const lastBrace = cleanData.lastIndexOf('}');
-                if (firstBrace !== -1 && lastBrace !== -1) {
-                    cleanData = cleanData.substring(firstBrace, lastBrace + 1);
+    function renderMultiResults(data, selectedResumes = []) {
+        try {
+            dom.emptyState.classList.add('hidden');
+            dom.singleResults.classList.add('hidden');
+            dom.multiResults.classList.remove('hidden');
+
+            // 提取数据
+            let resultData = data.data || data.comparison || data.result || data;
+
+            // 如果数据是字符串，尝试解析 (针对可能的解析残留)
+            if (typeof resultData === 'string') {
+                try {
+                    // 尝试清理 Markdown 代码块
+                    let cleanData = resultData.replace(/```(?:json)?\s*([\s\S]*?)\s*```/i, '$1').trim();
+                    // 尝试提取 JSON 部分
+                    const firstBrace = cleanData.indexOf('{');
+                    const lastBrace = cleanData.lastIndexOf('}');
+                    if (firstBrace !== -1 && lastBrace !== -1) {
+                        cleanData = cleanData.substring(firstBrace, lastBrace + 1);
+                    }
+                    resultData = JSON.parse(cleanData);
+                } catch (e) {
+                    console.error('[RenderMulti] Failed to parse resultData string:', e);
                 }
-                resultData = JSON.parse(cleanData);
-            } catch (e) {
-                console.error('[RenderMulti] Failed to parse resultData string:', e);
             }
-        }
-        
-        if (!resultData || (typeof resultData !== 'object') || Object.keys(resultData).length === 0) {
-            dom.multiResults.innerHTML = `
+
+            if (!resultData || (typeof resultData !== 'object') || Object.keys(resultData).length === 0) {
+                dom.multiResults.innerHTML = `
                 <div class="text-center py-20 bg-white rounded-xl border border-gray-100 shadow-sm">
                     <i class="fas fa-exclamation-triangle text-blue-500 text-4xl mb-4"></i>
                     <div class="text-gray-500 font-medium">未获取到有效的对比数据</div>
                     <div class="text-gray-400 text-xs mt-2">数据类型: ${typeof resultData}</div>
                 </div>
             `;
-            return;
-        }
-        
-        // 解析候选人列表
-        let people = [];
-        const candidates = resultData.candidates || resultData.people || resultData.results || resultData.candidate_list || [];
-        
-                if (Array.isArray(candidates) && candidates.length > 0) {
-                    people = candidates.map((c, i) => {
-                        const normalized = normalizeResult(c);
-                        return {
-                            name: normalized.basicInfo.name !== '未知' ? normalized.basicInfo.name : (selectedResumes[i] ? selectedResumes[i].name : `候选人 ${String.fromCharCode(65 + i)}`),
+                return;
+            }
+
+            // 解析候选人列表
+            let people = [];
+            const candidates = resultData.candidates || resultData.people || resultData.results || resultData.candidate_list || [];
+
+            if (Array.isArray(candidates) && candidates.length > 0) {
+                people = candidates.map((c, i) => {
+                    const normalized = normalizeResult(c);
+                    return {
+                        name: normalized.basicInfo.name !== '未知' ? normalized.basicInfo.name : (selectedResumes[i] ? selectedResumes[i].name : `候选人 ${String.fromCharCode(65 + i)}`),
+                        total_score: normalized.overallScore,
+                        scores_percent: normalized.dimensions,
+                        summary: normalized.report
+                    };
+                });
+            } else {
+                // 兜底逻辑：如果返回的是全局映射结构 (例如 { "A": { ... }, "B": { ... } })
+                console.warn('[RenderMulti] No candidates array found, attempting fallback mapping from keys');
+
+                const possibleKeys = ['A', 'B', 'C', 'D', 'E', 'F'];
+                possibleKeys.forEach((key, i) => {
+                    if (resultData[key] && typeof resultData[key] === 'object') {
+                        const normalized = normalizeResult(resultData[key]);
+                        people.push({
+                            name: normalized.basicInfo.name !== '未知' ? normalized.basicInfo.name : (selectedResumes[i] ? selectedResumes[i].name : `候选人 ${key}`),
                             total_score: normalized.overallScore,
                             scores_percent: normalized.dimensions,
                             summary: normalized.report
-                        };
-                    });
-                } else {
-                    // 兜底逻辑：如果返回的是全局映射结构 (例如 { "A": { ... }, "B": { ... } })
-                    console.warn('[RenderMulti] No candidates array found, attempting fallback mapping from keys');
-                    
-                    const possibleKeys = ['A', 'B', 'C', 'D', 'E', 'F'];
-                    possibleKeys.forEach((key, i) => {
-                        if (resultData[key] && typeof resultData[key] === 'object') {
-                            const normalized = normalizeResult(resultData[key]);
+                        });
+                    }
+                });
+
+                // 进一步兜底：如果还是没找到，尝试遍历所有对象键，寻找看起来像候选人的数据
+                if (people.length === 0) {
+                    Object.keys(resultData).forEach((key, i) => {
+                        const val = resultData[key];
+                        if (val && typeof val === 'object' && (val.overall_score || val.scores_percent || val.total_score)) {
+                            const normalized = normalizeResult(val);
                             people.push({
-                                name: normalized.basicInfo.name !== '未知' ? normalized.basicInfo.name : (selectedResumes[i] ? selectedResumes[i].name : `候选人 ${key}`),
+                                name: normalized.basicInfo.name !== '未知' ? normalized.basicInfo.name : `候选人 ${key}`,
                                 total_score: normalized.overallScore,
                                 scores_percent: normalized.dimensions,
                                 summary: normalized.report
                             });
                         }
                     });
-
-                    // 进一步兜底：如果还是没找到，尝试遍历所有对象键，寻找看起来像候选人的数据
-                    if (people.length === 0) {
-                        Object.keys(resultData).forEach((key, i) => {
-                            const val = resultData[key];
-                            if (val && typeof val === 'object' && (val.overall_score || val.scores_percent || val.total_score)) {
-                                const normalized = normalizeResult(val);
-                                people.push({
-                                    name: normalized.basicInfo.name !== '未知' ? normalized.basicInfo.name : `候选人 ${key}`,
-                                    total_score: normalized.overallScore,
-                                    scores_percent: normalized.dimensions,
-                                    summary: normalized.report
-                                });
-                            }
-                        });
-                    }
                 }
-            
+            }
+
             if (people.length === 0) {
                 console.error('[RenderMulti] Failed to map any candidates. resultData keys:', Object.keys(resultData));
                 dom.multiResults.innerHTML = `
@@ -1563,13 +1576,13 @@ function renderMultiResults(data, selectedResumes = []) {
             const getWinnerName = (winner) => {
                 if (!winner) return '暂无';
                 if (winner === 'Tie') return '多位人选平局';
-                
+
                 // 如果是 A, B, C...
                 if (winner.length === 1 && winner >= 'A' && winner <= 'Z') {
                     const idx = winner.charCodeAt(0) - 65;
                     return people[idx] ? people[idx].name : winner;
                 }
-                
+
                 // 如果是候选人姓名，直接返回
                 return winner;
             };
@@ -1662,8 +1675,8 @@ function renderMultiResults(data, selectedResumes = []) {
                                                 </div>
                                             </td>
                                             ${dims.map(dim => {
-                                                const score = p.scores_percent[dim.key] || 0;
-                                                return `
+                const score = p.scores_percent[dim.key] || 0;
+                return `
                                                     <td class="p-3 text-center">
                                                         <div class="flex flex-col items-center">
                                                             <span class="font-bold ${score >= 85 ? 'text-green-600' : score >= 70 ? 'text-blue-600' : 'text-gray-500'}">${score}</span>
@@ -1673,7 +1686,7 @@ function renderMultiResults(data, selectedResumes = []) {
                                                         </div>
                                                     </td>
                                                 `;
-                                            }).join('')}
+            }).join('')}
                                             <td class="p-3 text-center bg-blue-50/10">
                                                 <span class="text-sm font-black text-blue-600">${p.total_score}</span>
                                             </td>
@@ -1793,7 +1806,7 @@ function renderMultiResults(data, selectedResumes = []) {
                     </div>
                 </div>
             `;
-            
+
             dom.multiResults.innerHTML = html;
             renderMultiRadarChart(people, colors);
             try {
@@ -1818,8 +1831,8 @@ function renderMultiResults(data, selectedResumes = []) {
                     });
                     lines.push('');
                     lines.push(`## 核心维度对照表`);
-                    const dimLabels = ['skills','experience','project','education','potential','teamwork'];
-                    const dimTitle = ['专业技能','经验契合','项目履历','学历背景','潜力','团队协作'];
+                    const dimLabels = ['skills', 'experience', 'project', 'education', 'potential', 'teamwork'];
+                    const dimTitle = ['专业技能', '经验契合', '项目履历', '学历背景', '潜力', '团队协作'];
                     lines.push(`| 候选人 | ${dimTitle.join(' | ')} | 综合得分 |`);
                     lines.push(`| - | - | - | - | - | - | - |`);
                     people.forEach(p => {
@@ -1845,7 +1858,7 @@ function renderMultiResults(data, selectedResumes = []) {
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    const dateStr = new Date().toISOString().slice(0,10);
+                    const dateStr = new Date().toISOString().slice(0, 10);
                     a.download = `对比分析_${dateStr}.md`;
                     document.body.appendChild(a);
                     a.click();
@@ -1875,18 +1888,18 @@ function renderMultiResults(data, selectedResumes = []) {
     function buildMarkdown() {
         const record = state.analysisResult;
         if (!record) return '';
-        
+
         const data = normalizeResult(record);
         const lines = [];
         const nameText = data.basicInfo.name || '候选人';
-        
+
         lines.push(`# ${nameText} 的简历解析报告`);
         lines.push('');
         lines.push(`## 综合得分`);
         lines.push(`${data.overallScore} / 100`);
         lines.push('');
         lines.push(`## 核心维度`);
-        
+
         const dimLabels = {
             skills: '专业技能',
             experience: '经验契合',
@@ -1895,28 +1908,28 @@ function renderMultiResults(data, selectedResumes = []) {
             potential: '潜力',
             teamwork: '团队协作'
         };
-        
+
         Object.keys(dimLabels).forEach(key => {
             lines.push(`- ${dimLabels[key]}：${data.dimensions[key] || 0}`);
         });
-        
+
         lines.push('');
         lines.push(`## AI 深度分析报告`);
         lines.push(data.report || '暂无详细报告');
         lines.push('');
-        
+
         if (data.highlights && data.highlights.length > 0) {
             lines.push(`### 核心优势`);
             data.highlights.forEach(h => lines.push(`- ${h}`));
             lines.push('');
         }
-        
+
         if (data.risks && data.risks.length > 0) {
             lines.push(`### 不足之处`);
             data.risks.forEach(r => lines.push(`- ${r}`));
             lines.push('');
         }
-        
+
         return lines.join('\n');
     }
 
@@ -1925,7 +1938,7 @@ function renderMultiResults(data, selectedResumes = []) {
         if (!target) return;
 
         const originalHtml = btn ? btn.innerHTML : '';
-        
+
         try {
             if (btn && btn.tagName === 'BUTTON') {
                 btn.disabled = true;
@@ -1956,7 +1969,7 @@ function renderMultiResults(data, selectedResumes = []) {
             const imgData = canvas.toDataURL('image/jpeg', 0.95);
             const jspdfNS = window.jspdf || {};
             const JsPDFCtor = jspdfNS.jsPDF || window.jsPDF;
-            
+
             if (!JsPDFCtor) {
                 window.print();
                 return;
@@ -1965,7 +1978,7 @@ function renderMultiResults(data, selectedResumes = []) {
             const pdf = new JsPDFCtor('p', 'mm', 'a4');
             const pdfWidth = pdf.internal.pageSize.getWidth();
             const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-            
+
             let heightLeft = pdfHeight;
             let position = 0;
             const pageHeight = pdf.internal.pageSize.getHeight();
@@ -2064,7 +2077,7 @@ function renderMultiResults(data, selectedResumes = []) {
 
     function debounce(func, wait) {
         let timeout;
-        return function() {
+        return function () {
             const context = this, args = arguments;
             clearTimeout(timeout);
             timeout = setTimeout(() => func.apply(context, args), wait);

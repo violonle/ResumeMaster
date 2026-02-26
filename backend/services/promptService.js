@@ -17,6 +17,7 @@ const DEFAULT_TEMPLATES = {
 2. **脱水评估**：剔除简历中的水分，识别真正的核心贡献而非仅仅是“参与”。
 3. **风险前置**：重点识别频繁跳槽、职业断档、技能降级等负面信号。
 4. **决策分级**：分数必须具有区分度（85+ 极佳，70-85 良好，60-70 一般，<60 淘汰）。
+5. **稳定性评估**：通过过往工作的平均任职时间评估其职业稳定性。
 
 ### 简历内容：
 """
@@ -32,9 +33,11 @@ JSON结构：
   "overall_score": 整数(0-100),
   "match_level": "极高匹配/高匹配/中等/一般/不匹配",
   "scores_percent": {
-    "job_fit": 0-100,
-    "experience_fit": 0-100,
-    "learning_ability": 0-100,
+    "skills": 0-100,
+    "experience": 0-100,
+    "project": 0-100,
+    "education": 0-100,
+    "potential": 0-100,
     "teamwork": 0-100
   },
   "highlights": ["【亮点】关键词：简要描述证据", "【亮点】..."],
@@ -51,7 +54,7 @@ JSON结构：
     content: `你是一位在全球500强企业拥有20年人才选拔经验的【首席人才官 (CHRO)】。你阅人无数，擅长从平凡的文字中洞察人才的底层逻辑、职业底色以及未来的爆发力。你的评估报告是 CEO 决定是否录用、以及如何定级定薪的关键依据。
 
 ### 核心任务：
-请基于提供的简历内容，产出一份不少于 800 字、极具专业深度和洞察力的深度解析报告。
+请基于提供的简历内容，产出一份专业深度和洞察力兼备的深度解析报告（建议字数 800-1200 字）。
 
 ### 核心解析维度：
 1. **人才底色与职业轨迹 (Career DNA)**：
@@ -193,7 +196,7 @@ JSON结构要求：
 
   // 5. 数据分析所需要的提示词模板
   recruitment_forecast: {
-    name: '招聘趋势预测',
+    name: 'Dashboard-招聘趋势预测',
     category: 'analysis',
     variables: ['dataJson'],
     content: `你是一位全球顶尖的人力资源数据科学家（HR Data Scientist），熟悉招聘漏斗、供需、转化率、时间效率、成本与质量指标。请基于提供的数据进行预测与诊断，结论必须可落地、可追踪、可解释。
@@ -251,7 +254,7 @@ JSON结构要求：
 ### 输出要求：
 - 必须输出严格的JSON格式，禁止包含任何Markdown代码块标记，禁止包含任何解释性文字。
 - 报告内容必须详尽翔实，严禁空洞的赞美或批评，必须有详实的事实支撑和深度的逻辑推导。
-- **字数要求**：整份报告内容（JSON各字段文字总和）必须超过 1200 字。
+- **字数要求**：整份报告内容（JSON各字段文字总和）必须充实，建议在 800-1200 字之间，确保内容详尽、具深度且有实效。
 
 JSON 结构：
 {
@@ -323,7 +326,7 @@ JSON 结构：
     }
     `
   },
-  
+
   // 8. 面试回答评估
   interview_answer_evaluation: {
     name: '面试回答评估',
@@ -539,11 +542,11 @@ class PromptService {
           logger.info(`Initialized default prompt template: ${key}`);
         }
       }
-      
+
       // Clear cache after update
       this.cache = {};
       this.lastCacheTime = 0;
-      
+
     } catch (error) {
       logger.error('Failed to ensure default prompts:', error);
     }
@@ -615,24 +618,24 @@ class PromptService {
    * Handles both string JD and object/array of jobs
    */
   prepareJobDescriptionVar(jd) {
-      if (!jd) return '';
-      let content = jd;
-      if (typeof jd === 'object') {
-          try {
-              content = JSON.stringify(jd, null, 2);
-          } catch (e) {
-              content = String(jd);
-          }
+    if (!jd) return '';
+    let content = jd;
+    if (typeof jd === 'object') {
+      try {
+        content = JSON.stringify(jd, null, 2);
+      } catch (e) {
+        content = String(jd);
       }
-      return `### 目标岗位（JD）：\n${content}\n`;
+    }
+    return `### 目标岗位（JD）：\n${content}\n`;
   }
 
   /**
    * Process variable for Target Job specifically (Alias for backward compatibility)
    */
   prepareTargetJobSection(targetJob) {
-      if (!targetJob) return '';
-      return this.prepareJobDescriptionVar(targetJob);
+    if (!targetJob) return '';
+    return this.prepareJobDescriptionVar(targetJob);
   }
 }
 

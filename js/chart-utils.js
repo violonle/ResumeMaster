@@ -13,14 +13,14 @@ class ChartUtils {
      */
     static createRadarChart(canvas, resumes, dimensions) {
         const ctx = canvas.getContext('2d');
-        
+
         // 颜色配置
         const colors = [
             { bg: 'rgba(59, 130, 246, 0.2)', border: 'rgb(59, 130, 246)' }, // 蓝色
             { bg: 'rgba(16, 185, 129, 0.2)', border: 'rgb(16, 185, 129)' }, // 绿色
             { bg: 'rgba(139, 92, 246, 0.2)', border: 'rgb(139, 92, 246)' }  // 紫色
         ];
-        
+
         // 构建数据集
         const datasets = resumes.map((resume, index) => ({
             label: resume.name,
@@ -33,7 +33,7 @@ class ChartUtils {
             pointHoverBackgroundColor: '#fff',
             pointHoverBorderColor: colors[index % colors.length].border
         }));
-        
+
         return new Chart(ctx, {
             type: 'radar',
             data: {
@@ -53,7 +53,7 @@ class ChartUtils {
                     },
                     tooltip: {
                         callbacks: {
-                            label: function(context) {
+                            label: function (context) {
                                 return `${context.dataset.label}: ${context.parsed.r}分`;
                             }
                         }
@@ -65,7 +65,7 @@ class ChartUtils {
                         max: 100,
                         ticks: {
                             stepSize: 20,
-                            callback: function(value) {
+                            callback: function (value) {
                                 return value + '分';
                             }
                         },
@@ -84,7 +84,7 @@ class ChartUtils {
             }
         });
     }
-    
+
     /**
      * 创建柱状图对比
      * @param {HTMLCanvasElement} canvas - 画布元素
@@ -94,7 +94,7 @@ class ChartUtils {
      */
     static createBarChart(canvas, resumes, dimension) {
         const ctx = canvas.getContext('2d');
-        
+
         const colors = [
             'rgba(59, 130, 246, 0.8)',
             'rgba(16, 185, 129, 0.8)',
@@ -102,7 +102,7 @@ class ChartUtils {
             'rgba(245, 158, 11, 0.8)',
             'rgba(239, 68, 68, 0.8)'
         ];
-        
+
         return new Chart(ctx, {
             type: 'bar',
             data: {
@@ -125,7 +125,7 @@ class ChartUtils {
                     },
                     tooltip: {
                         callbacks: {
-                            label: function(context) {
+                            label: function (context) {
                                 return `${context.parsed.y}分`;
                             }
                         }
@@ -136,7 +136,7 @@ class ChartUtils {
                         beginAtZero: true,
                         max: 100,
                         ticks: {
-                            callback: function(value) {
+                            callback: function (value) {
                                 return value + '分';
                             }
                         },
@@ -157,7 +157,7 @@ class ChartUtils {
             }
         });
     }
-    
+
     /**
      * 创建技能对比图
      * @param {HTMLCanvasElement} canvas - 画布元素
@@ -167,13 +167,13 @@ class ChartUtils {
      */
     static createSkillChart(canvas, resumes, skills) {
         const ctx = canvas.getContext('2d');
-        
+
         const colors = [
             'rgba(59, 130, 246, 0.8)',
             'rgba(16, 185, 129, 0.8)',
             'rgba(139, 92, 246, 0.8)'
         ];
-        
+
         const datasets = resumes.map((resume, index) => ({
             label: resume.name,
             data: skills.map(skill => {
@@ -185,7 +185,7 @@ class ChartUtils {
             borderWidth: 1,
             borderRadius: 4
         }));
-        
+
         return new Chart(ctx, {
             type: 'bar',
             data: {
@@ -205,7 +205,7 @@ class ChartUtils {
                     },
                     tooltip: {
                         callbacks: {
-                            label: function(context) {
+                            label: function (context) {
                                 return `${context.dataset.label}: ${context.parsed.y}分`;
                             }
                         }
@@ -216,7 +216,7 @@ class ChartUtils {
                         beginAtZero: true,
                         max: 100,
                         ticks: {
-                            callback: function(value) {
+                            callback: function (value) {
                                 return value + '分';
                             }
                         },
@@ -237,7 +237,7 @@ class ChartUtils {
             }
         });
     }
-    
+
     /**
      * 获取维度标签
      * @param {string} dimension - 维度键
@@ -263,12 +263,14 @@ class ChartUtils {
             'learning_ability': '学习能力',
             'job_match': '岗位匹配度',
             'skill_match': '技能匹配度',
-            'experience_match': '经验匹配度'
+            'experience_match': '经验匹配度',
+            'project': '项目履历',
+            'stability': '稳定性'
         };
-        
+
         return labels[dimension] || dimension;
     }
-    
+
     /**
      * 更新图表数据
      * @param {Chart} chart - Chart.js实例
@@ -276,11 +278,11 @@ class ChartUtils {
      */
     static updateChart(chart, newData) {
         if (!chart || !newData) return;
-        
+
         chart.data = newData;
         chart.update('active');
     }
-    
+
     /**
      * 销毁图表
      * @param {Chart} chart - Chart.js实例
@@ -290,7 +292,7 @@ class ChartUtils {
             chart.destroy();
         }
     }
-    
+
     /**
      * 创建进度环形图
      * @param {HTMLCanvasElement} canvas - 画布元素
@@ -300,7 +302,7 @@ class ChartUtils {
      */
     static createProgressRing(canvas, score, label) {
         const ctx = canvas.getContext('2d');
-        
+
         // 根据分数确定颜色
         let color;
         if (score >= 80) {
@@ -310,7 +312,7 @@ class ChartUtils {
         } else {
             color = 'rgb(239, 68, 68)'; // 红色
         }
-        
+
         return new Chart(ctx, {
             type: 'doughnut',
             data: {
@@ -339,25 +341,25 @@ class ChartUtils {
             },
             plugins: [{
                 id: 'centerText',
-                beforeDraw: function(chart) {
+                beforeDraw: function (chart) {
                     const ctx = chart.ctx;
                     const centerX = chart.chartArea.left + (chart.chartArea.right - chart.chartArea.left) / 2;
                     const centerY = chart.chartArea.top + (chart.chartArea.bottom - chart.chartArea.top) / 2;
-                    
+
                     ctx.save();
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
-                    
+
                     // 绘制分数
                     ctx.font = 'bold 24px Arial';
                     ctx.fillStyle = color;
                     ctx.fillText(score, centerX, centerY - 5);
-                    
+
                     // 绘制标签
                     ctx.font = '12px Arial';
                     ctx.fillStyle = '#666';
                     ctx.fillText(label, centerX, centerY + 15);
-                    
+
                     ctx.restore();
                 }
             }]

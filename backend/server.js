@@ -158,12 +158,33 @@ app.get('/admin/*', (req, res) => {
 });
 
 // 3. 其他静态资源
+// 优先处理 public 目录下的根路径文件（logo.png, favicon.ico 等）
+app.use('/logo.png', express.static(path.join(ROOT_DIR, 'public/logo.png')));
+app.use('/favicon.ico', express.static(path.join(ROOT_DIR, 'public/favicon.ico')));
+app.use('/avatars', express.static(path.join(ROOT_DIR, 'public/avatars')));
+
+// 兼容旧数据中的 /dist/avatar/ 路径 → /public/avatars/
+// 注意：这些路由必须在 /dist 静态中间件之前定义，否则会被覆盖
+app.use('/dist/avatar', express.static(path.join(ROOT_DIR, 'public/avatars')));
+// 处理旧数据中 .png 扩展名问题（重定向到 .svg）
+// 注意：移除前导零，因为实际文件是 1.svg, 2.svg, ... 12.svg
+app.get('/dist/avatar/:filename.png', (req, res) => {
+    // 移除前导零，例如 "04" -> "4"
+    const filename = req.params.filename.replace(/^0+/, '') || '0';
+    const svgPath = path.join(ROOT_DIR, 'public/avatars', filename + '.svg');
+    res.sendFile(svgPath, (err) => {
+        if (err) {
+            res.status(404).send('Avatar not found');
+        }
+    });
+});
+
  app.use('/uploads', express.static(path.join(ROOT_DIR, 'uploads')));
  app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
  app.use('/pages/Interview', express.static(path.join(ROOT_DIR, 'pages/Interview/dist')));
 app.use('/pages/interview', express.static(path.join(ROOT_DIR, 'pages/Interview/dist')));
-  // 确保 assets 目录也能被正确访问（针对某些路径解析情况）
-  app.use('/assets', express.static(path.join(ROOT_DIR, 'pages/interview/dist/assets')));
+ // 确保 assets 目录也能被正确访问（针对某些路径解析情况）
+ app.use('/assets', express.static(path.join(ROOT_DIR, 'pages/interview/dist/assets')));
  app.use('/pages', express.static(path.join(ROOT_DIR, 'pages')));
  app.use('/components', express.static(path.join(ROOT_DIR, 'components')));
  app.use('/css', express.static(path.join(ROOT_DIR, 'css')));
@@ -171,6 +192,8 @@ app.use('/pages/interview', express.static(path.join(ROOT_DIR, 'pages/Interview/
  app.use('/assets', express.static(path.join(ROOT_DIR, 'assets')));
  app.use('/images', express.static(path.join(ROOT_DIR, 'images')));
  app.use('/public', express.static(path.join(ROOT_DIR, 'public')));
+// 4. 处理 dist 目录的静态文件（必须在 /dist/avatar 路由之后）
+app.use('/dist', express.static(path.join(ROOT_DIR, 'dist')));
 
 app.use(express.static(ROOT_DIR));
 
@@ -480,8 +503,8 @@ const startServer = async () => {
           console.log('[Startup] Database connection established successfully (Production).');
         } else {
           // 非生产环境可以尝试同步，但禁用 alter 以避免 ER_TOO_MANY_KEYS 错误
-          await sequelize.sync({ force: false, alter: false });
-          console.log('[Startup] Database synchronized (Development).');
+          // await sequelize.sync({ force: false, alter: false });
+          console.log('[Startup] Database sync skipped (Development).');
         }
         try {
           const { ensurePostgresViews } = require('./scripts/bootstrap-postgres-views');

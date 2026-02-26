@@ -32,7 +32,7 @@ class HeaderProfile {
     static render(containerSelector = null, append = false) {
         const user = this.getUserInfo();
         const html = this.generateHTML(user);
-        
+
         let container;
         if (containerSelector) {
             container = document.querySelector(containerSelector);
@@ -74,18 +74,18 @@ class HeaderProfile {
                 const data = JSON.parse(stored);
                 // Handle both nested {user: {...}} and flat user object structures
                 const user = data.user || data;
-                
+
                 // If username is empty, try to use phone number (masked)
                 let displayName = user.username;
                 if (!displayName && user.phone) {
                     displayName = user.phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
                 }
-                
+
                 // Role mapping based on subscription levels
                 let roleDisplay = '普通用户';
                 let enterpriseDisplay = '争湃·简历大师免费版';
-                
-                switch(user.role) {
+
+                switch (user.role) {
                     case 'admin':
                         roleDisplay = '管理员';
                         enterpriseDisplay = '争湃·简历大师管理后台';
@@ -107,7 +107,7 @@ class HeaderProfile {
                     username: displayName || 'Guest',
                     role: roleDisplay,
                     enterpriseName: enterpriseDisplay,
-                    avatar: user.avatar || '',
+                    avatar: user.avatar || '/avatars/avatar.svg',
                     email: user.email || ''
                 };
             }
@@ -118,7 +118,7 @@ class HeaderProfile {
             username: 'Guest',
             role: 'HR专员',
             enterpriseName: '未认证企业',
-            avatar: '',
+            avatar: '/avatars/avatar.svg',
             email: ''
         };
     }
@@ -154,14 +154,14 @@ class HeaderProfile {
                 const un = (u.username || '').trim();
                 if (un) rawName = un;
             }
-        } catch (_) {}
+        } catch (_) { }
         const name = rawName || '显示ID';
         const role = user.role;
         const enterprise = user.enterpriseName;
-        
-        // 使用更稳定的本地 SVG 兜底（对引号进行了转义以防 onerror 报错）
-        const fallbackAvatar = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23cccccc'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E".replace(/'/g, "&apos;");
-        
+
+        // 默认头像路径
+        const fallbackAvatar = "/avatars/avatar.svg";
+
         // 由于 ui-avatars.com 在国内可能也不稳定，我们改用本地生成的 Base64 头像（简单的文字头像）
         const generateInitialAvatar = (name) => {
             if (typeof ui !== 'undefined' && ui.renderAvatar) {
@@ -174,20 +174,20 @@ class HeaderProfile {
                 canvas.width = 128;
                 canvas.height = 128;
                 const ctx = canvas.getContext('2d');
-                
+
                 // 背景
                 const colors = ['#3b82f6', '#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#14b8a6'];
                 let hash = 0;
                 for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
                 ctx.fillStyle = colors[Math.abs(hash) % colors.length];
                 ctx.fillRect(0, 0, 128, 128);
-                
+
                 // 文字
                 ctx.fillStyle = '#ffffff';
                 ctx.font = 'bold 64px sans-serif';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                
+
                 let displayName = '';
                 const chineseMatch = name.match(/[\u4e00-\u9fa5]/g);
                 if (chineseMatch && chineseMatch.length >= 2) {
@@ -196,7 +196,7 @@ class HeaderProfile {
                     displayName = name.substring(0, 2).toUpperCase();
                 }
                 ctx.fillText(displayName, 64, 64);
-                
+
                 return canvas.toDataURL('image/png');
             } catch (e) {
                 return fallbackAvatar;
@@ -260,12 +260,12 @@ class HeaderProfile {
 
         if (btn && menu) {
             let timeoutId;
-            
+
             const show = () => {
                 clearTimeout(timeoutId);
                 menu.classList.remove('hidden');
             };
-            
+
             const hide = () => {
                 timeoutId = setTimeout(() => {
                     menu.classList.add('hidden');

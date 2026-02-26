@@ -2,54 +2,55 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../config/db');
 
 // 用户模型
-  const User = sequelize.define('User', {
-    id: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true
-    },
-    username: {
-      type: DataTypes.STRING(50),
-      unique: true,
-      allowNull: true,
-      validate: {
-        len: [2, 50]
-      }
-    },
-    email: {
-      type: DataTypes.STRING(100),
-      unique: true,
-      allowNull: true,
-      validate: {
-        isEmail: true
-      }
-    },
-    phone: {
-      type: DataTypes.STRING(20),
-      unique: true,
-      allowNull: true,
-      validate: {
-        is: /^[\d\s\-\+\(\)]+$/
-      }
-    },
-    password_hash: {
-      type: DataTypes.STRING(255),
-      allowNull: false
-    },
-    avatar: {
-      type: DataTypes.STRING(500),
-      allowNull: true
-    },
-    company_name: {
-      type: DataTypes.STRING(100),
-      allowNull: true
-    },
-    company_id: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      comment: '所属公司ID，多租户隔离关键字段'
-    },
-    role: {
+const User = sequelize.define('User', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  username: {
+    type: DataTypes.STRING(50),
+    unique: true,
+    allowNull: true,
+    validate: {
+      len: [2, 50]
+    }
+  },
+  email: {
+    type: DataTypes.STRING(100),
+    unique: true,
+    allowNull: true,
+    validate: {
+      isEmail: true
+    }
+  },
+  phone: {
+    type: DataTypes.STRING(20),
+    unique: true,
+    allowNull: true,
+    validate: {
+      is: /^[\d\s\-\+\(\)]+$/
+    }
+  },
+  password_hash: {
+    type: DataTypes.STRING(255),
+    allowNull: false
+  },
+  avatar: {
+    type: DataTypes.STRING(500),
+    allowNull: true,
+    defaultValue: '/avatars/avatar.svg'
+  },
+  company_name: {
+    type: DataTypes.STRING(100),
+    allowNull: true
+  },
+  company_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    comment: '所属公司ID，多租户隔离关键字段'
+  },
+  role: {
     type: DataTypes.ENUM('user', 'premium', 'enterprise', 'admin'),
     defaultValue: 'user'
   },
@@ -101,9 +102,6 @@ const sequelize = require('../config/db');
     },
     {
       fields: ['role']
-    },
-    {
-      fields: ['subscription_status']
     },
     {
       fields: ['is_active']
@@ -1478,10 +1476,10 @@ module.exports = {
       status: { type: DataTypes.ENUM('sent', 'used', 'expired'), defaultValue: 'sent' },
       ip: { type: DataTypes.STRING(45), allowNull: true },
       expires_at: { type: DataTypes.DATE, allowNull: false }
-    }, { 
-      tableName: 'verification_codes', 
-      timestamps: true, 
-      createdAt: 'created_at', 
+    }, {
+      tableName: 'verification_codes',
+      timestamps: true,
+      createdAt: 'created_at',
       updatedAt: 'updated_at',
       indexes: [
         { fields: ['phone', 'created_at'] },

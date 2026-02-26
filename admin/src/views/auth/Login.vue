@@ -24,10 +24,10 @@
               <div class="d-flex align-end justify-center mb-8 w-100 ga-4">
                 <div style="width: 72px;">
                   <VImg
-                    src="/logo.png"
-                    alt="Logo"
-                    contain
-                  />
+            src="/logo.png"
+            alt="Logo"
+            contain
+          />
                 </div>
                 <h1 class="text-h3 font-weight-bold mb-0">
                   争湃·简历大师

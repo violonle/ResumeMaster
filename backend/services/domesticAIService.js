@@ -110,7 +110,8 @@ class DomesticAIService {
 
   // 选择最优服务
   async selectOptimalService(taskType = 'resume_analysis', userCtx = null) {
-    console.log(`[AI Service] Selecting optimal service for task: ${taskType}`);
+    console.log(`[AI Service] Selecting optimal service for ${taskType}, UserCtx: ${JSON.stringify(userCtx)}`);
+    const start = Date.now();
     
     await this.loadAIConfig();
     console.log(`[AI Service] Current AI Config loaded. Providers count: ${Object.keys(this.aiConfig?.providers || {}).length}`);
@@ -129,9 +130,9 @@ class DomesticAIService {
         console.log(`[AI Service] No task mapping found for ${taskType}`);
     }
     
-    // 优先使用数据库启用的模型密钥（支持同平台多模型并行启用）
+    // 优先使用数据库启用的模型密钥（公司优先，次选全局）
     const enabledKeys = await this.getEnabledModelKeys(userCtx);
-    console.log(`[AI Service] Enabled keys from DB: ${enabledKeys.length}`);
+    console.log(`[AI Service] Found ${enabledKeys.length} enabled keys in DB. Time: ${Date.now() - start}ms`);
     
     if (enabledKeys.length) {
       // 简单优先级：按 SERVICE_PRIORITY 顺序选择第一个可用的 provider 的一条模型，轮询模型列表
@@ -608,9 +609,8 @@ class DomesticAIService {
           });
           break;
         case 'job_description':
-          prompt = await promptService.getPrompt('resume_deep_analysis', { 
-              resumeText: dataJson,
-              targetJobSection: '请根据以上数据优化职位描述。'
+          prompt = await promptService.getPrompt('job_jd_optimize', { 
+              originalJd: dataJson
           });
           break;
         default:

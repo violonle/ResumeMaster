@@ -1,42 +1,29 @@
-version: '3.8'
-
 services:
-  db:
-    image: mysql:8.0
-    container_name: srm-mysql-prod
-    command: --default-authentication-plugin=mysql_native_password
-    restart: always
-    environment:
-      MYSQL_DATABASE: ${DB_NAME:-superresumemaster}
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-YourStrongPassword}
-    volumes:
-      - ./mysql_data:/var/lib/mysql
-    networks:
-      - srm-network
-
   app:
-    image: letuyang/super-resume-master:${IMAGE_TAG:-latest}
-    container_name: super-resume-master
+    image: super-resume-master:latest
+    container_name: srm-app
     restart: always
-    # 移除 build 字段，直接从镜像运行
     ports:
       - "3000:3000"
-    environment:
-      - PORT=3000
-      - DB_HOST=db
-      - NODE_ENV=production
-    env_file:
-      - .env
     volumes:
       - ./uploads:/app/backend/uploads
       - ./logs:/app/backend/logs
-    depends_on:
-      - db
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DB_DIALECT=mysql
+      - DB_HOST=host.docker.internal
+      - DB_PORT=3306
+      - DB_NAME=${DB_NAME:-superresumemaster}
+      - DB_USER=${DB_USER:-root}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-*}
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    networks:
-      - srm-network
-
-networks:
-  srm-network:
-    driver: bridge
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s

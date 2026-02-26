@@ -258,10 +258,16 @@ class DashboardController {
                     `;
                 }
 
+                // 提取候选人姓名（去掉 "- 职位名称" 部分）
+                let candidateName = task.desc || '未命名任务';
+                if (candidateName.includes(' - ')) {
+                    candidateName = candidateName.split(' - ')[0];
+                }
+
                 return `
                 <div class="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-xl hover:shadow-md transition-all cursor-pointer" onclick="window.location.href='${task.link}'">
                     <div class="flex-1 min-w-0 mr-4">
-                        <h4 class="text-sm font-bold text-gray-900 truncate mb-1.5" title="${task.desc}">${task.desc}</h4>
+                        <h4 class="text-sm font-bold text-gray-900 truncate mb-1.5" title="${candidateName}">${candidateName}</h4>
                         <div class="flex items-center flex-wrap">
                             ${badge}
                             <p class="text-[10px] text-gray-500 truncate" title="${task.title} · ${task.time}">${task.title} · ${task.time}</p>

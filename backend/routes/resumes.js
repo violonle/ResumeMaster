@@ -45,22 +45,27 @@ router.post('/batch-import', authenticate, Permission.requireSubscription, Permi
         const createdResumes = [];
 
         for (const resumeData of resumes) {
-            const resume = await Resume.create({
-                user_id: userId,
-                company_id: companyId,
-                name: resumeData.name || resumeData.fileName || '未命名简历',
-                file_name: resumeData.fileName || resumeData.name || 'unknown.pdf',
-                file_size: resumeData.fileSize || 0,
-                file_type: resumeData.fileType || 'pdf',
-                file_path: resumeData.filePath || '',
-                status: 'uploaded',
-                parsed_data: resumeData.parsedData || {},
-                tags: resumeData.tags || [],
-                source: resumeData.source || 'import',
-                recruitment_status: '投递'
-            });
-            createdResumes.push(resume);
-        }
+                // 为批量导入的简历分配随机头像 (1.svg - 12.svg)
+                const avatarIndex = Math.floor(Math.random() * 12) + 1;
+                const avatar = `/avatars/${avatarIndex}.svg`;
+
+                const resume = await Resume.create({
+                    user_id: userId,
+                    company_id: companyId,
+                    name: resumeData.name || resumeData.fileName || '未命名简历',
+                    file_name: resumeData.fileName || resumeData.name || 'unknown.pdf',
+                    file_size: resumeData.fileSize || 0,
+                    file_type: resumeData.fileType || 'pdf',
+                    file_path: resumeData.filePath || '',
+                    status: 'uploaded',
+                    parsed_data: resumeData.parsedData || {},
+                    tags: resumeData.tags || [],
+                    source: resumeData.source || 'import',
+                    avatar: avatar, // 分配固化的随机头像
+                    recruitment_status: '投递'
+                });
+                createdResumes.push(resume);
+            }
 
         res.json({
             success: true,

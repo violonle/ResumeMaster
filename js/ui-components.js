@@ -726,34 +726,39 @@ class UIComponents {
             else if (sizeClass === 'w-8 h-8') finalSizeClass = 'w-10 h-10';
         }
 
+        // 转换旧头像路径格式
+        let normalizedAvatarUrl = avatarUrl;
+        if (avatarUrl && avatarUrl.trim() !== '') {
+            const distMatch = avatarUrl.match(/^\/dist\/avatar\/0*(\d+)\.png$/);
+            if (distMatch) {
+                normalizedAvatarUrl = `/avatars/${distMatch[1]}.svg`;
+            } else {
+                const distOldMatch = avatarUrl.match(/^\/dist\/avatar0*(\d+)\.png$/);
+                if (distOldMatch) {
+                    normalizedAvatarUrl = `/avatars/${distOldMatch[1]}.svg`;
+                }
+            }
+        }
+
         // 如果有真实的头像URL，则显示图片
-        if (avatarUrl && avatarUrl.trim() !== '' && 
-            !avatarUrl.includes('banner1.jpg') && 
-            !avatarUrl.includes('pravatar.cc') &&
-            !avatarUrl.includes('placeholder')) {
-            return `<img src="${avatarUrl}" alt="${name}" class="${finalSizeClass} ${roundedClass} ${extraClasses}">`;
+        if (normalizedAvatarUrl && normalizedAvatarUrl.trim() !== '' && 
+            !normalizedAvatarUrl.includes('banner1.jpg') && 
+            !normalizedAvatarUrl.includes('pravatar.cc') &&
+            !normalizedAvatarUrl.includes('placeholder')) {
+            return `<img src="${normalizedAvatarUrl}" alt="${name}" class="${finalSizeClass} ${roundedClass} ${extraClasses}">`;
         }
         
         // 默认头像逻辑
+        // 用户 (isCandidate = false)：默认 /avatars/avatar.svg
+        // 候选人 (isCandidate = true)：默认 /avatars/{数字}.svg
         let finalAvatarUrl = '';
         if (isCandidate) {
-            // 候选人：随机分配头像 (01.png - 10.png)
-            // 使用名称进行哈希，确保同一个人的头像是一致的
-            let avatarIndex = 1;
-            if (name) {
-                let hash = 0;
-                for (let i = 0; i < name.length; i++) {
-                    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-                }
-                avatarIndex = Math.abs(hash % 10) + 1;
-            } else {
-                avatarIndex = Math.floor(Math.random() * 10) + 1;
-            }
-            const avatarFile = avatarIndex.toString().padStart(2, '0') + '.png';
-            finalAvatarUrl = `/dist/avatar/${avatarFile}`;
+            // 候选人：随机分配头像 (1 - 12)
+            const seed = Math.floor(Math.random() * 12) + 1;
+            finalAvatarUrl = `/avatars/${seed}.svg`;
         } else {
-            // 平台用户：统一使用 dist/avatar01.png
-            finalAvatarUrl = '/dist/avatar01.png';
+            // 平台用户：统一使用 /avatars/avatar.svg
+            finalAvatarUrl = '/avatars/avatar.svg';
         }
 
         return `<img src="${finalAvatarUrl}" alt="${name}" class="${finalSizeClass} ${roundedClass} ${extraClasses}">`;

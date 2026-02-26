@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,8 +10,9 @@
     <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="preconnect" href="https://fonts.loli.net">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.loli.net/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.loli.net/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+
     <!-- Shared Utils -->
     <script src="../js/user-auth.js"></script>
     <script src="../js/header-profile.js"></script>
@@ -26,9 +28,11 @@
         :root {
             --font-family-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
         }
+
         body {
             font-family: var(--font-family-sans);
         }
+
         .portal-card {
             background-color: white;
             border: 1px solid #e5e7eb;
@@ -38,11 +42,16 @@
             transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
             transition-duration: 300ms;
         }
+
         .portal-card:hover {
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             transform: translateY(-2px);
         }
-        .brand-title { white-space: normal !important; }
+
+        .brand-title {
+            white-space: normal !important;
+        }
+
         .main-content-area {
             flex: 1;
             background: #f9fafb;
@@ -50,15 +59,18 @@
             padding: 40px 20px;
             overflow-y: auto;
         }
+
         .main-content {
             padding: 64px 0 0 0 !important;
         }
+
         .score-badge {
             padding: 4px 12px;
             border-radius: 9999px;
             font-weight: 600;
             font-size: 14px;
         }
+
         .dimension-tag {
             font-size: 12px;
             padding: 2px 8px;
@@ -66,12 +78,14 @@
             color: #6b7280;
             border-radius: 4px;
         }
+
         .dimension-bar {
             background: #eff6ff;
             padding: 4px 6px;
             border-radius: 8px;
             border: 1px solid #dbeafe;
         }
+
         .tab-card {
             display: flex;
             align-items: center;
@@ -83,12 +97,14 @@
             transition: all 0.2s ease;
             min-width: 220px;
         }
+
         .tab-card.active {
             background: #111827;
             color: #ffffff;
             border-color: #111827;
             box-shadow: 0 10px 20px -10px rgba(17, 24, 39, 0.5);
         }
+
         .tab-card .tab-icon {
             width: 36px;
             height: 36px;
@@ -99,28 +115,34 @@
             align-items: center;
             justify-content: center;
         }
+
         .tab-card.active .tab-icon {
             background: #1f2937;
             color: #ffffff;
         }
+
         .tab-card .tab-title {
             font-weight: 700;
         }
+
         .tab-card .tab-desc {
             font-size: 11px;
             color: #9ca3af;
         }
+
         .tab-card.active .tab-desc {
             color: #e5e7eb;
         }
     </style>
 </head>
+
 <body class="bg-gray-50 antialiased text-gray-900 selection:bg-blue-100 selection:text-blue-700">
     <!-- Header -->
     <header class="fixed top-0 left-0 right-0 h-20 bg-white shadow-sm border-b border-gray-200 z-50">
         <div class="max-w-[1440px] mx-auto h-full px-6 flex items-center justify-between">
             <div class="flex items-center space-x-4 pl-8">
-                <button onclick="history.back()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500 flex items-center justify-center">
+                <button onclick="history.back()"
+                    class="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500 flex items-center justify-center">
                     <i class="fas fa-arrow-left text-xl"></i>
                 </button>
                 <div class="brand-title flex flex-col justify-center space-y-1.5">
@@ -157,7 +179,8 @@
                     </div>
                     <div class="flex space-x-3">
                         <div class="relative">
-                            <select id="job-filter" class="pl-4 pr-10 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-white appearance-none min-w-[160px]">
+                            <select id="job-filter"
+                                class="pl-4 pr-10 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-white appearance-none min-w-[160px]">
                                 <option value="all">全部职位</option>
                             </select>
                             <div class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
@@ -166,8 +189,8 @@
                         </div>
                         <div class="relative">
                             <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                            <input type="text" id="record-search" placeholder="搜索简历名称..." 
-                                   class="pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-white w-64">
+                            <input type="text" id="record-search" placeholder="搜索简历名称..."
+                                class="pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-white w-64">
                         </div>
                     </div>
                 </div>
@@ -175,20 +198,23 @@
                 <!-- Records List -->
                 <div id="records-list" class="grid grid-cols-1 gap-4">
                     <!-- Loading State -->
-                    <div class="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-gray-100 shadow-sm">
+                    <div
+                        class="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-gray-100 shadow-sm">
                         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
                         <p class="text-gray-500">正在加载解析记录...</p>
                     </div>
                 </div>
 
                 <!-- Empty State (Hidden) -->
-                <div id="empty-state" class="hidden flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-dashed border-gray-200 shadow-sm">
+                <div id="empty-state"
+                    class="hidden flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-dashed border-gray-200 shadow-sm">
                     <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
                         <i class="fas fa-folder-open text-3xl text-gray-300"></i>
                     </div>
                     <h3 class="text-lg font-bold text-gray-900 mb-2">暂无解析记录</h3>
                     <p class="text-gray-500">您还没有进行过深度解析，去“深度解析”页面开始吧。</p>
-                    <a href="resume-tools.html" class="mt-6 px-6 py-2.5 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-all">
+                    <a href="resume-tools.html"
+                        class="mt-6 px-6 py-2.5 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-all">
                         去解析
                     </a>
                 </div>
@@ -213,7 +239,7 @@
             if (window.Sidebar) {
                 window.Sidebar.init({ mount: '#sidebar', active: 'resume-tools' });
             }
-            
+
             // 初始化头像
             if (typeof HeaderProfile !== 'undefined') {
                 HeaderProfile.init('#header-right-section');
@@ -259,7 +285,7 @@
                             'Authorization': `Bearer ${token}`
                         }
                     });
-                    
+
                     if (response.status === 401) {
                         userAuthInstance.logout();
                         window.location.href = 'login.html?message=' + encodeURIComponent('会话已过期，请重新登录');
@@ -279,7 +305,7 @@
                     }
 
                     const result = await response.json();
-                    
+
                     if (result.success) {
                         allRecords = result.data || [];
                         renderRecords(allRecords);
@@ -303,7 +329,7 @@
 
                 emptyState.classList.add('hidden');
                 recordsList.classList.remove('hidden');
-                
+
                 recordsList.innerHTML = records.map(record => {
                     const date = new Date(record.analysis_date).toLocaleString('zh-CN', {
                         year: 'numeric',
@@ -317,17 +343,17 @@
                     const typeTag = isCompareSummary
                         ? '<span class="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-bold rounded border border-blue-100">对比解析</span>'
                         : (record.type === 'single' || record.type === 'multi_single')
-                            ? '<span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 text-[10px] font-bold rounded border border-emerald-100">单人解析</span>'
+                            ? '<span class="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-bold rounded border border-blue-100">单人解析</span>'
                             : '<span class="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-bold rounded border border-blue-100">对比拆分</span>';
 
-                    const scoreColor = record.overall_score >= 80 ? 'text-green-600 bg-green-50' : 
-                                     record.overall_score >= 60 ? 'text-blue-600 bg-blue-50' : 'text-blue-600 bg-blue-50';
+                    const scoreColor = record.overall_score >= 80 ? 'text-green-600 bg-green-50' :
+                        record.overall_score >= 60 ? 'text-blue-600 bg-blue-50' : 'text-blue-600 bg-blue-50';
 
                     const dims = record.dimensions || {};
                     const dimHtml = Object.entries(dims).map(([key, val]) => {
                         const dimNames = {
-                            skills: '技能', experience: '经验', education: '教育',
-                            project: '项目', stability: '稳定性', potential: '潜力', teamwork: '团队'
+                            skills: '技能', experience: '经验', project: '项目',
+                            education: '教育', potential: '潜力', teamwork: '团队'
                         };
                         return `<span class="dimension-tag">${dimNames[key] || key}: ${val}</span>`;
                     }).join('');
@@ -338,8 +364,8 @@
                         const summaryText = record._comparisonSummary || record._comparisonRecommendation || '暂无对比摘要';
                         const chipPalette = [
                             'bg-blue-50 text-blue-700 border border-blue-100',
-                            'bg-emerald-50 text-emerald-700 border border-emerald-100',
-                            'bg-purple-50 text-purple-700 border border-purple-100',
+                            'bg-blue-50 text-blue-700 border border-blue-100',
+                            'bg-blue-50 text-blue-700 border border-blue-100',
                             'bg-blue-50 text-blue-700 border border-blue-100'
                         ];
                         const winnerClass = 'bg-blue-50 text-blue-700 border border-blue-100';
@@ -462,9 +488,9 @@
                 return records.filter(r => {
                     // 允许 single (单人深度解析) 和 multi_single (对比拆分)
                     // 同时允许 type='multi' (通常是对比解析产生的单人记录)，这些记录在列表页会被标记为 "对比拆分"
-                    
+
                     if (r.type === 'single' || r.type === 'multi_single') return true;
-                    
+
                     // 允许 multi 类型 (作为对比拆分记录显示)
                     // 修复：用户反馈"对比拆分"记录不显示，是因为之前过滤掉了 type='multi' 的记录
                     if (r.type === 'multi') return true;
@@ -545,7 +571,7 @@
 
         async function confirmDeepAnalysis() {
             if (!currentResumeId || isProcessing) return;
-            
+
             isProcessing = true;
             const btn = event.currentTarget;
             const originalContent = btn.innerHTML;
@@ -554,13 +580,13 @@
 
             try {
                 // 使用 userAuthInstance.apiRequest 发送解析请求
-                const response = await window.userAuthInstance.apiRequest('/ai/batch-analyze', 'POST', { 
+                const response = await window.userAuthInstance.apiRequest('/ai/batch-analyze', 'POST', {
                     resumeIds: [currentResumeId],
-                    options: { 
+                    options: {
                         scene: 'deep_analysis'
                     }
                 }, false);
-                
+
                 closeAnalysisModal();
                 ui.showNotification('深度解析任务已启动，正在后台处理', 'success');
 
@@ -604,7 +630,7 @@
 
         async function confirmReject() {
             if (!currentResumeId) return;
-            
+
             const reason = document.getElementById('rejectReason').value;
             try {
                 ui.showLoading('正在提交...');
@@ -617,7 +643,7 @@
                     },
                     body: JSON.stringify({ status: 'rejected', reject_reason: reason })
                 });
-                
+
                 const result = await response.json();
                 ui.hideLoading();
                 if (result.success) {
@@ -635,14 +661,18 @@
     </script>
 
     <!-- Reject Modal -->
-    <div id="rejectModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div id="rejectModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog"
+        aria-modal="true">
         <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div id="reject-modal-backdrop" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeRejectModal()"></div>
+            <div id="reject-modal-backdrop" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+                aria-hidden="true" onclick="closeRejectModal()"></div>
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-            <div class="inline-block align-middle bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-gray-100">
+            <div
+                class="inline-block align-middle bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-gray-100">
                 <div class="bg-white px-6 pt-6 pb-4 sm:p-8 sm:pb-6">
                     <div class="sm:flex sm:items-start">
-                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-50 sm:mx-0 sm:h-12 sm:w-12 border border-red-100">
+                        <div
+                            class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-50 sm:mx-0 sm:h-12 sm:w-12 border border-red-100">
                             <i class="fas fa-exclamation-triangle text-red-500 text-xl"></i>
                         </div>
                         <div class="mt-3 text-center sm:mt-0 sm:ml-6 sm:text-left w-full">
@@ -651,16 +681,20 @@
                                 <p class="text-sm text-gray-500 mb-4">
                                     请填写淘汰理由（可选），该理由将仅供内部参考。
                                 </p>
-                                <textarea id="rejectReason" rows="4" class="block w-full text-sm border-gray-200 rounded-xl p-4 border focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all resize-none bg-gray-50" placeholder="请输入淘汰理由..."></textarea>
+                                <textarea id="rejectReason" rows="4"
+                                    class="block w-full text-sm border-gray-200 rounded-xl p-4 border focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all resize-none bg-gray-50"
+                                    placeholder="请输入淘汰理由..."></textarea>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="bg-gray-50 px-6 py-4 sm:px-8 sm:flex sm:flex-row-reverse gap-3">
-                    <button type="button" onclick="confirmReject()" class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-6 py-2.5 bg-red-600 text-sm font-bold text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:w-auto transition-all">
+                    <button type="button" onclick="confirmReject()"
+                        class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-6 py-2.5 bg-red-600 text-sm font-bold text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:w-auto transition-all">
                         确认淘汰
                     </button>
-                    <button type="button" onclick="closeRejectModal()" class="mt-3 w-full inline-flex justify-center rounded-xl border border-gray-200 shadow-sm px-6 py-2.5 bg-white text-sm font-bold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 sm:mt-0 sm:w-auto transition-all">
+                    <button type="button" onclick="closeRejectModal()"
+                        class="mt-3 w-full inline-flex justify-center rounded-xl border border-gray-200 shadow-sm px-6 py-2.5 bg-white text-sm font-bold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 sm:mt-0 sm:w-auto transition-all">
                         取消
                     </button>
                 </div>
@@ -669,14 +703,18 @@
     </div>
 
     <!-- Analysis Modal -->
-    <div id="analysisModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div id="analysisModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title"
+        role="dialog" aria-modal="true">
         <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div id="analysis-modal-backdrop" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeAnalysisModal()"></div>
+            <div id="analysis-modal-backdrop" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+                aria-hidden="true" onclick="closeAnalysisModal()"></div>
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-            <div class="inline-block align-middle bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-gray-100">
+            <div
+                class="inline-block align-middle bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-gray-100">
                 <div class="bg-white px-6 pt-6 pb-4 sm:p-8 sm:pb-6">
                     <div class="sm:flex sm:items-start">
-                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-50 sm:mx-0 sm:h-12 sm:w-12 border border-blue-100">
+                        <div
+                            class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-50 sm:mx-0 sm:h-12 sm:w-12 border border-blue-100">
                             <i class="fas fa-magic text-blue-500 text-xl"></i>
                         </div>
                         <div class="mt-3 text-center sm:mt-0 sm:ml-6 sm:text-left w-full">
@@ -699,21 +737,28 @@
                                         <span class="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></span>
                                         解析维度包含：
                                     </p>
-                                    <div class="grid grid-cols-2 gap-3">
+                                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
                                         <div class="flex items-center text-sm text-gray-600 bg-gray-50 p-2 rounded-lg">
-                                            <i class="fas fa-check text-green-500 mr-2 text-xs"></i> 专业技能深度评估
+                                            <i class="fas fa-check text-green-500 mr-2 text-xs"></i> 技能匹配
                                         </div>
                                         <div class="flex items-center text-sm text-gray-600 bg-gray-50 p-2 rounded-lg">
-                                            <i class="fas fa-check text-green-500 mr-2 text-xs"></i> 项目经验契合度
+                                            <i class="fas fa-check text-green-500 mr-2 text-xs"></i> 经验匹配
                                         </div>
                                         <div class="flex items-center text-sm text-gray-600 bg-gray-50 p-2 rounded-lg">
-                                            <i class="fas fa-check text-green-500 mr-2 text-xs"></i> 学历与背景评估
+                                            <i class="fas fa-check text-green-500 mr-2 text-xs"></i> 项目履历
                                         </div>
                                         <div class="flex items-center text-sm text-gray-600 bg-gray-50 p-2 rounded-lg">
-                                            <i class="fas fa-check text-green-500 mr-2 text-xs"></i> 稳定性预测
+                                            <i class="fas fa-check text-green-500 mr-2 text-xs"></i> 学历背景
+                                        </div>
+                                        <div class="flex items-center text-sm text-gray-600 bg-gray-50 p-2 rounded-lg">
+                                            <i class="fas fa-check text-green-500 mr-2 text-xs"></i> 发展潜力
+                                        </div>
+                                        <div class="flex items-center text-sm text-gray-600 bg-gray-50 p-2 rounded-lg">
+                                            <i class="fas fa-check text-green-500 mr-2 text-xs"></i> 团队协作
                                         </div>
                                     </div>
-                                    <p class="mt-4 text-xs text-gray-400 italic bg-gray-50 p-3 rounded-lg border border-dashed border-gray-200">
+                                    <p
+                                        class="mt-4 text-xs text-gray-400 italic bg-gray-50 p-3 rounded-lg border border-dashed border-gray-200">
                                         <i class="far fa-clock mr-1"></i> 解析过程大约需要 10-30 秒，完成后将自动刷新页面显示结果。
                                     </p>
                                 </div>
@@ -722,10 +767,12 @@
                     </div>
                 </div>
                 <div class="bg-gray-50 px-6 py-4 sm:px-8 sm:flex sm:flex-row-reverse gap-3">
-                    <button type="button" onclick="confirmDeepAnalysis()" class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-6 py-2.5 bg-blue-600 text-sm font-bold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:w-auto transition-all">
+                    <button type="button" onclick="confirmDeepAnalysis()"
+                        class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-6 py-2.5 bg-blue-600 text-sm font-bold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:w-auto transition-all">
                         立即解析
                     </button>
-                    <button type="button" onclick="closeAnalysisModal()" class="mt-3 w-full inline-flex justify-center rounded-xl border border-gray-200 shadow-sm px-6 py-2.5 bg-white text-sm font-bold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 sm:mt-0 sm:w-auto transition-all">
+                    <button type="button" onclick="closeAnalysisModal()"
+                        class="mt-3 w-full inline-flex justify-center rounded-xl border border-gray-200 shadow-sm px-6 py-2.5 bg-white text-sm font-bold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 sm:mt-0 sm:w-auto transition-all">
                         取消
                     </button>
                 </div>
@@ -733,4 +780,5 @@
         </div>
     </div>
 </body>
+
 </html>

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,30 +13,40 @@
   <script src="../js/resume-data.js?v=2"></script>
   <link rel="stylesheet" href="/css/sidebar.css">
   <link rel="stylesheet" href="/css/design-system.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
   <script src="../js/flatpickr-stub.js"></script>
   <style>
     :root {
       --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     }
-    body { 
-      font-family: var(--font-sans); 
-      font-size: 14px; /* Reduced base font size */
+
+    body {
+      font-family: var(--font-sans);
+      font-size: 14px;
+      /* Reduced base font size */
     }
+
     .portal-card {
-        background-color: white;
-        border: 1px solid #f1f5f9; /* Softer border */
-        border-radius: 12px; /* Slightly smaller radius */
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* Softer shadow */
-        transition: all 0.2s ease;
-        margin-bottom: 1rem; /* Reduced margin */
-        padding: 1.25rem; /* Reduced padding */
+      background-color: white;
+      border: 1px solid #f1f5f9;
+      /* Softer border */
+      border-radius: 12px;
+      /* Slightly smaller radius */
+      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      /* Softer shadow */
+      transition: all 0.2s ease;
+      margin-bottom: 1rem;
+      /* Reduced margin */
+      padding: 1.25rem;
+      /* Reduced padding */
     }
+
     .portal-card:hover {
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        transform: translateY(-1px);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      transform: translateY(-1px);
     }
 
     .tag {
@@ -50,27 +61,32 @@
       margin-bottom: 4px;
       font-weight: 500;
     }
+
     .info-label {
       font-size: 12px;
       color: #94a3b8;
       margin-bottom: 2px;
       font-weight: 500;
     }
+
     .info-value {
       font-size: 13px;
       color: #1e293b;
       font-weight: 600;
     }
+
     .timeline-item {
       position: relative;
       padding-left: 1.5rem;
       padding-bottom: 1rem;
       border-left: 1.5px solid #f1f5f9;
     }
+
     .timeline-item:last-child {
       border-left-color: transparent;
       padding-bottom: 0;
     }
+
     .timeline-dot {
       position: absolute;
       left: -6px;
@@ -82,19 +98,22 @@
       border: 2px solid #fff;
       box-shadow: 0 0 0 1.5px #f1f5f9;
     }
-    
+
     /* Custom Scrollbar for better look */
     ::-webkit-scrollbar {
       width: 6px;
       height: 6px;
     }
+
     ::-webkit-scrollbar-track {
       background: transparent;
     }
+
     ::-webkit-scrollbar-thumb {
       background: #e2e8f0;
       border-radius: 10px;
     }
+
     ::-webkit-scrollbar-thumb:hover {
       background: #cbd5e1;
     }
@@ -112,11 +131,12 @@
     }
   </style>
 </head>
+
 <body class="bg-gray-50 antialiased text-gray-900 selection:bg-blue-100 selection:text-blue-700">
   <!-- Sidebar -->
   <aside id="sidebar" class="fixed left-0 top-0 bottom-0 sidebar-modern z-40"></aside>
   <div id="sidebar-overlay" class="sidebar-overlay"></div>
-  
+
   <!-- Header -->
   <header class="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-20 h-20">
     <div class="flex items-center justify-between px-6 h-full">
@@ -135,11 +155,13 @@
     <div class="max-w-[1440px] mx-auto">
       <!-- Breadcrumb & Back -->
       <div class="mb-4 flex items-center justify-between">
-        <a id="back-link" href="librarypool.html" class="text-gray-400 hover:text-blue-600 flex items-center transition-colors text-sm">
+        <a id="back-link" href="librarypool.html"
+          class="text-gray-400 hover:text-blue-600 flex items-center transition-colors text-sm">
           <i class="fas fa-arrow-left text-lg mr-2"></i><span id="back-text">返回人才库</span>
         </a>
         <div class="flex items-center space-x-2">
-          <button id="reanalyze-btn" class="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors font-medium flex items-center text-sm">
+          <button id="reanalyze-btn"
+            class="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors font-medium flex items-center text-sm">
             <i class="fas fa-sync-alt mr-2"></i>重新解析
           </button>
         </div>
@@ -156,7 +178,8 @@
         <i class="fas fa-exclamation-triangle text-3xl text-red-500 mb-3"></i>
         <h2 class="text-lg font-bold text-gray-900 mb-1">无法加载简历</h2>
         <p class="text-sm text-gray-500 mb-4" id="error-message">找不到指定的简历信息</p>
-        <a href="librarypool.html" class="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm">返回列表</a>
+        <a href="librarypool.html"
+          class="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm">返回列表</a>
       </div>
 
       <!-- Resume Content -->
@@ -173,12 +196,16 @@
                 <span class="text-base text-blue-600 font-semibold" id="resume-position">职位</span>
                 <span class="w-px h-3 bg-slate-200"></span>
                 <div class="flex items-center gap-3 text-xs text-slate-500">
-                  <span class="flex items-center"><i class="fas fa-map-marker-alt mr-1.5 opacity-70"></i><span id="resume-location">城市</span></span>
+                  <span class="flex items-center"><i class="fas fa-map-marker-alt mr-1.5 opacity-70"></i><span
+                      id="resume-location">城市</span></span>
                 </div>
               </div>
               <div class="flex flex-wrap gap-4 text-xs text-slate-500 mt-2">
-                <span class="flex items-center hover:text-blue-600 transition-colors"><i class="fas fa-envelope mr-1.5 opacity-70"></i><span id="resume-email">email@example.com</span></span>
-                <span class="flex items-center hover:text-blue-600 transition-colors"><i class="fas fa-phone mr-1.5 opacity-70"></i><span id="resume-phone">13800000000</span></span>
+                <span class="flex items-center hover:text-blue-600 transition-colors"><i
+                    class="fas fa-envelope mr-1.5 opacity-70"></i><span
+                    id="resume-email">email@example.com</span></span>
+                <span class="flex items-center hover:text-blue-600 transition-colors"><i
+                    class="fas fa-phone mr-1.5 opacity-70"></i><span id="resume-phone">13800000000</span></span>
               </div>
             </div>
           </div>
@@ -190,7 +217,8 @@
                 <p class="text-2xl font-black text-blue-600 leading-none" id="resume-score">0</p>
               </div>
             </div>
-            <p class="text-[11px] text-slate-400">更新于: <span id="resume-updated" class="font-medium text-slate-500">2024-01-01</span></p>
+            <p class="text-[11px] text-slate-400">更新于: <span id="resume-updated"
+                class="font-medium text-slate-500">2024-01-01</span></p>
           </div>
         </div>
 
@@ -224,14 +252,16 @@
             <div class="portal-card" id="attachment-section">
               <h3 class="section-title"><i class="fas fa-paperclip text-blue-500"></i>原始附件</h3>
               <div class="flex items-center p-2.5 bg-slate-50 rounded-lg border border-slate-100 group">
-                <div class="w-9 h-9 rounded-lg bg-white flex items-center justify-center shadow-sm text-blue-500 mr-3 border border-slate-100 group-hover:border-blue-200 transition-colors">
+                <div
+                  class="w-9 h-9 rounded-lg bg-white flex items-center justify-center shadow-sm text-blue-500 mr-3 border border-slate-100 group-hover:border-blue-200 transition-colors">
                   <i id="attachment-icon" class="fas fa-file-alt text-lg"></i>
                 </div>
                 <div class="flex-1 min-w-0 mr-2">
                   <p id="attachment-name" class="text-xs font-semibold text-slate-700 truncate mb-0.5">loading...</p>
                   <p id="attachment-size" class="text-[10px] text-slate-400">0 KB</p>
                 </div>
-                <a id="preview-attachment-btn" href="#" target="_blank" class="text-slate-400 hover:text-blue-600 p-1.5 transition-colors" title="预览附件">
+                <a id="preview-attachment-btn" href="#" target="_blank"
+                  class="text-slate-400 hover:text-blue-600 p-1.5 transition-colors" title="预览附件">
                   <i class="fas fa-external-link-alt text-sm"></i>
                 </a>
               </div>
@@ -241,8 +271,8 @@
           <!-- Right Column -->
           <div class="lg:col-span-8 space-y-5">
 
-             <!-- Summary -->
-             <div class="portal-card">
+            <!-- Summary -->
+            <div class="portal-card">
               <h3 class="section-title"><i class="fas fa-star text-blue-500"></i>个人优势</h3>
               <p class="text-slate-600 text-sm leading-relaxed" id="resume-summary">暂无描述</p>
             </div>
@@ -262,9 +292,9 @@
                 <!-- Education Items -->
               </div>
             </div>
-            
-             <!-- Projects -->
-             <div class="portal-card">
+
+            <!-- Projects -->
+            <div class="portal-card">
               <h3 class="section-title"><i class="fas fa-project-diagram text-blue-500"></i>项目经历</h3>
               <div class="space-y-5" id="project-container">
                 <!-- Project Items -->
@@ -275,7 +305,8 @@
             <div class="portal-card" id="raw-text-section">
               <h3 class="section-title"><i class="fas fa-code text-blue-500"></i>解析内容预览</h3>
               <div class="bg-slate-50 rounded-lg p-3 border border-slate-100">
-                <pre id="resume-raw-text" class="text-xs text-slate-500 whitespace-pre-wrap font-sans leading-relaxed max-h-[400px] overflow-y-auto"></pre>
+                <pre id="resume-raw-text"
+                  class="text-xs text-slate-500 whitespace-pre-wrap font-sans leading-relaxed max-h-[400px] overflow-y-auto"></pre>
               </div>
             </div>
           </div>
@@ -288,480 +319,530 @@
   <script src="../js/header-profile.js"></script>
 
   <!-- Reject Modal -->
-  <div id="rejectModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-      <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-          <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeRejectModal()"></div>
-          <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-          <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-              <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                  <div class="sm:flex sm:items-start">
-                      <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
-                          <i class="fas fa-exclamation-triangle text-red-600"></i>
-                      </div>
-                      <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                          <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">淘汰候选人</h3>
-                          <div class="mt-2">
-                              <p class="text-sm text-gray-500 mb-4">
-                                  请填写淘汰理由（可选），该理由将仅供内部参考。
-                              </p>
-                              <textarea id="rejectReason" rows="3" class="shadow-sm focus:ring-red-500 focus:border-red-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border" placeholder="请输入淘汰理由..."></textarea>
-                          </div>
-                      </div>
-                  </div>
+  <div id="rejectModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog"
+    aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"
+        onclick="closeRejectModal()"></div>
+      <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+      <div
+        class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+          <div class="sm:flex sm:items-start">
+            <div
+              class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+              <i class="fas fa-exclamation-triangle text-red-600"></i>
+            </div>
+            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+              <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">淘汰候选人</h3>
+              <div class="mt-2">
+                <p class="text-sm text-gray-500 mb-4">
+                  请填写淘汰理由（可选），该理由将仅供内部参考。
+                </p>
+                <textarea id="rejectReason" rows="3"
+                  class="shadow-sm focus:ring-red-500 focus:border-red-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border"
+                  placeholder="请输入淘汰理由..."></textarea>
               </div>
-              <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                  <button type="button" onclick="confirmReject()" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
-                      确认淘汰
-                  </button>
-                  <button type="button" onclick="closeRejectModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
-                      取消
-                  </button>
-              </div>
+            </div>
           </div>
+        </div>
+        <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+          <button type="button" onclick="confirmReject()"
+            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
+            确认淘汰
+          </button>
+          <button type="button" onclick="closeRejectModal()"
+            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+            取消
+          </button>
+        </div>
       </div>
+    </div>
   </div>
 
   <!-- Analysis Modal -->
-  <div id="analysisModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-      <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-          <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeAnalysisModal()"></div>
-          <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-          <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-              <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                  <div class="sm:flex sm:items-start">
-                      <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
-                          <i class="fas fa-magic text-blue-600"></i>
-                      </div>
-                      <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                          <h3 class="text-lg leading-6 font-medium text-gray-900">深度解析说明</h3>
-                          <div class="mt-2">
-                              <div class="bg-blue-50 p-4 mb-4">
-                                  <div class="flex">
-                                      <div class="flex-shrink-0">
-                                          <i class="fas fa-info-circle text-blue-400"></i>
-                                      </div>
-                                      <div class="ml-3">
-                                          <p class="text-sm text-blue-700">
-                                              深度解析将消耗 1 个 AI 点数，通过多维度深度评估候选人与职位的匹配度。
-                                          </p>
-                                      </div>
-                                  </div>
-                              </div>
-                              <div class="space-y-3 text-sm text-gray-600">
-                                  <p class="font-bold text-gray-800">解析维度包含：</p>
-                                  <ul class="list-disc pl-5 space-y-1">
-                                      <li>专业技能深度评估</li>
-                                      <li>项目经验契合度分析</li>
-                                      <li>学历与背景质量评估</li>
-                                      <li>离职原因与稳定性预测</li>
-                                      <li>团队协作与文化匹配度</li>
-                                  </ul>
-                                  <p class="mt-4 italic">解析过程大约需要 10-30 秒，完成后将自动刷新页面显示结果。</p>
-                              </div>
-                          </div>
-                      </div>
+  <div id="analysisModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog"
+    aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"
+        onclick="closeAnalysisModal()"></div>
+      <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+      <div
+        class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+          <div class="sm:flex sm:items-start">
+            <div
+              class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
+              <i class="fas fa-magic text-blue-600"></i>
+            </div>
+            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+              <h3 class="text-lg leading-6 font-medium text-gray-900">深度解析说明</h3>
+              <div class="mt-2">
+                <div class="bg-blue-50 p-4 mb-4">
+                  <div class="flex">
+                    <div class="flex-shrink-0">
+                      <i class="fas fa-info-circle text-blue-400"></i>
+                    </div>
+                    <div class="ml-3">
+                      <p class="text-sm text-blue-700">
+                        深度解析将消耗 1 个 AI 点数，通过多维度深度评估候选人与职位的匹配度。
+                      </p>
+                    </div>
                   </div>
+                </div>
+                <div class="space-y-3 text-sm text-gray-600">
+                  <p class="font-bold text-gray-800">解析维度包含：</p>
+                  <ul class="list-disc pl-5 space-y-1">
+                    <li>技能匹配</li>
+                    <li>经验匹配</li>
+                    <li>项目履历匹配</li>
+                    <li>学历背景</li>
+                    <li>发展潜力</li>
+                    <li>团队协作</li>
+                  </ul>
+                  <p class="mt-4 italic">解析过程大约需要 10-30 秒，完成后将自动刷新页面显示结果。</p>
+                </div>
               </div>
-              <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                  <button type="button" onclick="confirmDeepAnalysis()" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
-                      立即解析
-                  </button>
-                  <button type="button" onclick="closeAnalysisModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
-                      取消
-                  </button>
-              </div>
+            </div>
           </div>
+        </div>
+        <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+          <button type="button" onclick="confirmDeepAnalysis()"
+            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
+            立即解析
+          </button>
+          <button type="button" onclick="closeAnalysisModal()"
+            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+            取消
+          </button>
+        </div>
       </div>
+    </div>
   </div>
 
   <!-- Interview Modal -->
-  <div id="interviewModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-      <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-          <div id="interview-backdrop" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity bg-black/50" aria-hidden="true"></div>
-          <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-          <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
-              <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                  <h3 class="text-xl leading-6 font-bold text-gray-900 mb-6 flex items-center gap-2" id="modal-title">
-                      <i class="fas fa-calendar-check text-blue-600"></i>
-                      安排面试
-                  </h3>
-                  <form id="interviewForm" class="space-y-5">
-                      <div class="grid grid-cols-2 gap-4">
-                          <div>
-                              <label class="block text-sm font-semibold text-gray-700 mb-1">面试类型</label>
-                              <select name="channel" class="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all">
-                                  <option value="video" selected>线上面试</option>
-                                  <option value="offline">现场面试</option>
-                              </select>
-                          </div>
-                          <div>
-                              <label class="block text-sm font-semibold text-gray-700 mb-1">AI 面试题量</label>
-                              <select name="aiQuestionCount" class="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all">
-                                  <option value="6">6</option>
-                                  <option value="8" selected>8</option>
-                                  <option value="10">10</option>
-                                  <option value="12">12</option>
-                                  <option value="15">15</option>
-                              </select>
-                          </div>
-                      </div>
-                      <div>
-                          <label class="block text-sm font-semibold text-gray-700 mb-1">面试官</label>
-                          <input type="text" name="interviewer" placeholder="输入面试官姓名" class="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all">
-                      </div>
-                      <div>
-                          <label class="block text-sm font-semibold text-gray-700 mb-1">面试时间</label>
-                          <div class="relative group">
-                              <input type="text" id="interview-datetime" name="datetime" class="flatpickr block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm pl-10 py-2.5 transition-all cursor-pointer bg-blue-50/30 hover:bg-blue-50/50" placeholder="点击选择日期和时间" required>
-                              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                                  <i class="fas fa-calendar-alt text-blue-500 group-focus-within:text-blue-600 transition-colors"></i>
-                              </div>
-                          </div>
-                      </div>
-                      <div>
-                          <label class="block text-sm font-semibold text-gray-700 mb-1">地点 / 会议链接</label>
-                          <input type="text" name="location" placeholder="输入面试地点或视频会议链接" class="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all">
-                      </div>
-                      <div>
-                          <label class="block text-sm font-semibold text-gray-700 mb-1">面试备注</label>
-                          <textarea name="notes" rows="2" placeholder="给候选人的补充说明..." class="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all"></textarea>
-                      </div>
-                      <div class="pt-2 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
-                          <button type="submit" class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2.5 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:col-start-2 sm:text-sm transition-all">确认安排</button>
-                          <button type="button" class="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2.5 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:col-start-1 sm:text-sm modal-close transition-all">取消</button>
-                      </div>
-                  </form>
+  <div id="interviewModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog"
+    aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <div id="interview-backdrop" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity bg-black/50"
+        aria-hidden="true"></div>
+      <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+      <div
+        class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
+        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+          <h3 class="text-xl leading-6 font-bold text-gray-900 mb-6 flex items-center gap-2" id="modal-title">
+            <i class="fas fa-calendar-check text-blue-600"></i>
+            安排面试
+          </h3>
+          <form id="interviewForm" class="space-y-5">
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">面试类型</label>
+                <select name="channel"
+                  class="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all">
+                  <option value="video" selected>线上面试</option>
+                  <option value="offline">现场面试</option>
+                </select>
               </div>
-          </div>
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">AI 面试题量</label>
+                <select name="aiQuestionCount"
+                  class="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all">
+                  <option value="6">6</option>
+                  <option value="8" selected>8</option>
+                  <option value="10">10</option>
+                  <option value="12">12</option>
+                  <option value="15">15</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">面试官</label>
+              <input type="text" name="interviewer" placeholder="输入面试官姓名"
+                class="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all">
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">面试时间</label>
+              <div class="relative group">
+                <input type="text" id="interview-datetime" name="datetime"
+                  class="flatpickr block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm pl-10 py-2.5 transition-all cursor-pointer bg-blue-50/30 hover:bg-blue-50/50"
+                  placeholder="点击选择日期和时间" required>
+                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                  <i class="fas fa-calendar-alt text-blue-500 group-focus-within:text-blue-600 transition-colors"></i>
+                </div>
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">地点 / 会议链接</label>
+              <input type="text" name="location" placeholder="输入面试地点或视频会议链接"
+                class="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all">
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">面试备注</label>
+              <textarea name="notes" rows="2" placeholder="给候选人的补充说明..."
+                class="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all"></textarea>
+            </div>
+            <div class="pt-2 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
+              <button type="submit"
+                class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2.5 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:col-start-2 sm:text-sm transition-all">确认安排</button>
+              <button type="button"
+                class="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2.5 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:col-start-1 sm:text-sm modal-close transition-all">取消</button>
+            </div>
+          </form>
+        </div>
       </div>
+    </div>
   </div>
 
   <!-- Offer Modal -->
-  <div id="offerModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-      <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-          <div id="offer-backdrop" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity bg-black/50" aria-hidden="true"></div>
-          <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-          <div class="inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
-              <div class="bg-white px-8 pt-8 pb-8">
-                  <div class="flex items-center justify-between mb-8">
-                      <h3 class="text-xl font-black text-gray-900 flex items-center gap-3" id="modal-title">
-                          <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-                              <i class="fas fa-file-signature text-sm"></i>
-                          </div>
-                          发送 Offer
-                      </h3>
-                      <button type="button" class="text-gray-400 hover:text-gray-600 modal-close">
-                          <i class="fas fa-times"></i>
-                      </button>
-                  </div>
-                  <form id="offerForm" class="space-y-6">
-                      <div class="grid grid-cols-2 gap-6">
-                          <div>
-                              <label class="block text-xs font-black text-gray-400 uppercase tracking-wider mb-2">薪资 (月薪)</label>
-                              <div class="relative">
-                                  <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400"><span class="text-sm">¥</span></div>
-                                  <input type="number" name="salary" class="block w-full bg-gray-50 border-none rounded-2xl pl-8 pr-4 py-3 text-sm font-black text-gray-700 focus:ring-2 focus:ring-blue-100 transition-all" placeholder="20000">
-                              </div>
-                          </div>
-                          <div>
-                              <label class="block text-xs font-black text-gray-400 uppercase tracking-wider mb-2">年终奖 (月数)</label>
-                              <input type="number" name="bonus" class="block w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-black text-gray-700 focus:ring-2 focus:ring-blue-100 transition-all" placeholder="14">
-                          </div>
-                      </div>
-                      <div>
-                          <label class="block text-xs font-black text-gray-400 uppercase tracking-wider mb-2">入职日期</label>
-                          <input type="date" name="startDate" class="block w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-black text-gray-700 focus:ring-2 focus:ring-blue-100 transition-all" required>
-                      </div>
-                      <div>
-                          <label class="block text-xs font-black text-gray-400 uppercase tracking-wider mb-2">试用期 (月)</label>
-                          <select name="probation" class="block w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-black text-gray-700 focus:ring-2 focus:ring-blue-100 transition-all appearance-none cursor-pointer">
-                              <option value="3">3个月</option>
-                              <option value="6">6个月</option>
-                              <option value="0">无</option>
-                          </select>
-                      </div>
-                      <div>
-                          <label class="block text-xs font-black text-gray-400 uppercase tracking-wider mb-2">附加说明</label>
-                          <textarea name="content" rows="3" class="block w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-black text-gray-700 focus:ring-2 focus:ring-blue-100 transition-all" placeholder="请输入附加说明..."></textarea>
-                      </div>
-                      <div class="flex gap-4 pt-4">
-                          <button type="button" class="flex-1 px-6 py-3 bg-gray-50 text-gray-500 font-black rounded-2xl hover:bg-gray-100 transition-all modal-close">取消</button>
-                          <button type="submit" class="flex-1 px-6 py-3 bg-orange-600 text-white font-black rounded-2xl hover:bg-orange-700 shadow-lg shadow-orange-200 transition-all">发送 Offer</button>
-                      </div>
-                  </form>
+  <div id="offerModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog"
+    aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <div id="offer-backdrop" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity bg-black/50"
+        aria-hidden="true"></div>
+      <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+      <div
+        class="inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
+        <div class="bg-white px-8 pt-8 pb-8">
+          <div class="flex items-center justify-between mb-8">
+            <h3 class="text-xl font-black text-gray-900 flex items-center gap-3" id="modal-title">
+              <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                <i class="fas fa-file-signature text-sm"></i>
               </div>
+              发送 Offer
+            </h3>
+            <button type="button" class="text-gray-400 hover:text-gray-600 modal-close">
+              <i class="fas fa-times"></i>
+            </button>
           </div>
+          <form id="offerForm" class="space-y-6">
+            <div class="grid grid-cols-2 gap-6">
+              <div>
+                <label class="block text-xs font-black text-gray-400 uppercase tracking-wider mb-2">薪资 (月薪)</label>
+                <div class="relative">
+                  <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400"><span
+                      class="text-sm">¥</span></div>
+                  <input type="number" name="salary"
+                    class="block w-full bg-gray-50 border-none rounded-2xl pl-8 pr-4 py-3 text-sm font-black text-gray-700 focus:ring-2 focus:ring-blue-100 transition-all"
+                    placeholder="20000">
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-black text-gray-400 uppercase tracking-wider mb-2">年终奖 (月数)</label>
+                <input type="number" name="bonus"
+                  class="block w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-black text-gray-700 focus:ring-2 focus:ring-blue-100 transition-all"
+                  placeholder="14">
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-black text-gray-400 uppercase tracking-wider mb-2">入职日期</label>
+              <input type="date" name="startDate"
+                class="block w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-black text-gray-700 focus:ring-2 focus:ring-blue-100 transition-all"
+                required>
+            </div>
+            <div>
+              <label class="block text-xs font-black text-gray-400 uppercase tracking-wider mb-2">试用期 (月)</label>
+              <select name="probation"
+                class="block w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-black text-gray-700 focus:ring-2 focus:ring-blue-100 transition-all appearance-none cursor-pointer">
+                <option value="3">3个月</option>
+                <option value="6">6个月</option>
+                <option value="0">无</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-black text-gray-400 uppercase tracking-wider mb-2">附加说明</label>
+              <textarea name="content" rows="3"
+                class="block w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-black text-gray-700 focus:ring-2 focus:ring-blue-100 transition-all"
+                placeholder="请输入附加说明..."></textarea>
+            </div>
+            <div class="flex gap-4 pt-4">
+              <button type="button"
+                class="flex-1 px-6 py-3 bg-gray-50 text-gray-500 font-black rounded-2xl hover:bg-gray-100 transition-all modal-close">取消</button>
+              <button type="submit"
+                class="flex-1 px-6 py-3 bg-blue-600 text-white font-black rounded-2xl hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all">发送
+                Offer</button>
+            </div>
+          </form>
+        </div>
       </div>
+    </div>
   </div>
 
   <!-- Screening Modal -->
-  <div id="screeningModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-      <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-          <div id="screening-backdrop" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity bg-black/50" aria-hidden="true"></div>
-          <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-          <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
-              <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                  <h3 class="text-xl leading-6 font-bold text-gray-900 mb-4">已快评</h3>
-                  <form id="screeningForm" class="space-y-4">
-                      <div>
-                          <label class="block text-sm font-semibold text-gray-700 mb-1">备注</label>
-                          <textarea name="notes" rows="3" class="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all" placeholder="记录快评说明..."></textarea>
-                      </div>
-                      <div class="pt-2 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
-                          <button type="submit" class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2.5 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:col-start-2 sm:text-sm transition-all">确认通过</button>
-                          <button type="button" class="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2.5 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:col-start-1 sm:text-sm modal-close transition-all">取消</button>
-                      </div>
-                  </form>
-              </div>
-          </div>
+  <div id="screeningModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog"
+    aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <div id="screening-backdrop" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity bg-black/50"
+        aria-hidden="true"></div>
+      <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+      <div
+        class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
+        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+          <h3 class="text-xl leading-6 font-bold text-gray-900 mb-4">已快评</h3>
+          <form id="screeningForm" class="space-y-4">
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">备注</label>
+              <textarea name="notes" rows="3"
+                class="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all"
+                placeholder="记录快评说明..."></textarea>
+            </div>
+            <div class="pt-2 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
+              <button type="submit"
+                class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2.5 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:col-start-2 sm:text-sm transition-all">确认通过</button>
+              <button type="button"
+                class="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2.5 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:col-start-1 sm:text-sm modal-close transition-all">取消</button>
+            </div>
+          </form>
+        </div>
       </div>
+    </div>
   </div>
 
   <script>
-      let currentRejectId = null;
-      let currentAnalysisId = null;
-      let currentInterviewResumeId = null;
-      let currentOfferResumeId = null;
-      let currentScreeningResumeId = null;
+    let currentRejectId = null;
+    let currentAnalysisId = null;
+    let currentInterviewResumeId = null;
+    let currentOfferResumeId = null;
+    let currentScreeningResumeId = null;
 
-      function closeRejectModal() {
-          const modal = document.getElementById('rejectModal');
-          if (modal) modal.classList.add('hidden');
-          currentRejectId = null;
+    function closeRejectModal() {
+      const modal = document.getElementById('rejectModal');
+      if (modal) modal.classList.add('hidden');
+      currentRejectId = null;
+    }
+
+    function closeAnalysisModal() {
+      const modal = document.getElementById('analysisModal');
+      if (modal) modal.classList.add('hidden');
+      currentAnalysisId = null;
+    }
+
+    /**
+     * 统一处理深度解析
+     */
+    function handleDeepAnalysis(resumeId) {
+      currentAnalysisId = resumeId;
+      const modal = document.getElementById('analysisModal');
+      if (resumeId) {
+        if (modal) {
+          modal.classList.remove('hidden');
+        } else {
+          confirmDeepAnalysis();
+        }
+      } else {
+        if (modal) modal.classList.add('hidden');
+      }
+    }
+
+    /**
+     * 确认深度解析
+     */
+    async function confirmDeepAnalysis() {
+      if (!currentAnalysisId) return;
+      const reanalyzeBtn = document.getElementById('reanalyze-btn');
+
+      closeAnalysisModal();
+
+      if (reanalyzeBtn) {
+        reanalyzeBtn.disabled = true;
+        reanalyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>提交中...';
       }
 
-      function closeAnalysisModal() {
-          const modal = document.getElementById('analysisModal');
-          if (modal) modal.classList.add('hidden');
-          currentAnalysisId = null;
-      }
+      try {
+        // 使用 userAuthInstance.apiRequest 统一处理请求
+        const result = await userAuthInstance.apiRequest('/ai/analyze', 'POST', { resumeId: currentAnalysisId, force: true, options: { scene: 'deep_analysis' } });
 
-      /**
-       * 统一处理深度解析
-       */
-      function handleDeepAnalysis(resumeId) {
-          currentAnalysisId = resumeId;
-          const modal = document.getElementById('analysisModal');
-          if (resumeId) {
-              if (modal) {
-                  modal.classList.remove('hidden');
-              } else {
-                  confirmDeepAnalysis();
-              }
+        if (result.success) {
+          if (result.status === 'processing' || result.data?.status === 'processing') {
+            if (reanalyzeBtn) reanalyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>分析中...';
+            ui.showNotification('分析请求已提交，正在后台处理...', 'info');
+            pollAnalysisStatus(currentAnalysisId, reanalyzeBtn);
           } else {
-              if (modal) modal.classList.add('hidden');
+            // ui.showNotification('解析完成', 'success');
+            setTimeout(() => window.location.reload(), 1000);
           }
+        } else {
+          throw new Error(result.error?.message || result.error || '解析失败');
+        }
+      } catch (error) {
+        console.error('重新解析出错:', error);
+        ui.showNotification('重新解析失败: ' + error.message, 'error');
+        if (reanalyzeBtn) {
+          reanalyzeBtn.disabled = false;
+          reanalyzeBtn.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>重新解析';
+        }
       }
+    }
 
-      /**
-       * 确认深度解析
-       */
-      async function confirmDeepAnalysis() {
-          if (!currentAnalysisId) return;
-          const reanalyzeBtn = document.getElementById('reanalyze-btn');
-          
-          closeAnalysisModal();
-          
-          if (reanalyzeBtn) {
-              reanalyzeBtn.disabled = true;
-              reanalyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>提交中...';
-          }
-          
-          try {
-              // 使用 userAuthInstance.apiRequest 统一处理请求
-              const result = await userAuthInstance.apiRequest('/ai/analyze', 'POST', { resumeId: currentAnalysisId, force: true, options: { scene: 'deep_analysis' } });
-              
-              if (result.success) {
-                if (result.status === 'processing' || result.data?.status === 'processing') {
-                    if (reanalyzeBtn) reanalyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>分析中...';
-                    ui.showNotification('分析请求已提交，正在后台处理...', 'info');
-                    pollAnalysisStatus(currentAnalysisId, reanalyzeBtn);
-                } else {
-                    // ui.showNotification('解析完成', 'success');
-                    setTimeout(() => window.location.reload(), 1000);
-                }
-              } else {
-                throw new Error(result.error?.message || result.error || '解析失败');
-              }
-          } catch (error) {
-              console.error('重新解析出错:', error);
-              ui.showNotification('重新解析失败: ' + error.message, 'error');
-              if (reanalyzeBtn) {
-                  reanalyzeBtn.disabled = false;
-                  reanalyzeBtn.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>重新解析';
-              }
-          }
-      }
-
-      /**
-       * 统一处理淘汰
-       */
-      function handleReject(resumeId) {
-          currentRejectId = resumeId;
-          const modal = document.getElementById('rejectModal');
-          if (resumeId) {
-              if (modal) {
-                  modal.classList.remove('hidden');
-                  const reasonInput = document.getElementById('rejectReason');
-                  if (reasonInput) reasonInput.value = '';
-              }
-          } else {
-              if (modal) modal.classList.add('hidden');
-          }
-      }
-
-      /**
-       * 确认淘汰
-       */
-      async function confirmReject() {
-          if (!currentRejectId) return;
+    /**
+     * 统一处理淘汰
+     */
+    function handleReject(resumeId) {
+      currentRejectId = resumeId;
+      const modal = document.getElementById('rejectModal');
+      if (resumeId) {
+        if (modal) {
+          modal.classList.remove('hidden');
           const reasonInput = document.getElementById('rejectReason');
-          const notes = reasonInput ? reasonInput.value : '';
-          
-          try {
-              ui.showLoading('正在提交...');
-              // 1. 更新简历状态
-              const result = await userAuthInstance.apiRequest(`/resumes/${currentRejectId}/status`, 'PUT', { 
-                  status: '淘汰',
-                  notes: notes
-              });
-              
-              if (result.success) {
-                  // 2. 同步更新候选人状态（如果有）
-                  try {
-                      const appsResponse = await userAuthInstance.apiRequest(`/recruitment/candidates/list?resume_id=${currentRejectId}`);
-                      if (appsResponse && appsResponse.success && Array.isArray(appsResponse.data)) {
-                          for (const app of appsResponse.data) {
-                              await userAuthInstance.apiRequest(`/recruitment/candidates/${app.id}/status`, 'POST', { 
-                                    status: 'rejected',
-                                    notes: notes 
-                                });
-                          }
-                      }
-                  } catch (e) {
-                      console.warn('Sync candidates failed:', e);
-                  }
-                  
-                  ui.hideLoading();
-                  // ui.showNotification('已淘汰简历', 'success');
-                  closeRejectModal();
-                  setTimeout(() => window.location.reload(), 1000);
-              } else {
-                  ui.hideLoading();
-                  ui.showNotification('操作失败: ' + (result.error?.message || result.error || '未知错误'), 'error');
-              }
-          } catch (e) {
-              console.error(e);
-              ui.hideLoading();
-              ui.showNotification('网络错误', 'error');
-          }
+          if (reasonInput) reasonInput.value = '';
+        }
+      } else {
+        if (modal) modal.classList.add('hidden');
       }
+    }
+
+    /**
+     * 确认淘汰
+     */
+    async function confirmReject() {
+      if (!currentRejectId) return;
+      const reasonInput = document.getElementById('rejectReason');
+      const notes = reasonInput ? reasonInput.value : '';
+
+      try {
+        ui.showLoading('正在提交...');
+        // 1. 更新简历状态
+        const result = await userAuthInstance.apiRequest(`/resumes/${currentRejectId}/status`, 'PUT', {
+          status: '淘汰',
+          notes: notes
+        });
+
+        if (result.success) {
+          // 2. 同步更新候选人状态（如果有）
+          try {
+            const appsResponse = await userAuthInstance.apiRequest(`/recruitment/candidates/list?resume_id=${currentRejectId}`);
+            if (appsResponse && appsResponse.success && Array.isArray(appsResponse.data)) {
+              for (const app of appsResponse.data) {
+                await userAuthInstance.apiRequest(`/recruitment/candidates/${app.id}/status`, 'POST', {
+                  status: 'rejected',
+                  notes: notes
+                });
+              }
+            }
+          } catch (e) {
+            console.warn('Sync candidates failed:', e);
+          }
+
+          ui.hideLoading();
+          // ui.showNotification('已淘汰简历', 'success');
+          closeRejectModal();
+          setTimeout(() => window.location.reload(), 1000);
+        } else {
+          ui.hideLoading();
+          ui.showNotification('操作失败: ' + (result.error?.message || result.error || '未知错误'), 'error');
+        }
+      } catch (e) {
+        console.error(e);
+        ui.hideLoading();
+        ui.showNotification('网络错误', 'error');
+      }
+    }
   </script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
-        console.log('DOMContentLoaded fired');
-        
-        // Initialize sidebar
-        if (typeof Sidebar !== 'undefined') {
-            await Sidebar.init({ mount: '#sidebar', active: 'librarypool' });
-        }
-        // Initialize header profile
-        if (typeof HeaderProfile !== 'undefined') {
-            HeaderProfile.init('#header-right-section');
-        }
+      console.log('DOMContentLoaded fired');
 
-        // Update back link to return to previous page
-        const backLink = document.getElementById('back-link');
-        const backText = document.getElementById('back-text');
-        const referrer = document.referrer;
-        
-        // Check if referrer exists and is not the current page
-        if (referrer && referrer !== window.location.href) {
-            // Set the href to the referrer
-            backLink.href = referrer;
-            // Update the text to be more generic
-            backText.textContent = '返回上一页';
-        }
+      // Initialize sidebar
+      if (typeof Sidebar !== 'undefined') {
+        await Sidebar.init({ mount: '#sidebar', active: 'librarypool' });
+      }
+      // Initialize header profile
+      if (typeof HeaderProfile !== 'undefined') {
+        HeaderProfile.init('#header-right-section');
+      }
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const resumeId = urlParams.get('id');
+      // Update back link to return to previous page
+      const backLink = document.getElementById('back-link');
+      const backText = document.getElementById('back-text');
+      const referrer = document.referrer;
 
-        if (!resumeId) {
-          showError('未提供简历ID');
-          return;
-        }
-        
-        // Bind reanalyze button
-        const reanalyzeBtn = document.getElementById('reanalyze-btn');
-        console.log('Reanalyze button found:', reanalyzeBtn);
-        
-        if (reanalyzeBtn) {
-          reanalyzeBtn.onclick = async () => {
-            currentAnalysisId = resumeId;
-            const modal = document.getElementById('analysisModal');
-            if (modal) {
-                modal.classList.remove('hidden');
-            } else {
-                confirmDeepAnalysis();
-            }
-          };
-        } else {
-            console.error('Reanalyze button NOT found in DOM');
-        }
+      // Check if referrer exists and is not the current page
+      if (referrer && referrer !== window.location.href) {
+        // Set the href to the referrer
+        backLink.href = referrer;
+        // Update the text to be more generic
+        backText.textContent = '返回上一页';
+      }
 
-        initResumeDetails();
+      const urlParams = new URLSearchParams(window.location.search);
+      const resumeId = urlParams.get('id');
+
+      if (!resumeId) {
+        showError('未提供简历ID');
+        return;
+      }
+
+      // Bind reanalyze button
+      const reanalyzeBtn = document.getElementById('reanalyze-btn');
+      console.log('Reanalyze button found:', reanalyzeBtn);
+
+      if (reanalyzeBtn) {
+        reanalyzeBtn.onclick = async () => {
+          currentAnalysisId = resumeId;
+          const modal = document.getElementById('analysisModal');
+          if (modal) {
+            modal.classList.remove('hidden');
+          } else {
+            confirmDeepAnalysis();
+          }
+        };
+      } else {
+        console.error('Reanalyze button NOT found in DOM');
+      }
+
+      initResumeDetails();
     });
 
     async function pollAnalysisStatus(resumeId, btn) {
-        let attempts = 0;
-        const maxAttempts = 30; // 60 seconds timeout
-        
-        const interval = setInterval(async () => {
-            attempts++;
-            try {
-                const token = (typeof userAuthInstance !== 'undefined' && typeof userAuthInstance.getToken === 'function')
-                    ? userAuthInstance.getToken()
-                    : (localStorage.getItem('token') || (JSON.parse(localStorage.getItem('userInfo') || '{}').token || null));
-                const response = await fetch(`/api/ai/status/${resumeId}`, {
-                    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-                });
-                const res = await response.json();
-                
-                if (res.success) {
-                    const status = res.data.status;
-                    if (status === 'analyzed') {
-                        clearInterval(interval);
-                        btn.innerHTML = '<i class="fas fa-check mr-2"></i>完成';
-                        // ui.showNotification('简历分析完成，即将刷新页面', 'success');
-                        setTimeout(() => window.location.reload(), 1000);
-                    } else if (status === 'failed') {
-                        clearInterval(interval);
-                        btn.disabled = false;
-                        btn.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>重试';
-                        ui.showNotification('分析失败，请稍后重试', 'error');
-                    }
-                }
-            } catch (e) {
-                console.error('Poll status error:', e);
+      let attempts = 0;
+      const maxAttempts = 30; // 60 seconds timeout
+
+      const interval = setInterval(async () => {
+        attempts++;
+        try {
+          const token = (typeof userAuthInstance !== 'undefined' && typeof userAuthInstance.getToken === 'function')
+            ? userAuthInstance.getToken()
+            : (localStorage.getItem('token') || (JSON.parse(localStorage.getItem('userInfo') || '{}').token || null));
+          const response = await fetch(`/api/ai/status/${resumeId}`, {
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+          });
+          const res = await response.json();
+
+          if (res.success) {
+            const status = res.data.status;
+            if (status === 'analyzed') {
+              clearInterval(interval);
+              btn.innerHTML = '<i class="fas fa-check mr-2"></i>完成';
+              // ui.showNotification('简历分析完成，即将刷新页面', 'success');
+              setTimeout(() => window.location.reload(), 1000);
+            } else if (status === 'failed') {
+              clearInterval(interval);
+              btn.disabled = false;
+              btn.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>重试';
+              ui.showNotification('分析失败，请稍后重试', 'error');
             }
-            
-            if (attempts >= maxAttempts) {
-                clearInterval(interval);
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>刷新查看';
-                ui.showNotification('分析时间较长，请稍后手动刷新页面查看结果', 'warning');
-            }
-        }, 2000);
+          }
+        } catch (e) {
+          console.error('Poll status error:', e);
+        }
+
+        if (attempts >= maxAttempts) {
+          clearInterval(interval);
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>刷新查看';
+          ui.showNotification('分析时间较长，请稍后手动刷新页面查看结果', 'warning');
+        }
+      }, 2000);
     }
 
-    function navigateToJobPosting(){window.location.href='job-posting.html'}
-    function navigateToResumeUpload(){window.location.href='resume-upload-pc.html'}
-    function navigateToAnalytics(){window.location.href='data-analysis.html'}
+    function navigateToJobPosting() { window.location.href = 'job-posting.html' }
+    function navigateToResumeUpload() { window.location.href = 'resume-upload-pc.html' }
+    function navigateToAnalytics() { window.location.href = 'data-analysis.html' }
 
     async function initResumeDetails() {
       const urlParams = new URLSearchParams(window.location.search);
       const id = urlParams.get('id');
-      
+
       if (!id) {
         showError('未提供简历ID');
         return;
@@ -773,9 +854,9 @@
         const rdm = new ResumeDataManager();
         console.log('调用getResumeById方法');
         let resume = await rdm.getResumeById(id);
-        
+
         console.log('getResumeById返回结果:', resume);
-        
+
         if (resume) {
           await renderResume(resume);
         } else {
@@ -806,116 +887,116 @@
     }
 
     async function resolveCandidateId(resumeId, jobId) {
-        try {
-            const qs = new URLSearchParams();
-            qs.set('resume_id', String(resumeId));
-            const appsResponse = await userAuthInstance.apiRequest(`/recruitment/candidates/list?${qs.toString()}`);
-            if (!appsResponse || !appsResponse.success || !Array.isArray(appsResponse.data) || appsResponse.data.length === 0) return null;
-            if (!jobId) return appsResponse.data[0].id;
-            const jobIdStr = String(jobId);
-            const match = appsResponse.data.find(a => String(a.job_id || a.jobId || a.Job?.id || '') === jobIdStr);
-            return (match || appsResponse.data[0]).id;
-        } catch (_) {
-            return null;
-        }
+      try {
+        const qs = new URLSearchParams();
+        qs.set('resume_id', String(resumeId));
+        const appsResponse = await userAuthInstance.apiRequest(`/recruitment/candidates/list?${qs.toString()}`);
+        if (!appsResponse || !appsResponse.success || !Array.isArray(appsResponse.data) || appsResponse.data.length === 0) return null;
+        if (!jobId) return appsResponse.data[0].id;
+        const jobIdStr = String(jobId);
+        const match = appsResponse.data.find(a => String(a.job_id || a.jobId || a.Job?.id || '') === jobIdStr);
+        return (match || appsResponse.data[0]).id;
+      } catch (_) {
+        return null;
+      }
     }
 
     async function updatePipelineStatus(resumeId, status, notes = '') {
-        const ensureOk = (res) => {
-            if (res && Object.prototype.hasOwnProperty.call(res, 'success') && !res.success) {
-                const msg = (res.error && res.error.message) ? res.error.message : (res.error || '请求失败');
-                throw new Error(msg);
-            }
-            return res;
-        };
-        const urlParams = new URLSearchParams(window.location.search);
-        const jobId = urlParams.get('jobId');
-        const candidateId = await resolveCandidateId(resumeId, jobId);
-
-        if (candidateId) {
-            ensureOk(await userAuthInstance.apiRequest(`/recruitment/candidates/${candidateId}/status`, 'POST', { status, notes }));
-            try {
-                ensureOk(await userAuthInstance.apiRequest(`/resumes/${resumeId}/status`, 'PUT', { status }));
-            } catch (_) { }
-            return;
+      const ensureOk = (res) => {
+        if (res && Object.prototype.hasOwnProperty.call(res, 'success') && !res.success) {
+          const msg = (res.error && res.error.message) ? res.error.message : (res.error || '请求失败');
+          throw new Error(msg);
         }
+        return res;
+      };
+      const urlParams = new URLSearchParams(window.location.search);
+      const jobId = urlParams.get('jobId');
+      const candidateId = await resolveCandidateId(resumeId, jobId);
 
-        ensureOk(await userAuthInstance.apiRequest(`/resumes/${resumeId}/status`, 'PUT', { status, notes }));
+      if (candidateId) {
+        ensureOk(await userAuthInstance.apiRequest(`/recruitment/candidates/${candidateId}/status`, 'POST', { status, notes }));
+        try {
+          ensureOk(await userAuthInstance.apiRequest(`/resumes/${resumeId}/status`, 'PUT', { status }));
+        } catch (_) { }
+        return;
+      }
+
+      ensureOk(await userAuthInstance.apiRequest(`/resumes/${resumeId}/status`, 'PUT', { status, notes }));
     }
 
-    window.openInviteInterviewModal = async function(resumeId) {
-        currentInterviewResumeId = resumeId;
-        const modal = document.getElementById('interviewModal');
-        if (modal) {
-            modal.classList.remove('hidden');
-            const input = document.getElementById('interview-datetime');
-            if (input && typeof flatpickr !== 'undefined' && !modal.dataset.pickerInit) {
-                flatpickr("#interview-datetime", { enableTime: true, dateFormat: "Y-m-d H:i", time_24hr: true, locale: "zh", minDate: "today" });
-                modal.dataset.pickerInit = "1";
-            }
+    window.openInviteInterviewModal = async function (resumeId) {
+      currentInterviewResumeId = resumeId;
+      const modal = document.getElementById('interviewModal');
+      if (modal) {
+        modal.classList.remove('hidden');
+        const input = document.getElementById('interview-datetime');
+        if (input && typeof flatpickr !== 'undefined' && !modal.dataset.pickerInit) {
+          flatpickr("#interview-datetime", { enableTime: true, dateFormat: "Y-m-d H:i", time_24hr: true, locale: "zh", minDate: "today" });
+          modal.dataset.pickerInit = "1";
         }
+      }
     };
 
-    window.openSendOffer = async function(resumeId) {
-        currentOfferResumeId = resumeId;
-        const modal = document.getElementById('offerModal');
-        if (modal) modal.classList.remove('hidden');
+    window.openSendOffer = async function (resumeId) {
+      currentOfferResumeId = resumeId;
+      const modal = document.getElementById('offerModal');
+      if (modal) modal.classList.remove('hidden');
     };
 
-    window.markHired = async function(resumeId) {
-        ui.showConfirm('确定录用该候选人吗？', async () => {
-            try {
-                ui.showLoading('正在提交...');
-                await updatePipelineStatus(resumeId, 'hired');
-                ui.hideLoading();
-                // ui.showNotification('已录用', 'success');
-                setTimeout(() => window.location.reload(), 600);
-            } catch (e) {
-                console.error(e);
-                ui.hideLoading();
-                ui.showNotification('操作失败', 'error');
-            }
-        }, null, { type: 'info', title: '录用确认' });
-    };
-
-    window.passScreening = async function(resumeId) {
-        currentScreeningResumeId = resumeId;
-        const modal = document.getElementById('screeningModal');
-        if (modal) {
-            modal.classList.remove('hidden');
-            const form = document.getElementById('screeningForm');
-            if (form) form.reset();
+    window.markHired = async function (resumeId) {
+      ui.showConfirm('确定录用该候选人吗？', async () => {
+        try {
+          ui.showLoading('正在提交...');
+          await updatePipelineStatus(resumeId, 'hired');
+          ui.hideLoading();
+          // ui.showNotification('已录用', 'success');
+          setTimeout(() => window.location.reload(), 600);
+        } catch (e) {
+          console.error(e);
+          ui.hideLoading();
+          ui.showNotification('操作失败', 'error');
         }
+      }, null, { type: 'info', title: '录用确认' });
     };
 
-    window.updateStatus = async function(resumeId, status) {
-        if (status === 'rejected' || status === '淘汰') {
-            handleReject(resumeId);
-            return;
+    window.passScreening = async function (resumeId) {
+      currentScreeningResumeId = resumeId;
+      const modal = document.getElementById('screeningModal');
+      if (modal) {
+        modal.classList.remove('hidden');
+        const form = document.getElementById('screeningForm');
+        if (form) form.reset();
+      }
+    };
+
+    window.updateStatus = async function (resumeId, status) {
+      if (status === 'rejected' || status === '淘汰') {
+        handleReject(resumeId);
+        return;
+      }
+
+      ui.showConfirm('确定要更新状态吗？', async () => {
+        try {
+          ui.showLoading('正在提交...');
+          await updatePipelineStatus(resumeId, status);
+          ui.hideLoading();
+          // ui.showNotification('状态更新成功', 'success');
+          setTimeout(() => window.location.reload(), 600);
+        } catch (e) {
+          console.error(e);
+          ui.hideLoading();
+          ui.showNotification('网络错误', 'error');
         }
-
-        ui.showConfirm('确定要更新状态吗？', async () => {
-            try {
-                ui.showLoading('正在提交...');
-                await updatePipelineStatus(resumeId, status);
-                ui.hideLoading();
-                // ui.showNotification('状态更新成功', 'success');
-                setTimeout(() => window.location.reload(), 600);
-            } catch (e) {
-                console.error(e);
-                ui.hideLoading();
-                ui.showNotification('网络错误', 'error');
-            }
-        });
+      });
     };
 
-    window.analyzeResume = async function(id) {
-        handleDeepAnalysis(id);
+    window.analyzeResume = async function (id) {
+      handleDeepAnalysis(id);
     };
 
     document.addEventListener('click', (e) => {
       if (e.target && e.target.classList.contains('modal-close')) {
-        const ids = ['interviewModal','offerModal','screeningModal'];
+        const ids = ['interviewModal', 'offerModal', 'screeningModal'];
         for (const id of ids) {
           const m = document.getElementById(id);
           if (m) m.classList.add('hidden');
@@ -1042,21 +1123,21 @@
         qs.set('resume_id', String(resumeId));
         // Use true for silent mode to avoid redundant loading indicators
         const appsResponse = await userAuthInstance.apiRequest(`/recruitment/candidates/list?${qs.toString()}`, 'GET', null, false, true);
-        
+
         if (!appsResponse || !appsResponse.success || !Array.isArray(appsResponse.data) || appsResponse.data.length === 0) {
-            return null;
+          return null;
         }
 
         // Only resolve status if we are in a specific job context
         if (!jobId) {
-            return null;
+          return null;
         }
 
         const jobIdStr = String(jobId);
         const picked = appsResponse.data.find(a => String(a.job_id || a.jobId || a.Job?.id || '') === jobIdStr);
-        
+
         if (!picked) {
-            return null;
+          return null;
         }
 
         const st = picked.recruitment_status || picked.status || '';
@@ -1071,7 +1152,7 @@
       console.log('Rendering Resume Data:', data);
       document.getElementById('loading-indicator').classList.add('hidden');
       document.getElementById('resume-content').classList.remove('hidden');
-      
+
       function parseMaybeJson(value) {
         if (typeof value !== 'string') return value;
         const trimmed = value.trim();
@@ -1101,106 +1182,106 @@
           pd = {};
         }
       }
-      
+
       // 增强数据提取逻辑，适配多种数据结构
       const basicInfo = pd.basic_info || pd.personalInfo || pd;
       const rawText = data.raw_text || pd.rawText || '';
-      
+
       let name = data.name || basicInfo.name || pd.name || '';
       // 如果没有名字，尝试从 rawText 提取
       if ((!name || name === '未命名简历') && rawText) {
-          const nameMatch = rawText.match(/(?:^|\n)\s*(?:-\s*)?(?:姓名|Name|候选人)[:：]\s*([^\n\r]+)/i) || 
-                            rawText.match(/^\s*([^\n\r]{2,4})(?:\s+|$)/) || 
-                            rawText.match(/([^\n\r]{2,4})\s+(?:1[3-9]\d{9})/); 
-          if (nameMatch) name = nameMatch[1].trim();
+        const nameMatch = rawText.match(/(?:^|\n)\s*(?:-\s*)?(?:姓名|Name|候选人)[:：]\s*([^\n\r]+)/i) ||
+          rawText.match(/^\s*([^\n\r]{2,4})(?:\s+|$)/) ||
+          rawText.match(/([^\n\r]{2,4})\s+(?:1[3-9]\d{9})/);
+        if (nameMatch) name = nameMatch[1].trim();
       }
       if (!name) name = data.file_name || '未命名简历';
-      
+
       const nameEl = document.getElementById('resume-name');
       nameEl.textContent = name;
-      
+
       const avatarContainer = document.getElementById('avatar-container');
       if (avatarContainer) {
-          avatarContainer.innerHTML = window.ui.renderAvatar(data.avatar, name, 'w-16 h-16', 'rounded-full', true);
+        avatarContainer.innerHTML = window.ui.renderAvatar(data.avatar, name, 'w-16 h-16', 'rounded-full', true);
       }
-      
+
       // Remove existing badge if any
       const existingBadge = nameEl.querySelector('.status-badge');
       if (existingBadge) existingBadge.remove();
-      
+
       const urlParams = new URLSearchParams(window.location.search);
       const pageJobId = urlParams.get('jobId');
       const candidateStatus = await resolveCandidateStatus(data.id, pageJobId);
       const effectiveStatus = candidateStatus || data.recruitment_status || '投递';
       let statusKey = normalizeStatus(effectiveStatus);
-      
+
       // 逻辑修正：如果有分数（快评分或深度解析分），则认为已进行快评，状态显示为“已快评”
       const displayScore = data.overall_score || data.score || (data.parsed_data && (typeof data.parsed_data === 'object' ? data.parsed_data.overall_score : 0)) || 0;
-      
+
       const isParsing = data.status === 'parsing' || data.status === 'processing';
       if (isParsing) {
-          statusKey = 'parsing';
+        statusKey = 'parsing';
       } else if (displayScore > 0 && (statusKey === 'applied' || statusKey === 'new' || statusKey === 'uploaded' || statusKey === '')) {
-          statusKey = 'screening';
+        statusKey = 'screening';
       }
-      
+
       if (statusKey === 'parsing') {
-          const badge = document.createElement('span');
-          badge.className = 'status-badge ml-3 px-2 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-lg align-middle border border-blue-200 animate-pulse';
-          badge.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-1"></i>解析中';
-          nameEl.appendChild(badge);
+        const badge = document.createElement('span');
+        badge.className = 'status-badge ml-3 px-2 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-lg align-middle border border-blue-200 animate-pulse';
+        badge.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-1"></i>解析中';
+        nameEl.appendChild(badge);
       } else if (statusKey === 'hired' || statusKey === 'offer') {
-          const badge = document.createElement('span');
-          badge.className = 'status-badge ml-3 px-2 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-lg align-middle border border-emerald-200';
-          badge.innerHTML = '<i class="fas fa-check-circle mr-1"></i>已录用';
-          nameEl.appendChild(badge);
+        const badge = document.createElement('span');
+        badge.className = 'status-badge ml-3 px-2 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-lg align-middle border border-blue-200';
+        badge.innerHTML = '<i class="fas fa-check-circle mr-1"></i>已录用';
+        nameEl.appendChild(badge);
       } else if (statusKey === 'screening') {
-          const badge = document.createElement('span');
-          badge.className = 'status-badge ml-3 px-2 py-1 bg-yellow-100 text-yellow-700 text-xs font-bold rounded-lg align-middle border border-yellow-200';
-          badge.innerHTML = '<i class="fas fa-search mr-1"></i>已快评';
-          nameEl.appendChild(badge);
+        const badge = document.createElement('span');
+        badge.className = 'status-badge ml-3 px-2 py-1 bg-yellow-100 text-yellow-700 text-xs font-bold rounded-lg align-middle border border-yellow-200';
+        badge.innerHTML = '<i class="fas fa-search mr-1"></i>已快评';
+        nameEl.appendChild(badge);
       } else if (statusKey === 'applied' || statusKey === 'new' || statusKey === 'uploaded') {
-          const badge = document.createElement('span');
-          badge.className = 'status-badge ml-3 px-2 py-1 bg-gray-100 text-gray-500 text-xs font-bold rounded-lg align-middle border border-gray-200';
-          badge.innerHTML = '<i class="fas fa-clock mr-1"></i>待快评';
-          nameEl.appendChild(badge);
+        const badge = document.createElement('span');
+        badge.className = 'status-badge ml-3 px-2 py-1 bg-gray-100 text-gray-500 text-xs font-bold rounded-lg align-middle border border-gray-200';
+        badge.innerHTML = '<i class="fas fa-clock mr-1"></i>待快评';
+        nameEl.appendChild(badge);
       }
-      
+
       let jobTitle = data.job_title || basicInfo.job_title || basicInfo.current_position || basicInfo.target_position || pd.job_title || pd.position || '';
       if (!jobTitle && rawText) {
-          const jobMatch = rawText.match(/(?:职位|应聘|目标|Position|Job Title|求职意向|期望职位)[:：]\s*([^\n\r]+)/i);
-          if (jobMatch) jobTitle = jobMatch[1].trim();
+        const jobMatch = rawText.match(/(?:职位|应聘|目标|Position|Job Title|求职意向|期望职位)[:：]\s*([^\n\r]+)/i);
+        if (jobMatch) jobTitle = jobMatch[1].trim();
       }
       if (!jobTitle) jobTitle = '未填写职位';
       document.getElementById('resume-position').textContent = jobTitle;
-      
+
       let email = data.email || basicInfo.email || pd.email || '';
       if (!email && rawText) {
-          const emailMatch = rawText.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
-          if (emailMatch) email = emailMatch[1];
+        const emailMatch = rawText.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
+        if (emailMatch) email = emailMatch[1];
       }
       if (!email) email = '未填写邮箱';
       document.getElementById('resume-email').textContent = email;
-      
+
       let phone = data.phone || basicInfo.phone || pd.phone || '';
       if (!phone && rawText) {
-          const phoneMatch = rawText.match(/(?:1[3-9][0-9\-\s]{9,13})|(?:\d{3,4}[-\s]\d{3,4}[-\s]\d{3,4})/);
-          if (phoneMatch) phone = phoneMatch[0].replace(/[^\d-]/g, '');
+        const phoneMatch = rawText.match(/(?:1[3-9][0-9\-\s]{9,13})|(?:\d{3,4}[-\s]\d{3,4}[-\s]\d{3,4})/);
+        if (phoneMatch) phone = phoneMatch[0].replace(/[^\d-]/g, '');
       }
       if (!phone) phone = '未填写电话';
       document.getElementById('resume-phone').textContent = phone;
-      
+
       let location = data.location || basicInfo.location || pd.location || pd.city || pd.expectCity || '';
       if (!location && rawText) {
-           const locMatch = rawText.match(/(?:地址|城市|Location|City|现居地|所在地|居住地)[:：]\s*([^\n\r]+)/i);
-           if (locMatch) location = locMatch[1].trim();
+        const locMatch = rawText.match(/(?:地址|城市|Location|City|现居地|所在地|居住地)[:：]\s*([^\n\r]+)/i);
+        if (locMatch) location = locMatch[1].trim();
       }
       location = location.replace(/期望薪资.*?\d+.*?K/gi, '').replace(/薪资.*?\d+.*?K/gi, '').replace(/资.*?\d+.*?K/gi, '').replace(/期望城市/gi, '').replace(/所在城市/gi, '').trim();
       if (!location || location === '资' || location === '资8-12K') {
         location = '未填写城市';
       }
       document.getElementById('resume-location').textContent = location;
-      
+
       // 适配不同的分数路径
       let score = data.overall_score || data.score || pd.overall_score || 0;
       if (!score && pd.scores && pd.scores.overall) score = pd.scores.overall;
@@ -1209,44 +1290,44 @@
       // 渲染操作按钮（与职位详情页保持一致：手动快评/邀请面试/发送Offer/录用）
       const actionsDiv = document.getElementById('pipeline-actions');
       if (actionsDiv) {
-          const status = statusKey;
-          let btnHtml = '';
-          const btnClass = "px-4 py-2 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center w-full justify-center whitespace-nowrap min-w-[100px]";
-          
-          if (status === 'parsing') {
-              btnHtml = `<button class="${btnClass} bg-blue-100 text-blue-400 cursor-not-allowed" disabled><i class="fas fa-circle-notch fa-spin mr-1.5"></i>正在解析...</button>`;
-          } else if (status === 'applied' || status === 'new' || status === 'uploaded' || status === '') {
-              btnHtml = `<button class="${btnClass} bg-blue-600 text-white hover:bg-blue-700" onclick="passScreening('${data.id}')"><i class="fas fa-check-double mr-1.5"></i>手动快评</button>`;
-          } else if (status === 'screening' || status === 'passed') {
-              btnHtml = `<button class="${btnClass} bg-emerald-600 text-white hover:bg-emerald-700" onclick="openInviteInterviewModal('${data.id}')"><i class="fas fa-paper-plane mr-1.5"></i>面试邀请</button>`;
-          } else if (status === 'interview') {
-              btnHtml = `<button class="${btnClass} bg-orange-600 text-white hover:bg-orange-700" onclick="openSendOffer('${data.id}')"><i class="fas fa-award mr-1.5"></i>发送Offer</button>`;
-          } else if (status === 'offer') {
-              btnHtml = `<button class="${btnClass} bg-emerald-600 text-white hover:bg-emerald-700" onclick="markHired('${data.id}')"><i class="fas fa-user-check mr-1.5"></i>录用</button>`;
-          }
-          
-          if (status === 'hired') {
-              // 已入职状态不显示操作按钮
-          }
-          
-          if (!['rejected', 'hired'].includes(status)) {
-              btnHtml += `<button class="${btnClass} bg-red-50 text-red-600 border border-red-100 hover:bg-red-100" onclick="updateStatus('${data.id}', 'rejected')"><i class="fas fa-times-circle mr-1.5"></i>淘汰</button>`;
-          }
-          
-          if (status === 'rejected') {
-              btnHtml = `<button class="${btnClass} bg-green-50 text-green-600 border border-green-100 hover:bg-green-100" onclick="updateStatus('${data.id}', 'applied')"><i class="fas fa-undo mr-1.5"></i>恢复</button>`;
-          }
-          
-          actionsDiv.innerHTML = btnHtml;
+        const status = statusKey;
+        let btnHtml = '';
+        const btnClass = "px-4 py-2 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center w-full justify-center whitespace-nowrap min-w-[100px]";
+
+        if (status === 'parsing') {
+          btnHtml = `<button class="${btnClass} bg-blue-100 text-blue-400 cursor-not-allowed" disabled><i class="fas fa-circle-notch fa-spin mr-1.5"></i>正在解析...</button>`;
+        } else if (status === 'applied' || status === 'new' || status === 'uploaded' || status === '') {
+          btnHtml = `<button class="${btnClass} bg-blue-600 text-white hover:bg-blue-700" onclick="passScreening('${data.id}')"><i class="fas fa-check-double mr-1.5"></i>手动快评</button>`;
+        } else if (status === 'screening' || status === 'passed') {
+          btnHtml = `<button class="${btnClass} bg-blue-600 text-white hover:bg-blue-700" onclick="openInviteInterviewModal('${data.id}')"><i class="fas fa-paper-plane mr-1.5"></i>面试邀请</button>`;
+        } else if (status === 'interview') {
+          btnHtml = `<button class="${btnClass} bg-blue-600 text-white hover:bg-blue-700" onclick="openSendOffer('${data.id}')"><i class="fas fa-award mr-1.5"></i>发送Offer</button>`;
+        } else if (status === 'offer') {
+          btnHtml = `<button class="${btnClass} bg-blue-600 text-white hover:bg-blue-700" onclick="markHired('${data.id}')"><i class="fas fa-user-check mr-1.5"></i>录用</button>`;
+        }
+
+        if (status === 'hired') {
+          // 已入职状态不显示操作按钮
+        }
+
+        if (!['rejected', 'hired'].includes(status)) {
+          btnHtml += `<button class="${btnClass} bg-red-50 text-red-600 border border-red-100 hover:bg-red-100" onclick="updateStatus('${data.id}', 'rejected')"><i class="fas fa-times-circle mr-1.5"></i>淘汰</button>`;
+        }
+
+        if (status === 'rejected') {
+          btnHtml = `<button class="${btnClass} bg-green-50 text-green-600 border border-green-100 hover:bg-green-100" onclick="updateStatus('${data.id}', 'applied')"><i class="fas fa-undo mr-1.5"></i>恢复</button>`;
+        }
+
+        actionsDiv.innerHTML = btnHtml;
       }
-      
+
       const date = data.upload_date ? new Date(data.upload_date).toLocaleDateString() : new Date().toLocaleDateString();
       document.getElementById('resume-updated').textContent = date;
 
       // Attachment Logic
       const fileName = data.file_name || 'unknown.pdf';
       document.getElementById('attachment-name').textContent = fileName;
-      
+
       const sizeKB = data.file_size ? (data.file_size / 1024).toFixed(1) + ' KB' : '未知大小';
       document.getElementById('attachment-size').textContent = sizeKB;
 
@@ -1258,19 +1339,19 @@
 
       const previewBtn = document.getElementById('preview-attachment-btn');
       if (data.file_path && data.file_path.includes('uploads')) {
-          // Convert absolute path to relative URL
-          // Assuming /uploads is served statically
-          const parts = data.file_path.split('uploads');
-          if (parts.length > 1) {
-              const relativePath = '/uploads' + parts[parts.length - 1].replace(/\\/g, '/'); // Ensure it starts with /uploads and handle Windows paths
-              previewBtn.href = relativePath;
-              // If it's a PDF, browser opens it. If docx, it downloads.
-              // For docx preview, we might need a viewer, but for now browser default behavior is fine.
-          } else {
-              previewBtn.style.display = 'none';
-          }
-      } else {
+        // Convert absolute path to relative URL
+        // Assuming /uploads is served statically
+        const parts = data.file_path.split('uploads');
+        if (parts.length > 1) {
+          const relativePath = '/uploads' + parts[parts.length - 1].replace(/\\/g, '/'); // Ensure it starts with /uploads and handle Windows paths
+          previewBtn.href = relativePath;
+          // If it's a PDF, browser opens it. If docx, it downloads.
+          // For docx preview, we might need a viewer, but for now browser default behavior is fine.
+        } else {
           previewBtn.style.display = 'none';
+        }
+      } else {
+        previewBtn.style.display = 'none';
       }
 
       document.getElementById('info-exp').textContent = (data.experience_years || basicInfo.work_years || basicInfo.experience || pd.experience_years || 0) + '年';
@@ -1278,7 +1359,7 @@
       document.getElementById('info-edu').textContent = data.highest_education || basicInfo.education || basicInfo.degree || (normalizedEducation[0] && normalizedEducation[0].degree) || '未填写';
       document.getElementById('info-status').textContent = data.job_status || basicInfo.job_status || basicInfo.status || '未填写';
       document.getElementById('info-salary').textContent = data.expected_salary || basicInfo.expected_salary || basicInfo.salary || '面议';
-      
+
       // Populate Raw Text
       const rawTextContainer = document.getElementById('resume-raw-text');
       if (data.raw_text) {
@@ -1287,7 +1368,7 @@
       } else {
         document.getElementById('raw-text-section').style.display = 'none';
       }
-      
+
       // 适配 Summary 路径
       let summaryText = data.summary || pd.summary || '暂无个人优势描述';
       if (summaryText === '暂无个人优势描述' && pd.evaluation_report && pd.evaluation_report.summary) {
@@ -1297,24 +1378,24 @@
 
       const expContainer = document.getElementById('experience-container');
       const experience = asArray(data.work_experience || pd.work_experience || pd.workExperience || pd.experience);
-      
+
       if (experience.length > 0) {
         expContainer.innerHTML = experience.map((exp, index) => {
           // 智能解析时间段
           let startDate = exp.startDate || exp.startYear || exp.start_date || '';
           let endDate = exp.endDate || exp.endYear || exp.end_date || '至今';
-          
+
           // 如果有 period 字段 (如 "2020.01-2022.01")，尝试解析
           if ((!startDate || !endDate) && exp.period) {
-             const parts = exp.period.split(/[-至]/);
-             if (parts.length >= 1) startDate = parts[0].trim();
-             if (parts.length >= 2) endDate = parts[1].trim();
+            const parts = exp.period.split(/[-至]/);
+            if (parts.length >= 1) startDate = parts[0].trim();
+            if (parts.length >= 2) endDate = parts[1].trim();
           }
 
           const position = exp.position || exp.jobTitle || exp.role || exp.title || '';
           const company = exp.company || exp.name || '未知公司';
           const description = exp.description || exp.responsibilities || exp.achievements || '';
-          
+
           return `
           <div class="timeline-item">
             <div class="timeline-dot"></div>
@@ -1337,17 +1418,17 @@
         eduContainer.innerHTML = education.map(edu => {
           let startDate = edu.startDate || edu.startYear || edu.start_date || '';
           let endDate = edu.endDate || edu.endYear || edu.end_date || '至今';
-          
+
           if ((!startDate || !endDate) && edu.period) {
-             const parts = edu.period.split(/[-至]/);
-             if (parts.length >= 1) startDate = parts[0].trim();
-             if (parts.length >= 2) endDate = parts[1].trim();
+            const parts = edu.period.split(/[-至]/);
+            if (parts.length >= 1) startDate = parts[0].trim();
+            if (parts.length >= 2) endDate = parts[1].trim();
           }
 
           const school = edu.school || edu.name || '未知学校';
           const degree = edu.degree || '';
           const major = edu.major || '';
-          
+
           return `
           <div class="timeline-item">
             <div class="timeline-dot"></div>
@@ -1361,7 +1442,7 @@
       } else {
         eduContainer.innerHTML = '<p class="text-gray-400 italic">暂无教育经历</p>';
       }
-      
+
       // Projects - 使用数据库字段
       const projContainer = document.getElementById('project-container');
       const projects = asArray(data.projects || pd.projects || pd.project_experience);
@@ -1369,17 +1450,17 @@
         projContainer.innerHTML = projects.map(proj => {
           let startDate = proj.startDate || proj.startYear || proj.start_date || '';
           let endDate = proj.endDate || proj.endYear || proj.end_date || '至今';
-          
+
           if ((!startDate || !endDate) && proj.period) {
-             const parts = proj.period.split(/[-至]/);
-             if (parts.length >= 1) startDate = parts[0].trim();
-             if (parts.length >= 2) endDate = parts[1].trim();
+            const parts = proj.period.split(/[-至]/);
+            if (parts.length >= 1) startDate = parts[0].trim();
+            if (parts.length >= 2) endDate = parts[1].trim();
           }
 
           const name = proj.name || proj.title || '未知项目';
           const role = proj.role || proj.position || '';
           const description = proj.description || proj.responsibilities || proj.performance || '';
-          
+
           return `
           <div class="timeline-item">
             <div class="timeline-dot"></div>
@@ -1392,10 +1473,11 @@
           </div>
         `}).join('');
       } else {
-         // Hide project section if empty
-         if(projContainer.parentElement) projContainer.parentElement.style.display = 'none';
+        // Hide project section if empty
+        if (projContainer.parentElement) projContainer.parentElement.style.display = 'none';
       }
     }
   </script>
 </body>
+
 </html>

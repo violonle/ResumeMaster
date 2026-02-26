@@ -1,0 +1,16 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: superresumemaster_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: Longkou7~!
+      MYSQL_DATABASE: superresumemaster
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./superresumemaster_mysql.sql:/docker-entrypoint-initdb.d/init.sql
+
+volumes:
+  mysql_data:

@@ -5,59 +5,59 @@ const { Op } = require('sequelize');
 
 // 简易验证码存储（演示环境）
 const phoneCodeStore = new Map();
-function genCode(){ return String(Math.floor(100000 + Math.random()*900000)); }
-function now(){ return Date.now(); }
+function genCode() { return String(Math.floor(100000 + Math.random() * 900000)); }
+function now() { return Date.now(); }
 
 const sms = require('../services/smsService');
 
 // 发送短信验证码（演示实现）
-const sendCode = async (req,res)=>{
-  try{
+const sendCode = async (req, res) => {
+  try {
     const { phone: rawPhone } = req.body;
     const np = sms.normalizePhone(rawPhone);
-    if(!np.ok){
-      return res.status(400).json({ success:false, error:{ code:'INVALID_PHONE', message:'手机号格式不正确' } });
+    if (!np.ok) {
+      return res.status(400).json({ success: false, error: { code: 'INVALID_PHONE', message: '手机号格式不正确' } });
     }
     const phone = np.phone;
     const code = genCode();
-    phoneCodeStore.set(String(phone), { code, expire: now()+5*60*1000, attempts:0 });
+    phoneCodeStore.set(String(phone), { code, expire: now() + 5 * 60 * 1000, attempts: 0 });
     console.log(`[Auth] Sending code ${code} to ${phone}...`);
     const sendRes = await sms.sendVerificationCode(String(phone), code);
     console.log('[Auth] SMS Result:', JSON.stringify(sendRes));
-    
+
     // 仅在短信发送成功时返回成功
-    if (sendRes && sendRes.success && sendRes.sent){
-      return res.json({ success:true, data:{ sent:true, devHint: code }, message: sendRes.message || '验证码已发送' });
+    if (sendRes && sendRes.success && sendRes.sent) {
+      return res.json({ success: true, data: { sent: true, devHint: code }, message: sendRes.message || '验证码已发送' });
     } else {
       const reason = sendRes && sendRes.error ? String(sendRes.error) : ''
       const msg = reason === 'CONFIG_MISSING_KEYS' ? '短信通道未配置：缺少AccessKey' :
         (reason === 'CONFIG_MISSING_SIGN' ? '短信通道未配置：缺少签名' :
-        (reason === 'CONFIG_MISSING_TEMPLATE' ? '短信通道未配置：缺少模板' :
-        (reason === 'DISABLED' ? '短信服务未开启' :
-        (sendRes && sendRes.mock ? '短信通道未配置：缺少AccessKey' : (sendRes && sendRes.message ? String(sendRes.message) : '短信发送失败')))))
+          (reason === 'CONFIG_MISSING_TEMPLATE' ? '短信通道未配置：缺少模板' :
+            (reason === 'DISABLED' ? '短信服务未开启' :
+              (sendRes && sendRes.mock ? '短信通道未配置：缺少AccessKey' : (sendRes && sendRes.message ? String(sendRes.message) : '短信发送失败')))))
       // 明确返回 false 以便于前端处理
-      return res.status(400).json({ success:false, error: { code: 'SMS_SEND_FAILED', message: msg, detail: reason } });
+      return res.status(400).json({ success: false, error: { code: 'SMS_SEND_FAILED', message: msg, detail: reason } });
     }
-  }catch(e){
-    res.status(500).json({ success:false, error:{ code:'SEND_CODE_ERROR', message:e.message } });
+  } catch (e) {
+    res.status(500).json({ success: false, error: { code: 'SEND_CODE_ERROR', message: e.message } });
   }
 };
 
 // 校验验证码并登录/注册
-const verifyCode = async (req,res)=>{
-  try{
+const verifyCode = async (req, res) => {
+  try {
     const { phone: rawPhone, code } = req.body;
     const np = sms.normalizePhone(rawPhone);
-    if(!np.ok){
-      return res.status(400).json({ success:false, error:{ code:'INVALID_PHONE', message:'手机号格式不正确' } });
+    if (!np.ok) {
+      return res.status(400).json({ success: false, error: { code: 'INVALID_PHONE', message: '手机号格式不正确' } });
     }
     const phone = np.phone;
-    if(!code || String(code).length!==6){
-      return res.status(400).json({ success:false, error:{ code:'INVALID_CODE', message:'验证码格式不正确' } });
+    if (!code || String(code).length !== 6) {
+      return res.status(400).json({ success: false, error: { code: 'INVALID_CODE', message: '验证码格式不正确' } });
     }
     let record = phoneCodeStore.get(String(phone));
-    const devBypass = code==='123456';
-    if(!devBypass){
+    const devBypass = code === '123456';
+    if (!devBypass) {
       // 如果内存中没有，尝试从数据库中查找（防止服务器重启导致内存丢失）
       if (!record) {
         const { VerificationCode } = require('../models');
@@ -74,17 +74,17 @@ const verifyCode = async (req,res)=>{
         }
       }
 
-      if(!record || record.expire<now()){
-        return res.status(400).json({ success:false, error:{ code:'CODE_EXPIRED', message:'验证码已过期或未发送' } });
+      if (!record || record.expire < now()) {
+        return res.status(400).json({ success: false, error: { code: 'CODE_EXPIRED', message: '验证码已过期或未发送' } });
       }
-      if(record.code !== String(code)){
+      if (record.code !== String(code)) {
         if (record.dbId) {
           // 如果是数据库记录，更新尝试次数（此处简单处理，主要靠内存）
         }
         record.attempts++; phoneCodeStore.set(String(phone), record);
-        return res.status(401).json({ success:false, error:{ code:'CODE_MISMATCH', message:'验证码错误' } });
+        return res.status(401).json({ success: false, error: { code: 'CODE_MISMATCH', message: '验证码错误' } });
       }
-      
+
       // 标记为已使用
       if (record.dbId) {
         const { VerificationCode } = require('../models');
@@ -93,20 +93,26 @@ const verifyCode = async (req,res)=>{
       phoneCodeStore.delete(String(phone));
     }
 
-    let user = await User.findOne({ where:{ phone:String(phone) } });
+    let user = await User.findOne({ where: { phone: String(phone) } });
     let action = 'login';
-    if(!user){
-      const username = `用户${String(phone).slice(-4)}-${Math.floor(Math.random()*10000)}`;
+    if (!user) {
+      const username = `用户${String(phone).slice(-4)}-${Math.floor(Math.random() * 10000)}`;
       const hashedPassword = await bcrypt.hash(`auto-${genCode()}-${phone}`, 10);
-      user = await User.create({ username, phone:String(phone), password_hash: hashedPassword, phone_verified:true });
+      user = await User.create({
+        username,
+        phone: String(phone),
+        password_hash: hashedPassword,
+        phone_verified: true,
+        avatar: '/avatars/avatar.svg'
+      });
       action = 'registered';
     }
 
-    await user.update({ last_login_at: new Date(), login_count: (user.login_count||0)+1 });
+    await user.update({ last_login_at: new Date(), login_count: (user.login_count || 0) + 1 });
     const token = generateToken(user);
-    res.json({ success:true, data:{ user:{ id:user.id, username:user.username, email:user.email, phone:user.phone, avatar:user.avatar, role:user.role, company_name:user.company_name, company_id:user.company_id }, token, action }, message: action==='registered'?'注册并登录成功':'登录成功' });
-  }catch(e){
-    res.status(500).json({ success:false, error:{ code:'VERIFY_CODE_ERROR', message:e.message } });
+    res.json({ success: true, data: { user: { id: user.id, username: user.username, email: user.email, phone: user.phone, avatar: user.avatar, role: user.role, company_name: user.company_name, company_id: user.company_id }, token, action }, message: action === 'registered' ? '注册并登录成功' : '登录成功' });
+  } catch (e) {
+    res.status(500).json({ success: false, error: { code: 'VERIFY_CODE_ERROR', message: e.message } });
   }
 };
 
@@ -158,7 +164,7 @@ const register = async (req, res) => {
       email,
       phone,
       password_hash: hashedPassword,
-      avatar: '/dist/avatar01.png' // 注册用户默认头像设为 avatar01.png
+      avatar: '/avatars/avatar.svg' // 默认头像设为 /avatars/avatar.svg
     });
 
     // 生成令牌
@@ -224,7 +230,7 @@ const login = async (req, res) => {
     // 根据邮箱、手机或用户名查找用户
     console.log('[DEBUG_LOGIN] Received identifier:', identifier, 'type:', typeof identifier);
     console.log('[DEBUG_LOGIN] Search conditions:', JSON.stringify(whereConditions));
-    
+
     const user = await User.findOne({
       where: {
         [Op.or]: whereConditions
@@ -449,9 +455,9 @@ module.exports = {
     try {
       const companyId = req.user?.company_id || null;
       let whereClause = { user_id: req.user.id };
-      
+
       if (companyId) {
-        whereClause = { 
+        whereClause = {
           [Op.or]: [
             { user_id: req.user.id },
             { company_id: companyId }
@@ -460,17 +466,17 @@ module.exports = {
       }
 
       const resumesCount = await Resume.count({ where: whereClause });
-      const interviewsCount = await ResumeJob.count({ 
-        where: { 
-          ...whereClause, 
-          status: { [Op.in]: ['interview', '面试', '面试中'] } 
-        } 
+      const interviewsCount = await ResumeJob.count({
+        where: {
+          ...whereClause,
+          status: { [Op.in]: ['interview', '面试', '面试中'] }
+        }
       });
-      const activeJobs = await Job.count({ 
-        where: { 
-          ...whereClause, 
-          status: 'active' 
-        } 
+      const activeJobs = await Job.count({
+        where: {
+          ...whereClause,
+          status: 'active'
+        }
       });
       res.json({ success: true, data: { resumes: resumesCount, interviews: interviewsCount, tasks: activeJobs } });
     } catch (error) {

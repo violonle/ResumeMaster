@@ -111,9 +111,9 @@ const createResume = async (req, res) => {
   try {
     const { file_name, file_size, file_type, file_path, raw_text, parsed_data, tags } = req.body;
 
-    // 为新简历分配随机头像 (01-10.png)
-    const randomAvatarIndex = Math.floor(Math.random() * 10) + 1;
-    const avatar = `/dist/avatar/${randomAvatarIndex.toString().padStart(2, '0')}.png`;
+    // 为新简历分配随机头像 (1.svg - 12.svg)，头像固化到数据库
+    const avatarIndex = Math.floor(Math.random() * 12) + 1;
+    const avatar = `/avatars/${avatarIndex}.svg`;
 
     const resume = await Resume.create({
       user_id: req.user.id,

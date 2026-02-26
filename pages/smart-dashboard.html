@@ -121,7 +121,7 @@
                 <!-- 职位发布 -->
                 <div class="dashboard-card p-6 rounded-2xl cursor-pointer" onclick="window.location.href='job-management.html'">
                     <div class="flex items-center space-x-5">
-                        <div class="w-14 h-14 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center text-2xl">
+                        <div class="w-14 h-14 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center text-2xl">
                             <span>💼</span>
                         </div>
                         <div>
@@ -135,13 +135,13 @@
                 <!-- 面试安排 -->
                 <div class="dashboard-card p-6 rounded-2xl cursor-pointer" onclick="window.location.href='recruitment-flow.html'">
                     <div class="flex items-center space-x-5">
-                        <div class="w-14 h-14 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center text-2xl">
-                            <span>✅</span>
+                        <div class="w-14 h-14 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center text-2xl">
+                            <span><i class="fas fa-check text-blue-600"></i></span>
                         </div>
                         <div>
                             <p class="text-[11px] font-black text-gray-500 uppercase tracking-widest mb-1">面试安排</p>
                             <h3 class="text-2xl font-black text-gray-900" id="interviews-scheduled">—</h3>
-                            <p class="text-[10px] font-black text-emerald-600 mt-0.5">待面试人数</p>
+                            <p class="text-[10px] font-black text-blue-600 mt-0.5">待面试人数</p>
                         </div>
                     </div>
                 </div>
@@ -435,7 +435,7 @@
 
                 // 模拟数据
                 const advice = [
-                    { type: 'trend', text: '💡 您的后端工程师职位申请量在过去48小时内增长了25%。', color: 'blue' },
+                    { type: 'trend', text: '<i class="fas fa-lightbulb text-blue-600"></i> 您的后端工程师职位申请量在过去48小时内增长了25%。', color: 'blue' },
                     { type: 'suggestion', text: '📊 建议：优先审核具有“微服务架构”背景的候选人。', color: 'indigo' }
                 ];
 

@@ -299,10 +299,20 @@
         const headers = token ? { Authorization: 'Bearer '+token } : {};
         
         const [cur] = await Promise.all([
-          (typeof resumeDataManager !== 'undefined' 
-            ? resumeDataManager.apiRequest('/subscription/current', 'GET', null, false, true)
-            : fetch('/api/subscription/current', { headers: headers }).then(r => r.json())
-          ).catch(() => null)
+          (async () => {
+            try {
+              if (typeof resumeDataManager !== 'undefined') {
+                return await resumeDataManager.apiRequest('/subscription/current', 'GET', null, false, true);
+              } else {
+                const response = await fetch('/api/subscription/current', { headers });
+                if (!response.ok) return null;
+                return await response.json();
+              }
+            } catch (e) {
+              console.warn('获取订阅信息失败:', e.message);
+              return null;
+            }
+          })()
         ]);
         
         // 渲染完订阅信息后，如果是专业版/企业版，同步更新用户信息中的 role
@@ -376,9 +386,15 @@
   }
 
   function buildInnerHTML() {
-    return fetch('/components/sidebar.html')
+    const controller = new AbortController();
+    const signal = controller.signal;
+    
+    return fetch('/components/sidebar.html', { signal })
       .then(r => r.text())
-      .catch(() => `<div class="p-6"><div id="sidebar-header" class="flex items-center justify-between p-4 border-b border-gray-200 mb-6"><div id="sidebar-logo" class="flex items-center"><div class="w-10 h-10 bg-[#111827] rounded-lg flex items-center justify-center"><i class="fas fa-briefcase text-white text-lg"></i></div><div class="ml-3 sidebar-text"><h1 class="text-lg font-bold text-gray-900">争湃·简历大师</h1><p class="text-xs text-gray-500">JobHuntly</p></div></div><button class="flex items-center px-3 py-2 text-sm text-gray-900 rounded-lg hover:bg-gray-50" id="sidebar-toggle-inner"><i class="fas fa-bars text-gray-900"></i></button></div><div class="mb-6"><h3 class="text-xs font-semibold text-gray-900 uppercase tracking-wider mb-3 px-3">快速操作</h3><div id="sidebar-quick-actions" class="space-y-2"></div></div><nav class="space-y-1"><h3 class="text-xs font-semibold text-gray-900 uppercase tracking-wider mb-3 px-3">导航</h3><div id="sidebar-nav"></div></nav><div id="sidebar-subscription" class="mt-8 p-4 gradient-card rounded-lg"><div class="flex items-center justify-between mb-2"><span class="text-sm font-medium text-gray-900">订阅状态</span><span id="sidebar-sub-status" class="text-xs text-gray-400 font-bold">未订阅</span></div><div class="w-full bg-gray-200 rounded-full h-2 mb-2"><div id="sidebar-sub-progress" class="bg-blue-500 h-2 rounded-full" style="width:0%"></div></div><p id="sidebar-sub-renew" class="text-xs text-gray-600">开启 AI 招聘提效</p></div></div>`);
+      .catch(() => `<div class="p-6"><div id="sidebar-header" class="flex items-center justify-between p-4 border-b border-gray-200 mb-6"><div id="sidebar-logo" class="flex items-center"><div class="w-10 h-10 bg-[#111827] rounded-lg flex items-center justify-center"><i class="fas fa-briefcase text-white text-lg"></i></div><div class="ml-3 sidebar-text"><h1 class="text-lg font-bold text-gray-900">争湃·简历大师</h1><p class="text-xs text-gray-500">JobHuntly</p></div></div><button class="flex items-center px-3 py-2 text-sm text-gray-900 rounded-lg hover:bg-gray-50" id="sidebar-toggle-inner"><i class="fas fa-bars text-gray-900"></i></button></div><div class="mb-6"><h3 class="text-xs font-semibold text-gray-900 uppercase tracking-wider mb-3 px-3">快速操作</h3><div id="sidebar-quick-actions" class="space-y-2"></div></div><nav class="space-y-1"><h3 class="text-xs font-semibold text-gray-900 uppercase tracking-wider mb-3 px-3">导航</h3><div id="sidebar-nav"></div></nav><div id="sidebar-subscription" class="mt-8 p-4 gradient-card rounded-lg"><div class="flex items-center justify-between mb-2"><span class="text-sm font-medium text-gray-900">订阅状态</span><span id="sidebar-sub-status" class="text-xs text-gray-400 font-bold">未订阅</span></div><div class="w-full bg-gray-200 rounded-full h-2 mb-2"><div id="sidebar-sub-progress" class="bg-blue-500 h-2 rounded-full" style="width:0%"></div></div><p id="sidebar-sub-renew" class="text-xs text-gray-600">开启 AI 招聘提效</p></div></div>`)
+      .finally(() => {
+        controller.abort();
+      });
   }
 
   const Sidebar = {
