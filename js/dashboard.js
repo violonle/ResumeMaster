@@ -350,7 +350,7 @@ class DashboardController {
                     <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
                         <div class="flex items-center mb-2 pb-2 border-b border-gray-100">
                             <i class="fas fa-chart-line text-blue-500 mr-2"></i>
-                            <h4 class="font-bold text-gray-900 text-sm">招聘趋势预测</h4>
+                            <h4 class="font-bold text-gray-900 text-sm">Dashboard-招聘趋势预测</h4>
                         </div>
                         <p class="text-sm text-gray-600 leading-relaxed text-justify mt-2">${formatText(analysis.trend_analysis) || '暂无分析'}</p>
                     </div>

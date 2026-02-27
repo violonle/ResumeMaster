@@ -34,6 +34,7 @@ class AutoScreeningService {
   async resetStuckResumes() {
     try {
       const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+      const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
       const stuckResumes = await Resume.findAll({
         where: {
           status: 'parsing',
@@ -47,9 +48,60 @@ class AutoScreeningService {
           await resume.update({ status: 'uploaded' });
         }
       }
+
+      const stuckQuickScoreResumes = await Resume.findAll({
+        where: {
+          status: 'parsing',
+          updated_at: { [Op.lt]: twoMinutesAgo }
+        },
+        include: [
+          {
+            model: ResumeJob,
+            required: true,
+            where: {
+              status: { [Op.in]: ['applied', 'screening'] },
+              [Op.or]: [{ match_score: null }, { match_score: 0 }]
+            }
+          }
+        ],
+        limit: 50
+      });
+
+      if (stuckQuickScoreResumes.length > 0) {
+        logger.info(`[AutoScreening] 发现 ${stuckQuickScoreResumes.length} 份卡住的快评简历，重置状态...`);
+        for (const resume of stuckQuickScoreResumes) {
+          await resume.update({ status: 'uploaded' });
+        }
+      }
+
+      const failedResumes = await Resume.findAll({
+        where: {
+          status: 'failed',
+          updated_at: { [Op.lt]: twoMinutesAgo },
+          raw_text: { [Op.ne]: null }
+        },
+        limit: 50
+      });
+
+      if (failedResumes.length > 0) {
+        logger.info(`[AutoScreening] 发现 ${failedResumes.length} 份可重试的失败简历，重置状态...`);
+        for (const resume of failedResumes) {
+          await resume.update({ status: 'uploaded' });
+        }
+      }
     } catch (error) {
       logger.error('[AutoScreening] 重置超时简历失败:', error);
     }
+  }
+
+  withTimeout(promise, ms) {
+    let timer = null;
+    const timeout = new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error(`AI processing timeout after ${ms}ms`)), ms);
+    });
+    return Promise.race([promise, timeout]).finally(() => {
+      if (timer) clearTimeout(timer);
+    });
   }
 
   /**
@@ -211,7 +263,7 @@ class AutoScreeningService {
           const scene = 'resume_quick_score';
 
           // 调用后台分析逻辑
-          await aiController.processAnalysisBackground(
+          await this.withTimeout(aiController.processAnalysisBackground(
             resume.id,
             resume.raw_text || '',
             jobDescription,
@@ -223,7 +275,7 @@ class AutoScreeningService {
               notify_high_score: job.notify_high_score,
               high_score_threshold: job.high_score_threshold
             }
-          );
+          ), 6 * 60 * 1000);
 
           // 自动深度解析触发：在 aiController.processAnalysisBackground 内部，
           // 如果 scene 是 resume_quick_score 且快评通过，且 job.enable_deep_analysis 为 true，
@@ -372,7 +424,7 @@ class AutoScreeningService {
       await resume.update({ status: 'parsing' });
 
       // 4. 调用后台分析逻辑
-      aiController.processAnalysisBackground(
+      this.withTimeout(aiController.processAnalysisBackground(
         resume.id,
         resume.raw_text || '',
         jobDescription,
@@ -381,7 +433,7 @@ class AutoScreeningService {
           scene: 'resume_quick_score', 
           jobId: job.id 
         }
-      ).catch(err => {
+      ), 6 * 60 * 1000).catch(err => {
         logger.error(`[AutoScreening] 立即触发快评后台处理出错: ${resumeId}`, err);
         Resume.update({ status: 'uploaded' }, { where: { id: resumeId, status: 'parsing' } }).catch(() => {});
       });

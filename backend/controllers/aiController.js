@@ -14,6 +14,20 @@ const aiService = new DomesticAIService();
 
 const OptimizedResumeParseService = require('../services/optimizedResumeParseService');
 
+const normalizeRecruitmentStatusForDb = (status) => {
+  const s = String(status || '').trim();
+  if (!s) return '投递';
+  const lower = s.toLowerCase();
+  if (s === '已快评' || s === '快评' || lower === 'screening') return '快评';
+  if (s === '投递' || s === '新投递' || lower === 'applied' || lower === 'new' || s === '待快评') return '投递';
+  if (s === '面试' || lower === 'interview') return '面试';
+  if (s === 'Offer' || lower === 'offer' || s === '已offer' || s === '已录用') return 'Offer';
+  if (s === '入职' || s === '已入职' || lower === 'hired') return '入职';
+  if (s === '放弃' || lower === 'withdrawn') return '放弃';
+  if (s === '淘汰' || s === '已淘汰' || lower === 'rejected') return '淘汰';
+  return '投递';
+};
+
 class AIController {
   // 触发深度解析轮询（手动/调试）
   async triggerDeepAnalysisPolling(req, res) {
@@ -351,6 +365,7 @@ class AIController {
 
         const report = (analysisPayload && analysisPayload.evaluation_report) || (analysisPayload && analysisPayload.report) || (analysisPayload && analysisPayload.analysis_report) || {};
         let radar = {};
+        const dimensionKeys = ['skills', 'experience', 'project', 'education', 'potential', 'teamwork'];
 
         // 如果提供了 preservedDimensions，则优先使用它来保持得分不变
         if (preservedDimensions && typeof preservedDimensions === 'object') {
@@ -358,7 +373,6 @@ class AIController {
           radar = { ...preservedDimensions };
 
           // 确保所有必要的维度都存在
-          const dimensionKeys = ['skills', 'experience', 'project', 'education', 'potential', 'teamwork'];
           dimensionKeys.forEach(key => {
             if (radar[key] === undefined) {
               // 兼容旧数据的 stability 字段
@@ -658,12 +672,14 @@ class AIController {
           }
         }
 
+        const dbRecruitmentStatus = normalizeRecruitmentStatusForDb(recruitmentStatus);
+
         // 最后更新简历状态
         // 关键修复：将 AI 分析得到的结构化数据回填到 Resume 表的 parsed_data 字段，
         // 确保 resume-details.html 能显示出 AI 提取的详细字段。
         await Resume.update({
           status: finalStatus,
-          recruitment_status: recruitmentStatus,
+          recruitment_status: dbRecruitmentStatus,
           auto_rejected: autoRejected,
           rejection_reason: rejectionReason,
           last_analysis_date: new Date(),
@@ -691,7 +707,7 @@ class AIController {
           if (targetJobId) {
             const updateData = {
               match_score: finalOverallScore,
-              status: (recruitmentStatus === '淘汰') ? 'rejected' : 'screening',
+              status: (dbRecruitmentStatus === '淘汰') ? 'rejected' : 'screening',
               notes: rejectionReason || undefined
             };
 

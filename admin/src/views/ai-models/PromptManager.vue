@@ -18,16 +18,6 @@
     </div>
 
     <VCard>
-      <VAlert
-        v-if="debugInfo"
-        type="info"
-        variant="tonal"
-        closable
-        class="ma-4"
-        @click:close="debugInfo = null"
-      >
-        <pre class="text-caption">{{ debugInfo }}</pre>
-      </VAlert>
 
       <div v-if="loading" class="pa-4 text-center">
         <VProgressCircular indeterminate color="primary" />
@@ -203,7 +193,6 @@ import { promptAPI } from '@/api';
 
 const prompts = ref([]);
 const loading = ref(false);
-const debugInfo = ref(null);
 const dialog = ref(false);
 const saving = ref(false);
 const valid = ref(true);
@@ -224,10 +213,10 @@ const fetchPrompts = async () => {
     const token = localStorage.getItem('admin-token');
     console.log('[PromptManager] Calling promptAPI.getList(), token exists:', !!token);
     const res = await promptAPI.getList();
-    console.log('[PromptManager] fetchPrompts response:', res);
-    debugInfo.value = `Time: ${new Date().toLocaleTimeString()} | Token: ${token ? token.substring(0, 10) + '...' : 'NONE'} | Res Type: ${typeof res} | Res.data Type: ${res ? typeof res.data : 'N/A'} | Data: ${JSON.stringify(res ? res.data : res).substring(0, 150)}...`;
+    // console.log('[PromptManager] fetchPrompts response:', res);
+    // debugInfo.value = `Time: ${new Date().toLocaleTimeString()} | Token: ${token ? token.substring(0, 10) + '...' : 'NONE'} | Res Type: ${typeof res} | Res.data Type: ${res ? typeof res.data : 'N/A'} | Data: ${JSON.stringify(res ? res.data : res).substring(0, 150)}...`;
     
-    console.log('[PromptManager] Processing response:', res);
+    // console.log('[PromptManager] Processing response:', res);
     
     let dataToUse = null;
     if (res && Array.isArray(res.data)) {
@@ -240,16 +229,16 @@ const fetchPrompts = async () => {
     
     if (dataToUse) {
       prompts.value = dataToUse;
-      debugInfo.value += ` | SUCCESS: Found ${dataToUse.length} prompts`;
+      // debugInfo.value += ` | SUCCESS: Found ${dataToUse.length} prompts`;
     } else {
       console.warn('[PromptManager] Unexpected data format:', res);
       // 如果 res 本身就是数组且没有 success 包装
       if (Array.isArray(res)) {
         prompts.value = res;
-        debugInfo.value += ` | SUCCESS: Found ${res.length} prompts (raw array)`;
+        // debugInfo.value += ` | SUCCESS: Found ${res.length} prompts (raw array)`;
       } else {
         prompts.value = [];
-        debugInfo.value += ` | ERROR: Unexpected format`;
+        // debugInfo.value += ` | ERROR: Unexpected format`;
       }
     }
   } catch (error) {

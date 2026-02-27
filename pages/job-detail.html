@@ -121,7 +121,7 @@
 
         /* 进度条样式 (同步人才库样式) */
         .progress-bar-container {
-            height: 6px;
+            height: 4px;
             background-color: #f3f4f6;
             border-radius: 3px;
             overflow: hidden;
@@ -2422,7 +2422,8 @@
                     jobId: cleanId,
                     page: currentCandidatePage,
                     pageSize: candidatePageSize,
-                    isTalentPool: false // 明确指定不是人才库查询，而是职位相关查询
+                    isTalentPool: false, // 明确指定不是人才库查询，而是职位相关查询
+                    include_rejected: true
                 };
 
                 console.log('调用getTalentPoolResumes API，参数:', opts);
@@ -2932,9 +2933,9 @@
                               <div class="flex flex-col min-w-[80px]">
                                   <div class="flex justify-between items-center mb-1">
                                       <span class="text-[10px] text-gray-500 font-semibold">${d.label}</span>
-                                      <span class="text-[10px] font-bold text-gray-700">${d.value}%</span>
+                                      <span class="text-[10px] font-bold text-gray-700">${d.value}</span>
                                   </div>
-                                  <div class="progress-bar-container" style="height: 4px;">
+                                  <div class="progress-bar-container">
                                       <div class="progress-bar-fill" style="width: ${d.value}%"></div>
                                   </div>
                               </div>

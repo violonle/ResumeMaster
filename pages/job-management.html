@@ -396,17 +396,17 @@
                         <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                             <div>
                                 <p class="text-xs text-gray-400">
-                                    显示第 <span class="font-semibold text-gray-600">1</span> 到 <span class="font-semibold text-gray-600">10</span> 条，共 <span class="font-semibold text-gray-600">12</span> 条记录
+                                    显示第 <span id="job-page-info-start" class="font-semibold text-gray-600">1</span> 到 <span id="job-page-info-end" class="font-semibold text-gray-600">10</span> 条，共 <span id="job-page-info-total" class="font-semibold text-gray-600">12</span> 条记录
                                 </p>
                             </div>
                             <div>
                                 <nav class="relative z-0 inline-flex space-x-2">
-                                    <button class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-400 hover:bg-gray-50 transition-colors">
+                                    <button id="job-prev-page-btn" class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-400 hover:bg-gray-50 transition-colors">
                                         <i class="fas fa-chevron-left text-xs"></i>
                                     </button>
-                                    <button class="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-600 text-white font-semibold text-xs shadow-md shadow-blue-200">1</button>
-                                    <button class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 font-medium text-xs transition-colors">2</button>
-                                    <button class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-400 hover:bg-gray-50 transition-colors">
+                                    <button id="job-page-btn-1" class="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-600 text-white font-semibold text-xs shadow-md shadow-blue-200">1</button>
+                                    <button id="job-page-btn-2" class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 font-medium text-xs transition-colors">2</button>
+                                    <button id="job-next-page-btn" class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-400 hover:bg-gray-50 transition-colors">
                                         <i class="fas fa-chevron-right text-xs"></i>
                                     </button>
                                 </nav>
@@ -511,6 +511,7 @@
                         </a>
                     </div>
                 `;
+                updateJobPagination(0);
                 return;
             }
 
@@ -601,6 +602,44 @@
                     </div>
                 </div>
             `;}).join('');
+            updateJobPagination(jobs.length);
+        }
+
+        function updateJobPagination(totalItems) {
+            const pageSize = 10;
+            const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+            const start = totalItems > 0 ? 1 : 0;
+            const end = totalItems > 0 ? Math.min(pageSize, totalItems) : 0;
+
+            const startEl = document.getElementById('job-page-info-start');
+            const endEl = document.getElementById('job-page-info-end');
+            const totalEl = document.getElementById('job-page-info-total');
+            if (startEl) startEl.textContent = start;
+            if (endEl) endEl.textContent = end;
+            if (totalEl) totalEl.textContent = totalItems;
+
+            const page2Btn = document.getElementById('job-page-btn-2');
+            if (page2Btn) {
+                if (totalPages <= 1) {
+                    page2Btn.classList.add('hidden');
+                } else {
+                    page2Btn.classList.remove('hidden');
+                }
+            }
+
+            const prevBtn = document.getElementById('job-prev-page-btn');
+            const nextBtn = document.getElementById('job-next-page-btn');
+            const disablePaging = totalPages <= 1;
+            if (prevBtn) {
+                prevBtn.disabled = disablePaging;
+                prevBtn.classList.toggle('opacity-50', disablePaging);
+                prevBtn.classList.toggle('cursor-not-allowed', disablePaging);
+            }
+            if (nextBtn) {
+                nextBtn.disabled = disablePaging;
+                nextBtn.classList.toggle('opacity-50', disablePaging);
+                nextBtn.classList.toggle('cursor-not-allowed', disablePaging);
+            }
         }
 
         // 更新统计数据

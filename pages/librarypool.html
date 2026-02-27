@@ -661,7 +661,7 @@
                         const controller = new AbortController();
                         const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-                        const list = await window.resumeDataManager.getTalentPoolResumes(false, false, { isTalentPool: true });
+                        const list = await window.resumeDataManager.getTalentPoolResumes(false, false, { isTalentPool: true, include_rejected: true });
                         clearTimeout(timeoutId);
 
                         data = Array.isArray(list) ? list : [];
@@ -670,7 +670,7 @@
                         const controller = new AbortController();
                         const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-                        const result = await window.resumeDataManager.apiRequest('/library/resumes?is_talent_pool=true', 'GET', null, true);
+                        const result = await window.resumeDataManager.apiRequest('/library/resumes?is_talent_pool=true&include_rejected=true', 'GET', null, true);
                         clearTimeout(timeoutId);
 
                         data = (result && result.data) ? result.data : [];
@@ -1783,6 +1783,7 @@
                 const qVal = this.searchBox && this.searchBox.value ? this.searchBox.value.trim().toLowerCase() : '';
                 if (qVal) qs.set('q', qVal);
                 qs.set('is_talent_pool', 'true');
+                qs.set('include_rejected', 'true');
 
                 console.log('[LibraryPool] Fetching all resumes for user/company to ensure consistent stats');
 
@@ -2074,6 +2075,28 @@
                     if (success) {
                         if (showNotification && window.ui && typeof window.ui.showNotification === 'function') {
                             window.ui.showNotification(`状态已更新为: ${status}`, 'success');
+                        }
+                        const normalizedStatus = this.normalizeStatus(status);
+                        this.candidateStatusByResume = this.candidateStatusByResume || {};
+                        this.candidateStatusByResume[resumeId] = normalizedStatus;
+                        if (normalizedStatus !== 'rejected') {
+                            try {
+                                const appsResponse = await window.resumeDataManager.apiRequest(`/recruitment/candidates/list?resume_id=${resumeId}`);
+                                if (appsResponse && appsResponse.success && Array.isArray(appsResponse.data)) {
+                                    for (const app of appsResponse.data) {
+                                        await window.resumeDataManager.apiRequest(`/recruitment/candidates/${app.id}/status`, 'POST', {
+                                            status: 'applied'
+                                        });
+                                    }
+                                }
+                            } catch (syncError) {
+                                console.warn('同步候选人状态失败:', syncError);
+                            }
+                        }
+                        if (normalizedStatus !== 'rejected' && this.autoRejectedFilter && this.autoRejectedFilter.checked) {
+                            this.autoRejectedFilter.checked = false;
+                            if (this.hiredFilter) this.hiredFilter.checked = false;
+                            this.currentPage = 1;
                         }
                         // 重新获取数据以确保状态同步
                         await this.fetchResumes();

@@ -3,7 +3,7 @@ ARG TARGETPLATFORM
 ARG BUILDPLATFORM
 
 # 使用国内镜像源加速基础镜像拉取
-ARG DOCKER_MIRROR="docker.m.daocloud.io"
+ARG DOCKER_MIRROR="docker.io"
 
 # --- Stage 1: Build Admin ---
 FROM --platform=$BUILDPLATFORM ${DOCKER_MIRROR}/library/node:20-slim AS admin-builder

@@ -752,8 +752,11 @@ class DomesticAIService {
         if (e.response) {
             console.error(`[AI Service] Response error:`, JSON.stringify(e.response.data));
         }
-        const code = String(e && e.status || '');
-        if (code === '401' || code === '403') break;
+        const code = String(e && (e.status || e.statusCode || (e.response && e.response.status)) || '');
+        if (code === '401' || code === '403') {
+          this.serviceFailures[provider] = Math.max(this.serviceFailures[provider] || 0, 5);
+          break;
+        }
         const delay = Math.min(800 * Math.pow(2, tries), 3000);
         await new Promise(rs => setTimeout(rs, delay));
         tries++;

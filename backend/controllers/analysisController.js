@@ -244,6 +244,11 @@ const getLatestAnalysisResult = async (req, res) => {
     }
     // Use shared utility to normalize dimensions and apply fallback logic
     // This replaces ~100 lines of duplicate logic
+    const rawDimensions =
+      (result && result.dimensions) ||
+      (details && (details.dimensions || details.scores_percent || details.radar_scores || details.radarScores || details.score_detail)) ||
+      details ||
+      {};
     const analysisJson = createAnalysisJson({
       id: result.id,
       overall_score: (result && result.overall_score > 0) ? result.overall_score : 0,

@@ -753,8 +753,12 @@ class UIComponents {
         // 候选人 (isCandidate = true)：默认 /avatars/{数字}.svg
         let finalAvatarUrl = '';
         if (isCandidate) {
-            // 候选人：随机分配头像 (1 - 12)
-            const seed = Math.floor(Math.random() * 12) + 1;
+            const seedSource = String(name || '').trim() || 'candidate';
+            let hash = 0;
+            for (let i = 0; i < seedSource.length; i++) {
+                hash = seedSource.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const seed = Math.abs(hash % 12) + 1;
             finalAvatarUrl = `/avatars/${seed}.svg`;
         } else {
             // 平台用户：统一使用 /avatars/avatar.svg

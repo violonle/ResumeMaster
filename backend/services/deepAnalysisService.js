@@ -59,7 +59,6 @@ class DeepAnalysisService {
       const activeJobs = await Job.findAll({
         where: {
           status: 'active',
-          enable_auto_screening: true,
           enable_deep_analysis: true
         }
       });
@@ -77,8 +76,20 @@ class DeepAnalysisService {
         const pendingResumes = await ResumeJob.findAll({
           where: {
             job_id: job.id,
-            deep_analysis_status: { [Op.in]: ['none', 'failed'] },
-            deep_analysis_retry_count: { [Op.lt]: this.maxRetries },
+            [Op.and]: [
+              {
+                [Op.or]: [
+                  { deep_analysis_status: { [Op.in]: ['none', 'failed'] } },
+                  { deep_analysis_status: { [Op.is]: null } }
+                ]
+              },
+              {
+                [Op.or]: [
+                  { deep_analysis_retry_count: { [Op.lt]: this.maxRetries } },
+                  { deep_analysis_retry_count: { [Op.is]: null } }
+                ]
+              }
+            ],
             match_score: { [Op.gte]: job.auto_reject_score || 0 }
           },
           include: [{ model: Resume, as: 'Resume' }],
@@ -126,7 +137,7 @@ class DeepAnalysisService {
         include: [{ model: Resume, as: 'Resume' }]
       });
 
-      if (rj && (rj.deep_analysis_status === 'none' || rj.deep_analysis_status === 'failed')) {
+      if (rj && (!rj.deep_analysis_status || rj.deep_analysis_status === 'none' || rj.deep_analysis_status === 'failed')) {
         await this.triggerAnalysis(rj, job, 'auto_immediate');
       }
     } catch (error) {

@@ -626,6 +626,13 @@ async function getTalentPoolResumes(req, res) {
           }
         }
         const latestAnalysis = analysisJson;
+        const score = r.score || (analysisJson ? analysisJson.overall_score : 0);
+
+        if ((currentStatus === '快评' || currentStatus === '投递') && (!score || score <= 0)) {
+          currentStatus = '投递';
+        } else if (currentStatus === '投递' && score > 0) {
+          currentStatus = '快评';
+        }
 
         return {
           id: r.id,
