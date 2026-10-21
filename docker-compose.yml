@@ -16,7 +16,7 @@ services:
       - DB_PORT=${DB_PORT:-3306}
       - DB_NAME=${DB_NAME:-superresumemaster}
       - DB_USER=${DB_USER:-root}
-      - DB_PASSWORD=${DB_PASSWORD:-Longkou7~!}
+      - DB_PASSWORD=${DB_PASSWORD}
       - JWT_SECRET=${JWT_SECRET:-a7f3k9m2x8p1q4w5e8r0t3y6u1i2o5p8a9s1d2f3g4h5j6k7l8z9x0c1v2b3n4m5q6w7e8r9t0y1u2i3o4p5a6s7d8f9g0h1j2k3l4z5x6c7v8b9n0m1q2w3e4r5t6y7u8i9o0p}
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-*}
       - REDIS_HOST=${REDIS_HOST:-redis}
@@ -37,13 +37,13 @@ services:
     restart: always
     environment:
       - MYSQL_DATABASE=${DB_NAME:-superresumemaster}
-      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD:-Longkou7~!}
+      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
     ports:
       - "${DB_PORT:-3306}:3306"
     volumes:
       - db_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD:-Longkou7~!}"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD}"]
       interval: 10s
       timeout: 5s
       retries: 5
