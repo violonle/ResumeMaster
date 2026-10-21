@@ -29,8 +29,8 @@ fi
 # 确保其他必要变量存在
 grep -q "DB_NAME=" .env || echo "DB_NAME=superresumemaster" >> .env
 grep -q "DB_USER=" .env || echo "DB_USER=root" >> .env
-grep -q "DB_PASSWORD=" .env || echo "DB_PASSWORD=YourStrongPassword" >> .env
-grep -q "JWT_SECRET=" .env || echo "JWT_SECRET=srm_secret_key_2024" >> .env
+grep -q "DB_PASSWORD=" .env || echo "DB_PASSWORD=$(openssl rand -hex 16)" >> .env
+grep -q "JWT_SECRET=" .env || echo "JWT_SECRET=$(openssl rand -hex 32)" >> .env
 grep -q "NODE_ENV=" .env || echo "NODE_ENV=production" >> .env
 
 # 3. 核心：在服务器本地进行 Docker 构建
