@@ -229,7 +229,7 @@ INSERT INTO user_activities VALUES(124,2,NULL,'candidate_status_update','ResumeJ
 INSERT INTO user_activities VALUES(125,2,NULL,'candidate_status_update','ResumeJob',8,'{"from":"applied","to":"淘汰"}',NULL,NULL,'2026-02-02 07:35:57.476 +00:00');
 CREATE TABLE `system_configs` (`id` INT PRIMARY KEY AUTO_INCREMENT AUTO_INCREMENT, `key` VARCHAR(100) NOT NULL UNIQUE, `value` TEXT, `type` TEXT DEFAULT 'string', `description` TEXT, `is_public` TINYINT(1) DEFAULT 0, `updated_at` DATETIME);
 INSERT INTO system_configs VALUES(1,'sms.provider','aliyun','string',NULL,0,'2026-01-27 05:05:05.453 +00:00');
-INSERT INTO system_configs VALUES(2,'sms.accessKeyId','LTAI5tPFyUu7yPooHyeJZV5o','string',NULL,0,'2026-01-27 05:05:05.459 +00:00');
+INSERT INTO system_configs VALUES(2,'sms.accessKeyId','youraccessKeyid','string',NULL,0,'2026-01-27 05:05:05.459 +00:00');
 INSERT INTO system_configs VALUES(3,'sms.accessKeySecret','Vq566jB7bPZ3VGmUvphGZgSXcdNLIE','string',NULL,0,'2026-01-27 05:05:05.461 +00:00');
 INSERT INTO system_configs VALUES(4,'sms.signName','争湃简历大师','string',NULL,0,'2026-01-27 05:05:05.462 +00:00');
 INSERT INTO system_configs VALUES(5,'sms.auth.templateCode','SMS_498755176','string',NULL,0,'2026-01-27 05:05:05.464 +00:00');
